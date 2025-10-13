@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     # Local apps (complete ones only)
     # Local apps
+    "health",
     "users",
     "products",
     "orders",
