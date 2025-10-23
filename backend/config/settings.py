@@ -24,7 +24,12 @@ SECRET_KEY = env("SECRET_KEY", default="your-secret-key-here-change-in-productio
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "pharmacy-aggregator.onrender.com"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+    "localhost",
+    "127.0.0.1",
+    "pharmacy-aggregator.onrender.com",
+    ".onrender.com"  # Allows all subdomains on render.com
+])
 
 # Application definition
 INSTALLED_APPS = [
