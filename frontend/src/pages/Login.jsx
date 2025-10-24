@@ -50,32 +50,68 @@ const Login = () => {
     });
     
     if (result.success) {
-      // Prefer using the user object returned from the login call since
-      // context state updates (setUser) may not be immediately visible.
       const returnedUser = result.user;
-
-      // Normalize the role to lowercase for reliable comparisons. If role
-      // is missing, we'll fall back to context's getDashboardPath.
-      const role = returnedUser?.role?.toString?.().toLowerCase?.() || null;
-      console.log('[Login Debug] Computed role for redirect:', {
+      console.log('[Login Debug] Processing successful login:', {
         returnedUser,
-        normalizedRole: role
+        requestedRole: credentials.role
       });
 
-      // Compute target path based on role (avoid depending on context timing)
-      let target = "/";
-      if (role === "pharmacist") target = "/pharmacist-dashboard";
-      else if (role === "admin") target = "/admin";
-      else if (role === "customer") target = "/"; // or '/customer/dashboard' if available
+      // Get the normalized role from various possible fields
+      const determineRole = (user) => {
+        if (!user) return null;
+        
+        // Check explicit role fields
+        if (user.role) return user.role.toString().toLowerCase();
+        if (user.user_type) return user.user_type.toString().toLowerCase();
+        
+        // Check boolean flags
+        if (user.is_pharmacist) return 'pharmacist';
+        if (user.is_admin) return 'admin';
+        if (user.is_customer) return 'customer';
+        
+        return null;
+      };
 
-      // Fallback to context helper if needed
-      if (!returnedUser || !role) {
+      const role = determineRole(returnedUser);
+      console.log('[Login Debug] Determined user role:', {
+        role,
+        userFields: {
+          role: returnedUser?.role,
+          user_type: returnedUser?.user_type,
+          is_pharmacist: returnedUser?.is_pharmacist,
+          is_admin: returnedUser?.is_admin
+        }
+      });
+
+      // Determine redirect path
+      let target = "/";
+      if (role === "pharmacist") {
+        target = "/pharmacist/dashboard";
+      } else if (role === "admin") {
+        target = "/admin/dashboard";
+      } else if (role === "customer") {
+        target = "/customer/dashboard";
+      } else {
+        // If no role determined from user object, fall back to context
+        console.log('[Login Debug] No role found in user object, using context fallback');
         try {
           target = getDashboardPath();
         } catch (err) {
-          console.warn("Fallback to default path due to missing user in context", err);
+          console.warn("[Login Debug] Context fallback failed:", err);
+          // Final fallback based on requested role
+          if (credentials.role === 'pharmacist') {
+            target = "/pharmacist/dashboard";
+          } else {
+            target = "/customer/dashboard";
+          }
         }
       }
+
+      console.log('[Login Debug] Redirecting to:', {
+        target,
+        role,
+        fallbackUsed: !role
+      });
 
       navigate(target);
     } else {

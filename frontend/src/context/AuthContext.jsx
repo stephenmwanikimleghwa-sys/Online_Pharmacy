@@ -68,13 +68,30 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("access_token", access);
       }
 
+      // Extract and normalize user role from response data
+      const normalizeUserRole = (data) => {
+        console.log('[Auth Debug] Normalizing user role from:', data);
+        
+        // Check various possible role fields
+        const role = data?.role || data?.user_type || null;
+        
+        // Check for boolean flags
+        if (data?.is_pharmacist) return 'pharmacist';
+        if (data?.is_admin) return 'admin';
+        if (data?.is_customer) return 'customer';
+        
+        return role?.toString?.().toLowerCase?.() || null;
+      };
+
       // Always attempt to fetch the full profile after login
       let finalUser = null;
       try {
         // First try to use the user data from login response
         if (userData && typeof userData === "object") {
           console.log('[Auth Debug] Initial user data from login:', userData);
-          finalUser = userData;
+          const initialRole = normalizeUserRole(userData);
+          finalUser = { ...userData, role: initialRole };
+          console.log('[Auth Debug] Normalized initial user data:', finalUser);
         }
         
         // Then fetch the full profile to ensure we have complete data
@@ -84,8 +101,14 @@ export const AuthProvider = ({ children }) => {
         
         if (profileData && typeof profileData === "object") {
           console.log('[Auth Debug] Received profile data:', profileData);
-          // Merge profile data with any existing user data
-          finalUser = { ...finalUser, ...profileData };
+          const profileRole = normalizeUserRole(profileData);
+          // Merge profile data with any existing user data, preferring profile role
+          finalUser = { 
+            ...finalUser, 
+            ...profileData,
+            role: profileRole || finalUser?.role 
+          };
+          console.log('[Auth Debug] Merged and normalized user data:', finalUser);
         } else {
           console.warn('[Auth Debug] Profile endpoint returned invalid data:', profileRes.data);
         }
@@ -97,7 +120,9 @@ export const AuthProvider = ({ children }) => {
         });
         // If we have userData from login, use that as fallback
         if (!finalUser && userData && typeof userData === "object") {
-          finalUser = userData;
+          const fallbackRole = normalizeUserRole(userData);
+          finalUser = { ...userData, role: fallbackRole };
+          console.log('[Auth Debug] Using fallback user data:', finalUser);
         }
       }
 
@@ -167,35 +192,60 @@ export const AuthProvider = ({ children }) => {
   const getDashboardPath = () => {
     console.log('[Auth Debug] Getting dashboard path:', {
       user,
-      role: user?.role
+      role: user?.role,
+      isPharmacist: user?.is_pharmacist,
+      isAdmin: user?.is_admin
     });
 
-    if (!user || !user.role) {
-      console.warn('[Auth Debug] No user or role found, returning home path');
+    if (!user) {
+      console.warn('[Auth Debug] No user found, returning home path');
       return "/";
     }
-    
+
     try {
-      const role = user.role.toString().toLowerCase();
-      let path = "/";
+      // First check explicit role field
+      let role = user.role?.toString?.().toLowerCase?.();
       
+      // Then check user_type if role not found
+      if (!role && user.user_type) {
+        role = user.user_type.toString().toLowerCase();
+      }
+      
+      // Check boolean flags if still no role
+      if (!role) {
+        if (user.is_pharmacist) role = 'pharmacist';
+        else if (user.is_admin) role = 'admin';
+        else if (user.is_customer) role = 'customer';
+      }
+      
+      console.log('[Auth Debug] Determined user role:', role);
+      
+      let path = "/";
       switch (role) {
         case "pharmacist":
-          path = "/pharmacist-dashboard";
+          path = "/pharmacist/dashboard";  // Updated to match route structure
           break;
         case "admin":
-          path = "/admin";
+          path = "/admin/dashboard";  // Consistent route structure
           break;
         case "customer":
           path = "/customer/dashboard";
           break;
         default:
-          console.warn(`[Auth Debug] Unknown role "${role}", using default path`);
+          if (user.is_pharmacist) {
+            path = "/pharmacist/dashboard";
+          } else if (user.is_admin) {
+            path = "/admin/dashboard";
+          } else {
+            console.warn(`[Auth Debug] Unknown role "${role}", using default path`);
+            path = "/customer/dashboard";  // Default to customer dashboard if role is unknown
+          }
       }
 
       console.log('[Auth Debug] Resolved dashboard path:', {
         role,
-        path
+        path,
+        user
       });
       
       return path;
