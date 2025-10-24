@@ -42,7 +42,10 @@ const Login = () => {
       // Prefer using the user object returned from the login call since
       // context state updates (setUser) may not be immediately visible.
       const returnedUser = result.user;
-      const role = returnedUser?.role || (await (async () => null)());
+
+      // Normalize the role to lowercase for reliable comparisons. If role
+      // is missing, we'll fall back to context's getDashboardPath.
+      const role = returnedUser?.role?.toString?.().toLowerCase?.() || null;
 
       // Compute target path based on role (avoid depending on context timing)
       let target = "/";
@@ -51,7 +54,7 @@ const Login = () => {
       else if (role === "customer") target = "/"; // or '/customer/dashboard' if available
 
       // Fallback to context helper if needed
-      if (!returnedUser) {
+      if (!returnedUser || !role) {
         try {
           target = getDashboardPath();
         } catch (err) {

@@ -62,19 +62,33 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("access_token", access);
       }
 
-      // If user data is present, set it (but guard role access)
+      // If user data is present, set it. If not, attempt to fetch profile
+      let finalUser = null;
       if (userData && typeof userData === "object") {
-        // If requested role provided, only warn if mismatch; don't throw to avoid crashing
-        if (credentials.role && userData.role && userData.role !== credentials.role) {
-          console.warn(
-            `Logged-in user role mismatch: requested=${credentials.role} returned=${userData.role}`,
-          );
+        finalUser = userData;
+      } else {
+        // Try to fetch the profile using the token we just stored so we can
+        // reliably determine the user's role and other attributes.
+        try {
+          const profileRes = await api.get("/auth/profile");
+          finalUser = profileRes.data?.user || profileRes.data?.profile || profileRes.data || null;
+        } catch (profileErr) {
+          console.warn("Failed to fetch profile after login:", profileErr);
         }
-        setUser(userData);
-        if (userData.role) localStorage.setItem("user_role", userData.role);
       }
 
-      return { success: true, user: userData || null };
+      if (finalUser) {
+        // If requested role provided, only warn if mismatch; don't throw to avoid crashing
+        if (credentials.role && finalUser.role && finalUser.role !== credentials.role) {
+          console.warn(
+            `Logged-in user role mismatch: requested=${credentials.role} returned=${finalUser.role}`,
+          );
+        }
+        setUser(finalUser);
+        if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
+      }
+
+      return { success: true, user: finalUser || null };
     } catch (error) {
       console.error("Login failed:", error);
       const errorMessage =
