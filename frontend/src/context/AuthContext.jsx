@@ -115,16 +115,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getDashboardPath = () => {
-    if (!user) return "/";
-    switch (user.role) {
-      case "pharmacist":
-        return "/pharmacist-dashboard";
-      case "admin":
-        return "/admin";
-      case "customer":
-        return "/customer/dashboard";
-      default:
-        return "/";
+    if (!user || !user.role) return "/";
+    
+    try {
+      switch (user.role) {
+        case "pharmacist":
+          return "/pharmacist-dashboard";
+        case "admin":
+          return "/admin";
+        case "customer":
+          return "/customer/dashboard";
+        default:
+          return "/";
+      }
+    } catch (error) {
+      console.error("Error getting dashboard path:", error);
+      return "/";
     }
   };
 

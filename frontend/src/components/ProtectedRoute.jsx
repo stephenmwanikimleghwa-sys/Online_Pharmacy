@@ -13,12 +13,15 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
+  // Check for authenticated user first
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
+  // Safely check role if required
+  if (requiredRole && (!user.role || user.role !== requiredRole)) {
+    console.warn(`Access denied: Required role "${requiredRole}" not met. User role: "${user.role || 'none'}"`);
+    return <Navigate to="/" replace />;
   }
 
   return children;
