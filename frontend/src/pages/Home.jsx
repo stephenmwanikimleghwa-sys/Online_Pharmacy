@@ -15,7 +15,7 @@ const Home = () => {
       try {
         // Replace with actual API endpoints
         const productsRes = await axios.get(
-          "http://localhost:8000/api/products/featured/",
+          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"}/products/featured/`,
         );
         const raw = productsRes?.data;
         const items = Array.isArray(raw)

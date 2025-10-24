@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   // Configure axios defaults
   const api = axios.create({
-    baseURL: "http://localhost:8000/api", // Backend API base URL
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api", // Backend API base URL
   });
 
   // Add auth token to requests

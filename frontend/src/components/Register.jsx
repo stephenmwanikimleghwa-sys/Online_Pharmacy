@@ -80,7 +80,7 @@ const Register = () => {
       }
 
       const endpoint = isPharmacist ? '/api/auth/pharmacist-register/' : '/api/auth/register/';
-      const response = await axios.post(`http://localhost:8000${endpoint}`, payload);
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"}${endpoint}`, payload);
 
       // Store JWT token (assume response has access token)
       localStorage.setItem('access_token', response.data.access);
