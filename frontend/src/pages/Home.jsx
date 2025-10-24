@@ -170,7 +170,7 @@ const Home = () => {
                 {error}
               </div>
             </div>
-          ) : featuredProducts.length === 0 ? (
+          ) : (!Array.isArray(featuredProducts) || featuredProducts.length === 0) ? (
             // Empty state with illustration and CTA
             <div className="text-center py-12">
               <div className="max-w-md mx-auto">
@@ -198,7 +198,7 @@ const Home = () => {
           ) : (
             // Products grid
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts.map((product) => (
+              {(Array.isArray(featuredProducts) ? featuredProducts : []).map((product) => (
                 <div
                   key={product.id}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
