@@ -1,13 +1,16 @@
 import axios from "axios";
 
-// Resolve API base URL from Vite env var. Provide a safe fallback to a relative `/api`
-// so client requests still work in environments where the env var wasn't set.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+// In development, if VITE_API_BASE_URL isn't set, use localhost
+const isDevelopment = import.meta.env.MODE === 'development';
+const defaultDevUrl = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (isDevelopment ? defaultDevUrl : '/api');
 
 // Log API configuration
 console.log('[API Debug] Initializing API client:', {
+  mode: import.meta.env.MODE,
   baseURL: API_BASE_URL,
   envBaseURL: import.meta.env.VITE_API_BASE_URL,
+  isDevelopment
 });
 
 // Create Axios instance
@@ -16,6 +19,9 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Add timeout and validate status
+  timeout: 10000,
+  validateStatus: (status) => status >= 200 && status < 300,
 });
 
 // Request interceptor to add JWT token to headers

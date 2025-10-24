@@ -68,19 +68,36 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("access_token", access);
       }
 
-      // If user data is present, set it. If not, attempt to fetch profile
+      // Always attempt to fetch the full profile after login
       let finalUser = null;
-      if (userData && typeof userData === "object") {
-        finalUser = userData;
-        console.log('[Auth Debug] Using user data from login response:', finalUser);
-      } else {
-        // Try to fetch the profile using the token we just stored so we can
-        // reliably determine the user's role and other attributes.
-        try {
-          const profileRes = await api.get("/auth/profile");
-          finalUser = profileRes.data?.user || profileRes.data?.profile || profileRes.data || null;
-        } catch (profileErr) {
-          console.warn("Failed to fetch profile after login:", profileErr);
+      try {
+        // First try to use the user data from login response
+        if (userData && typeof userData === "object") {
+          console.log('[Auth Debug] Initial user data from login:', userData);
+          finalUser = userData;
+        }
+        
+        // Then fetch the full profile to ensure we have complete data
+        console.log('[Auth Debug] Fetching full profile...');
+        const profileRes = await api.get("/auth/profile");
+        const profileData = profileRes.data?.user || profileRes.data?.profile || profileRes.data;
+        
+        if (profileData && typeof profileData === "object") {
+          console.log('[Auth Debug] Received profile data:', profileData);
+          // Merge profile data with any existing user data
+          finalUser = { ...finalUser, ...profileData };
+        } else {
+          console.warn('[Auth Debug] Profile endpoint returned invalid data:', profileRes.data);
+        }
+      } catch (profileErr) {
+        console.error('[Auth Debug] Failed to fetch profile:', {
+          error: profileErr.message,
+          status: profileErr.response?.status,
+          data: profileErr.response?.data
+        });
+        // If we have userData from login, use that as fallback
+        if (!finalUser && userData && typeof userData === "object") {
+          finalUser = userData;
         }
       }
 

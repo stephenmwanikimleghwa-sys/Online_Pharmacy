@@ -15,10 +15,24 @@ const Home = () => {
       try {
         console.log('[Home Debug] Fetching featured products from:', `${api.defaults.baseURL}/products/featured/`);
         
+        // First check if the API is accessible
+        try {
+          await api.get('/health/');
+        } catch (healthError) {
+          console.error('[Home Debug] API health check failed:', {
+            error: healthError.message,
+            status: healthError.response?.status
+          });
+        }
+        
         // Use shared API instance (handles baseURL + auth interceptors)
         const productsRes = await api.get(`/products/featured/`);
         
-        console.log('[Home Debug] Featured products response:', productsRes);
+        console.log('[Home Debug] Featured products response:', {
+          status: productsRes.status,
+          headers: productsRes.headers,
+          data: productsRes.data
+        });
         
         const raw = productsRes?.data;
         const items = Array.isArray(raw)
@@ -31,6 +45,10 @@ const Home = () => {
           
         console.log('[Home Debug] Parsed featured products:', items);
         
+        if (items.length === 0) {
+          console.warn('[Home Debug] No featured products found in response');
+        }
+        
         setFeaturedProducts(items.slice(0, 8)); // Top 8
       } catch (error) {
         console.error("[Home Debug] Error fetching featured data:", {
@@ -39,6 +57,7 @@ const Home = () => {
           statusText: error.response?.statusText,
           url: error.config?.url,
           baseURL: api.defaults.baseURL,
+          response: error.response?.data,
         });
         // Mock data for development
         setFeaturedProducts([
