@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -21,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       // Fetch user profile
       axios
-        .get("/api/auth/profile/")
+        .get(`${API_BASE_URL}/auth/profile/`)
         .then((response) => setUser(response.data))
         .catch(() => {
           localStorage.removeItem("token");
@@ -33,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post("/api/auth/login/", {
+      const response = await axios.post(`${API_BASE_URL}/auth/login/`, {
         username,
         password,
       });

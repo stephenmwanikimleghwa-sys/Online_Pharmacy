@@ -21,7 +21,7 @@ const UserAccount = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"; // Backend API base URL
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Backend API base URL
 
   useEffect(() => {
     if (!user) {
