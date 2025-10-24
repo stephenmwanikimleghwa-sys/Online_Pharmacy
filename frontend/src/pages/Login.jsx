@@ -39,7 +39,27 @@ const Login = () => {
 
     const result = await login(credentials);
     if (result.success) {
-      navigate(getDashboardPath()); // Redirect to appropriate dashboard based on role
+      // Prefer using the user object returned from the login call since
+      // context state updates (setUser) may not be immediately visible.
+      const returnedUser = result.user;
+      const role = returnedUser?.role || (await (async () => null)());
+
+      // Compute target path based on role (avoid depending on context timing)
+      let target = "/";
+      if (role === "pharmacist") target = "/pharmacist-dashboard";
+      else if (role === "admin") target = "/admin";
+      else if (role === "customer") target = "/"; // or '/customer/dashboard' if available
+
+      // Fallback to context helper if needed
+      if (!returnedUser) {
+        try {
+          target = getDashboardPath();
+        } catch (err) {
+          console.warn("Fallback to default path due to missing user in context", err);
+        }
+      }
+
+      navigate(target);
     } else {
       setError(
         result.error?.non_field_errors?.[0] ||
