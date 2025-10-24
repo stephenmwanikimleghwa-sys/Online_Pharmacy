@@ -1,7 +1,8 @@
 import axios from "axios";
 
-// Resolve API base URL from Vite env var (no fallback — ensure VITE_API_BASE_URL is set during build)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Resolve API base URL from Vite env var. Provide a safe fallback to a relative `/api`
+// so client requests still work in environments where the env var wasn't set.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // Create Axios instance
 const api = axios.create({
@@ -41,3 +42,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+export { API_BASE_URL };

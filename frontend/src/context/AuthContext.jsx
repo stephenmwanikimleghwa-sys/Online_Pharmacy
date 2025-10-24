@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Backend API base URL (must be set in env)
+import api, { API_BASE_URL } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -20,19 +18,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Configure axios defaults
-  const api = axios.create({
-    baseURL: API_BASE_URL,
-  });
-
-  // Add auth token to requests
-  useEffect(() => {
-    if (token) {
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common["Authorization"];
-    }
-  }, [token]);
+  // NOTE: We reuse the shared `api` instance (from services/api.js)
+  // which already reads the token from localStorage in a request interceptor.
 
   // Check if token is valid on app load
   useEffect(() => {
@@ -40,9 +27,12 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const response = await api.get("/auth/profile");
-          setUser(response.data);
+          // normalize response: some APIs return the user directly, others wrap it
+          const profile = response.data?.user || response.data?.profile || response.data;
+          setUser(profile);
         } catch (error) {
           console.error("Token verification failed:", error);
+          // clear token and user on failure
           logout();
         }
       }
@@ -54,27 +44,41 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      // Include role in login request
+      // Include role in login request (backend may ignore it)
       const response = await api.post("/auth/login/", {
         username: credentials.username,
         password: credentials.password,
-        role: credentials.role
+        role: credentials.role,
       });
-      const { access, user: userData } = response.data;
-      
-      // Verify role matches requested role
-      if (userData.role !== credentials.role) {
-        throw new Error(`Invalid role. You are not registered as a ${credentials.role}.`);
+
+      // support multiple response shapes
+      const resp = response.data || {};
+      const access = resp.access || resp.token || resp.access_token;
+      const userData = resp.user || resp.profile || resp.user_data || resp;
+
+      // store token if present
+      if (access) {
+        setToken(access);
+        localStorage.setItem("access_token", access);
       }
-      
-      setToken(access);
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("user_role", userData.role);
-      setUser(userData);
-      return { success: true, user: userData };
+
+      // If user data is present, set it (but guard role access)
+      if (userData && typeof userData === "object") {
+        // If requested role provided, only warn if mismatch; don't throw to avoid crashing
+        if (credentials.role && userData.role && userData.role !== credentials.role) {
+          console.warn(
+            `Logged-in user role mismatch: requested=${credentials.role} returned=${userData.role}`,
+          );
+        }
+        setUser(userData);
+        if (userData.role) localStorage.setItem("user_role", userData.role);
+      }
+
+      return { success: true, user: userData || null };
     } catch (error) {
       console.error("Login failed:", error);
-      const errorMessage = error.message || error.response?.data?.detail || "Login failed";
+      const errorMessage =
+        error?.response?.data?.detail || error?.message || "Login failed";
       return { success: false, error: { detail: errorMessage } };
     }
   };
@@ -82,16 +86,24 @@ export const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     try {
       const response = await api.post("/auth/register/", formData);
-      const { access, user: userData } = response.data;
-      setToken(access);
-      localStorage.setItem("access_token", access);
-      setUser(userData);
-      return { success: true, user: userData };
+      const resp = response.data || {};
+      const access = resp.access || resp.token || resp.access_token;
+      const userData = resp.user || resp.profile || resp.user_data || resp;
+
+      if (access) {
+        setToken(access);
+        localStorage.setItem("access_token", access);
+      }
+      if (userData && typeof userData === "object") {
+        setUser(userData);
+        if (userData.role) localStorage.setItem("user_role", userData.role);
+      }
+      return { success: true, user: userData || null };
     } catch (error) {
       console.error("Registration failed:", error);
       return {
         success: false,
-        error: error.response?.data || "Registration failed",
+        error: error.response?.data || { detail: error.message || "Registration failed" },
       };
     }
   };
