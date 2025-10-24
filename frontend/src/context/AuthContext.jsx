@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"; // Backend API base URL
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -20,7 +22,7 @@ export const AuthProvider = ({ children }) => {
 
   // Configure axios defaults
   const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api", // Backend API base URL
+    baseURL: API_BASE_URL,
   });
 
   // Add auth token to requests

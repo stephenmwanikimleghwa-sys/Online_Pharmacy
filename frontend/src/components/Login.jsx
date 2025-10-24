@@ -19,7 +19,8 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"}/auth/login/`, formData);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+  const response = await axios.post(`${API_BASE_URL}/auth/login/`, formData);
       const { access, refresh, user } = response.data;
 
       // Store tokens (use secure storage in production, e.g., httpOnly cookies)

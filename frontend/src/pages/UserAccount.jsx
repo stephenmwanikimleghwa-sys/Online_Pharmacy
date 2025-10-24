@@ -21,7 +21,7 @@ const UserAccount = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"; // Backend API base URL
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"; // Backend API base URL
 
   useEffect(() => {
     if (!user) {
@@ -37,7 +37,7 @@ const UserAccount = () => {
       setLoading(true);
       try {
         // Fetch profile
-        const profileRes = await axios.get(`${API_BASE}/auth/profile/`, {
+  const profileRes = await axios.get(`${API_BASE_URL}/auth/profile/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(profileRes.data);
@@ -57,13 +57,13 @@ const UserAccount = () => {
         });
 
         // Fetch prescriptions
-        const presRes = await axios.get(`${API_BASE}/prescriptions/`, {
+  const presRes = await axios.get(`${API_BASE_URL}/prescriptions/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPrescriptions(presRes.data);
 
         // Fetch orders
-        const ordersRes = await axios.get(`${API_BASE}/orders/`, {
+  const ordersRes = await axios.get(`${API_BASE_URL}/orders/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrders(ordersRes.data);

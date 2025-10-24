@@ -79,8 +79,9 @@ const Register = () => {
         payload.pharmacy_license = formData.pharmacy_license;
       }
 
-      const endpoint = isPharmacist ? '/api/auth/pharmacist-register/' : '/api/auth/register/';
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"}${endpoint}`, payload);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+  const endpoint = isPharmacist ? '/auth/pharmacist-register/' : '/auth/register/';
+  const response = await axios.post(`${API_BASE_URL}${endpoint}`, payload);
 
       // Store JWT token (assume response has access token)
       localStorage.setItem('access_token', response.data.access);
