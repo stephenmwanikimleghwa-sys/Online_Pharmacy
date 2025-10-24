@@ -4,6 +4,8 @@ import {
   getPendingPrescriptions,
   getDispensedPrescriptions,
 } from "../services/prescriptionService";
+import LoadingSpinner from "../components/LoadingSpinner";
+import WelcomeBanner from "../components/WelcomeBanner";
 import inventoryService from "../services/inventoryService";
 import { useAuth } from "../context/AuthContext";
 import PrescriptionCard from "../components/PrescriptionCard";
@@ -59,23 +61,17 @@ const PharmacistDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-4">
+        <LoadingSpinner size="lg" />
+        <p className="text-gray-600 animate-pulse">Loading your dashboard...</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Pharmacist Dashboard
-        </h1>
-        <p className="text-gray-600">
-          Welcome back, {user?.full_name || user?.username}
-        </p>
-      </div>
+      {/* Welcome Banner */}
+      <WelcomeBanner />
 
       {/* Quick Actions */}
       <div className="mb-8">

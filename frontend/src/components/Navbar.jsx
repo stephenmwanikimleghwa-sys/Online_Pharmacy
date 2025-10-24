@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import {
@@ -12,6 +12,13 @@ const Navbar = () => {
   const { user, logout, loading } = useAuth();
   const { totalItems } = useCart();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = React.useState(false);
+  const location = useLocation();
+
+  // Close mobile menu on navigation
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [location]);
 
   const handleLogout = () => {
     logout();
@@ -116,15 +123,19 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
-            <button className="text-gray-700 hover:text-primary p-2">
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-700 hover:text-primary p-2"
+              aria-label="Toggle menu"
+            >
               <Bars3Icon className="h-6 w-6" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation (simple dropdown or expand on click - basic version) */}
-      <div className="md:hidden hidden" id="mobile-menu">
+      {/* Mobile Navigation */}
+      <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} transition-all duration-200 ease-in-out`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50">
           <Link
             to="/"

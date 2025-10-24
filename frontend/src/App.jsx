@@ -7,9 +7,10 @@
  */
 
 import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import PharmacistDashboard from "./pages/PharmacistDashboard";
 import AddPrescription from "./pages/AddPrescription";
@@ -42,31 +43,65 @@ function App() {
           {!isAuthPage && <Navbar />}
           <main className="main-content">
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<Home />} />
-
               <Route path="/products" element={<Products />} />
               <Route path="/products/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/account" element={<UserAccount />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/admin" element={<AdminDashboard />} />
+              
+              {/* Protected Customer Routes */}
+              <Route
+                path="/cart"
+                element={<ProtectedRoute element={Cart} allowedRoles={['customer']} />}
+              />
+              <Route
+                path="/checkout"
+                element={<ProtectedRoute element={Checkout} allowedRoles={['customer']} />}
+              />
+              <Route
+                path="/customer/dashboard"
+                element={<ProtectedRoute element={UserAccount} allowedRoles={['customer']} />}
+              />
+              <Route
+                path="/account"
+                element={<ProtectedRoute element={UserAccount} />}
+              />
+
+              {/* Protected Pharmacist Routes */}
               <Route
                 path="/pharmacist-dashboard"
-                element={<PharmacistDashboard />}
+                element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
               />
-              <Route path="/prescriptions/add" element={<AddPrescription />} />
+              <Route
+                path="/prescriptions/add"
+                element={<ProtectedRoute element={AddPrescription} allowedRoles={['pharmacist']} />}
+              />
               <Route
                 path="/prescriptions/:id/validate"
-                element={<ValidatePrescription />}
+                element={<ProtectedRoute element={ValidatePrescription} allowedRoles={['pharmacist']} />}
               />
               <Route
                 path="/prescriptions/:id/dispense"
-                element={<DispensePrescription />}
+                element={<ProtectedRoute element={DispensePrescription} allowedRoles={['pharmacist']} />}
               />
-              <Route path="/inventory" element={<InventoryManagement />} />
-              <Route path="/reports" element={<ReportsDashboard />} />
+              <Route
+                path="/inventory"
+                element={<ProtectedRoute element={InventoryManagement} allowedRoles={['pharmacist', 'admin']} />}
+              />
+
+              {/* Protected Admin Routes */}
+              <Route
+                path="/admin"
+                element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
+              />
+              <Route
+                path="/reports"
+                element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist']} />}
+              />
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           {!isAuthPage && <Footer />}

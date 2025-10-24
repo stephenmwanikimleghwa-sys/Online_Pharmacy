@@ -54,15 +54,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await api.post("/auth/login/", credentials);
+      // Include role in login request
+      const response = await api.post("/auth/login/", {
+        username: credentials.username,
+        password: credentials.password,
+        role: credentials.role
+      });
       const { access, user: userData } = response.data;
+      
+      // Verify role matches requested role
+      if (userData.role !== credentials.role) {
+        throw new Error(`Invalid role. You are not registered as a ${credentials.role}.`);
+      }
+      
       setToken(access);
       localStorage.setItem("access_token", access);
+      localStorage.setItem("user_role", userData.role);
       setUser(userData);
       return { success: true, user: userData };
     } catch (error) {
       console.error("Login failed:", error);
-      return { success: false, error: error.response?.data || "Login failed" };
+      const errorMessage = error.message || error.response?.data?.detail || "Login failed";
+      return { success: false, error: { detail: errorMessage } };
     }
   };
 
@@ -84,10 +97,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Clear auth state
     setToken(null);
     setUser(null);
+    
+    // Clear all auth-related items from localStorage
     localStorage.removeItem("access_token");
-    navigate("/login");
+    localStorage.removeItem("user_role");
+    
+    // Clear any auth-related cookies if they exist
+    document.cookie.split(";").forEach(cookie => {
+      document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    
+    // Redirect to home page
+    navigate("/");
   };
 
   const getDashboardPath = () => {
@@ -97,6 +121,8 @@ export const AuthProvider = ({ children }) => {
         return "/pharmacist-dashboard";
       case "admin":
         return "/admin";
+      case "customer":
+        return "/customer/dashboard";
       default:
         return "/";
     }

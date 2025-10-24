@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -25,8 +26,15 @@ const Register = () => {
     special: false,
   });
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const { register } = useAuth();
+  const { register, isAuthenticated, getDashboardPath } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect authenticated users to their dashboard
+    if (isAuthenticated) {
+      navigate(getDashboardPath());
+    }
+  }, [isAuthenticated, navigate, getDashboardPath]);
 
   const checkPasswordCriteria = (password) => {
     const newCriteria = {
@@ -59,15 +67,26 @@ const Register = () => {
     }
   };
 
+  const [successMessage, setSuccessMessage] = useState("");
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccessMessage("");
+
+    if (formData.password !== formData.password2) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
     const result = await register(formData);
     if (result.success) {
-      alert("Registration successful! Redirecting to login...");
-      navigate("/login");
+      setSuccessMessage("Registration successful! Redirecting to login...");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } else {
       if (typeof result.error === "object") {
         setError(Object.values(result.error).flat().join(", "));
@@ -89,7 +108,7 @@ const Register = () => {
             Or{" "}
             <a
               href="/login"
-              className="font-medium text-primary hover:text-primary"
+              className="font-medium text-primary hover:text-primary-dark transition-colors duration-150 underline decoration-2 decoration-primary/30 hover:decoration-primary"
             >
               sign in to your account
             </a>
@@ -347,14 +366,18 @@ const Register = () => {
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
-              {typeof error === "object" ? (
-                <pre className="whitespace-pre-wrap text-xs">
-                  {JSON.stringify(error, null, 2)}
-                </pre>
-              ) : (
-                error
-              )}
+            <div className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 p-4 rounded-md border border-red-200">
+              <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <p className="flex-1">
+                {typeof error === "object" ? JSON.stringify(error, null, 2) : error}
+              </p>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="flex items-center space-x-2 text-green-600 text-sm bg-green-50 p-4 rounded-md border border-green-200">
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <p className="flex-1">{successMessage}</p>
             </div>
           )}
 
@@ -362,9 +385,16 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {loading ? "Registering..." : "Register"}
+              {loading ? (
+                <span className="flex items-center space-x-2">
+                  <LoadingSpinner size="sm" color="white" />
+                  <span>Creating your account...</span>
+                </span>
+              ) : (
+                "Create Account"
+              )}
             </button>
           </div>
         </form>

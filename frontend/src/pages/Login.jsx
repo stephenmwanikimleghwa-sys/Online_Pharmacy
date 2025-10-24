@@ -1,18 +1,28 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from '../context/AuthContext';
+import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
+    role: "customer" // default role
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, getDashboardPath } = useAuth();
+  const { login, isAuthenticated, getDashboardPath } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // If already authenticated, redirect to appropriate dashboard
+    if (isAuthenticated) {
+      navigate(getDashboardPath());
+    }
+  }, [isAuthenticated, navigate, getDashboardPath]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,7 +61,7 @@ const Login = () => {
             Or{" "}
             <a
               href="/register"
-              className="font-medium text-primary hover:text-primary"
+              className="font-medium text-primary hover:text-primary-dark transition-colors duration-150 underline decoration-2 decoration-primary/30 hover:decoration-primary"
             >
               create a new account
             </a>
@@ -108,11 +118,41 @@ const Login = () => {
                 </button>
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Login as
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setCredentials(prev => ({ ...prev, role: 'customer' }))}
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    credentials.role === 'customer'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Customer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCredentials(prev => ({ ...prev, role: 'pharmacist' }))}
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    credentials.role === 'pharmacist'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Pharmacist
+                </button>
+              </div>
+            </div>
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
-              {error}
+            <div className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 p-4 rounded-md border border-red-200">
+              <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <p className="flex-1">{error}</p>
             </div>
           )}
 
@@ -120,9 +160,16 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? (
+                <span className="flex items-center space-x-2">
+                  <LoadingSpinner size="sm" color="white" />
+                  <span>Signing in...</span>
+                </span>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </div>
         </form>
