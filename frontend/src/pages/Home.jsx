@@ -13,8 +13,13 @@ const Home = () => {
     // Fetch featured products from API
     const fetchFeaturedData = async () => {
       try {
-  // Use shared API instance (handles baseURL + auth interceptors)
-  const productsRes = await api.get(`/products/featured/`);
+        console.log('[Home Debug] Fetching featured products from:', `${api.defaults.baseURL}/products/featured/`);
+        
+        // Use shared API instance (handles baseURL + auth interceptors)
+        const productsRes = await api.get(`/products/featured/`);
+        
+        console.log('[Home Debug] Featured products response:', productsRes);
+        
         const raw = productsRes?.data;
         const items = Array.isArray(raw)
           ? raw
@@ -23,9 +28,18 @@ const Home = () => {
           : Array.isArray(raw?.data)
           ? raw.data
           : [];
+          
+        console.log('[Home Debug] Parsed featured products:', items);
+        
         setFeaturedProducts(items.slice(0, 8)); // Top 8
       } catch (error) {
-        console.error("Error fetching featured data:", error);
+        console.error("[Home Debug] Error fetching featured data:", {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: error.config?.url,
+          baseURL: api.defaults.baseURL,
+        });
         // Mock data for development
         setFeaturedProducts([
           {

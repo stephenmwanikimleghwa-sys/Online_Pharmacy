@@ -37,7 +37,18 @@ const Login = () => {
     setLoading(true);
     setError("");
 
+    console.log('[Login Debug] Attempting login with credentials:', {
+      ...credentials,
+      password: '[REDACTED]'
+    });
+    
     const result = await login(credentials);
+    console.log('[Login Debug] Login result:', {
+      success: result.success,
+      user: result.user,
+      error: result.error
+    });
+    
     if (result.success) {
       // Prefer using the user object returned from the login call since
       // context state updates (setUser) may not be immediately visible.
@@ -46,6 +57,10 @@ const Login = () => {
       // Normalize the role to lowercase for reliable comparisons. If role
       // is missing, we'll fall back to context's getDashboardPath.
       const role = returnedUser?.role?.toString?.().toLowerCase?.() || null;
+      console.log('[Login Debug] Computed role for redirect:', {
+        returnedUser,
+        normalizedRole: role
+      });
 
       // Compute target path based on role (avoid depending on context timing)
       let target = "/";

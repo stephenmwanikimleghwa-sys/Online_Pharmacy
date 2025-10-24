@@ -55,6 +55,12 @@ export const AuthProvider = ({ children }) => {
       const resp = response.data || {};
       const access = resp.access || resp.token || resp.access_token;
       const userData = resp.user || resp.profile || resp.user_data || resp;
+      
+      console.log('[Auth Debug] Login response:', {
+        rawResponse: response.data,
+        parsedAccess: access,
+        parsedUser: userData
+      });
 
       // store token if present
       if (access) {
@@ -66,6 +72,7 @@ export const AuthProvider = ({ children }) => {
       let finalUser = null;
       if (userData && typeof userData === "object") {
         finalUser = userData;
+        console.log('[Auth Debug] Using user data from login response:', finalUser);
       } else {
         // Try to fetch the profile using the token we just stored so we can
         // reliably determine the user's role and other attributes.
@@ -141,21 +148,42 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getDashboardPath = () => {
-    if (!user || !user.role) return "/";
+    console.log('[Auth Debug] Getting dashboard path:', {
+      user,
+      role: user?.role
+    });
+
+    if (!user || !user.role) {
+      console.warn('[Auth Debug] No user or role found, returning home path');
+      return "/";
+    }
     
     try {
-      switch (user.role) {
+      const role = user.role.toString().toLowerCase();
+      let path = "/";
+      
+      switch (role) {
         case "pharmacist":
-          return "/pharmacist-dashboard";
+          path = "/pharmacist-dashboard";
+          break;
         case "admin":
-          return "/admin";
+          path = "/admin";
+          break;
         case "customer":
-          return "/customer/dashboard";
+          path = "/customer/dashboard";
+          break;
         default:
-          return "/";
+          console.warn(`[Auth Debug] Unknown role "${role}", using default path`);
       }
+
+      console.log('[Auth Debug] Resolved dashboard path:', {
+        role,
+        path
+      });
+      
+      return path;
     } catch (error) {
-      console.error("Error getting dashboard path:", error);
+      console.error("[Auth Debug] Error getting dashboard path:", error);
       return "/";
     }
   };

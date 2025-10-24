@@ -4,6 +4,12 @@ import axios from "axios";
 // so client requests still work in environments where the env var wasn't set.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+// Log API configuration
+console.log('[API Debug] Initializing API client:', {
+  baseURL: API_BASE_URL,
+  envBaseURL: import.meta.env.VITE_API_BASE_URL,
+});
+
 // Create Axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
