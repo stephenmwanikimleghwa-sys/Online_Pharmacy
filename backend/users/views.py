@@ -142,3 +142,13 @@ def verify_pharmacist(request, user_id):
         {"message": f"Pharmacist {user.username} has been verified."},
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def profile(request):
+    """
+    Simple profile endpoint that returns the authenticated user's profile.
+    """
+    serializer = UserProfileSerializer(request.user)
+    return Response(serializer.data)

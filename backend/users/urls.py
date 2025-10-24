@@ -13,7 +13,8 @@ urlpatterns = [
     ),
     path("login/", views.UserLoginView.as_view(), name="login"),
     # Profile management
-    path("profile/", views.UserProfileView.as_view(), name="profile"),
+    # Simple function-based profile endpoint returns the authenticated user's data
+    path("profile/", views.profile, name="profile"),
     path(
         "change-password/", views.ChangePasswordView.as_view(), name="change_password"
     ),

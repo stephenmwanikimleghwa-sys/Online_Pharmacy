@@ -1,17 +1,18 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 
 app_name = "products"
 
+# Create a router and register our viewset
+router = DefaultRouter()
+router.register(r'', views.ProductViewSet, basename='product')
+
 urlpatterns = [
-    # List and create products
-    path("", views.ProductListCreateView.as_view(), name="list_create"),
-    # Retrieve, update, delete specific product
-    path("<int:pk>/", views.ProductRetrieveUpdateDestroyView.as_view(), name="detail"),
-    # Search products
+    # ViewSet URLs (includes list, create, retrieve, update, delete)
+    path('', include(router.urls)),
+    
+    # Keep existing function-based views
     path("search/", views.search_products, name="search"),
-    # Pharmacist's own products
     path("my-products/", views.my_products, name="my_products"),
-    # Featured products (for home page)
-    path("featured/", views.FeaturedProductsView.as_view(), name="featured"),
 ]

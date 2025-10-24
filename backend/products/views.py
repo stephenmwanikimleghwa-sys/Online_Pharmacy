@@ -1,5 +1,5 @@
-from rest_framework import generics, status, permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, status, permissions, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -112,14 +112,36 @@ def my_products(request):
     return Response(serializer.data)
 
 
-class FeaturedProductsView(generics.ListAPIView):
+class ProductViewSet(viewsets.ModelViewSet):
     """
-    Get featured products (e.g., popular or low-stock items).
+    ViewSet for Product model providing CRUD operations and custom actions.
     """
-
+    queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
-    permission_classes = [permissions.AllowAny]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ["name", "description", "category"]
+    filterset_fields = ["category", "price"]
+    ordering_fields = ["name", "price", "created_at"]
+    ordering = ["name"]
 
-    def get_queryset(self):
-        # Example: Featured = low stock or high rating (customize as needed)
-        return Product.objects.filter(is_active=True).order_by("-created_at")[:10]
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsPharmacistOrAdmin()]
+        return [permissions.AllowAny()]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ProductCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return ProductUpdateSerializer
+        return ProductSerializer
+
+    @action(detail=False, methods=['get'], url_path='featured')
+    def featured(self, request):
+        """
+        Get featured products.
+        Returns the first 4 products marked as featured.
+        """
+        featured_products = self.get_queryset().filter(is_featured=True)[:4]
+        serializer = self.get_serializer(featured_products, many=True)
+        return Response(serializer.data)

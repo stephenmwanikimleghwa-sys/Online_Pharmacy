@@ -42,6 +42,7 @@ class Product(models.Model):
         upload_to="product_images/", blank=True, null=True, verbose_name="Product Image"
     )
     is_active = models.BooleanField(default=True, verbose_name="Is Active")
+    is_featured = models.BooleanField(default=False, verbose_name="Is Featured")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
 
