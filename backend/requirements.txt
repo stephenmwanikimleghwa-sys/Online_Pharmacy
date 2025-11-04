@@ -5,7 +5,8 @@ psycopg2-binary==2.9.7
 django-cors-headers==4.3.1
 django-environ==0.11.2
 # Core dependencies
-Pillow==8.4.0  # Further downgraded for Python 3.13 compatibility
+# Use Pillow 10.3.0 as requested
+Pillow==10.3.0
 # Build dependencies
 setuptools>=65.5.1
 wheel>=0.38.0
