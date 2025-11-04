@@ -283,16 +283,31 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 # Redis for caching (optional for future scaling)
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+REDIS_URL = env("REDIS_URL", default="")
+
+# Configure caches: use Redis when REDIS_URL is provided, otherwise use local memory
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                # Don't blow up the site if Redis is temporarily unavailable
+                "IGNORE_EXCEPTIONS": True,
+            },
+        }
     }
-}
+else:
+    # Fallback to in-memory cache when no REDIS_URL is configured (safer in first deploys)
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
 
 # Celery settings (for async tasks)
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
+# Celery: prefer explicit env vars, fall back to REDIS_URL if provided
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL or "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=REDIS_URL or "redis://localhost:6379/0")

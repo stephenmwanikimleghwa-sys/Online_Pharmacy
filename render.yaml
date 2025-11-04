@@ -12,7 +12,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: ".onrender.com,online-pharmacy-sn88.onrender.com"
+        value: "*"
       - key: VITE_API_BASE_URL
         value: https://pharmacy-aggregator.onrender.com/api
       - key: DATABASE_URL
