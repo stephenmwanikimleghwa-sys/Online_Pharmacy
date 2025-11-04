@@ -90,7 +90,7 @@ const Navbar = () => {
                 </Link>
                 {user.role === "admin" && (
                   <Link
-                    to="/admin"
+                    to="/admin/dashboard"
                     className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
                   >
                     Admin
@@ -110,12 +110,6 @@ const Navbar = () => {
                   className="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary"
-                >
-                  Sign Up
                 </Link>
               </>
             )}
@@ -178,12 +172,6 @@ const Navbar = () => {
                 className="text-gray-700 hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
               >
                 Login
-              </Link>
-              <Link
-                to="/register"
-                className="bg-primary text-white block px-3 py-2 rounded-md text-base font-medium"
-              >
-                Sign Up
               </Link>
             </>
           )}

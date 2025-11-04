@@ -45,7 +45,7 @@ const ValidatePrescription = () => {
     setValidating(true);
     try {
       await prescriptionService.validatePrescription(id, 'Prescription validated by pharmacist');
-      navigate('/pharmacist-dashboard');
+  navigate('/pharmacist/dashboard');
     } catch (error) {
       console.error('Error validating prescription:', error);
     } finally {
@@ -62,7 +62,7 @@ const ValidatePrescription = () => {
     setValidating(true);
     try {
       await prescriptionService.rejectPrescription(id, rejectionReason);
-      navigate('/pharmacist-dashboard');
+  navigate('/pharmacist/dashboard');
     } catch (error) {
       console.error('Error rejecting prescription:', error);
     } finally {
@@ -84,7 +84,7 @@ const ValidatePrescription = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800">Prescription Not Found</h1>
           <button
-            onClick={() => navigate('/pharmacist-dashboard')}
+            onClick={() => navigate('/pharmacist/dashboard')}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Back to Dashboard
@@ -100,7 +100,7 @@ const ValidatePrescription = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Validate Prescription</h1>
           <button
-            onClick={() => navigate('/pharmacist-dashboard')}
+            onClick={() => navigate('/pharmacist/dashboard')}
             className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
           >
             Back to Dashboard

@@ -29,7 +29,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     ordering = ["name"]
 
     def get_queryset(self):
-        return Product.objects.filter(is_active=True)
+        return Product.objects.filter(is_active=True).order_by('name')
 
     def get_permissions(self):
         if self.request.method == "POST":

@@ -82,7 +82,7 @@ const AddPrescription = () => {
       formData.append('status', 'pending');
 
       await prescriptionService.addPrescription(formData);
-      navigate('/pharmacist-dashboard');
+  navigate('/pharmacist/dashboard');
     } catch (error) {
       console.error('Error adding prescription:', error);
       alert('Failed to add prescription. Please try again.');

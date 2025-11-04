@@ -22,7 +22,7 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+  <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow transform-gpu will-change-transform transition-all duration-200 ease-in-out" style={{minHeight: 140}}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-800">{item.name}</h3>
@@ -55,8 +55,9 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
         <button
           onClick={onRestock}
           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+          aria-label={`Request stock for ${item.name}`}
         >
-          Restock
+          Request Stock
         </button>
         <button
           onClick={onViewLogs}

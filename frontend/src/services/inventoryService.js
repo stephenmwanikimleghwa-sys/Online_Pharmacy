@@ -1,22 +1,6 @@
 // src/services/inventoryService.js
 
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from './api';
 
 export const inventoryService = {
   // Get inventory summary (total products, low stock, out of stock)
@@ -25,8 +9,51 @@ export const inventoryService = {
   },
 
   // Get all inventory items with pagination and filtering
-  getInventory: (params = {}) => {
-    return api.get("/inventory/", { params });
+  getInventory: async (params = {}) => {
+    try {
+      // Check authentication state
+      const token = localStorage.getItem("access_token");
+      console.log('[Inventory Service] Auth check:', {
+        hasToken: !!token,
+        tokenStart: token ? token.substring(0, 10) + '...' : 'none'
+      });
+
+      if (!token) {
+        console.error('[Inventory Service] No auth token found');
+        // Let the shared api/interceptor handle redirect; still throw so callers can react
+        const err = new Error('Authentication required');
+        err.response = { status: 401 };
+        throw err;
+      }
+
+      // Make the request to the products endpoint using the shared api client
+      console.log('[Inventory Service] Fetching inventory from products endpoint');
+      const response = await api.get('/inventory/products/', { params });
+      
+      // Log successful response
+      console.log('[Inventory Service] Inventory fetched successfully:', {
+        status: response.status,
+        itemCount: response.data?.products?.length || 0,
+        totalItems: response.data?.totalItems || 0
+      });
+      
+      return response;
+    } catch (error) {
+      // Enhanced error logging
+      console.error('[Inventory Service] Failed to fetch inventory:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        stack: error.stack
+      });
+      
+      // If unauthorized, log and rethrow so callers can stop polling or redirect
+      if (error.response?.status === 401) {
+        console.warn('[Inventory Service] Auth token invalid or expired');
+      }
+      
+      throw error;
+    }
   },
 
   // Get low stock items
@@ -68,12 +95,17 @@ export const inventoryService = {
   },
 
   // Request restock (for low stock alerts)
-  requestRestock: (itemId, quantityNeeded) => {
-    return api.post("/inventory/restock-requests/", {
+  requestRestock: (itemId, quantityNeeded, currentQuantity = null, notes = '') => {
+    // Use the serializer's expected field names
+    const payload = {
       product: itemId,
-      quantity_needed: quantityNeeded,
+      requested_quantity: quantityNeeded,
       status: "pending",
-    });
+    };
+    if (currentQuantity !== null) payload.current_quantity = currentQuantity;
+    if (notes) payload.notes = notes;
+
+    return api.post("/inventory/restock-requests/", payload);
   },
 
   // Get all restock requests (for admin/pharmacist)

@@ -1,0 +1,38 @@
+# services:
+#   - type: web
+#     name: pharmacy-aggregator-backend
+#     env: python
+#     plan: free
+#     buildCommand: |
+#       pip install -r backend/requirements.txt
+#       cd frontend && npm install && npm run build
+#     startCommand: cd backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+#     healthCheckPath: /api/health/
+#     envVars:
+#       - key: DEBUG
+#         value: False
+#       - key: SECRET_KEY
+#         generateValue: true
+#       - key: ALLOWED_HOSTS
+#         value: pharmacy-aggregator.onrender.com
+#       - key: VITE_API_BASE_URL
+#         value: https://pharmacy-aggregator.onrender.com/api
+#       - key: DATABASE_URL
+#         fromDatabase:
+#           name: pharmacy-db
+#           property: connectionString
+#       - key: REDIS_URL
+#         fromService:
+#           type: redis
+#           name: pharmacy-redis
+#           property: connectionString
+# 
+#   - type: redis
+#     name: pharmacy-redis
+#     plan: free
+# 
+#   - type: pserv
+#     name: pharmacy-db
+#     plan: free
+#     databaseName: transcounty_pharmacy
+#     user: pharmacy_user

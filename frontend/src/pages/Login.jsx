@@ -8,7 +8,6 @@ const Login = () => {
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
-    role: "customer" // default role
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +37,7 @@ const Login = () => {
     setError("");
 
     console.log('[Login Debug] Attempting login with credentials:', {
-      ...credentials,
+      username: credentials.username,
       password: '[REDACTED]'
     });
     
@@ -52,8 +51,7 @@ const Login = () => {
     if (result.success) {
       const returnedUser = result.user;
       console.log('[Login Debug] Processing successful login:', {
-        returnedUser,
-        requestedRole: credentials.role
+        returnedUser
       });
 
       // Get the normalized role from various possible fields
@@ -98,12 +96,8 @@ const Login = () => {
           target = getDashboardPath();
         } catch (err) {
           console.warn("[Login Debug] Context fallback failed:", err);
-          // Final fallback based on requested role
-          if (credentials.role === 'pharmacist') {
-            target = "/pharmacist/dashboard";
-          } else {
-            target = "/customer/dashboard";
-          }
+          // Final fallback: default to home
+          target = "/";
         }
       }
 
@@ -131,15 +125,7 @@ const Login = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{" "}
-            <a
-              href="/register"
-              className="font-medium text-primary hover:text-primary-dark transition-colors duration-150 underline decoration-2 decoration-primary/30 hover:decoration-primary"
-            >
-              create a new account
-            </a>
-          </p>
+          {/* Registration disabled - only login allowed */}
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
@@ -192,35 +178,7 @@ const Login = () => {
                 </button>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Login as
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setCredentials(prev => ({ ...prev, role: 'customer' }))}
-                  className={`px-4 py-2 rounded-md text-sm font-medium ${
-                    credentials.role === 'customer'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Customer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCredentials(prev => ({ ...prev, role: 'pharmacist' }))}
-                  className={`px-4 py-2 rounded-md text-sm font-medium ${
-                    credentials.role === 'pharmacist'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Pharmacist
-                </button>
-              </div>
-            </div>
+            {/* Role selection removed — users are redirected based on their server-side role */}
           </div>
 
           {error && (

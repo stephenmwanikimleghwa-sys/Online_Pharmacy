@@ -1,8 +1,5 @@
 from rest_framework import serializers
 from products.models import StockLog
-from users.models import User
-from products.models import Product
-
 
 class StockLogSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)

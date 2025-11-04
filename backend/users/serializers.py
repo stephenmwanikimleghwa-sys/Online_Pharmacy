@@ -5,57 +5,6 @@ from django.core.exceptions import ValidationError
 from .models import User, RoleChoices
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password]
-    )
-    password2 = serializers.CharField(write_only=True, required=True)
-
-    class Meta:
-        model = User
-        fields = (
-            "username",
-            "email",
-            "password",
-            "password2",
-            "first_name",
-            "last_name",
-            "phone_number",
-            "role",
-            "date_of_birth",
-            "address",
-        )
-        extra_kwargs = {
-            "first_name": {"required": True},
-            "last_name": {"required": True},
-            "email": {"required": True},
-        }
-
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
-            raise serializers.ValidationError(
-                {"password": "Password fields didn't match."}
-            )
-
-        if User.objects.filter(email=attrs["email"]).exists():
-            raise serializers.ValidationError(
-                {"email": "A user with this email already exists."}
-            )
-
-        if User.objects.filter(username=attrs["username"]).exists():
-            raise serializers.ValidationError(
-                {"username": "A user with this username already exists."}
-            )
-
-        return attrs
-
-    def create(self, validated_data):
-        validated_data.pop("password2")
-        password = validated_data.pop("password")
-        user = User.objects.create(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -72,6 +21,10 @@ class UserLoginSerializer(serializers.Serializer):
             if user:
                 if not user.is_active:
                     raise serializers.ValidationError("User account is disabled.")
+                if not user.is_verified:
+                    raise serializers.ValidationError("User account is not verified.")
+                if not (user.username == 'mwaniki' or user.role in [RoleChoices.ADMIN, RoleChoices.PHARMACIST]):
+                    raise serializers.ValidationError("Access denied.")
                 attrs["user"] = user
                 return attrs
             else:
@@ -134,62 +87,4 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
-class PharmacistRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password]
-    )
-    password2 = serializers.CharField(write_only=True, required=True)
-    pharmacy_license = serializers.CharField(write_only=True, required=True)
 
-    class Meta:
-        model = User
-        fields = (
-            "username",
-            "email",
-            "password",
-            "password2",
-            "first_name",
-            "last_name",
-            "phone_number",
-            "pharmacy_license",
-        )
-        extra_kwargs = {
-            "first_name": {"required": True},
-            "last_name": {"required": True},
-            "email": {"required": True},
-        }
-
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
-            raise serializers.ValidationError(
-                {"password": "Password fields didn't match."}
-            )
-
-        if User.objects.filter(email=attrs["email"]).exists():
-            raise serializers.ValidationError(
-                {"email": "A user with this email already exists."}
-            )
-
-        if User.objects.filter(username=attrs["username"]).exists():
-            raise serializers.ValidationError(
-                {"username": "A user with this username already exists."}
-            )
-
-        return attrs
-
-    def create(self, validated_data):
-        validated_data.pop("password2")
-        pharmacy_license = validated_data.pop("pharmacy_license")
-        password = validated_data.pop("password")
-
-        user = User.objects.create(
-            **validated_data,
-            role=RoleChoices.PHARMACIST,
-            is_verified=False,  # Requires admin verification
-        )
-        user.set_password(password)
-        user.save()
-
-        # In a real implementation, you would store the pharmacy license info
-        # and trigger an admin verification process
-        return user

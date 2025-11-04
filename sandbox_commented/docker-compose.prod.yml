@@ -1,0 +1,149 @@
+# version: '3.8'
+# 
+# services:
+#   # PostgreSQL Database
+#   db:
+#     image: postgres:15
+#     environment:
+#       POSTGRES_DB: ${DB_NAME}
+#       POSTGRES_USER: ${DB_USER}
+#       POSTGRES_PASSWORD: ${DB_PASSWORD}
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+# 
+#   # Redis for caching and Celery
+#   redis:
+#     image: redis:7-alpine
+#     volumes:
+#       - redis_data:/data
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+# 
+#   # Django Backend
+#   backend:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     command: >
+#       sh -c "python manage.py migrate &&
+#              python manage.py collectstatic --noinput &&
+#              gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
+#     volumes:
+#       - static_volume:/app/staticfiles
+#       - media_volume:/app/media
+#     ports:
+#       - "8000:8000"
+#     environment:
+#       - DEBUG=False
+#       - DB_HOST=db
+#       - DB_PORT=5432
+#       - DB_NAME=${DB_NAME}
+#       - DB_USER=${DB_USER}
+#       - DB_PASSWORD=${DB_PASSWORD}
+#       - REDIS_URL=redis://redis:6379/1
+#       - CELERY_BROKER_URL=redis://redis:6379/0
+#       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+#       - SECRET_KEY=${SECRET_KEY}
+#       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#       redis:
+#         condition: service_healthy
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+# 
+#   # Celery Worker
+#   celery:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     command: celery -A config worker -l info
+#     environment:
+#       - DEBUG=False
+#       - DB_HOST=db
+#       - DB_PORT=5432
+#       - DB_NAME=${DB_NAME}
+#       - DB_USER=${DB_USER}
+#       - DB_PASSWORD=${DB_PASSWORD}
+#       - REDIS_URL=redis://redis:6379/1
+#       - CELERY_BROKER_URL=redis://redis:6379/0
+#       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+#       - SECRET_KEY=${SECRET_KEY}
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#       redis:
+#         condition: service_healthy
+#     restart: unless-stopped
+# 
+#   # Celery Beat (Scheduler)
+#   celery-beat:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     command: celery -A config beat -l info
+#     environment:
+#       - DEBUG=False
+#       - DB_HOST=db
+#       - DB_PORT=5432
+#       - DB_NAME=${DB_NAME}
+#       - DB_USER=${DB_USER}
+#       - DB_PASSWORD=${DB_PASSWORD}
+#       - REDIS_URL=redis://redis:6379/1
+#       - CELERY_BROKER_URL=redis://redis:6379/0
+#       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+#       - SECRET_KEY=${SECRET_KEY}
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#       redis:
+#         condition: service_healthy
+#     restart: unless-stopped
+# 
+#   # React Frontend (Production Build)
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile.prod
+#     ports:
+#       - "80:80"
+#     depends_on:
+#       - backend
+#     restart: unless-stopped
+# 
+#   # Nginx (Production)
+#   nginx:
+#     image: nginx:alpine
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+#       - static_volume:/app/staticfiles
+#       - media_volume:/app/media
+#       - ./docker/nginx/ssl:/etc/nginx/ssl
+#     depends_on:
+#       - backend
+#       - frontend
+#     restart: unless-stopped
+# 
+# volumes:
+#   postgres_data:
+#   redis_data:
+#   static_volume:
+#   media_volume:

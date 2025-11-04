@@ -38,6 +38,17 @@ class Product(models.Model):
     reorder_threshold = models.PositiveIntegerField(
         default=10, verbose_name="Reorder Threshold"
     )
+    supplier = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Supplier"
+    )
+    expiry_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name="Expiry Date"
+    )
     image = models.ImageField(
         upload_to="product_images/", blank=True, null=True, verbose_name="Product Image"
     )
@@ -75,6 +86,36 @@ class Product(models.Model):
     @property
     def is_low_stock(self):
         return self.stock_quantity <= self.reorder_threshold
+        
+    @property
+    def expiry_status(self):
+        if not self.expiry_date:
+            return "unknown"
+        
+        from django.utils import timezone
+        import datetime
+        
+        today = timezone.now().date()
+        expiry = self.expiry_date
+        days_until_expiry = (expiry - today).days
+        
+        if days_until_expiry < 0:
+            return "expired"
+        elif days_until_expiry <= 30:
+            return "expiring_soon"
+        elif days_until_expiry <= 90:
+            return "near_expiry"
+        else:
+            return "valid"
+            
+    @property
+    def days_until_expiry(self):
+        if not self.expiry_date:
+            return None
+            
+        from django.utils import timezone
+        today = timezone.now().date()
+        return (self.expiry_date - today).days
 
 
 class StockLog(models.Model):

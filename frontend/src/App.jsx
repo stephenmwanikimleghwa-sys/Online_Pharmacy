@@ -13,6 +13,7 @@ import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import PharmacistDashboard from "./pages/PharmacistDashboard";
+import RestockRequests from "./pages/RestockRequests";
 import AddPrescription from "./pages/AddPrescription";
 import ValidatePrescription from "./pages/ValidatePrescription";
 import DispensePrescription from "./pages/DispensePrescription";
@@ -25,16 +26,16 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import UserAccount from "./pages/UserAccount";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminStock from "./pages/AdminStock";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ManageUsers from "./pages/ManageUsers";
 import "./App.css";
 
 function App() {
   const location = useLocation();
-  const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage = location.pathname === "/login";
 
   return (
     <AuthProvider>
@@ -48,9 +49,12 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/products/:id" element={<ProductDetails />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
               
               {/* Protected Customer Routes */}
+              <Route
+                path="/admin/stock"
+                element={<ProtectedRoute element={AdminStock} allowedRoles={["admin"]} />}
+              />
               <Route
                 path="/cart"
                 element={<ProtectedRoute element={Cart} allowedRoles={['customer']} />}
@@ -70,7 +74,7 @@ function App() {
 
               {/* Protected Pharmacist Routes */}
               <Route
-                path="/pharmacist-dashboard"
+                path="/pharmacist/dashboard"
                 element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
               />
               <Route
@@ -92,8 +96,16 @@ function App() {
 
               {/* Protected Admin Routes */}
               <Route
-                path="/admin"
+                path="/admin/dashboard"
                 element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
+              />
+              <Route
+                path="/admin/users"
+                element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />}
+              />
+              <Route
+                path="/admin/restock-requests"
+                element={<ProtectedRoute element={RestockRequests} allowedRoles={['admin', 'pharmacist']} />}
               />
               <Route
                 path="/reports"

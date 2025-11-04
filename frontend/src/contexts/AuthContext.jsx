@@ -15,7 +15,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(localStorage.getItem("access_token"));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +26,8 @@ export const AuthProvider = ({ children }) => {
         .get(`${API_BASE_URL}/auth/profile/`)
         .then((response) => setUser(response.data))
         .catch(() => {
-          localStorage.removeItem("token");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
           setToken(null);
         });
     }
@@ -39,10 +40,11 @@ export const AuthProvider = ({ children }) => {
         username,
         password,
       });
-      const { access } = response.data;
-      localStorage.setItem("token", access);
-      setToken(access);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+  const { access, refresh } = response.data;
+  localStorage.setItem("access_token", access);
+  if (refresh) localStorage.setItem("refresh_token", refresh);
+  setToken(access);
+  axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
       const profileResponse = await axios.get("/api/auth/profile/");
       setUser(profileResponse.data);
       return { success: true };
@@ -51,26 +53,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
-    try {
-      const response = await axios.post("/api/auth/register/", userData);
-      const { access } = response.data;
-      localStorage.setItem("token", access);
-      setToken(access);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
-      const profileResponse = await axios.get("/api/auth/profile/");
-      setUser(profileResponse.data);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data || "Registration failed",
-      };
-    }
-  };
+  // Registration disabled on client side. Server registration endpoints removed.
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common["Authorization"];
@@ -80,9 +67,9 @@ export const AuthProvider = ({ children }) => {
     if (!user) return "/";
     switch (user.role) {
       case "pharmacist":
-        return "/pharmacist-dashboard";
+        return "/pharmacist/dashboard";
       case "admin":
-        return "/admin-dashboard";
+        return "/admin/dashboard";
       default:
         return "/";
     }
@@ -92,7 +79,6 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     login,
-    register,
     logout,
     loading,
     getDashboardPath,

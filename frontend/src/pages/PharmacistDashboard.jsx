@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  getPendingPrescriptions,
-  getDispensedPrescriptions,
-} from "../services/prescriptionService";
+import prescriptionService from "../services/prescriptionService";
 import LoadingSpinner from "../components/LoadingSpinner";
 import WelcomeBanner from "../components/WelcomeBanner";
 import inventoryService from "../services/inventoryService";
@@ -28,14 +25,32 @@ const PharmacistDashboard = () => {
     try {
       setLoading(true);
       const [pending, dispensed, inventory] = await Promise.all([
-        getPendingPrescriptions(),
-        getDispensedPrescriptions(),
+        prescriptionService.getPendingPrescriptions(),
+        prescriptionService.getDispensedPrescriptions(),
         inventoryService.getInventorySummary(),
       ]);
 
-      setPendingPrescriptions(pending.data || []);
-      setDispensedPrescriptions(dispensed.data || []);
-      setInventorySummary(inventory.data || {});
+      // Normalize different API response shapes: some endpoints return axios responses
+      // ({ data: [...] }) while others may directly return arrays/objects.
+      const normalizeList = (res) => {
+        if (!res) return [];
+        if (Array.isArray(res)) return res;
+        if (res.data && Array.isArray(res.data)) return res.data;
+        // handle paginated { results: [...] }
+        if (res.results && Array.isArray(res.results)) return res.results;
+        return [];
+      };
+
+      const normalizeObject = (res) => {
+        if (!res) return {};
+        if (res.data && typeof res.data === 'object') return res.data;
+        if (typeof res === 'object') return res;
+        return {};
+      };
+
+      setPendingPrescriptions(normalizeList(pending));
+      setDispensedPrescriptions(normalizeList(dispensed));
+      setInventorySummary(normalizeObject(inventory));
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

@@ -38,7 +38,7 @@ const Header = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search pharmacies or products..."
+                placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -64,14 +64,7 @@ const Header = () => {
             >
               Home
             </Link>
-            <Link
-              to="/pharmacies"
-              className={`py-2 px-3 text-sm font-medium rounded-md ${
-                location.pathname === '/pharmacies' ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600'
-              }`}
-            >
-              Pharmacies
-            </Link>
+            {/* Pharmacies feature removed for now */}
             <Link
               to="/products"
               className={`py-2 px-3 text-sm font-medium rounded-md ${
@@ -147,10 +140,10 @@ const Header = () => {
         </div>
 
         {/* Mobile Search - Shown on mobile */}
-        <form onSubmit={handleSearch} className="md:hidden mb-4">
+          <form onSubmit={handleSearch} className="md:hidden mb-4">
           <input
             type="text"
-            placeholder="Search pharmacies or products..."
+            placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

@@ -146,30 +146,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (formData) => {
-    try {
-      const response = await api.post("/auth/register/", formData);
-      const resp = response.data || {};
-      const access = resp.access || resp.token || resp.access_token;
-      const userData = resp.user || resp.profile || resp.user_data || resp;
-
-      if (access) {
-        setToken(access);
-        localStorage.setItem("access_token", access);
-      }
-      if (userData && typeof userData === "object") {
-        setUser(userData);
-        if (userData.role) localStorage.setItem("user_role", userData.role);
-      }
-      return { success: true, user: userData || null };
-    } catch (error) {
-      console.error("Registration failed:", error);
-      return {
-        success: false,
-        error: error.response?.data || { detail: error.message || "Registration failed" },
-      };
-    }
-  };
+  // Registration endpoint removed — registration is disabled in the client.
 
   const logout = () => {
     // Clear auth state
@@ -270,7 +247,6 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     login,
-    register,
     logout,
     updateProfile,
     getDashboardPath,

@@ -2,10 +2,12 @@ from rest_framework import generics, status, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .models import Prescription
+from django.db.models import Count, Q
+from datetime import timedelta
+from .models import Prescription, PrescriptionStatusChoices
 from .serializers import (
     PrescriptionCreateSerializer,
     PrescriptionSerializer,
@@ -70,9 +72,9 @@ def verify_prescription(request, pk):
     status = request.data.get("status")
     notes = request.data.get("notes", "")
 
-    if status not in [Prescription.VERIFIED, Prescription.REJECTED]:
+    if status not in [PrescriptionStatusChoices.VALIDATED, PrescriptionStatusChoices.REJECTED]:
         return Response(
-            {"error": "Invalid status. Must be 'verified' or 'rejected'."},
+            {"error": "Invalid status. Must be 'validated' or 'rejected'."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -93,7 +95,7 @@ def pharmacist_prescriptions(request):
     List pending prescriptions for verification (pharmacists/admins).
     """
     prescriptions = Prescription.objects.filter(
-        status=Prescription.PENDING
+        status=PrescriptionStatusChoices.PENDING
     ).select_related("user")
     serializer = PrescriptionSerializer(prescriptions, many=True)
     return Response(serializer.data)
@@ -120,7 +122,7 @@ def pharmacist_dispensed_prescriptions(request):
     List dispensed prescriptions for pharmacists/admins.
     """
     prescriptions = Prescription.objects.filter(
-        status__in=["filled", "refilled"]
+        status=PrescriptionStatusChoices.DISPENSED
     ).select_related("user")
     serializer = PrescriptionSerializer(prescriptions, many=True)
     return Response(serializer.data)

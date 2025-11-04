@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .details {
+            margin-bottom: 20px;
+        }
+        .status {
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Restock Request Update</h2>
+        </div>
+        
+        <div class="details">
+            <p>The status of your restock request has been updated:</p>
+            
+            <ul>
+                <li><strong>Product:</strong> {{ product.name }}</li>
+                <li><strong>Requested Quantity:</strong> {{ request.requested_quantity }}</li>
+                <li><strong>Current Status:</strong> <span class="status">{{ status }}</span></li>
+                {% if request.notes %}
+                <li><strong>Notes:</strong> {{ request.notes }}</li>
+                {% endif %}
+            </ul>
+            
+            {% if status == 'Approved' %}
+            <p>Your request has been approved. The stock will be updated once the items are received.</p>
+            {% elif status == 'Rejected' %}
+            <p>Your request has been rejected. Please review the notes for more information.</p>
+            {% elif status == 'Completed' %}
+            <p>The stock has been updated with the requested items.</p>
+            {% elif status == 'Cancelled' %}
+            <p>This request has been cancelled.</p>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

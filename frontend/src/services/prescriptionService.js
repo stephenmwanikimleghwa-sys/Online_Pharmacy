@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Add token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -76,10 +76,11 @@ export const prescriptionService = {
 
 //export { getPendingPrescriptions, getDispensedPrescriptions };
 export const getPendingPrescriptions = () => {
-  /* ... */
+  return prescriptionService.getPendingPrescriptions();
 };
+
 export const getDispensedPrescriptions = () => {
-  /* ... */
+  return prescriptionService.getDispensedPrescriptions();
 };
 
 export default prescriptionService;

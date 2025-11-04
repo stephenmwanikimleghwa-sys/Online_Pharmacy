@@ -8,8 +8,6 @@ class ProductSerializer(serializers.ModelSerializer):
     Serializer for listing and retrieving products.
     """
 
-    pharmacy_name = serializers.CharField(source="pharmacy.name", read_only=True)
-
     class Meta:
         model = Product
         fields = (
@@ -17,9 +15,11 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "category",
+            "supplier",
+            "expiry_date",
             "price",
             "stock_quantity",
-            "pharmacy_name",
+            "reorder_threshold",
             "image",
             "is_active",
             "created_at",
@@ -45,13 +45,12 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "category",
             "price",
             "stock_quantity",
+            "supplier",
+            "expiry_date",
             "image",
         )
 
-    def validate_pharmacy(self, value):
-        if value.status != "active":
-            raise ValidationError("Product can only be added to active pharmacies.")
-        return value
+    # Removed validate_pharmacy since we're auto-assigning pharmacy
 
     def validate_price(self, value):
         if value <= 0:
@@ -64,18 +63,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # Ensure pharmacy is set (for pharmacists, auto-set if not provided)
-        request = self.context.get("request")
-        if (
-            request
-            and request.user.role == "pharmacist"
-            and not validated_data.get("pharmacy")
-        ):
-            pharmacy = request.user.pharmacies.first()
-            if pharmacy:
-                validated_data["pharmacy"] = pharmacy
-            else:
-                raise ValidationError("Pharmacist must have an associated pharmacy.")
+        # Create products without pharmacy association
         return super().create(validated_data)
 
 

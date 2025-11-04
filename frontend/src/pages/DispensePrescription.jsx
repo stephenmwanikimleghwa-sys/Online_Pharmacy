@@ -71,7 +71,7 @@ const DispensePrescription = () => {
       // Update prescription status
       await prescriptionService.dispensePrescription(id);
 
-      navigate('/pharmacist-dashboard');
+  navigate('/pharmacist/dashboard');
     } catch (error) {
       console.error('Error dispensing prescription:', error);
       alert('Failed to dispense prescription. Please try again.');
@@ -94,7 +94,7 @@ const DispensePrescription = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800">Prescription Not Found</h1>
           <button
-            onClick={() => navigate('/pharmacist-dashboard')}
+            onClick={() => navigate('/pharmacist/dashboard')}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Back to Dashboard
@@ -110,7 +110,7 @@ const DispensePrescription = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Dispense Prescription</h1>
           <button
-            onClick={() => navigate('/pharmacist-dashboard')}
+            onClick={() => navigate('/pharmacist/dashboard')}
             className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
           >
             Back to Dashboard
