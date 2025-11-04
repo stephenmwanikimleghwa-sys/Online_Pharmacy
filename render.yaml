@@ -1,15 +1,10 @@
 services:
   - type: web
     name: pharmacy-aggregator-backend
-    env: python
+    env: docker
     plan: free
-    runtime: python3.12.6
-    buildCommand: |
-      pip install --upgrade pip
-      pip install wheel setuptools
-      pip install -r backend/requirements.txt
-      cd frontend && npm install && npm run build
-    startCommand: cd backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    dockerfilePath: Dockerfile
+    startCommand: cd /app/backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     healthCheckPath: /api/health/
     envVars:
       - key: DEBUG
