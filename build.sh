@@ -5,6 +5,16 @@ set -e
 
 echo "🚀 Building Pharmacy Aggregator for Render..."
 
+# Install system dependencies if apt-packages exists
+if [ -f apt-packages ]; then
+	echo "📦 Installing system dependencies..."
+	apt-get update -qq
+	apt-get install -y $(cat apt-packages)
+fi
+
+# Upgrade pip and install build tools
+pip install --upgrade pip setuptools wheel build
+
 # Install Python dependencies
 echo "📦 Installing Python dependencies..."
 pip install -r backend/requirements.txt
