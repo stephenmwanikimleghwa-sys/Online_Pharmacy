@@ -4,13 +4,15 @@ services:
     env: python
     plan: free
     buildCommand: |
+      pip install --upgrade pip
+      pip install wheel setuptools
       pip install -r backend/requirements.txt
       cd frontend && npm install && npm run build
     startCommand: cd backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     healthCheckPath: /api/health/
     envVars:
       - key: DEBUG
-        value: False
+        value: "false"
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
@@ -18,21 +20,15 @@ services:
       - key: VITE_API_BASE_URL
         value: https://pharmacy-aggregator.onrender.com/api
       - key: DATABASE_URL
-        fromDatabase:
-          name: pharmacy-db
-          property: connectionString
+        value: postgresql://pharmacy_db_qa6i_user:wEN4moAcXBYfjBI06FNimHiXK0VRt9RP@dpg-d44q7mngi27c73afsg50-a/pharmacy_db_qa6i
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: pharmacy-redis
-          property: connectionString
+        value: redis://default:UNz4xUuxUd4pIthFqyeKzwuDrqYkKk9g@redis-15333.c258.us-east-1-4.ec2.redns.redis-cloud.com:15333
+      - key: CELERY_BROKER_URL
+        value: redis://default:UNz4xUuxUd4pIthFqyeKzwuDrqYkKk9g@redis-15333.c258.us-east-1-4.ec2.redns.redis-cloud.com:15333
+      - key: CELERY_RESULT_BACKEND
+        value: redis://default:UNz4xUuxUd4pIthFqyeKzwuDrqYkKk9g@redis-15333.c258.us-east-1-4.ec2.redns.redis-cloud.com:15333
 
-  - type: redis
-    name: pharmacy-redis
-    plan: free
-
-  - type: pserv
+  - type: postgres
     name: pharmacy-db
     plan: free
-    databaseName: transcounty_pharmacy
-    user: pharmacy_user
+    ipAllowList: []

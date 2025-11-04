@@ -4,7 +4,7 @@ djangorestframework-simplejwt==5.3.0
 psycopg2-binary==2.9.7
 django-cors-headers==4.3.1
 django-environ==0.11.2
-Pillow==10.0.1
+Pillow==9.5.0  # Downgraded for better compatibility
 django-storages==1.14.2
 boto3==1.28.62
 cryptography==41.0.4
@@ -15,7 +15,6 @@ drf-yasg==1.21.5
 django-filter==23.3
 django-allauth==0.57.0
 stripe==7.0.0
-#python-mpesa==0.5.0
 django-ratelimit==3.0.1
 gunicorn==21.2.0
 whitenoise==6.6.0
@@ -25,3 +24,5 @@ pytest-django==4.7.0
 factory-boy==3.2.1
 Faker==19.9.0
 coverage==7.3.2
+setuptools>=65.5.1  # Added for build support
+wheel>=0.38.0  # Added for build support
