@@ -3,6 +3,7 @@ services:
     name: pharmacy-aggregator-backend
     env: python
     plan: free
+    runtime: python3.12.6
     buildCommand: |
       pip install --upgrade pip
       pip install wheel setuptools
