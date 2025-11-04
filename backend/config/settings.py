@@ -24,12 +24,24 @@ SECRET_KEY = env("SECRET_KEY", default="your-secret-key-here-change-in-productio
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
-    "localhost",
-    "127.0.0.1",
-    "pharmacy-aggregator.onrender.com",
-    ".onrender.com"  # Allows all subdomains on render.com
-])
+# ALLOWED_HOSTS handling: support three formats via env var:
+#  - empty / not set -> use sensible defaults
+#  - comma-separated list (e.g. ".onrender.com,example.com") -> parsed into list
+#  - single '*' -> allow all hosts (use with caution)
+_allowed_raw = env("ALLOWED_HOSTS", default="")
+if _allowed_raw.strip() == "":
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "pharmacy-aggregator.onrender.com",
+        ".onrender.com",
+    ]
+elif _allowed_raw.strip() == "*":
+    # Explicit wildcard requested
+    ALLOWED_HOSTS = ["*"]
+else:
+    # Parse comma-separated list
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_raw.split(",") if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
