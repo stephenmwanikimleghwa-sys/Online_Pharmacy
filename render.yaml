@@ -7,8 +7,9 @@ services:
     plan: free
     dockerfilePath: Dockerfile.render
     # Run migrations and collectstatic before starting the app so DB tables exist
+    # Use verbose output so we can see migration activity in Render logs
     startCommand: >
-      bash -lc "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
+      bash -lc "echo '=== START: running showmigrations ===' && python manage.py showmigrations && echo '=== START: running migrate ===' && python manage.py migrate --noinput --verbosity 2 && echo '=== MIGRATE COMPLETE ===' && echo '=== START: collectstatic ===' && python manage.py collectstatic --noinput --verbosity 1 && echo '=== COLLECTSTATIC COMPLETE ===' && exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
     healthCheckPath: /api/health/
     envVars:
       - key: DEBUG
