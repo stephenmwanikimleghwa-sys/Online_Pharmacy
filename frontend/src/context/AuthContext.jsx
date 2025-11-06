@@ -140,9 +140,19 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: finalUser || null };
     } catch (error) {
       console.error("Login failed:", error);
-      const errorMessage =
-        error?.response?.data?.detail || error?.message || "Login failed";
-      return { success: false, error: { detail: errorMessage } };
+
+      // Prefer the server response body when available (it may contain
+      // field-level validation errors like { username: [...], password: [...] }
+      // or non_field_errors/details for auth failures). Return it as-is so
+      // the UI can render specific messages.
+      const serverData = error?.response?.data;
+
+      if (serverData) {
+        return { success: false, error: serverData };
+      }
+
+      // Fallback to axios message
+      return { success: false, error: { detail: error?.message || "Login failed" } };
     }
   };
 

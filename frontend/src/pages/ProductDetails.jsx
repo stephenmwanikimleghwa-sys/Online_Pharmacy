@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import ImageWithFallback from "../components/ImageWithFallback";
 import api from '../services/api'; // Axios instance for API calls
 import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
@@ -18,7 +20,7 @@ const ProductDetails = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await api.get(`/api/products/${id}/`);
+        const response = await api.get(`/products/${id}/`);
         setProduct(response.data);
       } catch (err) {
         setError('Failed to load product details');
@@ -59,9 +61,10 @@ const ProductDetails = () => {
           <div className="md:flex">
             {/* Product Image */}
             <div className="md:w-1/2 p-6">
-              <img
-                src={product.image || '/placeholder-product.jpg'}
+              <ImageWithFallback
+                src={product.image}
                 alt={product.name}
+                fallbackText={product.name}
                 className="w-full h-64 object-cover rounded-lg"
               />
             </div>

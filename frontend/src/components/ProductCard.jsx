@@ -1,5 +1,6 @@
 import React from 'react';
 import { HeartIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import ImageWithFallback from './ImageWithFallback';
 
 const ProductCard = ({ product, onAddToCart }) => {
   const { id, name, price, image, pharmacy, category } = product;
@@ -8,9 +9,10 @@ const ProductCard = ({ product, onAddToCart }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
       {/* Product Image */}
       <div className="relative h-48 bg-gray-100">
-        <img
-          src={image || '/placeholder-product.jpg'}
+        <ImageWithFallback
+          src={image}
           alt={name}
+          fallbackText={name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

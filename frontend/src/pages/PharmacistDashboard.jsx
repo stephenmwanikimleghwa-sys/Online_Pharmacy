@@ -8,8 +8,10 @@ import { useAuth } from "../context/AuthContext";
 import PrescriptionCard from "../components/PrescriptionCard";
 import InventorySummaryCard from "../components/InventorySummaryCard";
 import QuickActions from "../components/QuickActions";
+import QuickSale from "../components/QuickSale";
 
 const PharmacistDashboard = () => {
+  const [isQuickSaleOpen, setIsQuickSaleOpen] = useState(false);
   const [pendingPrescriptions, setPendingPrescriptions] = useState([]);
   const [dispensedPrescriptions, setDispensedPrescriptions] = useState([]);
   const [inventorySummary, setInventorySummary] = useState({});
@@ -95,7 +97,16 @@ const PharmacistDashboard = () => {
           onViewReports={handleViewReports}
           onViewInventory={() => navigate("/inventory")}
         />
+        <button
+          onClick={() => setIsQuickSaleOpen(true)}
+          className="mt-4 w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Quick Sale
+        </button>
       </div>
+
+      {/* Quick Sale Modal */}
+      <QuickSale isOpen={isQuickSaleOpen} onClose={() => setIsQuickSaleOpen(false)} />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -17,14 +17,20 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('/api/products/', {
-          headers: { Authorization: `Bearer ${token}` }
+        // Use the configured api instance instead of direct axios
+        const response = await api.get('/products/', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
-        setProducts(response.data);
-      } catch (err) {
-        setError('Failed to load products');
-        console.error(err);
-      } finally {
+        // Ensure products is always an array
+        const productsData = Array.isArray(response.data) ? response.data : 
+                           response.data.results ? response.data.results : [];
+        console.log('Products response:', response.data);
+        setProducts(productsData);
+          } catch (error) {
+      console.error('Error fetching products:', error);
+      setError(error?.response?.data?.message || error.message || 'Failed to fetch products');
+      setProducts([]);
+    } finally {
         setLoading(false);
       }
     };

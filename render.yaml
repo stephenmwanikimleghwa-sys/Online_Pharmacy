@@ -1,10 +1,11 @@
 services:
+  # Backend Service
   - type: web
     name: pharmacy-aggregator-backend
-    env: docker
+    runtime: docker
+    region: ohio
     plan: free
-    dockerfilePath: Dockerfile
-    startCommand: cd /app/backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    dockerfilePath: Dockerfile.render
     healthCheckPath: /api/health/
     envVars:
       - key: DEBUG
@@ -12,19 +13,85 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: "*"
-      - key: VITE_API_BASE_URL
-        value: https://pharmacy-aggregator.onrender.com/api
+        value: ".onrender.com"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "config.settings"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
       - key: DATABASE_URL
-        value: postgresql://pharmacy_db_qa6i_user:wEN4moAcXBYfjBI06FNimHiXK0VRt9RP@dpg-d44q7mngi27c73afsg50-a/pharmacy_db_qa6i
+        fromDatabase:
+          name: pharmacy-db
+          property: connectionString
       - key: REDIS_URL
-        value: redis://default:UNz4xUuxUd4pIthFqyeKzwuDrqYkKk9g@redis-15333.c258.us-east-1-4.ec2.redns.redis-cloud.com:15333
+        fromService:
+          name: pharmacy-cache
+          type: redis
+          property: connectionString
       - key: CELERY_BROKER_URL
-        value: redis://default:UNz4xUuxUd4pIthFqyeKzwuDrqYkKk9g@redis-15333.c258.us-east-1-4.ec2.redns.redis-cloud.com:15333
+        fromService:
+          name: pharmacy-cache
+          type: redis
+          property: connectionString
       - key: CELERY_RESULT_BACKEND
-        value: redis://default:UNz4xUuxUd4pIthFqyeKzwuDrqYkKk9g@redis-15333.c258.us-east-1-4.ec2.redns.redis-cloud.com:15333
+        fromService:
+          name: pharmacy-cache
+          type: redis
+          property: connectionString
 
-  - type: postgres
-    name: pharmacy-db
-    plan: free
+  # Frontend Service (Static Site)
+  - type: web
+    name: pharmacy-aggregator-frontend
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "18.0.0"
+      - key: VITE_API_BASE_URL
+        value: https://pharmacy-aggregator-backend.onrender.com/api
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # Redis Service
+  - type: redis
+    name: pharmacy-cache
     ipAllowList: []
+    plan: free
+
+  # Background Worker (Celery)
+  - type: web
+    name: pharmacy-aggregator-worker
+    runtime: docker
+    region: ohio
+    plan: free
+    dockerfilePath: Dockerfile.render
+    envVars:
+      - key: DEBUG
+        value: "false"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "config.settings"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pharmacy-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: pharmacy-cache
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: pharmacy-cache
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: pharmacy-cache
+          type: redis
+          property: connectionString

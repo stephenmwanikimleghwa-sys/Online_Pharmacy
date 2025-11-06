@@ -10,4 +10,6 @@ urlpatterns = [
     path("<int:pk>/", views.OrderRetrieveUpdateDestroyView.as_view(), name="detail"),
     # User's own orders
     path("my-orders/", views.my_orders, name="my_orders"),
+    # Quick sale endpoint
+    path("quick/", views.quick_sale, name="quick_sale"),
 ]

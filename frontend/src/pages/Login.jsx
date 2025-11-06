@@ -48,7 +48,7 @@ const Login = () => {
       error: result.error
     });
     
-    if (result.success) {
+  if (result.success) {
       const returnedUser = result.user;
       console.log('[Login Debug] Processing successful login:', {
         returnedUser
@@ -109,11 +109,40 @@ const Login = () => {
 
       navigate(target);
     } else {
-      setError(
-        result.error?.non_field_errors?.[0] ||
-          result.error?.detail ||
-          "Login failed. Please check your credentials.",
-      );
+      // result.error may be an object like:
+      // { non_field_errors: [...]} or { username: [...], password: [...] }
+      const err = result.error;
+
+      const formatError = (errObj) => {
+        if (!errObj) return "Login failed. Please check your credentials.";
+        if (typeof errObj === "string") return errObj;
+        if (errObj.non_field_errors && errObj.non_field_errors.length)
+          return errObj.non_field_errors[0];
+        if (errObj.detail) return errObj.detail;
+
+        // Field-level errors
+        const fieldMessages = [];
+        ["username", "password", "email"].forEach((f) => {
+          if (errObj[f]) {
+            const msgs = Array.isArray(errObj[f]) ? errObj[f].join(" ") : String(errObj[f]);
+            fieldMessages.push(`${f.charAt(0).toUpperCase() + f.slice(1)}: ${msgs}`);
+          }
+        });
+
+        if (fieldMessages.length) return fieldMessages.join(" ");
+
+        // Fallback to serializing available keys
+        try {
+          return Object.values(errObj)
+            .flat()
+            .filter(Boolean)
+            .join(" ") || "Login failed. Please check your credentials.";
+        } catch (e) {
+          return "Login failed. Please check your credentials.";
+        }
+      };
+
+      setError(formatError(err));
     }
     setLoading(false);
   };
@@ -134,7 +163,7 @@ const Login = () => {
                 htmlFor="username"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Username *
+                Username
               </label>
               <input
                 id="username"
@@ -152,7 +181,7 @@ const Login = () => {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Password *
+                Password
               </label>
               <div className="relative">
                 <input
@@ -169,11 +198,13 @@ const Login = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
+                  {/* Toggle icons: show an open eye when password is visible, and a slashed eye when hidden */}
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                  ) : (
                     <EyeIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
                   )}
                 </button>
               </div>

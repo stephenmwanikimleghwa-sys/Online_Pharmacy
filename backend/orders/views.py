@@ -22,6 +22,161 @@ import base64
 import json
 from datetime import datetime
 from django.core.cache import cache
+from products.models import Product
+from .models import Order, OrderItem, OrderStatusChoices
+
+
+@api_view(['POST'])
+@permission_classes([IsPharmacistOrAdmin])
+def quick_sale(request):
+    """
+    Create a quick sale order without patient association.
+    Only for pharmacists and admins.
+    """
+    try:
+        print("Quick sale request data:", request.data)
+        # Validate input data
+        items = request.data.get('items', [])
+        if not items:
+            return Response(
+                {'error': 'No items provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create order
+        order = Order.objects.create(
+            user=request.user,  # The staff member who made the sale
+            status=OrderStatusChoices.DELIVERED,  # Quick sales are delivered immediately
+            total_amount=0  # Will be calculated from items
+        )
+
+        total_amount = 0
+        order_items = []
+
+        # Process each item
+        for item in items:
+            print("Processing item:", item)
+            product_id = item.get('id')
+            if not product_id:
+                order.delete()
+                return Response(
+                    {'error': 'Product ID missing in item'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            quantity = item.get('quantity', 1)
+
+            try:
+                print(f"Looking for product with ID: {product_id}")
+                product = Product.objects.get(id=product_id)
+                print(f"Found product: {product.name}")
+            except Product.DoesNotExist:
+                # Rollback on error
+                order.delete()
+                return Response(
+                    {'error': f'Product with ID {product_id} not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if product.stock_quantity < quantity:
+                # Rollback on insufficient stock
+                order.delete()
+                return Response(
+                    {'error': f'Insufficient stock for product {product.name}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create order item
+            order_item = OrderItem.objects.create(
+                order=order,
+                product=product,
+                quantity=quantity,
+                unit_price=product.price
+            )
+            order_items.append(order_item)
+
+            # Record previous stock for logging
+            previous_stock = product.stock_quantity
+            
+            # Update product stock
+            product.stock_quantity -= quantity
+            product.save()
+
+            # Create dispensing log with defensive logging and rollback on failure
+            try:
+                from dispensing_logs.models import DispensingLog
+                dispenser_name = (
+                    request.user.get_full_name() if hasattr(request.user, 'get_full_name') else str(request.user)
+                )
+                print(f"Creating DispensingLog: product={product.id} quantity={quantity} prev_stock={previous_stock} new_stock={product.stock_quantity} total_cost={order_item.subtotal} dispensed_by={dispenser_name}")
+                DispensingLog.objects.create(
+                    product=product,
+                    quantity=quantity,
+                    dispensed_by=request.user,
+                    order=order,
+                    previous_stock=previous_stock,
+                    new_stock=product.stock_quantity,
+                    total_cost=order_item.subtotal,
+                    notes=f"Quick sale by {dispenser_name}"
+                )
+            except Exception as log_exc:
+                import traceback as _tb
+                print(f"Failed to create DispensingLog for product {product.id}: {str(log_exc)}")
+                _tb.print_exc()
+                # Rollback order to avoid inconsistent state
+                try:
+                    order.delete()
+                except Exception:
+                    pass
+                return Response({'error': 'Failed to record dispensing log'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            item_subtotal = order_item.subtotal
+            total_amount += item_subtotal
+
+        # Update order total
+        order.total_amount = total_amount
+        order.save()
+
+        # Create a completed cash payment record
+        try:
+            Payment.objects.create(
+                order=order,
+                method='cash',
+                amount=total_amount,
+                status='completed',
+                reference=f'CASH-{order.id}'
+            )
+        except Exception as pay_exc:
+            import traceback as _tb
+            print(f"Failed to create Payment record for order {order.id}: {str(pay_exc)}")
+            _tb.print_exc()
+            try:
+                order.delete()
+            except Exception:
+                pass
+            return Response({'error': 'Failed to create payment record'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'id': order.id,
+            'total_amount': total_amount,
+            'items': [{
+                'product_id': item.product.id,
+                'product_name': item.product.name,
+                'quantity': item.quantity,
+                'unit_price': item.unit_price,
+                'total_price': item.subtotal
+            } for item in order_items]
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        # Log the error for debugging
+        import traceback
+        print(f'Quick sale error: {str(e)}')
+        print('Full traceback:')
+        traceback.print_exc()
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class IsOrderOwner(permissions.BasePermission):

@@ -43,6 +43,7 @@ urlpatterns = [
     path("api/prescriptions/", include("prescriptions.urls")),
     path("api/reviews/", include("reviews.urls")),
     path("api/inventory/", include("inventory.urls")),
+    path("api/dispensing-logs/", include("dispensing_logs.urls")),
 ]
 
 # Serve static and media files in development

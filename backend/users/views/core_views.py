@@ -111,11 +111,18 @@ def verify_pharmacist(request, user_id):
     )
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile(request):
     """
-    Simple profile endpoint that returns the authenticated user's profile.
+    Get or update the authenticated user's profile.
     """
-    serializer = UserProfileSerializer(request.user)
-    return Response(serializer.data)
+    if request.method == "GET":
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+    elif request.method == "PATCH":
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(UserProfileSerializer(request.user).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

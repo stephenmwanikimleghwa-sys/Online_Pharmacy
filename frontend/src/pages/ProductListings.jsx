@@ -16,7 +16,7 @@ const ProductListings = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`/api/products/?pharmacy=${pharmacyId}`);
+      const response = await api.get(`/products/?pharmacy=${pharmacyId}`);
       setProducts(response.data);
       setLoading(false);
     } catch (err) {

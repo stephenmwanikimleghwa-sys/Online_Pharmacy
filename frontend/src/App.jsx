@@ -19,6 +19,7 @@ import ValidatePrescription from "./pages/ValidatePrescription";
 import DispensePrescription from "./pages/DispensePrescription";
 import InventoryManagement from "./pages/InventoryManagement";
 import ReportsDashboard from "./pages/ReportsDashboard";
+import DispensingLogsPage from "./pages/DispensingLogsPage";
 
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
@@ -110,6 +111,10 @@ function App() {
               <Route
                 path="/reports"
                 element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist']} />}
+              />
+              <Route
+                path="/dispensing-logs"
+                element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
               />
 
               {/* Catch-all redirect */}

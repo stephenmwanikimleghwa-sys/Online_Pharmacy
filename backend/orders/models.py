@@ -17,14 +17,14 @@ class OrderStatusChoices(models.TextChoices):
 
 class Order(models.Model):
     """
-    Model representing a customer order from a pharmacy.
+    Model representing a quick sale or order in the pharmacy.
     """
 
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="orders",
-        verbose_name="Customer",
+        verbose_name="Staff Member",  # Changed from Customer to Staff Member
     )
 
     total_amount = models.DecimalField(
