@@ -13,6 +13,9 @@ from .serializers import (
 )
 from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 # Pharmacy import removed - single pharmacy app
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProductListCreateView(generics.ListCreateAPIView):
@@ -142,6 +145,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         Get featured products.
         Returns the first 4 products marked as featured.
         """
-        featured_products = self.get_queryset().filter(is_featured=True)[:4]
-        serializer = self.get_serializer(featured_products, many=True)
-        return Response(serializer.data)
+        try:
+            featured_products = self.get_queryset().filter(is_featured=True)[:4]
+            serializer = self.get_serializer(featured_products, many=True)
+            return Response(serializer.data)
+        except Exception as exc:
+            # Log full exception to help debugging in production logs
+            logger.exception("Error while fetching featured products: %s", exc)
+            return Response(
+                {"detail": "Internal server error while fetching featured products."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
