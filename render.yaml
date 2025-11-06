@@ -31,7 +31,7 @@ services:
       - key: DB_PORT
         value: "5432"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://online-pharmacy-1-np3y.onrender.com"
+        value: "https://online-pharmacy-1-np3y.onrender.com,https://online-pharmacy-sn88.onrender.com"
       - key: PYTHON_VERSION
         value: "3.11.0"
       - key: DATABASE_URL

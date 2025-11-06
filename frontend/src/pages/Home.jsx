@@ -20,7 +20,7 @@ const Home = () => {
         
         // First check if the API is accessible
         try {
-          await api.get('/health/');
+          await api.get('/api/health/');
         } catch (healthError) {
           console.error('[Home Debug] API health check failed:', {
             error: healthError.message,
@@ -30,7 +30,7 @@ const Home = () => {
         }
         
         // Use shared API instance (handles baseURL + auth interceptors)
-        const productsRes = await api.get(`/products/featured/`);
+        const productsRes = await api.get(`/api/products/featured/`);
         
         console.log('[Home Debug] Featured products response:', {
           status: productsRes.status,

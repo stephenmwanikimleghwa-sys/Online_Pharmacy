@@ -24,6 +24,11 @@ SECRET_KEY = env("SECRET_KEY", default="your-secret-key-here-change-in-productio
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
+# When running behind a proxy (like Render) that terminates SSL, respect
+# the X-Forwarded-Proto header so Django knows the original request scheme.
+# This prevents HTTPS redirect loops when SECURE_SSL_REDIRECT is enabled.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # ALLOWED_HOSTS handling: support three formats via env var:
 #  - empty / not set -> use sensible defaults
 #  - comma-separated list (e.g. ".onrender.com,example.com") -> parsed into list
