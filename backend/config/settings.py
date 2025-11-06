@@ -201,8 +201,14 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://online-pharmacy-1-np3y.onrender.com",
+    "https://online-pharmacy-sn88.onrender.com",
 ]
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.onrender\.com$",
+]
 
 # Custom user model
 AUTH_USER_MODEL = "users.User"

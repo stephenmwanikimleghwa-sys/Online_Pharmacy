@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+import os
 from django.views.generic import RedirectView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -21,9 +22,24 @@ schema_view = get_schema_view(
     permission_classes=[permissions.AllowAny],
 )
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "")
+
+def _root_redirect_url():
+    """Return the URL to redirect the site root to.
+
+    Priority:
+    1. FRONTEND_URL env var (if set)
+    2. / (if you want to serve a simple landing)
+    3. /swagger/ as a safe default for API documentation
+    """
+    if FRONTEND_URL:
+        return FRONTEND_URL
+    # Fall back to swagger UI when no frontend configured
+    return "/swagger/"
+
 urlpatterns = [
-    # Root redirect to Swagger
-    path("", RedirectView.as_view(url="/swagger/", permanent=False), name="root"),
+    # Root: redirect to frontend (configurable) or docs by default
+    path("", RedirectView.as_view(url=_root_redirect_url(), permanent=False), name="root"),
     # Admin site
     path("admin/", admin.site.urls),
     # API documentation
