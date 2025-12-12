@@ -42,6 +42,7 @@ class RestockRequest(models.Model):
         
     def save(self, *args, **kwargs):
         # If status is changing to completed, set completed_at
+        old_instance = None
         if self.pk:
             old_instance = RestockRequest.objects.get(pk=self.pk)
             if old_instance.status != 'completed' and self.status == 'completed':
@@ -50,7 +51,11 @@ class RestockRequest(models.Model):
         super().save(*args, **kwargs)
         
         # Send notifications on status changes
-        if self.pk and old_instance.status != self.status:
+        if old_instance:
+            if old_instance.status != self.status:
+                self.send_status_notification()
+        else:
+            # New request
             self.send_status_notification()
     
     def send_status_notification(self):
@@ -81,9 +86,9 @@ class RestockRequest(models.Model):
         # Send to approver if request was just created
         if self.status == 'pending':
             # Get all admin/pharmacist users
-            from users.models import User
+            from users.models import User, RoleChoices
             admins = User.objects.filter(
-                models.Q(is_superuser=True) | models.Q(is_pharmacist=True),
+                models.Q(is_superuser=True) | models.Q(role=RoleChoices.PHARMACIST),
                 is_active=True,
                 email__isnull=False
             ).values_list('email', flat=True)

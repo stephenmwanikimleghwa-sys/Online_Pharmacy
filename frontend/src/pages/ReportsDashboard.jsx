@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
 import { inventoryService } from '../services/inventoryService';
+import reportService from '../services/reportService';
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const ReportsDashboard = () => {
   const [reportData, setReportData] = useState({
@@ -9,7 +15,9 @@ const ReportsDashboard = () => {
     medicinesDispensed: [],
     stockUsage: [],
     inventoryTrends: [],
-    performanceMetrics: []
+    performanceMetrics: [],
+    topSellingProducts: [],
+    lowStockAlerts: []
   });
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
@@ -30,12 +38,35 @@ const ReportsDashboard = () => {
       const medicinesData = await prescriptionService.getDispensedMedicines(dateRange);
       const stockData = await inventoryService.getStockUsage(dateRange);
 
+      let trendsData = [];
+      let performanceData = [];
+
+      if (user?.role === 'admin') {
+        try {
+          const trends = await reportService.getInventoryTrends(30);
+          trendsData = trends.trends || [];
+          const performance = await reportService.getPharmacistPerformance();
+          performanceData = performance.performance || [];
+
+          const topSelling = await reportService.getTopSellingProducts(30);
+          const lowStock = await reportService.getLowStockAlerts();
+
+          setReportData(prev => ({
+            ...prev,
+            topSellingProducts: topSelling || [],
+            lowStockAlerts: lowStock || []
+          }));
+        } catch (err) {
+          console.error("Failed to fetch admin analytics:", err);
+        }
+      }
+
       setReportData({
         dailyPrescriptions: dailyData.data || [],
         medicinesDispensed: medicinesData.data || [],
         stockUsage: stockData.data || [],
-        inventoryTrends: [], // Placeholder for admin data
-        performanceMetrics: [] // Placeholder for admin data
+        inventoryTrends: trendsData,
+        performanceMetrics: performanceData
       });
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -81,7 +112,7 @@ const ReportsDashboard = () => {
             <input
               type="date"
               value={dateRange.startDate}
-              onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
+              onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
@@ -90,7 +121,7 @@ const ReportsDashboard = () => {
             <input
               type="date"
               value={dateRange.endDate}
-              onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
+              onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
@@ -207,23 +238,94 @@ const ReportsDashboard = () => {
 
       {/* Admin Reports */}
       {user?.role === 'admin' && (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Inventory Trends */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Inventory Trends</h2>
-            <p className="text-gray-600">Advanced inventory analytics will be displayed here</p>
+          <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Inventory Trends (Last 30 Days)</h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={reportData.inventoryTrends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="restock_count" stroke="#10B981" name="Restocks" />
+                  <Line type="monotone" dataKey="usage_count" stroke="#EF4444" name="Usage" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Pharmacist Performance */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Pharmacist Performance</h2>
-            <p className="text-gray-600">Pharmacist performance metrics will be displayed here</p>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={reportData.performanceMetrics}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="verified_by__username" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="verified_count" fill="#3B82F6" name="Verified Prescriptions" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          {/* Prescription Validation Metrics */}
+          {/* Top Selling Products */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Prescription Validation Metrics</h2>
-            <p className="text-gray-600">Prescription validation analytics will be displayed here</p>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Top Selling Products</h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={reportData.topSellingProducts}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {reportData.topSellingProducts.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Low Stock Alerts */}
+          <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 text-red-600 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Low Stock Alerts
+            </h2>
+            {reportData.lowStockAlerts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {reportData.lowStockAlerts.map((item) => (
+                  <div key={item.id} className="border border-red-200 bg-red-50 rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+                      <p className="text-sm text-red-600">Stock: {item.stock_quantity}</p>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Threshold: {item.reorder_threshold}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No low stock alerts.</p>
+            )}
           </div>
         </div>
       )}

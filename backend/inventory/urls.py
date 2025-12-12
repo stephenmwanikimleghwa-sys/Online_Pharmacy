@@ -2,6 +2,9 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.restock import RestockRequestViewSet
 from .views.dispensing import PrescriptionViewSet, DispensationViewSet
+from .views.stock_intake import StockIntakeViewSet
+from .views.supplier import SupplierViewSet
+from .views.batch import BatchViewSet
 from .views.inventory import (
     inventory_summary,
     inventory_list,
@@ -18,6 +21,10 @@ from .views import dispensing
 router = DefaultRouter()
 router.register(r'restock-requests', RestockRequestViewSet)
 router.register(r'dispensations', DispensationViewSet)
+router.register(r'stock-intake', StockIntakeViewSet)
+router.register(r'prescriptions', PrescriptionViewSet)
+router.register(r'suppliers', SupplierViewSet)
+router.register(r'batches', BatchViewSet)
 
 app_name = "inventory"
 

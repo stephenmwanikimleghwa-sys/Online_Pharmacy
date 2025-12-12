@@ -72,6 +72,30 @@ export const prescriptionService = {
       notes,
     });
   },
+
+  // Get daily prescription stats
+  getDailyPrescriptions: async (dateRange) => {
+    // TODO: Implement backend endpoint for daily stats
+    // For now returning empty array to prevent crash
+    return { data: [] };
+  },
+
+  // Get dispensed medicines stats
+  getDispensedMedicines: async (dateRange) => {
+    try {
+      const response = await api.get("/inventory/stats/dispensing/", { params: dateRange });
+      // Map backend format to frontend expected format
+      const mappedData = (response.data.top_products || []).map(item => ({
+        name: item.product__name,
+        quantity: item.total_quantity,
+        totalValue: item.total_revenue
+      }));
+      return { data: mappedData };
+    } catch (error) {
+      console.error("Error fetching dispensed medicines:", error);
+      return { data: [] };
+    }
+  },
 };
 
 //export { getPendingPrescriptions, getDispensedPrescriptions };

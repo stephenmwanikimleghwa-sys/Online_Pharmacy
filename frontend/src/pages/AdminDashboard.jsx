@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { UserIcon, ShoppingBagIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { UserIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 const AdminDashboard = () => {
   const { user, token } = useAuth();
@@ -10,9 +10,7 @@ const AdminDashboard = () => {
   const location = useLocation();
   const [stats, setStats] = useState({
     totalUsers: 0,
-    totalPharmacies: 0,
-    totalOrders: 0,
-    pendingOrders: 0
+    totalPharmacies: 0
   });
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,24 +33,15 @@ const AdminDashboard = () => {
           return { data: [] };
         });
 
-
-        const ordersRes = await api.get('/orders/').catch((err) => {
-          console.warn('Failed to load orders for dashboard, treating as empty', err);
-          return { data: [] };
-        });
-
         // Normalize responses: some APIs return paginated objects {results: [...]} or objects instead of arrays.
         const usersData = Array.isArray(usersRes.data) ? usersRes.data : (usersRes.data?.results ?? []);
-  // We don't use pharmacies in this deployment. Treat as empty.
-  const pharmaciesData = [];
-        const ordersData = Array.isArray(ordersRes.data) ? ordersRes.data : (ordersRes.data?.results ?? []);
+        // We don't use pharmacies in this deployment. Treat as empty.
+        const pharmaciesData = [];
 
         setUsers(usersData);
         setStats({
           totalUsers: usersData.length,
-          totalPharmacies: pharmaciesData.length,
-          totalOrders: ordersData.length,
-          pendingOrders: ordersData.filter(order => order.status === 'pending').length
+          totalPharmacies: pharmaciesData.length
         });
       } catch (err) {
         setError('Failed to load dashboard data');
@@ -111,28 +100,12 @@ const AdminDashboard = () => {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ShoppingBagIcon className="h-6 w-6 text-indigo-500" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.totalOrders}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
                   <ChartBarIcon className="h-6 w-6 text-yellow-500" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Pending Orders</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.pendingOrders}</dd>
+                    <dt className="text-sm font-medium text-gray-500 truncate">System Status</dt>
+                    <dd className="text-lg font-medium text-gray-900">Operational</dd>
                   </dl>
                 </div>
               </div>
@@ -196,12 +169,6 @@ const AdminDashboard = () => {
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-sm font-medium transition-colors"
           >
             Manage Stock
-          </button>
-          <button
-            onClick={() => navigate('/admin/orders')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm font-medium transition-colors"
-          >
-            Manage Orders
           </button>
         </div>
       </div>

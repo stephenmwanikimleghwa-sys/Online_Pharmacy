@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,58 +62,58 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health/" ]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Celery Worker
-  celery:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: celery -A config worker -l info
-    volumes:
-      - ./backend:/app
-    environment:
-      - DEBUG=True
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=transcounty_pharmacy
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - REDIS_URL=redis://redis:6379/1
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+  # Celery Worker (Skipped)
+  # celery:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   command: celery -A config worker -l info
+  #   volumes:
+  #     - ./backend:/app
+  #   environment:
+  #     - DEBUG=True
+  #     - DB_HOST=db
+  #     - DB_PORT=5432
+  #     - DB_NAME=transcounty_pharmacy
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=password
+  #     - REDIS_URL=redis://redis:6379/1
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
-  # Celery Beat (Scheduler)
-  celery-beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: celery -A config beat -l info
-    volumes:
-      - ./backend:/app
-    environment:
-      - DEBUG=True
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=transcounty_pharmacy
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - REDIS_URL=redis://redis:6379/1
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+  # Celery Beat (Scheduler) (Skipped)
+  # celery-beat:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   command: celery -A config beat -l info
+  #   volumes:
+  #     - ./backend:/app
+  #   environment:
+  #     - DEBUG=True
+  #     - DB_HOST=db
+  #     - DB_PORT=5432
+  #     - DB_NAME=transcounty_pharmacy
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=password
+  #     - REDIS_URL=redis://redis:6379/1
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
   # React Frontend
   frontend:

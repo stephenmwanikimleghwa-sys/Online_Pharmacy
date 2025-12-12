@@ -6,11 +6,43 @@ class RoleChoices(models.TextChoices):
     CUSTOMER = "customer", "Customer"
     PHARMACIST = "pharmacist", "Pharmacist"
     ADMIN = "admin", "Admin"
+    CASHIER = "cashier", "Cashier"
+    AUDITOR = "auditor", "Auditor"
+
+
+class Pharmacy(models.Model):
+    """
+    Model representing a pharmacy entity.
+    """
+    name = models.CharField(max_length=255, verbose_name="Pharmacy Name")
+    address = models.TextField(verbose_name="Address")
+    contact_phone = models.CharField(max_length=20, verbose_name="Contact Phone")
+    license_number = models.CharField(max_length=50, verbose_name="License Number", unique=True)
+    is_active = models.BooleanField(default=True, verbose_name="Is Active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "pharmacies"
+        verbose_name = "Pharmacy"
+        verbose_name_plural = "Pharmacies"
+
+    def __str__(self):
+        return self.name
 
 
 class User(AbstractUser):
     role = models.CharField(
         max_length=20, choices=RoleChoices.choices, default=RoleChoices.CUSTOMER
+    )
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+        verbose_name="Pharmacy",
+        help_text="The pharmacy this user belongs to (for pharmacists/staff)."
     )
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     profile_picture = models.ImageField(upload_to="profiles/", blank=True, null=True)
@@ -24,6 +56,10 @@ class User(AbstractUser):
         db_table = "users"
         verbose_name = "User"
         verbose_name_plural = "Users"
+        indexes = [
+            models.Index(fields=["role"]),
+            models.Index(fields=["pharmacy"]),
+        ]
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

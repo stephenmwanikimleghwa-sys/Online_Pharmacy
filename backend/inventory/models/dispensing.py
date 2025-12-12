@@ -116,7 +116,7 @@ class DispensationItem(models.Model):
     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     batch_number = models.CharField(max_length=50, blank=True)
-    expiry_date = models.DateField()  # Copied from product at time of dispensing
+    expiry_date = models.DateField(null=True, blank=True)  # Copied from product at time of dispensing
     
     def save(self, *args, **kwargs):
         if not self.total_price:

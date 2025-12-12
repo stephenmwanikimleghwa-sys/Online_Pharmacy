@@ -44,3 +44,4 @@ pytest-django==4.7.0
 factory-boy==3.2.1
 Faker==19.9.0
 coverage==7.3.2
+sentry-sdk

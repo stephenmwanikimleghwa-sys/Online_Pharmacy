@@ -4,9 +4,10 @@ from . import views
 
 app_name = "products"
 
-# Create a router and register our viewset
+# Create a router and register our viewsets
 router = DefaultRouter()
 router.register(r'', views.ProductViewSet, basename='product')
+router.register(r'pricing-tiers', views.PricingTierViewSet, basename='pricing-tier')
 
 urlpatterns = [
     # ViewSet URLs (includes list, create, retrieve, update, delete)

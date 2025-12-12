@@ -239,7 +239,7 @@ class OrderRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = OrderUpdateSerializer
     lookup_field = "pk"
-    permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsOrderOwner]
 
     def get_queryset(self):
         if not self.request.user.is_authenticated:

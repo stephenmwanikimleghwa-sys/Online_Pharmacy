@@ -2,9 +2,13 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .models import User, RoleChoices
+from .models import User, RoleChoices, Pharmacy
 
 
+class PharmacySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pharmacy
+        fields = "__all__"
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -23,8 +27,8 @@ class UserLoginSerializer(serializers.Serializer):
                     raise serializers.ValidationError("User account is disabled.")
                 if not user.is_verified:
                     raise serializers.ValidationError("User account is not verified.")
-                if not (user.username == 'mwaniki' or user.role in [RoleChoices.ADMIN, RoleChoices.PHARMACIST]):
-                    raise serializers.ValidationError("Access denied.")
+                # if not (user.username == 'mwaniki' or user.role in [RoleChoices.ADMIN, RoleChoices.PHARMACIST]):
+                #     raise serializers.ValidationError("Access denied.")
                 attrs["user"] = user
                 return attrs
             else:
@@ -36,6 +40,8 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    pharmacy_name = serializers.CharField(source='pharmacy.name', read_only=True)
+
     class Meta:
         model = User
         fields = (
@@ -46,6 +52,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "last_name",
             "phone_number",
             "role",
+            "pharmacy",
+            "pharmacy_name",
             "profile_picture",
             "date_of_birth",
             "address",

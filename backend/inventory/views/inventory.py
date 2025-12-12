@@ -17,14 +17,18 @@ import traceback
 @permission_classes([IsPharmacistOrAdmin])
 def inventory_summary(request):
     """Get inventory summary for pharmacist dashboard."""
-    total_products = Product.objects.filter(is_active=True).count()
-    low_stock_items = Product.objects.filter(
-        is_active=True,
+    # Filter by pharmacy
+    products = Product.objects.filter(is_active=True)
+    if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+        products = products.filter(pharmacy=request.user.pharmacy)
+
+    total_products = products.count()
+    low_stock_items = products.filter(
         stock_quantity__lte=models.F("reorder_threshold"),
         stock_quantity__gt=0,
     ).count()
-    out_of_stock_items = Product.objects.filter(
-        is_active=True, stock_quantity=0
+    out_of_stock_items = products.filter(
+        stock_quantity=0
     ).count()
 
     return Response({
@@ -48,6 +52,11 @@ def inventory_list(request):
         
         # Get base queryset
         products = Product.objects.filter(is_active=True).order_by("name")
+        
+        # Filter by pharmacy
+        if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+            products = products.filter(pharmacy=request.user.pharmacy)
+            print(f"[Inventory Debug] Filtered by pharmacy: {request.user.pharmacy.name}")
         print(f"[Inventory Debug] Initial active products: {products.count()}")
         
         # Search functionality
@@ -80,6 +89,11 @@ def inventory_list(request):
         
         # Now get active products
         products = Product.objects.filter(is_active=True).order_by("name")
+        
+        # Filter by pharmacy
+        if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+            products = products.filter(pharmacy=request.user.pharmacy)
+            
         print(f"\n[Inventory Debug] Active products: {products.count()}")
         print("  Sample active products:")
         for p in products[:2]:
@@ -222,7 +236,12 @@ def low_stock_items(request):
         is_active=True,
         stock_quantity__lte=models.F("reorder_threshold"),
         stock_quantity__gt=0,
-    ).order_by("stock_quantity")
+    )
+    
+    if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+        products = products.filter(pharmacy=request.user.pharmacy)
+        
+    products = products.order_by("stock_quantity")
 
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
@@ -234,7 +253,12 @@ def out_of_stock_items(request):
     products = Product.objects.filter(
         is_active=True,
         stock_quantity=0
-    ).order_by("name")
+    )
+    
+    if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+        products = products.filter(pharmacy=request.user.pharmacy)
+        
+    products = products.order_by("name")
 
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)

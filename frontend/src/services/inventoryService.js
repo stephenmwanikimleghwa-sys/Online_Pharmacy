@@ -29,14 +29,14 @@ export const inventoryService = {
       // Make the request to the products endpoint using the shared api client
       console.log('[Inventory Service] Fetching inventory from products endpoint');
       const response = await api.get('/inventory/products/', { params });
-      
+
       // Log successful response
       console.log('[Inventory Service] Inventory fetched successfully:', {
         status: response.status,
         itemCount: response.data?.products?.length || 0,
         totalItems: response.data?.totalItems || 0
       });
-      
+
       return response;
     } catch (error) {
       // Enhanced error logging
@@ -46,12 +46,12 @@ export const inventoryService = {
         data: error.response?.data,
         stack: error.stack
       });
-      
+
       // If unauthorized, log and rethrow so callers can stop polling or redirect
       if (error.response?.status === 401) {
         console.warn('[Inventory Service] Auth token invalid or expired');
       }
-      
+
       throw error;
     }
   },
@@ -121,6 +121,43 @@ export const inventoryService = {
       status,
     });
   },
+
+  // --- Supplier Management ---
+  getSuppliers: (params = {}) => {
+    return api.get('/inventory/suppliers/', { params });
+  },
+
+  getSupplier: (id) => {
+    return api.get(`/inventory/suppliers/${id}/`);
+  },
+
+  createSupplier: (data) => {
+    return api.post('/inventory/suppliers/', data);
+  },
+
+  updateSupplier: (id, data) => {
+    return api.patch(`/inventory/suppliers/${id}/`, data);
+  },
+
+  deleteSupplier: (id) => {
+    return api.delete(`/inventory/suppliers/${id}/`);
+  },
+
+  // --- Batch Management ---
+  getBatches: (params = {}) => {
+    return api.get('/inventory/batches/', { params });
+  },
+
+  getBatch: (id) => {
+    return api.get(`/inventory/batches/${id}/`);
+  },
+
+  // Get stock usage stats
+  getStockUsage: async (dateRange) => {
+    // TODO: Implement backend endpoint for stock usage
+    // For now returning empty array to prevent crash
+    return { data: [] };
+  }
 };
 
 export default inventoryService;

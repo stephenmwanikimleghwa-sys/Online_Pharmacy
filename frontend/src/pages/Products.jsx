@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useCart } from '../context/CartContext';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 import { FunnelIcon } from '@heroicons/react/24/outline';
@@ -11,8 +11,27 @@ const Products = () => {
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('name');
-  const { addToCart } = useCart();
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const { token } = useAuth();
+
+  const categories = [
+    'pain_relief',
+    'antibiotics',
+    'vitamins',
+    'chronic_care',
+    'dermatology',
+    'other'
+  ];
+
+  const categoryLabels = {
+    pain_relief: 'Pain Relief',
+    antibiotics: 'Antibiotics',
+    vitamins: 'Vitamins & Supplements',
+    chronic_care: 'Chronic Care',
+    dermatology: 'Dermatology',
+    other: 'Other'
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -37,6 +56,22 @@ const Products = () => {
 
     fetchProducts();
   }, [token]);
+
+  // Filter and sort products
+  const filteredProducts = products
+    .filter(product => {
+      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const matchesSearch = !searchTerm || 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'price') return a.price - b.price;
+      if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+      return 0;
+    });
 
   const renderSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -98,14 +133,47 @@ const Products = () => {
 
       {/* Collapsible Filters */}
       <div className={`${showFilters ? 'block' : 'hidden'} mb-6 bg-white p-4 rounded-lg shadow-sm`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Add filter controls here */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Search */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Price Range</label>
-            <div className="flex gap-2">
-              <input type="number" placeholder="Min" className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-              <input type="number" placeholder="Max" className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-            </div>
+            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <input 
+              type="text" 
+              placeholder="Search by name or description..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2" 
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {categoryLabels[cat]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Reset Filters */}
+          <div className="space-y-2 flex items-end">
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategory('');
+              }}
+              className="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-md transition"
+            >
+              Reset Filters
+            </button>
           </div>
         </div>
       </div>
@@ -115,15 +183,14 @@ const Products = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={addToCart}
               />
             ))}
           </div>
-          {products.length === 0 && (
+          {filteredProducts.length === 0 && (
             <div className="text-center py-16">
               <div className="mx-auto h-12 w-12 text-gray-400">
                 <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,7 +198,7 @@ const Products = () => {
                 </svg>
               </div>
               <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
-              <p className="mt-1 text-sm text-gray-500">Check back later for new products!</p>
+              <p className="mt-1 text-sm text-gray-500">Try adjusting your filters or search terms.</p>
             </div>
           )}
         </>

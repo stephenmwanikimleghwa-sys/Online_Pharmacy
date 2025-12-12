@@ -12,6 +12,16 @@
   box-sizing: border-box;
 }
 
+/* Custom color variables for the pharmacy theme */
+:root {
+  --primary-blue: #0ea5e9; /* Sky 500 */
+  --primary-dark: #0284c7; /* Sky 600 */
+  --secondary-green: #10b981; /* Emerald 500 */
+  --neutral-bg: #f8fafc; /* Slate 50 */
+  --text-main: #1e293b; /* Slate 800 */
+  --text-muted: #64748b; /* Slate 500 */
+}
+
 body {
   font-family:
     "Inter",
@@ -21,18 +31,26 @@ body {
     "Roboto",
     sans-serif;
   line-height: 1.6;
-  color: #1f2937; /* Tailwind gray-800 for text */
-  background-color: #f9fafb; /* Tailwind gray-50 */
+  color: var(--text-main);
+  background-color: var(--neutral-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom color variables for the pharmacy theme */
-:root {
-  --primary-blue: #1d4ed8;
-  --secondary-white: #ffffff;
-  --neutral-gray: #f3f4f6;
-  --accent-green: #10b981;
-  --text-dark: #111827;
-  --text-light: #6b7280;
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 /* Utility classes for theme colors */
@@ -47,24 +65,10 @@ body {
 }
 
 .bg-secondary {
-  background-color: var(--secondary-white);
+  background-color: var(--secondary-green);
 }
 .text-secondary {
-  color: var(--secondary-white);
-}
-
-.bg-neutral {
-  background-color: var(--neutral-gray);
-}
-.text-neutral {
-  color: var(--neutral-gray);
-}
-
-.bg-accent {
-  background-color: var(--accent-green);
-}
-.text-accent {
-  color: var(--accent-green);
+  color: var(--secondary-green);
 }
 
 /* Responsive scrollbar */
@@ -73,16 +77,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-blue);
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1e40af;
+  background: #94a3b8;
 }
 
 /* Smooth scroll */

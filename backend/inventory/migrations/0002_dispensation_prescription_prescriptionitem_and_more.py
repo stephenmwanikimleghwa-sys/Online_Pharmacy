@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('products', '0005_make_pharmacy_optional'),
+        ('products', '0004_merge_20251031_1133'),
         ('inventory', '0001_initial'),
     ]
 

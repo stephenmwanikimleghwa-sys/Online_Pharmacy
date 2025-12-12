@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('dispensing_logs', '0001_initial'),
-        ('products', '0005_make_pharmacy_optional'),
+        ('products', '0004_merge_20251031_1133'),
         ('orders', '0002_initial'),
     ]
 

@@ -1,0 +1,39 @@
+from rest_framework import serializers
+from ..models.stock_intake import StockIntake
+from products.serializers import ProductSerializer
+
+
+class StockIntakeSerializer(serializers.ModelSerializer):
+    """Serializer for StockIntake records."""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    received_by_username = serializers.CharField(source='received_by.username', read_only=True)
+    
+    class Meta:
+        model = StockIntake
+        fields = [
+            'id',
+            'product',
+            'product_name',
+            'distributor_name',
+            'quantity_received',
+            'unit_cost',
+            'total_cost',
+            'expiry_date',
+            'batch_number',
+            'received_date',
+            'received_by',
+            'received_by_username',
+            'notes',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'total_cost', 'received_date', 'created_at', 'updated_at', 'received_by']
+
+
+class StockIntakeDetailSerializer(StockIntakeSerializer):
+    """Detailed serializer for StockIntake with related product info."""
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True, required=True)
+    
+    class Meta(StockIntakeSerializer.Meta):
+        fields = StockIntakeSerializer.Meta.fields + ['product_id']

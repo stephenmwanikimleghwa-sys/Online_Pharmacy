@@ -1,12 +1,16 @@
 from rest_framework import serializers
-from .models import Product, CategoryChoices
+from products.models import Product, CategoryChoices
 from django.core.exceptions import ValidationError
+from .pricing_tier import PricingTierSerializer
+from typing import Any, Dict
+from decimal import Decimal
 
 
 class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for listing and retrieving products.
     """
+    pricing_tier = PricingTierSerializer(read_only=True)
 
     class Meta:
         model = Product
@@ -15,9 +19,13 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "category",
+            "dosage_form",
+            "manufacturer",
+            "strength",
             "supplier",
             "expiry_date",
             "price",
+            "pricing_tier",
             "stock_quantity",
             "reorder_threshold",
             "image",
@@ -43,6 +51,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "category",
+            "dosage_form",
+            "manufacturer",
+            "strength",
             "price",
             "stock_quantity",
             "supplier",
@@ -52,17 +63,26 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
     # Removed validate_pharmacy since we're auto-assigning pharmacy
 
-    def validate_price(self, value):
+    def validate_price(self, value: Decimal) -> Decimal:
+        """
+        Validate that the price is greater than 0.
+        """
         if value <= 0:
             raise ValidationError("Price must be greater than 0.")
         return value
 
-    def validate_stock_quantity(self, value):
+    def validate_stock_quantity(self, value: int) -> int:
+        """
+        Validate that stock quantity is non-negative.
+        """
         if value < 0:
             raise ValidationError("Stock quantity cannot be negative.")
         return value
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Product:
+        """
+        Create a new product instance.
+        """
         # Create products without pharmacy association
         return super().create(validated_data)
 
@@ -84,18 +104,27 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "category",
+            "dosage_form",
+            "manufacturer",
+            "strength",
             "price",
             "stock_quantity",
             "image",
             "is_active",
         )
 
-    def validate_price(self, value):
+    def validate_price(self, value: Decimal) -> Decimal:
+        """
+        Validate that the price is greater than 0 if provided.
+        """
         if value is not None and value <= 0:
             raise ValidationError("Price must be greater than 0.")
         return value
 
-    def validate_stock_quantity(self, value):
+    def validate_stock_quantity(self, value: int) -> int:
+        """
+        Validate that stock quantity is non-negative if provided.
+        """
         if value is not None and value < 0:
             raise ValidationError("Stock quantity cannot be negative.")
         return value

@@ -5,13 +5,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
-from ..serializers import (
+from users.serializers import (
     UserLoginSerializer,
     UserProfileSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer,
 )
-from ..models import User, RoleChoices
+from users.models import User, RoleChoices
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 

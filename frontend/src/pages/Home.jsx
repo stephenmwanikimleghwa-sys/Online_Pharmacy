@@ -17,10 +17,10 @@ const Home = () => {
         setLoading(true);
         setError(null);
         console.log('[Home Debug] Fetching featured products from:', `${api.defaults.baseURL}/products/featured/`);
-        
+
         // First check if the API is accessible
         try {
-          await api.get('/api/health/');
+          await api.get('/health/');
         } catch (healthError) {
           console.error('[Home Debug] API health check failed:', {
             error: healthError.message,
@@ -28,20 +28,20 @@ const Home = () => {
           });
           // Don't throw here, still try to fetch products
         }
-        
+
         // Use shared API instance (handles baseURL + auth interceptors)
-        const productsRes = await api.get(`/api/products/featured/`);
-        
+        const productsRes = await api.get(`/products/featured/`);
+
         console.log('[Home Debug] Featured products response:', {
           status: productsRes.status,
           headers: productsRes.headers,
           data: productsRes.data
         });
-        
+
         // Safely extract and validate products data
         const raw = productsRes?.data;
         let items = [];
-        
+
         if (Array.isArray(raw)) {
           items = raw;
         } else if (Array.isArray(raw?.results)) {
@@ -51,18 +51,18 @@ const Home = () => {
         } else {
           console.warn('[Home Debug] Unexpected response format:', raw);
         }
-        
+
         // Validate each product has required fields
         const validProducts = items.filter(product => (
-          product && 
-          typeof product === 'object' && 
+          product &&
+          typeof product === 'object' &&
           product.id &&
           product.name &&
           typeof product.price !== 'undefined'
         ));
-        
+
         console.log('[Home Debug] Valid featured products:', validProducts);
-        
+
         // Only take the first 4 products
         setFeaturedProducts(validProducts.slice(0, 4));
       } catch (error) {
@@ -102,68 +102,100 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            Welcome to Transcounty Pharmacy
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Your trusted online pharmacy in Kenya. Essential medications with
-            fast, secure, and convenient delivery at your doorstep.
-          </p>
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-md mx-auto mb-8">
-            <div className="flex bg-white rounded-lg shadow-lg overflow-hidden">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 text-gray-700 focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="bg-green-500 hover:bg-green-600 px-6 py-3 text-white font-semibold transition-colors"
+      <section className="relative overflow-hidden bg-slate-50 pt-16 pb-32">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary-200 blur-3xl opacity-50 animate-float"></div>
+          <div className="absolute top-1/2 -left-24 w-72 h-72 rounded-full bg-secondary-200 blur-3xl opacity-50 animate-float" style={{ animationDelay: '1s' }}></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 tracking-tight animate-fade-in">
+              Healthcare <span className="text-primary-500">Simplified</span>
+            </h1>
+            <p className="text-xl text-slate-600 mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              Your trusted partner for authentic medications. Fast delivery, secure payments, and professional care right at your doorstep.
+            </p>
+
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-primary-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                <div className="relative flex bg-white rounded-2xl shadow-soft overflow-hidden border border-slate-100 p-2">
+                  <input
+                    type="text"
+                    placeholder="Search for medicines, brands, or categories..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-6 py-3 text-slate-700 placeholder-slate-400 focus:outline-none text-lg bg-transparent"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-primary-500/30"
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <div className="flex justify-center gap-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+              <Link
+                to="/products"
+                className="inline-flex items-center px-6 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 hover:border-primary-500 hover:text-primary-600 transition-all shadow-sm hover:shadow-md"
               >
-                Search
-              </button>
+                Browse Catalog
+              </Link>
+              <Link
+                to="/upload-prescription"
+                className="inline-flex items-center px-6 py-3 rounded-xl bg-secondary-50 text-secondary-600 font-semibold hover:bg-secondary-100 transition-all"
+              >
+                Upload Prescription
+              </Link>
             </div>
-          </form>
-          <Link
-            to="/products"
-            className="inline-block bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Browse Products
-          </Link>
+          </div>
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 px-4">
+      <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            Featured Products
-          </h2>
-          
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                Featured Products
+              </h2>
+              <p className="text-slate-500">Curated selection of our best-selling items</p>
+            </div>
+            <Link
+              to="/products"
+              className="hidden sm:inline-flex items-center text-primary-600 font-semibold hover:text-primary-700 transition-colors"
+            >
+              View All
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </Link>
+          </div>
+
           {loading ? (
             // Loading state with skeleton
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[...Array(4)].map((_, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
-                  <div className="aspect-w-16 aspect-h-9 bg-gray-200" />
+                <div key={index} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-pulse">
+                  <div className="aspect-w-1 aspect-h-1 bg-slate-100" />
                   <div className="p-6 space-y-4">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                    <div className="h-6 bg-gray-200 rounded w-1/3" />
-                    <div className="h-10 bg-gray-200 rounded" />
+                    <div className="h-4 bg-slate-100 rounded w-3/4" />
+                    <div className="h-4 bg-slate-100 rounded w-1/2" />
+                    <div className="h-8 bg-slate-100 rounded w-1/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : error ? (
             // Error state
-            <div className="text-center py-8">
-              <div className="inline-flex items-center px-4 py-2 rounded-md bg-red-50 text-red-600">
+            <div className="text-center py-12">
+              <div className="inline-flex items-center px-4 py-2 rounded-xl bg-red-50 text-red-600 border border-red-100">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
@@ -171,79 +203,91 @@ const Home = () => {
               </div>
             </div>
           ) : (!Array.isArray(featuredProducts) || featuredProducts.length === 0) ? (
-            // Empty state with illustration and CTA
-            <div className="text-center py-12">
+            // Empty state
+            <div className="text-center py-20 bg-slate-50 rounded-3xl border border-slate-100">
               <div className="max-w-md mx-auto">
-                <svg className="mx-auto h-24 w-24 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="mx-auto h-24 w-24 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">No Featured Products Yet</h3>
-                <p className="mt-2 text-gray-500">
+                <h3 className="mt-6 text-xl font-semibold text-slate-900">No Featured Products Yet</h3>
+                <p className="mt-2 text-slate-500">
                   We're currently curating our featured products collection.
-                  Check back soon or browse our complete catalog.
                 </p>
-                <div className="mt-6">
+                <div className="mt-8">
                   <Link
                     to="/products"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 transition-all"
                   >
                     Browse All Products
-                    <svg xmlns="http://www.w3.org/2000/svg" className="ml-2 -mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
                   </Link>
                 </div>
               </div>
             </div>
           ) : (
             // Products grid
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {(Array.isArray(featuredProducts) ? featuredProducts : []).map((product) => (
                 <div
                   key={product.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-card transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  {product.image && (
-                    <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                  <div className="relative aspect-w-1 aspect-h-1 bg-slate-50 overflow-hidden">
+                    {product.image ? (
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="object-cover w-full h-full"
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                       />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-slate-300">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="w-full bg-white text-slate-900 py-2 rounded-lg font-semibold text-sm hover:bg-primary-50 transition-colors text-center shadow-lg"
+                      >
+                        Quick View
+                      </Link>
                     </div>
-                  )}
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  </div>
+                  <div className="p-5">
+                    <div className="mb-2">
+                      <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-full">
+                        {product.category || 'Medicine'}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1 line-clamp-1">
                       {product.name}
                     </h3>
-                    {product.category && (
-                      <p className="text-gray-600 mb-4">{product.category}</p>
-                    )}
-                    <p className="text-2xl font-bold text-green-600 mb-4">
-                      KSh {product.price.toLocaleString()}
+                    <p className="text-sm text-slate-500 mb-4 line-clamp-2">
+                      {product.description || 'No description available.'}
                     </p>
-                    <Link
-                      to={`/products/${product.id}`}
-                      className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded-lg font-semibold transition-colors"
-                    >
-                      View Product
-                    </Link>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xl font-bold text-slate-900">
+                        KSh {product.price.toLocaleString()}
+                      </p>
+                      <button className="p-2 rounded-full bg-slate-100 text-slate-600 hover:bg-primary-500 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-          
-          {/* Always show "Browse All" link */}
-          <div className="text-center mt-8">
+
+          <div className="text-center mt-12 sm:hidden">
             <Link
               to="/products"
-              className="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-md font-semibold transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors"
             >
               Browse All Products
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-              </svg>
             </Link>
           </div>
         </div>

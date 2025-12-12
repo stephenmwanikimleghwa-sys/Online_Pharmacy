@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin
+from users.models import RoleChoices
 from django.db.models import Q
 from ..models import RestockRequest
 from ..serializers.restock import RestockRequestSerializer
@@ -27,7 +28,7 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(product_id=product_id)
 
         # Regular users can only see their own requests
-        if not (user.is_pharmacist or user.is_superuser):
+        if not (user.role == RoleChoices.PHARMACIST or user.is_superuser):
             queryset = queryset.filter(requested_by=user)
             
         return queryset.select_related('product', 'requested_by', 'approved_by')
@@ -37,7 +38,7 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        if not (request.user.is_pharmacist or request.user.is_superuser):
+        if not (request.user.role == RoleChoices.PHARMACIST or request.user.is_superuser):
             return Response(
                 {"detail": "Only pharmacists and admins can approve requests"},
                 status=status.HTTP_403_FORBIDDEN
@@ -60,7 +61,7 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        if not (request.user.is_pharmacist or request.user.is_superuser):
+        if not (request.user.role == RoleChoices.PHARMACIST or request.user.is_superuser):
             return Response(
                 {"detail": "Only pharmacists and admins can reject requests"},
                 status=status.HTTP_403_FORBIDDEN
@@ -84,7 +85,7 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
-        if not (request.user.is_pharmacist or request.user.is_superuser):
+        if not (request.user.role == RoleChoices.PHARMACIST or request.user.is_superuser):
             return Response(
                 {"detail": "Only pharmacists and admins can complete requests"},
                 status=status.HTTP_403_FORBIDDEN
@@ -128,7 +129,7 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
         
         # Only the requester, pharmacists, or admins can cancel
         if (restock_request.requested_by != request.user and 
-            not request.user.is_pharmacist and 
+            not (request.user.role == RoleChoices.PHARMACIST) and 
             not request.user.is_superuser):
             return Response(
                 {"detail": "You don't have permission to cancel this request"},

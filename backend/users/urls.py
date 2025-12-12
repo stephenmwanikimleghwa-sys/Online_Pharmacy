@@ -1,4 +1,7 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views.pharmacy import PharmacyViewSet
+
 # Import views from the views package submodules to avoid name collision
 from .views.core_views import (
     UserLoginView,
@@ -18,7 +21,11 @@ from .views.admin_views import (
 
 app_name = "users"
 
+router = DefaultRouter()
+router.register(r'pharmacies', PharmacyViewSet, basename='pharmacy')
+
 urlpatterns = [
+    path('', include(router.urls)),
     path("login/", UserLoginView.as_view(), name="login"),
     # Profile management
     # Simple function-based profile endpoint returns the authenticated user's data

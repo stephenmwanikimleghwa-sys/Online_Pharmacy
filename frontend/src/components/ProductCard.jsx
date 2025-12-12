@@ -1,8 +1,8 @@
 import React from 'react';
-import { HeartIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { HeartIcon } from '@heroicons/react/24/outline';
 import ImageWithFallback from './ImageWithFallback';
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product }) => {
   const { id, name, price, image, pharmacy, category } = product;
 
   return (
@@ -45,15 +45,6 @@ const ProductCard = ({ product, onAddToCart }) => {
             KSh {price.toLocaleString()}
           </span>
         </div>
-
-        {/* Add to Cart Button */}
-        <button
-          onClick={() => onAddToCart(product)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
-        >
-          <ShoppingCartIcon className="w-5 h-5" />
-          Add to Cart
-        </button>
       </div>
     </div>
   );

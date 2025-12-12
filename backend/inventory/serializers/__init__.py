@@ -7,6 +7,7 @@ from .dispensing import (
 )
 from .restock import RestockRequestSerializer
 from .stock import StockLogSerializer
+from .stock_intake import StockIntakeSerializer, StockIntakeDetailSerializer
 
 __all__ = [
     'PrescriptionSerializer',
@@ -15,4 +16,6 @@ __all__ = [
     'DispensationItemSerializer',
     'RestockRequestSerializer',
     'StockLogSerializer',
+    'StockIntakeSerializer',
+    'StockIntakeDetailSerializer',
 ]

@@ -60,6 +60,7 @@ urlpatterns = [
     path("api/reviews/", include("reviews.urls")),
     path("api/inventory/", include("inventory.urls")),
     path("api/dispensing-logs/", include("dispensing_logs.urls")),
+    path("api/reports/", include("reports.urls")),
 ]
 
 # Serve static and media files in development

@@ -104,7 +104,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         )
 
         for item_data in items_data:
-            product = item_data.pop("product_id")
+            product = item_data.pop("product")
             OrderItem.objects.create(
                 order=order,
                 product=product,

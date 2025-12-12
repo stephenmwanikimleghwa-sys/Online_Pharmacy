@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from '../context/AuthContext';
+import { useAuth, LoginCredentials, User } from '../context/AuthContext';
 import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const Login = () => {
-  const [credentials, setCredentials] = useState({
+const Login: React.FC = () => {
+  const [credentials, setCredentials] = useState<LoginCredentials>({
     username: "",
     password: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const { login, isAuthenticated, getDashboardPath } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,7 +23,7 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, getDashboardPath]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCredentials((prev) => ({
       ...prev,
@@ -31,7 +31,7 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -40,33 +40,33 @@ const Login = () => {
       username: credentials.username,
       password: '[REDACTED]'
     });
-    
+
     const result = await login(credentials);
     console.log('[Login Debug] Login result:', {
       success: result.success,
       user: result.user,
       error: result.error
     });
-    
-  if (result.success) {
+
+    if (result.success) {
       const returnedUser = result.user;
       console.log('[Login Debug] Processing successful login:', {
         returnedUser
       });
 
       // Get the normalized role from various possible fields
-      const determineRole = (user) => {
+      const determineRole = (user: User | null | undefined): string | null => {
         if (!user) return null;
-        
+
         // Check explicit role fields
         if (user.role) return user.role.toString().toLowerCase();
         if (user.user_type) return user.user_type.toString().toLowerCase();
-        
+
         // Check boolean flags
         if (user.is_pharmacist) return 'pharmacist';
         if (user.is_admin) return 'admin';
         if (user.is_customer) return 'customer';
-        
+
         return null;
       };
 
@@ -113,7 +113,7 @@ const Login = () => {
       // { non_field_errors: [...]} or { username: [...], password: [...] }
       const err = result.error;
 
-      const formatError = (errObj) => {
+      const formatError = (errObj: any): string => {
         if (!errObj) return "Login failed. Please check your credentials.";
         if (typeof errObj === "string") return errObj;
         if (errObj.non_field_errors && errObj.non_field_errors.length)
@@ -121,7 +121,7 @@ const Login = () => {
         if (errObj.detail) return errObj.detail;
 
         // Field-level errors
-        const fieldMessages = [];
+        const fieldMessages: string[] = [];
         ["username", "password", "email"].forEach((f) => {
           if (errObj[f]) {
             const msgs = Array.isArray(errObj[f]) ? errObj[f].join(" ") : String(errObj[f]);

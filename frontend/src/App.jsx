@@ -9,7 +9,6 @@
 import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import PharmacistDashboard from "./pages/PharmacistDashboard";
@@ -23,16 +22,17 @@ import DispensingLogsPage from "./pages/DispensingLogsPage";
 
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
 import UserAccount from "./pages/UserAccount";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStock from "./pages/AdminStock";
+import StockIntakeLog from "./pages/StockIntakeLog";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ManageUsers from "./pages/ManageUsers";
 import "./App.css";
+
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   const location = useLocation();
@@ -40,29 +40,23 @@ function App() {
 
   return (
     <AuthProvider>
-      <CartProvider>
-        <div className="App">
-          {!isAuthPage && <Navbar />}
-          <main className="main-content">
+      <div className="App">
+        {!isAuthPage && <Navbar />}
+        <main className="main-content">
+          <ErrorBoundary>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:id" element={<ProductDetails />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
-              
+
+              {/* Protected Routes */}
+              <Route path="/products" element={<ProtectedRoute element={Products} />} />
+              <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
+
               {/* Protected Customer Routes */}
               <Route
                 path="/admin/stock"
                 element={<ProtectedRoute element={AdminStock} allowedRoles={["admin"]} />}
-              />
-              <Route
-                path="/cart"
-                element={<ProtectedRoute element={Cart} allowedRoles={['customer']} />}
-              />
-              <Route
-                path="/checkout"
-                element={<ProtectedRoute element={Checkout} allowedRoles={['customer']} />}
               />
               <Route
                 path="/customer/dashboard"
@@ -94,6 +88,10 @@ function App() {
                 path="/inventory"
                 element={<ProtectedRoute element={InventoryManagement} allowedRoles={['pharmacist', 'admin']} />}
               />
+              <Route
+                path="/stock-intake"
+                element={<ProtectedRoute element={StockIntakeLog} allowedRoles={['pharmacist', 'admin']} />}
+              />
 
               {/* Protected Admin Routes */}
               <Route
@@ -120,10 +118,10 @@ function App() {
               {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </main>
-          {!isAuthPage && <Footer />}
-        </div>
-      </CartProvider>
+          </ErrorBoundary>
+        </main>
+        {!isAuthPage && <Footer />}
+      </div>
     </AuthProvider>
   );
 }

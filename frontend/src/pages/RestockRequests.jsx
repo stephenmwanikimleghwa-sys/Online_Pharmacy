@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, Transition as HeadlessTransition } from '@headlessui/react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 const STATUS_COLORS = {
@@ -291,7 +291,7 @@ const RestockRequests = () => {
       </div>
 
       {/* Create/Edit Modal */}
-      <Transition show={isModalOpen} as={React.Fragment}>
+      <HeadlessTransition show={isModalOpen} as={React.Fragment}>
         <Dialog
           as="div"
           className="fixed inset-0 z-10 overflow-y-auto"
@@ -404,7 +404,7 @@ const RestockRequests = () => {
             </div>
           </div>
         </Dialog>
-      </Transition>
+      </HeadlessTransition>
     </div>
   );
 };
