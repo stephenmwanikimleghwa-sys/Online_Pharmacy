@@ -7,14 +7,14 @@ from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsPharmacistOrAdmin
+from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
 from products.models import Product, StockLog
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
 import traceback
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def inventory_summary(request):
     """Get inventory summary for pharmacist dashboard."""
     # Filter by pharmacy
@@ -229,7 +229,7 @@ def inventory_list(request):
         )
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def low_stock_items(request):
     """Get list of low stock items."""
     products = Product.objects.filter(
@@ -247,7 +247,7 @@ def low_stock_items(request):
     return Response(serializer.data)
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def out_of_stock_items(request):
     """Get list of out of stock items."""
     products = Product.objects.filter(
@@ -264,7 +264,7 @@ def out_of_stock_items(request):
     return Response(serializer.data)
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def inventory_detail(request, pk):
     """Get detailed information about a specific inventory item."""
     product = get_object_or_404(Product, pk=pk, is_active=True)
@@ -353,7 +353,7 @@ def adjust_inventory(request, pk):
     return Response(serializer.data)
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def stock_logs(request, pk):
     """Get stock logs for a specific product."""
     product = get_object_or_404(Product, pk=pk)

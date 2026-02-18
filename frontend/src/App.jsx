@@ -19,11 +19,15 @@ import DispensePrescription from "./pages/DispensePrescription";
 import InventoryManagement from "./pages/InventoryManagement";
 import ReportsDashboard from "./pages/ReportsDashboard";
 import DispensingLogsPage from "./pages/DispensingLogsPage";
+import PharmacyLicensing from "./pages/PharmacyLicensing";
+import CashierDashboard from "./pages/CashierDashboard";
 
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import UserAccount from "./pages/UserAccount";
 import Login from "./pages/Login";
+import PasswordResetRequest from "./pages/PasswordResetRequest";
+import PasswordResetConfirm from "./pages/PasswordResetConfirm";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStock from "./pages/AdminStock";
 import StockIntakeLog from "./pages/StockIntakeLog";
@@ -46,8 +50,9 @@ function App() {
           <ErrorBoundary>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/password-reset" element={<PasswordResetRequest />} />
+              <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
 
               {/* Protected Routes */}
               <Route path="/products" element={<ProtectedRoute element={Products} />} />
@@ -86,7 +91,7 @@ function App() {
               />
               <Route
                 path="/inventory"
-                element={<ProtectedRoute element={InventoryManagement} allowedRoles={['pharmacist', 'admin']} />}
+                element={<ProtectedRoute element={InventoryManagement} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
               />
               <Route
                 path="/stock-intake"
@@ -108,11 +113,19 @@ function App() {
               />
               <Route
                 path="/reports"
-                element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist']} />}
+                element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
               />
               <Route
                 path="/dispensing-logs"
                 element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
+              />
+              <Route
+                path="/licensing"
+                element={<ProtectedRoute element={PharmacyLicensing} allowedRoles={['admin', 'pharmacist']} />}
+              />
+              <Route
+                path="/cashier/dashboard"
+                element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
               />
 
               {/* Catch-all redirect */}

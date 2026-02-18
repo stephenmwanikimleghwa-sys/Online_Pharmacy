@@ -30,10 +30,13 @@ class ProductSerializer(serializers.ModelSerializer):
             "reorder_threshold",
             "image",
             "is_active",
+            "is_low_stock",
+            "expiry_status",
+            "days_until_expiry",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "created_at", "updated_at")
+        read_only_fields = ("id", "is_low_stock", "expiry_status", "days_until_expiry", "created_at", "updated_at")
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):

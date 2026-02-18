@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin
 from django.shortcuts import get_object_or_404
 from django.db import transaction
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
 from datetime import timedelta
 
@@ -25,10 +25,15 @@ from ..serializers.dispensing import (
 )
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsPharmacistOrAdmin]
+    permission_classes = [IsAuditorOrAdmin]
     serializer_class = PrescriptionSerializer
     queryset = Prescription.objects.all().order_by('-created_at')
     
+    def get_permissions(self):
+        if self.action in ['create', 'verify', 'update', 'partial_update', 'destroy']:
+            return [IsPharmacistOrAdmin()]
+        return super().get_permissions()
+
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
     
@@ -48,9 +53,14 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(prescription).data)
 
 class DispensationViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsPharmacistOrAdmin]
+    permission_classes = [IsAuditorOrAdmin]
     serializer_class = DispensationSerializer
     queryset = Dispensation.objects.all().order_by('-dispensed_at')
+    
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsPharmacistOrAdmin()]
+        return super().get_permissions()
     
     def perform_create(self, serializer):
         with transaction.atomic():
@@ -124,7 +134,7 @@ def dispense_otc(request):
         return Response(DispensationSerializer(dispensation).data)
 
 @api_view(['GET'])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def dispensing_stats(request):
     """
     Get dispensing statistics for different time periods
@@ -168,7 +178,7 @@ def dispensing_stats(request):
         stock_quantity__gt=0
     ).aggregate(
         total_items=Count('id'),
-        total_value=Sum(models.F('stock_quantity') * models.F('price'))
+        total_value=Sum(F('stock_quantity') * F('price'))
     )
     
     return Response({

@@ -8,83 +8,90 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
   } = summary;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Inventory Summary</h2>
+    <div className="glass-card rounded-2xl p-6 border border-white/50 shadow-premium">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Inventory Summary</h2>
+          <p className="text-slate-500 text-sm mt-1">Real-time overview of current pharmaceutical stock levels.</p>
+        </div>
         <button
           onClick={onViewInventory}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-soft hover:shadow-glow hover:bg-indigo-700 transition-all active:scale-[0.98] text-sm"
         >
           View Full Inventory
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Products */}
-        <div className="bg-blue-50 p-4 rounded-lg">
+        <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 group hover:border-indigo-200 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-800">Total Products</p>
-              <p className="text-2xl font-bold text-blue-900">{totalProducts}</p>
+              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Total Products</p>
+              <p className="text-3xl font-display font-bold text-indigo-900">{totalProducts}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
           </div>
         </div>
 
         {/* Low Stock */}
-        <div className={`p-4 rounded-lg ${lowStockItems > 0 ? 'bg-yellow-50' : 'bg-green-50'}`}>
+        <div className={`p-5 rounded-2xl border transition-all group ${lowStockItems > 0 ? 'bg-amber-50/50 border-amber-100 hover:border-amber-200' : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-yellow-800">Low Stock Items</p>
-              <p className={`text-2xl font-bold ${lowStockItems > 0 ? 'text-yellow-900' : 'text-green-900'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${lowStockItems > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>Low Stock Items</p>
+              <p className={`text-3xl font-display font-bold ${lowStockItems > 0 ? 'text-amber-900' : 'text-emerald-900'}`}>
                 {lowStockItems}
               </p>
             </div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${lowStockItems > 0 ? 'bg-yellow-600' : 'bg-green-600'}`}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform ${lowStockItems > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
           </div>
         </div>
 
         {/* Out of Stock */}
-        <div className={`p-4 rounded-lg ${outOfStockItems > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+        <div className={`p-5 rounded-2xl border transition-all group ${outOfStockItems > 0 ? 'bg-rose-50/50 border-rose-100 hover:border-rose-200' : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-red-800">Out of Stock</p>
-              <p className={`text-2xl font-bold ${outOfStockItems > 0 ? 'text-red-900' : 'text-green-900'}`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${outOfStockItems > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>Out of Stock</p>
+              <p className={`text-3xl font-display font-bold ${outOfStockItems > 0 ? 'text-rose-900' : 'text-emerald-900'}`}>
                 {outOfStockItems}
               </p>
             </div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${outOfStockItems > 0 ? 'bg-red-600' : 'bg-green-600'}`}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform ${outOfStockItems > 0 ? 'bg-rose-500' : 'bg-emerald-500'}`}>
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
           </div>
         </div>
       </div>
 
-      {lowStockItems > 0 && (
-        <div className="mt-4 p-3 bg-yellow-100 border border-yellow-200 rounded-md">
-          <p className="text-sm text-yellow-800">
-            ⚠️ {lowStockItems} product{lowStockItems !== 1 ? 's' : ''} running low on stock
-          </p>
-        </div>
-      )}
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {lowStockItems > 0 && (
+          <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-100/50 rounded-xl">
+            <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white rounded-lg text-amber-500 font-bold shadow-sm">!</span>
+            <p className="text-sm font-semibold text-amber-800">
+              {lowStockItems} product{lowStockItems !== 1 ? 's' : ''} running low on stock
+            </p>
+          </div>
+        )}
 
-      {outOfStockItems > 0 && (
-        <div className="mt-2 p-3 bg-red-100 border border-red-200 rounded-md">
-          <p className="text-sm text-red-800">
-            ❌ {outOfStockItems} product{outOfStockItems !== 1 ? 's' : ''} out of stock
-          </p>
-        </div>
-      )}
+        {outOfStockItems > 0 && (
+          <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100/50 rounded-xl">
+            <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white rounded-lg text-rose-500 font-bold shadow-sm">!</span>
+            <p className="text-sm font-semibold text-rose-800">
+              {outOfStockItems} product{outOfStockItems !== 1 ? 's' : ''} out of stock
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -4,25 +4,18 @@ A comprehensive pharmacy management system built with Django REST Framework and 
 
 ##  Features
 
-### For Customers
-- **Product Discovery**: Browse and search pharmaceutical products
-- **Prescription Upload**: Upload prescriptions for validation and processing
-- **Order Management**: Track orders from prescription to delivery
-- **User Account**: Manage profile and order history
-- **Cart & Checkout**: Secure shopping cart with multiple payment options
-
 ### For Pharmacists
-- **Prescription Management**: Validate and process customer prescriptions
-- **Inventory Control**: Real-time stock monitoring and management
-- **Order Processing**: Dispense medications and manage deliveries
-- **Dashboard**: Comprehensive analytics and reporting
-- **Stock Alerts**: Automated low-stock notifications
+- **Prescription Management**: Digitally record and verify physical patient prescriptions
+- **Inventory Control**: Real-time stock monitoring and batch-level tracking
+- **Direct Dispensing**: Efficiently dispense medications to walk-in customers
+- **Stock Alerts**: Automated low-stock notifications for critical drugs
+- **Internal Logs**: Automated generation of dispensing logs for compliance
 
 ### For Administrators
-- **User Management**: Manage customers, pharmacists, and staff
-- **System Analytics**: Business intelligence and reporting
-- **Inventory Oversight**: Monitor stock levels across all products
-- **Financial Reports**: Revenue tracking and analysis
+- **User Management**: Manage pharmacists, staff, and system access levels
+- **System Analytics**: Business intelligence and financial reporting dashboards
+- **Inventory Oversight**: Monitor stock levels across all aggregated pharmacies
+- **Financial Reports**: Track revenue and sales trends across shifts
 
 ## 🛠️ Tech Stack
 
@@ -233,31 +226,27 @@ Once the server is running, visit:
 
 ## 👥 User Roles
 
-### Customer
-- Browse and search products
-- Upload prescriptions
-- Place orders
-- Track order status
+## 👥 User Roles
 
 ### Pharmacist
-- Validate prescriptions
-- Manage inventory
-- Process orders
-- View analytics
+- Digitally enter walk-in prescriptions
+- Manage local inventory and batch tracking
+- Process dispensing actions
+- View branch-specific analytics
 
 ### Admin
-- User management
-- System configuration
-- Financial reports
-- Global analytics
+- User and role management
+- System-wide configuration
+- Comprehensive financial and stock reports
+- Global analytics across all pharmacies
 
 ## 🔒 Security Features
 
-- **JWT Authentication** - Secure API access
-- **Role-based Permissions** - Granular access control
+- **JWT Authentication** - Secure internal API access
+- **Role-based Permissions** - Granular control (e.g., only Pharmacists can dispense)
 - **CORS Protection** - Cross-origin request security
 - **Rate Limiting** - API abuse prevention
-- **Input Validation** - Data sanitization
+- **Input Validation** - Data sanitization for drug entry
 - **HTTPS Ready** - SSL/TLS configuration
 
 ## 🚀 Deployment
@@ -341,23 +330,24 @@ redis-cli ping
 
 ## 🎯 Roadmap
 
-### Phase 1 (Current)
-- [x] Basic prescription management
-- [x] Inventory tracking
-- [x] User authentication
-- [x] Order processing
+### Phase 1 (Completed)
+- [x] Internal prescription management (Pharmacist-led)
+- [x] Inventory & Batch tracking
+- [x] Internal User authentication (Admin/Pharmacist)
+- [x] Direct dispensing & Logging
 
-### Phase 2 (Next)
-- [ ] Mobile app (React Native)
-- [ ] Advanced analytics
-- [ ] Multi-pharmacy support
-- [ ] API integrations
+### Phase 2 (Current)
+- [x] Advanced analytics & Financial reporting
+- [x] Multi-pharmacy internal support
+- [x] Database optimization & Caching
+- [x] Security enhancements for internal endpoints
 
 ### Phase 3 (Future)
-- [ ] AI-powered recommendations
+- [ ] Patient Self-Service Portal & Mobile App
+- [ ] AI-powered inventory forecasting
 - [ ] Blockchain prescription verification
-- [ ] IoT device integration
 - [ ] Telemedicine features
+- [ ] IoT device integration
 
 ## 🙏 Acknowledgments
 

@@ -588,4 +588,31 @@ def payment_detail(request, pk):
         )
 
 
-# Additional utility views can be added here, e.g., refund processing for admins
+from django.http import FileResponse
+from utils.pdf_generator import PDFGenerator
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def get_receipt_pdf(request, pk):
+    """
+    Generate and return a PDF receipt for a specific order.
+    """
+    order = get_object_or_404(Order, pk=pk)
+    
+    # Permission check: must be owner or staff
+    if request.user.role == "customer" and order.user != request.user:
+        return Response(
+            {"error": "You do not have permission to view this receipt."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    generator = PDFGenerator()
+    pdf_buffer = generator.generate_receipt(order)
+    
+    filename = f"receipt_order_{order.id}.pdf"
+    return FileResponse(
+        pdf_buffer,
+        as_attachment=True,
+        filename=filename,
+        content_type='application/pdf'
+    )

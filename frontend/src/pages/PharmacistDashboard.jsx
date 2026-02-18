@@ -86,99 +86,143 @@ const PharmacistDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
       {/* Welcome Banner */}
       <WelcomeBanner />
 
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <QuickActions
-          onAddPrescription={handleAddPrescription}
-          onViewReports={handleViewReports}
-          onViewInventory={() => navigate("/inventory")}
-        />
-        <button
-          onClick={() => setIsQuickSaleOpen(true)}
-          className="mt-4 w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Quick Sale
-        </button>
+      {/* Quick Actions & Quick Sale - Top Row Bento */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+        <div className="lg:col-span-12">
+          <QuickActions
+            onAddPrescription={handleAddPrescription}
+            onViewReports={handleViewReports}
+            onViewInventory={() => navigate("/inventory")}
+          />
+        </div>
       </div>
 
-      {/* Quick Sale Modal */}
-      <QuickSale isOpen={isQuickSaleOpen} onClose={() => setIsQuickSaleOpen(false)} />
+      {/* Main Content Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Prescriptions */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Pending Prescriptions
-          </h2>
+        {/* Pending Prescriptions - Large Bento Card */}
+        <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 flex flex-col border border-white/50 shadow-premium">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-50 rounded-xl">
+                <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </div>
+              <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">
+                Pending Prescriptions
+              </h2>
+            </div>
+            <span className="px-4 py-1.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-full border border-amber-100 uppercase tracking-widest">
+              {pendingPrescriptions.length} Active Scripts
+            </span>
+          </div>
+
           {pendingPrescriptions.length === 0 ? (
-            <p className="text-gray-500">No pending prescriptions</p>
+            <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-6 opacity-60">
+                <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </div>
+              <p className="text-lg font-display font-bold text-slate-800">Queue is Clear</p>
+              <p className="text-sm mt-1">No pending prescriptions require your attention.</p>
+            </div>
           ) : (
-            <div className="space-y-4">
-              {pendingPrescriptions.slice(0, 5).map((prescription) => (
-                <PrescriptionCard
-                  key={prescription.id}
-                  prescription={prescription}
-                  onAction={handlePrescriptionAction}
-                  showActions={true}
-                />
-              ))}
-              {pendingPrescriptions.length > 5 && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {pendingPrescriptions.slice(0, 4).map((prescription) => (
+                  <PrescriptionCard
+                    key={prescription.id}
+                    prescription={prescription}
+                    onAction={handlePrescriptionAction}
+                    showActions={true}
+                  />
+                ))}
+              </div>
+              {pendingPrescriptions.length > 4 && (
                 <button
                   onClick={() => navigate("/prescriptions/pending")}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  className="w-full py-4 bg-slate-50 hover:bg-white text-slate-600 hover:text-indigo-600 font-bold text-sm rounded-2xl border border-slate-100 hover:border-indigo-100 hover:shadow-soft transition-all active:scale-[0.99]"
                 >
-                  View all pending prescriptions ({pendingPrescriptions.length})
+                  View full queue ({pendingPrescriptions.length} items) →
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* Dispensed Prescriptions */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Recently Dispensed
-          </h2>
-          {dispensedPrescriptions.length === 0 ? (
-            <p className="text-gray-500">No dispensed prescriptions</p>
-          ) : (
-            <div className="space-y-4">
-              {dispensedPrescriptions.slice(0, 5).map((prescription) => (
-                <PrescriptionCard
-                  key={prescription.id}
-                  prescription={prescription}
-                  showActions={false}
-                />
-              ))}
-              {dispensedPrescriptions.length > 5 && (
-                <button
-                  onClick={() => navigate("/prescriptions/dispensed")}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  View all dispensed prescriptions (
-                  {dispensedPrescriptions.length})
-                </button>
-              )}
+        {/* Recently Dispensed - Side Bento Card */}
+        <div className="lg:col-span-4 flex flex-col gap-8">
+          <div className="glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-emerald-50 rounded-xl">
+                <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+              </div>
+              <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">
+                Recently Dispensed
+              </h2>
             </div>
-          )}
+
+            {dispensedPrescriptions.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 opacity-60">
+                <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-xs font-bold uppercase tracking-widest italic text-center">No history for this session</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dispensedPrescriptions.slice(0, 3).map((prescription) => (
+                  <PrescriptionCard
+                    key={prescription.id}
+                    prescription={prescription}
+                    showActions={false}
+                  />
+                ))}
+                {dispensedPrescriptions.length > 3 && (
+                  <button
+                    onClick={() => navigate("/prescriptions/dispensed")}
+                    className="w-full py-3 text-indigo-600 hover:text-indigo-700 text-sm font-bold bg-indigo-50 rounded-xl transition-all active:scale-[0.98]"
+                  >
+                    Open Dispensing Ledger
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Sale Module - Featured Callout */}
+          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
+            {/* Decorative blobs */}
+            <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+            <div className="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/20">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              </div>
+              <h3 className="text-2xl font-display font-bold mb-3 tracking-tight">Direct OTC Sale</h3>
+              <p className="text-indigo-100 text-sm mb-8 font-medium leading-relaxed opacity-90">Handle non-prescription over-the-counter sales instantly and update inventory.</p>
+              <button
+                onClick={() => setIsQuickSaleOpen(true)}
+                className="w-full py-4 bg-white text-indigo-700 text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                Quick Sale (OTC)
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Inventory Summary */}
-        <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Inventory Summary
-          </h2>
+        {/* Inventory Summary - Bottom Wide Bento */}
+        <div className="lg:col-span-12">
           <InventorySummaryCard
             summary={inventorySummary}
             onViewInventory={() => navigate("/inventory")}
           />
         </div>
       </div>
+
+      {/* Quick Sale Modal */}
+      <QuickSale isOpen={isQuickSaleOpen} onClose={() => setIsQuickSaleOpen(false)} />
     </div>
   );
 };

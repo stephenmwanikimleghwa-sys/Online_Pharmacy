@@ -53,6 +53,50 @@ const reportService = {
             console.error('Error fetching low stock alerts:', error);
             throw error;
         }
+    },
+
+    /**
+     * Export analytics report as PDF
+     * @param {number} days - Number of days to include in the report
+     */
+    exportPDF: async (days = 30) => {
+        try {
+            const response = await api.get(`/reports/analytics/export_pdf/?days=${days}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `pharmacy_report_${new Date().toISOString().split('T')[0]}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Error exporting PDF:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Download a receipt for a specific order
+     * @param {number} orderId - ID of the order to download receipt for
+     */
+    getReceiptPDF: async (orderId) => {
+        try {
+            const response = await api.get(`/orders/${orderId}/receipt/`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `receipt_order_${orderId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Error downloading receipt:', error);
+            throw error;
+        }
     }
 };
 

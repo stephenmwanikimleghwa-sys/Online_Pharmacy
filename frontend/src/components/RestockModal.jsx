@@ -24,16 +24,18 @@ const RestockModal = ({ item, onClose, onRestock }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Request Stock — {item.name}
-        </h2>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-white rounded-[2.5rem] shadow-premium max-w-md w-full overflow-hidden animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
+        <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
+          <h2 className="text-2xl font-display font-bold relative z-10">Stock Replenishment</h2>
+          <p className="text-slate-400 text-xs mt-2 font-medium relative z-10 uppercase tracking-widest">{item.name}</p>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Quantity Needed *
+        <form onSubmit={handleSubmit} className="p-8 bg-slate-50/30">
+          <div className="mb-6">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">
+              Quantity Protocol *
             </label>
             <input
               type="number"
@@ -41,39 +43,39 @@ const RestockModal = ({ item, onClose, onRestock }) => {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter quantity needed"
+              className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+              placeholder="Units to request..."
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes / Reason (Optional)
+          <div className="mb-8">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">
+              Operational Notes (Optional)
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter notes or supplier info"
+              className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
+              placeholder="Reason for replenishment or vendor preference..."
               rows="3"
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex gap-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+              className="flex-1 px-6 py-4 bg-slate-200/50 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
               disabled={loading}
             >
-              Cancel
+              Abort
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? 'Requesting...' : 'Confirm Request'}
+              {loading ? 'Initializing...' : 'Confirm Request'}
             </button>
           </div>
         </form>

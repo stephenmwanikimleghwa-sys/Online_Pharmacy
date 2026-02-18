@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.pharmacy import PharmacyViewSet
+from .views.document_views import PharmacyDocumentViewSet
 
 # Import views from the views package submodules to avoid name collision
 from .views.core_views import (
@@ -10,6 +11,8 @@ from .views.core_views import (
     admin_user_list,
     verify_pharmacist,
     profile,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 from .views.admin_views import (
     list_pharmacists,
@@ -23,6 +26,7 @@ app_name = "users"
 
 router = DefaultRouter()
 router.register(r'pharmacies', PharmacyViewSet, basename='pharmacy')
+router.register(r'documents', PharmacyDocumentViewSet, basename='document')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -32,6 +36,12 @@ urlpatterns = [
     path("profile/", profile, name="profile"),
     path(
         "change-password/", ChangePasswordView.as_view(), name="change_password"
+    ),
+    path(
+        "password-reset/", PasswordResetRequestView.as_view(), name="password_reset"
+    ),
+    path(
+        "password-reset-confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"
     ),
     # Admin endpoints
     path("admin/users/", admin_user_list, name="admin_user_list"),

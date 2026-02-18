@@ -4,17 +4,21 @@ from rest_framework.response import Response
 from django.db.models import Count, Sum, F, Avg
 from django.db.models.functions import TruncDate
 from django.utils import timezone
+from django.http import FileResponse
 from datetime import timedelta
 from products.models import StockLog, Product
 from prescriptions.models import Prescription
 from users.models import User
 from utils.cache import cache_response
+from utils.pdf_generator import PDFGenerator
+
+from users.permissions import IsAuditorOrAdmin
 
 class AnalyticsViewSet(viewsets.ViewSet):
     """
     ViewSet for analytics and reporting endpoints.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuditorOrAdmin]
 
     @action(detail=False, methods=['get'])
     @cache_response(timeout=60*60, key_prefix='analytics_trends')
@@ -118,5 +122,42 @@ class AnalyticsViewSet(viewsets.ViewSet):
         alerts = products.values(
             'id', 'name', 'stock_quantity', 'reorder_threshold'
         ).order_by('stock_quantity')[:10]
-
+        
         return Response(list(alerts))
+
+    @action(detail=False, methods=['get'])
+    def export_pdf(self, request):
+        """
+        Generate a summary PDF report containing trends, top sellers, and low stock items.
+        """
+        days = int(request.query_params.get('days', 30))
+        
+        # 1. Fetch Trends
+        trends_resp = self.inventory_trends(request)
+        trends_data = trends_resp.data.get('trends', [])
+        
+        # 2. Fetch Top Selling
+        top_selling_resp = self.top_selling_products(request)
+        top_selling_data = top_selling_resp.data
+        
+        # 3. Fetch Low Stock
+        low_stock_resp = self.low_stock_alerts(request)
+        low_stock_data = low_stock_resp.data
+
+        # Compile for PDF Generator
+        data = {
+            "Inventory Trends (Last 30 Days)": trends_data,
+            "Top Selling Products": top_selling_data,
+            "Low Stock Critical Alerts": low_stock_data
+        }
+
+        generator = PDFGenerator()
+        pdf_buffer = generator.generate_analytics_report(data, title=f"Pharmacy Performance Summary ({days} Days)")
+        
+        filename = f"pharmacy_report_{timezone.now().strftime('%Y%m%d')}.pdf"
+        return FileResponse(
+            pdf_buffer,
+            as_attachment=True,
+            filename=filename,
+            content_type='application/pdf'
+        )

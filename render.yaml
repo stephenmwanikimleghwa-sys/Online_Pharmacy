@@ -21,13 +21,21 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
       - key: DB_NAME
-        value: "pharmacy_db_qa6i"
+        fromDatabase:
+          name: pharmacy-db
+          property: name
       - key: DB_USER
-        value: "pharmacy_db_qa6i_user"
+        fromDatabase:
+          name: pharmacy-db
+          property: username
       - key: DB_PASSWORD
-        value: "wEN4moAcXBYfjBI06FNimHiXK0VRt9RP"
+        fromDatabase:
+          name: pharmacy-db
+          property: password
       - key: DB_HOST
-        value: "dpg-d44q7mngi27c73afsg50-a.oregon-postgres.render.com"
+        fromDatabase:
+          name: pharmacy-db
+          property: host
       - key: DB_PORT
         value: "5432"
       - key: CORS_ALLOWED_ORIGINS

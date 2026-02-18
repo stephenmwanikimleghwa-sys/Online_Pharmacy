@@ -20,6 +20,7 @@ class IsPharmacistOrAdmin(permissions.BasePermission):
         return request.user.is_authenticated and request.user.role in [
             RoleChoices.PHARMACIST,
             RoleChoices.ADMIN,
+            RoleChoices.CASHIER,
         ]
 
 
@@ -46,3 +47,17 @@ class RoleBasedPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in self.allowed_roles
+
+
+class IsAuditorOrAdmin(permissions.BasePermission):
+    """
+    Allows access to auditors and admins.
+    Used for read-only reports and inventory views.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role in [
+            RoleChoices.AUDITOR,
+            RoleChoices.ADMIN,
+            RoleChoices.PHARMACIST, # Staff can also see reports usually
+        ]

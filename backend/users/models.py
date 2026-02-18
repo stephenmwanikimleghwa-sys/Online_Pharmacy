@@ -73,3 +73,58 @@ class User(AbstractUser):
         if self.email:
             self.email = self.email.lower()
         super().save(*args, **kwargs)
+
+
+class PharmacyDocument(models.Model):
+    """
+    Model representing legal documents, licenses, and permits for a pharmacy.
+    """
+    DOCUMENT_TYPES = [
+        ("license", "Pharmacy License"),
+        ("permit", "Operational Permit"),
+        ("insurance", "Insurance Certificate"),
+        ("compliance", "Compliance Certificate"),
+        ("other", "Other Document"),
+    ]
+
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.CASCADE,
+        related_name="documents",
+        verbose_name="Pharmacy"
+    )
+    document_type = models.CharField(
+        max_length=20, 
+        choices=DOCUMENT_TYPES, 
+        default="other",
+        verbose_name="Document Type"
+    )
+    title = models.CharField(max_length=255, verbose_name="Document Title")
+    file = models.FileField(
+        upload_to="pharmacy_documents/",
+        verbose_name="Document File"
+    )
+    expiry_date = models.DateField(blank=True, null=True, verbose_name="Expiry Date")
+    is_verified = models.BooleanField(default=False, verbose_name="Is Verified")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "pharmacy_documents"
+        verbose_name = "Pharmacy Document"
+        verbose_name_plural = "Pharmacy Documents"
+        ordering = ["-uploaded_at"]
+        indexes = [
+            models.Index(fields=["pharmacy", "document_type"]),
+            models.Index(fields=["expiry_date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.pharmacy.name} - {self.get_document_type_display()} ({self.title})"
+
+    @property
+    def is_expired(self):
+        if not self.expiry_date:
+            return False
+        from django.utils import timezone
+        return self.expiry_date < timezone.now().date()

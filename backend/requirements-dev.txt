@@ -1,0 +1,9 @@
+# Development and testing dependencies
+# Install alongside base requirements: pip install -r requirements.txt -r requirements-dev.txt
+
+pytest==7.4.2
+pytest-django==4.7.0
+factory-boy==3.2.1
+Faker==19.9.0
+coverage==7.3.2
+django-debug-toolbar==4.1.0

@@ -41,10 +41,11 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-glow flex items-center justify-center transform group-hover:scale-105 transition-all duration-300">
-                <span className="text-white font-bold text-lg">TP</span>
+              <div className="w-10 h-10 rounded-xl shadow-glow flex items-center justify-center transform group-hover:scale-105 transition-all duration-300"
+                style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+                <span className="text-white font-bold text-lg font-display">TP</span>
               </div>
-              <span className="text-xl font-bold text-slate-800 tracking-tight group-hover:text-primary-600 transition-colors">
+              <span className="text-xl font-bold text-slate-800 tracking-tight group-hover:text-primary-600 transition-colors font-display">
                 Transcounty
               </span>
             </Link>

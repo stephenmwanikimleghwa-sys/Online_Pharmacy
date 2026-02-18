@@ -12,4 +12,6 @@ urlpatterns = [
     path("my-orders/", views.my_orders, name="my_orders"),
     # Quick sale endpoint
     path("quick/", views.quick_sale, name="quick_sale"),
+    # Receipt PDF
+    path("<int:pk>/receipt/", views.get_receipt_pdf, name="receipt_pdf"),
 ]

@@ -7,7 +7,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  role: "admin" | "pharmacist" | "customer";
+  role: "admin" | "pharmacist" | "customer" | "cashier" | "auditor";
   pharmacy?: number;
   pharmacy_name?: string;
   is_active?: boolean;
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Extract and normalize user role from response data
-      const normalizeUserRole = (data: any): "admin" | "pharmacist" | "customer" | null => {
+      const normalizeUserRole = (data: any): "admin" | "pharmacist" | "customer" | "cashier" | "auditor" | null => {
         console.log('[Auth Debug] Normalizing user role from:', data);
 
         // Check various possible role fields
@@ -257,6 +257,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           break;
         case "admin":
           path = "/admin/dashboard";  // Consistent route structure
+          break;
+        case "cashier":
+          path = "/cashier/dashboard";
+          break;
+        case "auditor":
+          path = "/reports"; // Auditors go to reports by default
           break;
         case "customer":
           path = "/customer/dashboard";

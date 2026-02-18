@@ -7,9 +7,10 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
 
 const ReportsDashboard = () => {
+  // ... (state and effect remain the same)
   const [reportData, setReportData] = useState({
     dailyPrescriptions: [],
     medicinesDispensed: [],
@@ -33,7 +34,6 @@ const ReportsDashboard = () => {
   const fetchReportData = async () => {
     try {
       setLoading(true);
-      // In a real implementation, these would be API calls to backend report endpoints
       const dailyData = await prescriptionService.getDailyPrescriptions(dateRange);
       const medicinesData = await prescriptionService.getDispensedMedicines(dateRange);
       const stockData = await inventoryService.getStockUsage(dateRange);
@@ -45,6 +45,7 @@ const ReportsDashboard = () => {
         try {
           const trends = await reportService.getInventoryTrends(30);
           trendsData = trends.trends || [];
+
           const performance = await reportService.getPharmacistPerformance();
           performanceData = performance.performance || [];
 
@@ -61,13 +62,14 @@ const ReportsDashboard = () => {
         }
       }
 
-      setReportData({
+      setReportData(prev => ({
+        ...prev,
         dailyPrescriptions: dailyData.data || [],
         medicinesDispensed: medicinesData.data || [],
         stockUsage: stockData.data || [],
         inventoryTrends: trendsData,
         performanceMetrics: performanceData
-      });
+      }));
     } catch (error) {
       console.error('Error fetching report data:', error);
     } finally {
@@ -75,260 +77,349 @@ const ReportsDashboard = () => {
     }
   };
 
-  const exportToPDF = () => {
-    // Placeholder for PDF export functionality
-    alert('PDF export functionality will be implemented');
+  const exportToPDF = async () => {
+    try {
+      await reportService.exportPDF(30);
+    } catch (error) {
+      alert('Failed to generate PDF report. Please try again.');
+    }
   };
-
+  bitumen
   const exportToCSV = () => {
-    // Placeholder for CSV export functionality
     alert('CSV export functionality will be implemented');
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col justify-center items-center h-[60vh] gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-[3px] border-indigo-600 border-t-transparent shadow-glow-sm"></div>
+        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest animate-pulse">Scanning Data Repositories...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in text-slate-800">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Reports & Analytics</h1>
-        <p className="text-gray-600">
-          {user?.role === 'admin' ? 'System-wide analytics' : 'Personal performance reports'}
-        </p>
+      <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            </div>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Intelligence</h1>
+          </div>
+          <p className="text-lg text-slate-500 max-w-2xl">
+            {user?.role === 'admin' ? 'Monitoring system-wide pharmaceutical trends, inventory velocity, and team performance.' : 'Review personal dispensing accuracy, daily velocity, and product mix.'}
+          </p>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={exportToPDF}
+            className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold shadow-soft hover:shadow-card hover:bg-slate-50 transition-all flex items-center gap-2.5 active:scale-[0.98]"
+          >
+            <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l-4-4h3V4h2v8h3l-4 4zm9-4v10H3V12h2v8h14v-8h2z" /></svg>
+            Export PDF
+          </button>
+          <button
+            onClick={exportToCSV}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-glow hover:shadow-premium hover:bg-indigo-700 transition-all flex items-center gap-2.5 active:scale-[0.98]"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l-4-4h3V4h2v8h3l-4 4zm9-4v10H3V12h2v8h14v-8h2z" /></svg>
+            Excel Dataset
+          </button>
+        </div>
       </div>
 
-      {/* Date Range Filter */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Date Range</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+      {/* Modern Filter Section */}
+      <div className="glass-card rounded-[2rem] p-8 mb-12 border border-white/60 shadow-premium relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+          <svg className="w-32 h-32 text-indigo-900" fill="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </div>
+
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-2.5 bg-indigo-50 rounded-xl">
+            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </div>
+          <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Analysis Horizon</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
+          <div className="md:col-span-4">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Start Point</label>
             <input
               type="date"
               value={dateRange.startDate}
               onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-bold text-slate-700"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <div className="md:col-span-4">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">End Point</label>
             <input
               type="date"
               value={dateRange.endDate}
               onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-bold text-slate-700"
             />
           </div>
-          <div className="flex items-end">
+          <div className="md:col-span-4 flex items-end">
             <button
               onClick={fetchReportData}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black shadow-card transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              Apply Filter
+              <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Refresh Dataset
             </button>
           </div>
         </div>
       </div>
 
-      {/* Export Buttons */}
-      <div className="flex space-x-4 mb-6">
-        <button
-          onClick={exportToPDF}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-        >
-          Export PDF
-        </button>
-        <button
-          onClick={exportToCSV}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-        >
-          Export CSV
-        </button>
-      </div>
-
-      {/* Pharmacist Reports */}
-      {user?.role === 'pharmacist' && (
-        <div className="space-y-6">
-          {/* Daily Prescriptions */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Daily Prescriptions Handled</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Validated</th>
-                    <th className="px-4 py-2 text-left">Rejected</th>
-                    <th className="px-4 py-2 text-left">Dispensed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.dailyPrescriptions.map((item, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2">{item.date}</td>
-                      <td className="px-4 py-2">{item.validated}</td>
-                      <td className="px-4 py-2">{item.rejected}</td>
-                      <td className="px-4 py-2">{item.dispensed}</td>
+      {/* Role-based Dashboard Views */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {user?.role === 'pharmacist' && (
+          <>
+            <div className="lg:col-span-12 glass-card rounded-[2rem] border border-white/50 shadow-premium overflow-hidden">
+              <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                  </div>
+                  <h2 className="text-xl font-display font-bold text-slate-900">Dispensing Velocity</h2>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-100">
+                  <thead className="bg-slate-50/30">
+                    <tr>
+                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reporting Date</th>
+                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validated</th>
+                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rejected</th>
+                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dispensed</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Medicines Dispensed */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Medicines Dispensed</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left">Medicine</th>
-                    <th className="px-4 py-2 text-left">Quantity</th>
-                    <th className="px-4 py-2 text-left">Total Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.medicinesDispensed.map((item, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2">{item.name}</td>
-                      <td className="px-4 py-2">{item.quantity}</td>
-                      <td className="px-4 py-2">KES {item.totalValue}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Stock Usage */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Stock Usage</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left">Product</th>
-                    <th className="px-4 py-2 text-left">Starting Stock</th>
-                    <th className="px-4 py-2 text-left">Dispensed</th>
-                    <th className="px-4 py-2 text-left">Ending Stock</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.stockUsage.map((item, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2">{item.product}</td>
-                      <td className="px-4 py-2">{item.startingStock}</td>
-                      <td className="px-4 py-2">{item.dispensed}</td>
-                      <td className="px-4 py-2">{item.endingStock}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Admin Reports */}
-      {user?.role === 'admin' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Inventory Trends */}
-          <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Inventory Trends (Last 30 Days)</h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={reportData.inventoryTrends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="restock_count" stroke="#10B981" name="Restocks" />
-                  <Line type="monotone" dataKey="usage_count" stroke="#EF4444" name="Usage" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Pharmacist Performance */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Pharmacist Performance</h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={reportData.performanceMetrics}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="verified_by__username" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="verified_count" fill="#3B82F6" name="Verified Prescriptions" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Top Selling Products */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Top Selling Products</h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={reportData.topSellingProducts}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {reportData.topSellingProducts.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {reportData.dailyPrescriptions.map((item, index) => (
+                      <tr key={index} className="hover:bg-indigo-50/20 transition-colors">
+                        <td className="px-8 py-5 whitespace-nowrap font-display font-bold text-slate-700">{item.date}</td>
+                        <td className="px-8 py-5 whitespace-nowrap">
+                          <span className="text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full text-sm border border-indigo-100/50">{item.validated}</span>
+                        </td>
+                        <td className="px-8 py-5 whitespace-nowrap">
+                          <span className="text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full text-sm border border-rose-100/50">{item.rejected || 0}</span>
+                        </td>
+                        <td className="px-8 py-5 whitespace-nowrap font-display font-bold text-slate-900">{item.dispensed}</td>
+                      </tr>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* Low Stock Alerts */}
-          <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 text-red-600 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              Low Stock Alerts
-            </h2>
-            {reportData.lowStockAlerts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reportData.lowStockAlerts.map((item) => (
-                  <div key={item.id} className="border border-red-200 bg-red-50 rounded-lg p-4 flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-red-600">Stock: {item.stock_quantity}</p>
+            <div className="lg:col-span-6 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-8 border-l-4 border-indigo-500 pl-4">Product Output Mix</h2>
+              <div className="space-y-4">
+                {reportData.medicinesDispensed.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 hover:bg-white hover:shadow-card transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">💊</div>
+                      <div>
+                        <p className="font-bold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{item.name}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Dispensed Qty: {item.quantity}</p>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      Threshold: {item.reorder_threshold}
+                    <div className="text-right">
+                      <p className="font-display font-bold text-indigo-600 text-lg">KES {item.totalValue}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">No low stock alerts.</p>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+
+            <div className="lg:col-span-6 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-8 border-l-4 border-emerald-500 pl-4">Stock Utilization Ledger</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <th className="text-left pb-6">Asset Name</th>
+                      <th className="text-right pb-6">Starting</th>
+                      <th className="text-right pb-6">Delta</th>
+                      <th className="text-right pb-6">Current</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {reportData.stockUsage.map((item, index) => (
+                      <tr key={index} className="group cursor-default">
+                        <td className="py-4 text-sm font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">{item.product}</td>
+                        <td className="py-4 text-right text-sm text-slate-500 font-medium">{item.startingStock}</td>
+                        <td className="py-4 text-right text-sm font-bold text-rose-500">-{item.dispensed}</td>
+                        <td className="py-4 text-right text-sm font-display font-bold text-slate-900 underline decoration-emerald-200 decoration-2 underline-offset-4">{item.endingStock}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {user?.role === 'admin' && (
+          <>
+            {/* Inventory Trends */}
+            <div className="lg:col-span-12 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+                  </div>
+                  <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">System Stock Dynamics</h2>
+                </div>
+                <div className="flex items-center gap-6 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-emerald-50">
+                    <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Restock</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-rose-50">
+                    <span className="w-2.5 h-2.5 bg-rose-400 rounded-full shadow-[0_0_8px_rgba(251,113,133,0.5)]"></span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Consumption</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={reportData.inventoryTrends}>
+                    <defs>
+                      <linearGradient id="colorRestock" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorUsage" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FB7185" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#FB7185" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={15} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dx={-15} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '24px', border: '1px solid rgba(255,255,255,0.6)', backdropFilter: 'blur(16px)', background: 'rgba(255,255,255,0.95)', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', padding: '16px' }}
+                    />
+                    <Line type="monotone" dataKey="restock_count" stroke="#10B981" strokeWidth={4} dot={{ r: 5, fill: '#10B981', strokeWidth: 3, stroke: '#fff shadow-lg' }} activeDot={{ r: 8, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="usage_count" stroke="#FB7185" strokeWidth={4} dot={{ r: 5, fill: '#FB7185', strokeWidth: 3, stroke: '#fff shadow-lg' }} activeDot={{ r: 8, strokeWidth: 0 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Performance Heatmap */}
+            <div className="lg:col-span-7 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
+              <div className="flex items-center gap-3 mb-10">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                </div>
+                <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">Verification Throughput</h2>
+              </div>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={reportData.performanceMetrics} margin={{ top: 0, right: 0, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="verified_by__username" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} dx={-10} />
+                    <Tooltip cursor={{ fill: '#f8fafc', radius: 12 }} contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)' }} />
+                    <Bar dataKey="verified_count" fill="#4f46e5" radius={[12, 12, 4, 4]} barSize={48} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Top Selling Mix */}
+            <div className="lg:col-span-5 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium group">
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-10 border-l-4 border-fuchsia-500 pl-4 tracking-tight">Supply Distribution Mix</h2>
+              <div className="h-80 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={reportData.topSellingProducts}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={75}
+                      outerRadius={105}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {reportData.topSellingProducts.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={8} stroke="rgba(255,255,255,0.5)" strokeWidth={2} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Visual Center Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none mb-10 md:mb-0">
+                  <div className="text-center group-hover:scale-110 transition-transform duration-500">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Volume</p>
+                    <p className="text-2xl font-display font-bold text-slate-900">100%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Critical Alerts Bento */}
+            <div className="lg:col-span-12 glass-card rounded-[2rem] p-10 border-l-8 border-l-rose-500 shadow-premium relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-10 opacity-[0.05]">
+                <svg className="w-24 h-24 text-rose-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center shadow-soft">
+                    <svg className="w-8 h-8 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Critical Replenishment Protocol</h2>
+                    <p className="text-slate-500 text-sm mt-1">Assets currently identified below safety reorder thresholds.</p>
+                  </div>
+                </div>
+                <button className="px-6 py-2.5 bg-rose-50 text-rose-600 font-bold text-xs rounded-xl border border-rose-100 uppercase tracking-widest hover:bg-rose-100 transition-all active:scale-[0.98]">Intelligence Ledger Export</button>
+              </div>
+
+              {reportData.lowStockAlerts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {reportData.lowStockAlerts.map((item) => (
+                    <div key={item.id} className="p-6 bg-white/50 border border-slate-100 rounded-2xl hover:bg-white hover:shadow-card group transition-all">
+                      <h3 className="font-bold text-slate-900 mb-4 truncate group-hover:text-rose-600 transition-colors uppercase text-xs tracking-tight">{item.name}</h3>
+                      <div className="flex items-end justify-between mb-4">
+                        <div className="text-3xl font-display font-bold text-rose-600">{item.stock_quantity}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-2 py-0.5 bg-slate-50 rounded-full">Units Left</div>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2 shadow-inner">
+                        <div className="bg-gradient-to-r from-rose-500 to-rose-400 h-full group-hover:from-rose-600 group-hover:to-rose-500 transition-all" style={{ width: `${Math.min((item.stock_quantity / item.reorder_threshold) * 100, 100)}%` }}></div>
+                      </div>
+                      <div className="flex justify-between text-[9px] font-bold uppercase tracking-tighter">
+                        <span className="text-slate-400">Critical: {item.reorder_threshold}</span>
+                        <span className="text-rose-400">-{item.reorder_threshold - item.stock_quantity} Deficit</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-24 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center opacity-60">
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-soft mb-4">
+                    <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <p className="font-display font-bold text-slate-800">Inventory Status: Optimal</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">No critical stock interventions required</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

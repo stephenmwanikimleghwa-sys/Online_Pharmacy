@@ -1,79 +1,115 @@
-/* Import custom font (Inter) */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+/* Import custom fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Global styles */
+/* Global reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Custom color variables for the pharmacy theme */
+/* Premium color variables */
 :root {
-  --primary-blue: #0ea5e9; /* Sky 500 */
-  --primary-dark: #0284c7; /* Sky 600 */
-  --secondary-green: #10b981; /* Emerald 500 */
-  --neutral-bg: #f8fafc; /* Slate 50 */
-  --text-main: #1e293b; /* Slate 800 */
-  --text-muted: #64748b; /* Slate 500 */
+  --primary: #6366f1;
+  /* Indigo 500 */
+  --primary-dark: #4f46e5;
+  /* Indigo 600 */
+  --secondary: #10b981;
+  /* Emerald 500 */
+  --accent: #d946ef;
+  /* Fuchsia 500 */
+  --neutral-bg: #f0f4ff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.75);
 }
 
+/* Body — rich gradient background */
 body {
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    "Roboto",
-    sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
   color: var(--text-main);
-  background-color: var(--neutral-bg);
+  background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 45%, #ecfdf5 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism Utilities */
+/* Glassmorphism — indigo-tinted */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 4px 30px rgba(99, 102, 241, 0.06);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.08);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s ease;
 }
 
-/* Utility classes for theme colors */
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px 0 rgba(99, 102, 241, 0.13);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Interactive transitions */
+button,
+a,
+.clickable {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active,
+a:active {
+  transform: scale(0.98);
+}
+
+/* Utility classes */
 .bg-primary {
-  background-color: var(--primary-blue);
+  background-color: var(--primary);
 }
+
 .text-primary {
-  color: var(--primary-blue);
+  color: var(--primary);
 }
+
 .border-primary {
-  border-color: var(--primary-blue);
+  border-color: var(--primary);
 }
 
 .bg-secondary {
-  background-color: var(--secondary-green);
-}
-.text-secondary {
-  color: var(--secondary-green);
+  background-color: var(--secondary);
 }
 
-/* Responsive scrollbar */
+.text-secondary {
+  color: var(--secondary);
+}
+
+/* Premium gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #a855f7, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -81,12 +117,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #c7d2fe;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #818cf8;
 }
 
 /* Smooth scroll */
@@ -94,8 +130,8 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Focus styles for accessibility */
+/* Focus */
 *:focus-visible {
-  outline: 2px solid var(--primary-blue);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
