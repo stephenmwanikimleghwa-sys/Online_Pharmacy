@@ -28,11 +28,26 @@ const PharmacyLicensing = () => {
 
     const fetchDocuments = async () => {
         setLoading(true);
+        setError(null);
         try {
             const data = await pharmacyService.getDocuments();
-            setDocuments(data);
+            setDocuments(Array.isArray(data) ? data : []);
         } catch (err) {
-            setError('Failed to load documents.');
+            const status = err.response?.status;
+            const detail = err.response?.data?.detail;
+            let message = 'Could not load your documents. Please try again.';
+            if (status === 401 || status === 403) {
+                message = 'You do not have permission to view these documents. Please log in as a pharmacist or admin.';
+            } else if (status === 404) {
+                message = 'Documents endpoint not found. Please contact your system administrator.';
+            } else if (detail && typeof detail === 'string') {
+                message = detail;
+            } else if (!navigator.onLine) {
+                message = 'You appear to be offline. Please check your internet connection and try again.';
+            } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+                message = 'The request timed out. The server may be starting up — please wait a moment and try again.';
+            }
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -161,9 +176,20 @@ const PharmacyLicensing = () => {
                 {/* Documents List */}
                 <div className="lg:col-span-2">
                     {error && (
-                        <div className="mb-6 bg-rose-50 border border-rose-100 text-rose-700 p-5 rounded-2xl flex items-center gap-4 animate-fade-in">
-                            <WarningIcon className="w-6 h-6" />
-                            <p className="font-semibold">{error}</p>
+                        <div className="mb-6 bg-rose-50 border border-rose-200 text-rose-700 p-5 rounded-2xl animate-fade-in">
+                            <div className="flex items-start gap-4">
+                                <WarningIcon className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="font-bold text-sm mb-1">Could not load documents</p>
+                                    <p className="text-sm text-rose-600">{error}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={fetchDocuments}
+                                className="mt-4 px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-all uppercase tracking-widest"
+                            >
+                                Try Again
+                            </button>
                         </div>
                     )}
 

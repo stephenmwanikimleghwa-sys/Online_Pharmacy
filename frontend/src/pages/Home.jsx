@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import api from "../services/api";
 
 const Home = () => {
@@ -173,17 +174,17 @@ const Home = () => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-1 w-10 bg-indigo-600 rounded-full"></div>
-                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-[0.3em]">Curated Essentials</span>
+                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-[0.3em]">Popular</span>
               </div>
               <h2 className="text-4xl font-display font-bold text-slate-900 tracking-tight">
-                Pharmaceutical <span className="text-slate-400">Highlights</span>
+                Featured <span className="text-slate-400">medicines</span>
               </h2>
             </div>
             <Link
               to="/products"
               className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-200/50"
             >
-              Examine Full Catalog
+              View all products
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
@@ -216,10 +217,10 @@ const Home = () => {
                 <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-8">
                   <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 </div>
-                <h3 className="text-2xl font-display font-bold text-slate-900">Archive Currently Initializing</h3>
-                <p className="mt-2 text-slate-500 font-medium">We're synchronizing our featured asset classes. Please check back shortly.</p>
+                <h3 className="text-2xl font-display font-bold text-slate-900">No featured products right now</h3>
+                <p className="mt-2 text-slate-500 font-medium">Featured products will show here. Check back soon or browse all products.</p>
                 <Link to="/products" className="mt-10 inline-flex items-center px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-glow-indigo">
-                  View Master Catalog
+                  View all products
                 </Link>
               </div>
             </div>
@@ -247,21 +248,21 @@ const Home = () => {
                         to={`/products/${product.id}`}
                         className="w-full bg-slate-900/90 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600 transition-colors text-center inline-block shadow-xl"
                       >
-                        Technical Analysis
+                        View details
                       </Link>
                     </div>
                   </div>
                   <div className="px-4 pb-4 flex-1 flex flex-col">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[9px] font-bold text-indigo-50 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-100">
-                        {product.category || 'Asset'}
+                        {product.category || 'Product'}
                       </span>
                     </div>
                     <h3 className="text-xl font-display font-bold text-slate-900 mb-2 truncate">
                       {product.name}
                     </h3>
                     <p className="text-sm text-slate-500 mb-6 line-clamp-2 font-medium leading-relaxed">
-                      {product.description || 'Verified pharmaceutical asset metadata pending system update.'}
+                      {product.description || 'Product details.'}
                     </p>
                     <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50">
                       <div>

@@ -11,6 +11,7 @@ export interface User {
   pharmacy?: number;
   pharmacy_name?: string;
   is_active?: boolean;
+  must_change_password?: boolean;
   is_admin?: boolean;
   is_pharmacist?: boolean;
   is_customer?: boolean;
@@ -208,6 +209,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Clear all auth-related items from localStorage
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_role");
 
     // Clear any auth-related cookies if they exist

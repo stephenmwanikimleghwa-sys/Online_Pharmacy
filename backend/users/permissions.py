@@ -16,7 +16,7 @@ class IsPharmacistOrAdmin(permissions.BasePermission):
     Allows access to pharmacists and admins.
     """
 
-    def has_permission(self, request, views):
+    def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in [
             RoleChoices.PHARMACIST,
             RoleChoices.ADMIN,

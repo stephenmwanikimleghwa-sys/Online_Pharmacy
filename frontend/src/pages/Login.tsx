@@ -50,7 +50,9 @@ const Login: React.FC = () => {
       const role = determineRole(returnedUser);
       let target = "/";
 
-      if (role === 'admin') {
+      if (returnedUser?.must_change_password) {
+        target = "/force-password-change";
+      } else if (role === 'admin') {
         target = '/admin/dashboard';
       } else if (role === 'pharmacist') {
         target = '/pharmacist/dashboard';
@@ -128,7 +130,7 @@ const Login: React.FC = () => {
 
             {/* Feature pills */}
             <div className="flex flex-wrap gap-2 mt-8">
-              {["Inventory Control", "Prescriptions", "Analytics", "Audit Logs"].map((f) => (
+              {["Stock", "Prescriptions", "Reports", "Logs"].map((f) => (
                 <span key={f} className="px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full text-white/80 text-xs font-medium">
                   {f}
                 </span>

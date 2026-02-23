@@ -12,8 +12,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allow
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
+        <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin" aria-hidden />
+        <p className="text-sm font-medium text-neutral-500">Loading...</p>
       </div>
     );
   }

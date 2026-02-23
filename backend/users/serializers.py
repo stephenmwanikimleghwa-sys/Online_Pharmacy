@@ -34,7 +34,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'role', 'pharmacy', 
             'pharmacy_name', 'phone_number', 'profile_picture',
-            'first_name', 'last_name', 'full_name', 'is_active', 'is_verified'
+            'first_name', 'last_name', 'full_name', 'is_active', 'is_verified',
+            'must_change_password'
         ]
         read_only_fields = ['id', 'role', 'is_verified', 'full_name']
 

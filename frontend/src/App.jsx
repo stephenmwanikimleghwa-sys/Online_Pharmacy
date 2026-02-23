@@ -21,6 +21,7 @@ import ReportsDashboard from "./pages/ReportsDashboard";
 import DispensingLogsPage from "./pages/DispensingLogsPage";
 import PharmacyLicensing from "./pages/PharmacyLicensing";
 import CashierDashboard from "./pages/CashierDashboard";
+import ForcePasswordChange from "./pages/ForcePasswordChange";
 
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
@@ -40,7 +41,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   const location = useLocation();
-  const isAuthPage = location.pathname === "/login";
+  const isAuthPage = ["/login", "/force-password-change"].includes(location.pathname);
 
   return (
     <AuthProvider>
@@ -50,9 +51,11 @@ function App() {
           <ErrorBoundary>
             <Routes>
               {/* Public Routes */}
+              <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/password-reset" element={<PasswordResetRequest />} />
               <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
+              <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />
 
               {/* Protected Routes */}
               <Route path="/products" element={<ProtectedRoute element={Products} />} />

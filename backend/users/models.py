@@ -49,6 +49,7 @@ class User(AbstractUser):
     date_of_birth = models.DateField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     is_verified = models.BooleanField(default=False)
+    must_change_password = models.BooleanField(default=False, help_text="Designates whether the user must change their password upon login.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

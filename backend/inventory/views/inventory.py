@@ -11,7 +11,6 @@ from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
 from products.models import Product, StockLog
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
-import traceback
 
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
@@ -42,24 +41,11 @@ def inventory_summary(request):
 def inventory_list(request):
     """List all inventory items with search, filtering and pagination."""
     try:
-        # Log request information
-        print("[Inventory Debug] Request details:")
-        print(f"  User: {request.user.username}")
-        print(f"  Groups: {[g.name for g in request.user.groups.all()]}")
-        print(f"  Is staff: {request.user.is_staff}")
-        print(f"  Is pharmacist: {hasattr(request.user, 'is_pharmacist') and request.user.is_pharmacist}")
-        print(f"  Is admin: {hasattr(request.user, 'is_admin') and request.user.is_admin}")
-        
-        # Get base queryset
         products = Product.objects.filter(is_active=True).order_by("name")
-        
-        # Filter by pharmacy
-        if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+
+        if hasattr(request.user, "pharmacy") and request.user.pharmacy:
             products = products.filter(pharmacy=request.user.pharmacy)
-            print(f"[Inventory Debug] Filtered by pharmacy: {request.user.pharmacy.name}")
-        print(f"[Inventory Debug] Initial active products: {products.count()}")
-        
-        # Search functionality
+
         search = request.GET.get("search", "").strip()
         if search:
             products = products.filter(
@@ -67,79 +53,22 @@ def inventory_list(request):
                 Q(category__icontains=search) |
                 Q(supplier__icontains=search)
             )
-            print(f"[Inventory Debug] After search filter: {products.count()} products")
-        print("\n[Inventory Debug] *** INVENTORY LIST REQUEST ***")
-        print("[Inventory Debug] URL Path:", request.path)
-        print("[Inventory Debug] Method:", request.method)
-        print("[Inventory Debug] Headers:", dict(request.headers))
-        print("[Inventory Debug] User Info:")
-        print(f"  Username: {request.user.username}")
-        print(f"  Groups: {[g.name for g in request.user.groups.all()]}")
-        print(f"  Is staff: {request.user.is_staff}")
-        print(f"  Is pharmacist: {hasattr(request.user, 'is_pharmacist') and request.user.is_pharmacist}")
-        print(f"  Is admin: {hasattr(request.user, 'is_admin') and request.user.is_admin}")
-        
-        # Get ALL products first for debugging
-        all_products = Product.objects.all()
-        print("\n[Inventory Debug] Database Query Results:")
-        print(f"  Total products in DB: {all_products.count()}")
-        print("  Sample products:")
-        for p in all_products[:2]:
-            print(f"    - {p.id}: {p.name} (Active: {p.is_active}, Stock: {p.stock_quantity})")
-        
-        # Now get active products
-        products = Product.objects.filter(is_active=True).order_by("name")
-        
-        # Filter by pharmacy
-        if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
-            products = products.filter(pharmacy=request.user.pharmacy)
-            
-        print(f"\n[Inventory Debug] Active products: {products.count()}")
-        print("  Sample active products:")
-        for p in products[:2]:
-            print(f"    - {p.id}: {p.name} (Stock: {p.stock_quantity})")
-        
-        # Search functionality
-        search = request.GET.get("search", "").strip()
-        if search:
-            products = products.filter(
-                Q(name__icontains=search) |
-                Q(category__icontains=search) |
-                Q(supplier__icontains=search)
-            )
-            print(f"[Inventory Debug] After search filter: {products.count()} products")
-        # Filter by category if requested
+
         category = request.GET.get("category")
         if category:
             products = products.filter(category=category)
-            print(f"[Inventory Debug] After category filter: {products.count()} products")
 
-        # Filter by low stock if requested
         low_stock = request.GET.get("low_stock")
         if low_stock == "true":
             products = products.filter(
                 stock_quantity__lte=models.F("reorder_threshold"),
-                stock_quantity__gt=0
+                stock_quantity__gt=0,
             )
-            print(f"[Inventory Debug] After low stock filter: {products.count()} products")
 
-        # Filter by out of stock if requested
         out_of_stock = request.GET.get("out_of_stock")
         if out_of_stock == "true":
             products = products.filter(stock_quantity=0)
-            print(f"[Inventory Debug] After out of stock filter: {products.count()} products")
 
-        # Log sample products for debugging
-        sample_products = products[:2]
-        print("[Inventory Debug] Sample products:")
-        for product in sample_products:
-            print(f"  - ID: {product.id}")
-            print(f"  - Name: {product.name}")
-            print(f"  - Category: {product.category}")
-            print(f"  - Price: {product.price}")
-            print(f"  - Stock: {product.stock_quantity}")
-            print(f"  - Active: {product.is_active}")
-        
         # Pagination
         page = request.GET.get("page", 1)
         per_page = int(request.GET.get("per_page", 20))
@@ -161,71 +90,21 @@ def inventory_list(request):
             product['in_stock'] = product['stock_quantity'] > 0
         
         response_data = {
-            "products": serialized_products,  # This is what the frontend expects
+            "products": serialized_products,
             "totalPages": paginator.num_pages,
             "currentPage": int(page),
             "totalItems": paginator.count,
-            "debug": {
-                "request": {
-                    "user": request.user.username,
-                    "groups": [g.name for g in request.user.groups.all()],
-                    "is_staff": request.user.is_staff,
-                    "is_pharmacist": hasattr(request.user, 'is_pharmacist') and request.user.is_pharmacist,
-                    "is_admin": hasattr(request.user, 'is_admin') and request.user.is_admin,
-                    "query_params": dict(request.GET)
-                },
-                "response": {
-                    "total_products": products.count(),
-                    "products_on_page": len(serialized_products),
-                    "sample_products": [
-                        {
-                            "id": p["id"],
-                            "name": p["name"],
-                            "category": p["category"],
-                            "stock": p["stock_quantity"],
-                            "is_low_stock": p["is_low_stock"],
-                            "in_stock": p["in_stock"]
-                        }
-                        for p in serialized_products[:2]
-                    ] if serialized_products else []
-                }
-            }
         }
-        
-        print("[Inventory Debug] Response data:")
-        print(f"  Total items: {response_data['totalItems']}")
-        print(f"  Current page: {response_data['currentPage']}")
-        print(f"  Total pages: {response_data['totalPages']}")
-        print(f"  Products returned: {len(response_data['products'])}")
-        
-        # Sample of first product if any exist
-        if serialized_products:
-            print("[Inventory Debug] First product sample:")
-            print(f"  ID: {serialized_products[0]['id']}")
-            print(f"  Name: {serialized_products[0]['name']}")
-            print(f"  Stock: {serialized_products[0]['stock_quantity']}")
-            print(f"  Is Low Stock: {serialized_products[0]['is_low_stock']}")
-            print(f"  In Stock: {serialized_products[0]['in_stock']}")
-        
+
         return Response(response_data)
-        
+
     except Exception as e:
-        print(f"[Inventory Error] Failed to fetch inventory: {str(e)}")
-        print(f"[Inventory Error] Error details: {type(e).__name__}")
-        print(f"[Inventory Error] User: {request.user.username}")
-        print(f"[Inventory Error] Stack trace:", traceback.format_exc())
         return Response(
             {
                 "error": "Failed to fetch inventory",
                 "detail": str(e),
-                "debug": {
-                    "error_type": type(e).__name__,
-                    "user": request.user.username,
-                    "groups": [g.name for g in request.user.groups.all()]
-                },
-                "timestamp": timezone.now().isoformat()
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 @api_view(["GET"])

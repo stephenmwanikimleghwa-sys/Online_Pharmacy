@@ -1,21 +1,23 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { EnvelopeIcon, PhoneIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 const Footer = () => {
+  const quickLinks = [
+    { to: "/", label: "Home" },
+    { to: "/products", label: "Products" },
+  ];
+
   return (
-    <footer className="relative mt-auto border-t border-white/60"
-      style={{ background: "linear-gradient(135deg, #eef2ff 0%, #faf5ff 50%, #ecfdf5 100%)" }}>
-      {/* Top accent line */}
-      <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #4f46e5, #7c3aed, #c026d3)" }} />
+    <footer className="footer-premium relative mt-auto" role="contentinfo">
+      <div className="footer-accent" />
 
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
           <div className="col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-glow-sm"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+              <div className="footer-logo-mark">
                 <span className="text-white font-bold text-sm font-display">TP</span>
               </div>
               <h3 className="text-lg font-bold text-slate-800 font-display">Transcounty</h3>
@@ -25,28 +27,21 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+            <h4 className="footer-heading">Quick Links</h4>
             <ul className="space-y-2.5">
-              {[
-                { href: "/", label: "Home" },
-                { href: "/products", label: "Products" },
-                { href: "/pharmacies", label: "Pharmacies" },
-                { href: "/prescriptions", label: "Prescriptions" },
-              ].map(({ href, label }) => (
-                <li key={href}>
-                  <a href={href} className="text-slate-500 hover:text-primary-600 text-sm transition-colors">
+              {quickLinks.map(({ to, label }) => (
+                <li key={to}>
+                  <Link to={to} className="footer-link">
                     {label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contact Info */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Contact Us</h4>
+            <h4 className="footer-heading">Contact Us</h4>
             <ul className="space-y-2.5 text-sm text-slate-500">
               <li className="flex items-center gap-2">
                 <EnvelopeIcon className="w-4 h-4 text-primary-400 flex-shrink-0" />
@@ -63,9 +58,8 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Social Media */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Follow Us</h4>
+            <h4 className="footer-heading">Follow Us</h4>
             <div className="flex items-center gap-3">
               {[
                 { href: "https://facebook.com", Icon: FaFacebook, label: "Facebook" },
@@ -79,7 +73,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-9 h-9 rounded-xl bg-white/80 border border-white/60 flex items-center justify-center text-slate-400 hover:text-primary-600 hover:border-primary-200 hover:shadow-glow-sm transition-all"
+                  className="footer-social-btn"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -88,8 +82,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-slate-200/60 pt-8 mt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+        <div className="footer-copyright border-t border-slate-200/60 pt-8 mt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
           <p>© 2025 Transcounty Pharmacy. All rights reserved.</p>
           <p>Licensed under PPB Kenya.</p>
         </div>

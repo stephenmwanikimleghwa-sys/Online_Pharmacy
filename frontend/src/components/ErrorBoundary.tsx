@@ -27,21 +27,21 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 bg-red-50 text-red-800 rounded">
-          <h3 className="font-semibold">Something went wrong</h3>
-          <p className="text-sm mt-2">The inventory UI failed to render. You can retry or refresh the page.</p>
-          <div className="mt-3">
+        <div className="p-6 max-w-md mx-auto mt-12 bg-rose-50 text-rose-900 rounded-2xl border border-rose-200 shadow-sm">
+          <h3 className="font-semibold text-lg">Something went wrong</h3>
+          <p className="text-sm mt-2 text-rose-800">This page could not load properly. Try again or refresh the page.</p>
+          <div className="mt-4 flex gap-2">
             <button
-              className="px-3 py-1 bg-red-600 text-white rounded mr-2"
+              className="px-4 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700"
               onClick={() => this.setState({ hasError: false, error: null })}
             >
-              Retry
+              Try again
             </button>
             <button
-              className="px-3 py-1 bg-gray-200 rounded"
+              className="px-4 py-2 bg-white border border-rose-200 rounded-lg font-medium hover:bg-rose-50"
               onClick={() => window.location.reload()}
             >
-              Reload page
+              Refresh page
             </button>
           </div>
         </div>

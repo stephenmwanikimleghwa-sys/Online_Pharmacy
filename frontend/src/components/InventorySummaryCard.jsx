@@ -12,13 +12,13 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Inventory Summary</h2>
-          <p className="text-slate-500 text-sm mt-1">Real-time overview of current pharmaceutical stock levels.</p>
+          <p className="text-slate-500 text-sm mt-1">Quick view of your current stock.</p>
         </div>
         <button
           onClick={onViewInventory}
           className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-soft hover:shadow-glow hover:bg-indigo-700 transition-all active:scale-[0.98] text-sm"
         >
-          View Full Inventory
+          View stock list
         </button>
       </div>
 

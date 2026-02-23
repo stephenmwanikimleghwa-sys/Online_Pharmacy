@@ -156,16 +156,16 @@ const StockIntakeLog = () => {
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Intake <span className="text-indigo-600">Protocol</span></h1>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Stock <span className="text-indigo-600">Received</span></h1>
           </div>
-          <p className="text-lg text-slate-500 font-medium">Coordinate incoming pharmaceutical assets and distributor logistics.</p>
+          <p className="text-lg text-slate-500 font-medium">Record medicines and supplies received from your suppliers.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Initialize Intake</span>
+          <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Record New Delivery</span>
         </button>
       </div>
 
@@ -173,10 +173,10 @@ const StockIntakeLog = () => {
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           {[
-            { label: 'Total Protocols', value: summary.total_records, color: 'indigo', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
-            { label: 'Volume Received', value: summary.total_quantity_received, color: 'emerald', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg> },
-            { label: 'Capital Outflow', value: `KES ${parseFloat(summary.total_cost).toLocaleString()}`, color: 'violet', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-            { label: 'Distributor Mix', value: summary.distributors, color: 'amber', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
+            { label: 'Total Records', value: summary.total_records, color: 'indigo', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
+            { label: 'Units Received', value: summary.total_quantity_received, color: 'emerald', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg> },
+            { label: 'Total Cost', value: `KES ${parseFloat(summary.total_cost).toLocaleString()}`, color: 'violet', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+            { label: 'Suppliers Used', value: summary.distributors, color: 'amber', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
           ].map((stat, i) => (
             <div key={i} className="glass-card rounded-3xl p-6 shadow-premium border border-white/60 hover:shadow-soft transition-all group">
               <div className="flex items-center gap-4 mb-4">
@@ -209,7 +209,7 @@ const StockIntakeLog = () => {
           <div className="relative group w-full md:w-96">
             <input
               type="text"
-              placeholder="Filter by distributor ledger..."
+              placeholder="Search by supplier name..."
               value={filterDistributor}
               onChange={(e) => setFilterDistributor(e.target.value)}
               className="w-full pl-12 pr-6 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
@@ -217,7 +217,7 @@ const StockIntakeLog = () => {
             <svg className="w-5 h-5 text-slate-300 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">Archive View</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">All Records</span>
           </div>
         </div>
 
@@ -225,7 +225,7 @@ const StockIntakeLog = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50">
-                {['Product', 'Distributor', 'Quantity', 'Unit Cost', 'Total Commitment', 'Expiry', 'Actions'].map((header) => (
+                {['Medicine / Product', 'Supplier', 'Quantity', 'Unit Price', 'Total Cost', 'Expiry Date', 'Actions'].map((header) => (
                   <th key={header} className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{header}</th>
                 ))}
               </tr>
@@ -236,7 +236,7 @@ const StockIntakeLog = () => {
                   <td colSpan="7" className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center gap-4 opacity-40">
                       <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Retrieving Ledger...</p>
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
                     </div>
                   </td>
                 </tr>
@@ -247,7 +247,7 @@ const StockIntakeLog = () => {
                       <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center">
                         <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
-                      <p className="text-slate-500 font-display font-bold">No intake records identified</p>
+                      <p className="text-slate-500 font-display font-bold">No deliveries recorded yet</p>
                     </div>
                   </td>
                 </tr>
@@ -271,8 +271,8 @@ const StockIntakeLog = () => {
                     </td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${record.expiry_date && new Date(record.expiry_date) < new Date()
-                          ? 'bg-rose-50 text-rose-600 border-rose-100'
-                          : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        ? 'bg-rose-50 text-rose-600 border-rose-100'
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
                         }`}>
                         {record.expiry_date ? new Date(record.expiry_date).toLocaleDateString() : 'Infinite'}
                       </span>
@@ -304,22 +304,22 @@ const StockIntakeLog = () => {
                 <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                 </div>
-                <h2 className="text-3xl font-display font-bold leading-tight">Initialize Asset Intake</h2>
-                <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">Securely record incoming inventory assets into the decentralized registry.</p>
+                <h2 className="text-3xl font-display font-bold leading-tight">Record a New Delivery</h2>
+                <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">Fill in the details of the medicines you received from your supplier.</p>
               </div>
-              <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.3em] opacity-40">Protocol v4.2</div>
+
             </div>
 
             <form onSubmit={handleSubmit} className="md:w-2/3 p-10 bg-slate-50/30 overflow-y-auto max-h-[85vh]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Product Asset</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Medicine / Product</label>
                   <select
                     value={formData.product}
                     onChange={(e) => setFormData({ ...formData, product: e.target.value })}
                     className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                   >
-                    <option value="">Identify Product...</option>
+                    <option value="">Select a product...</option>
                     {products.map((product) => (
                       <option key={product.id} value={product.id}>{product.name}</option>
                     ))}
@@ -327,7 +327,7 @@ const StockIntakeLog = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Distributor Ledger</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Supplier Name</label>
                   <input
                     type="text"
                     list="distributors-list"
@@ -342,7 +342,7 @@ const StockIntakeLog = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Asset Volume</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Quantity Received</label>
                   <input
                     type="number"
                     min="1"
@@ -353,7 +353,7 @@ const StockIntakeLog = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Unit Commitment (KES)</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Price per Unit (KES)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -365,7 +365,7 @@ const StockIntakeLog = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Expiry Protocol</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Expiry Date</label>
                   <input
                     type="date"
                     value={formData.expiry_date}
@@ -375,7 +375,7 @@ const StockIntakeLog = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Batch ID</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Batch Number</label>
                   <input
                     type="text"
                     value={formData.batch_number}
@@ -392,13 +392,13 @@ const StockIntakeLog = () => {
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
                 >
-                  Abort
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
                 >
-                  Finalize Intake
+                  Save Record
                 </button>
               </div>
             </form>
@@ -429,9 +429,9 @@ const StockIntakeLog = () => {
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Asset Identity</p>
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Product</p>
                   <p className="text-xl font-display font-bold text-indigo-900">{selectedRecord.product_name}</p>
-                  <p className="text-xs font-bold text-indigo-600/60 mt-0.5">Origin: {selectedRecord.distributor_name}</p>
+                  <p className="text-xs font-bold text-indigo-600/60 mt-0.5">Supplier: {selectedRecord.distributor_name}</p>
                 </div>
               </div>
 
@@ -441,7 +441,7 @@ const StockIntakeLog = () => {
                   <p className="text-3xl font-display font-bold text-slate-900">{selectedRecord.quantity_received} <span className="text-sm text-slate-400 font-bold">UNITS</span></p>
                 </div>
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Commitment</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Cost</p>
                   <p className="text-xl font-display font-bold text-indigo-600">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
                   <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">Unit Cost: {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
                 </div>
@@ -449,11 +449,11 @@ const StockIntakeLog = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Expiry Protocol</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Expiry Date</p>
                   <p className="font-bold text-slate-700 px-4 py-2 bg-slate-100/50 rounded-xl text-xs">{selectedRecord.expiry_date ? new Date(selectedRecord.expiry_date).toLocaleDateString() : 'Secure/Infinite'}</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Batch Identifier</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Batch Number</p>
                   <p className="font-bold text-slate-700 px-4 py-2 bg-slate-100/50 rounded-xl text-xs">{selectedRecord.batch_number || 'ST-DEFAULT-ALPHA'}</p>
                 </div>
               </div>
@@ -464,7 +464,7 @@ const StockIntakeLog = () => {
                     {selectedRecord.received_by_username?.[0]?.toUpperCase() || 'S'}
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Logged By</p>
+                    <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Recorded By</p>
                     <p className="text-xs font-bold text-white uppercase tracking-tight">{selectedRecord.received_by_username}</p>
                   </div>
                 </div>
@@ -476,7 +476,7 @@ const StockIntakeLog = () => {
 
               {selectedRecord.notes && (
                 <div className="p-5 bg-amber-50 rounded-3xl border border-amber-100 text-amber-900 italic text-xs leading-relaxed">
-                  <span className="font-bold uppercase tracking-widest text-[9px] block mb-1 not-italic text-amber-500">Intake Communiqué:</span>
+                  <span className="font-bold uppercase tracking-widest text-[9px] block mb-1 not-italic text-amber-500">Notes:</span>
                   "{selectedRecord.notes}"
                 </div>
               )}
@@ -485,7 +485,7 @@ const StockIntakeLog = () => {
                 onClick={() => setSelectedRecord(null)}
                 className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
               >
-                Dismiss Protocol
+                Close
               </button>
             </div>
           </div>

@@ -54,8 +54,8 @@ const StockLogsModal = ({ item, onClose }) => {
         {/* Header Section */}
         <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
-            <h2 className="text-3xl font-display font-bold text-slate-900 tracking-tight">Audit Ledger: <span className="text-indigo-600">{item.name}</span></h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Registry history and asset velocity analysis</p>
+            <h2 className="text-3xl font-display font-bold text-slate-900 tracking-tight">Stock history: <span className="text-indigo-600">{item.name}</span></h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">See when stock went up or down</p>
           </div>
           <button
             onClick={onClose}
@@ -69,7 +69,7 @@ const StockLogsModal = ({ item, onClose }) => {
           {loading ? (
             <div className="flex flex-col justify-center items-center h-64 gap-4 opacity-40">
               <div className="animate-spin rounded-xl h-12 w-12 border-[3px] border-indigo-600 border-t-transparent shadow-glow-indigo"></div>
-              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Scanning Archive...</p>
+              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Loading...</p>
             </div>
           ) : error ? (
             <div className="bg-rose-50 border border-rose-100 rounded-3xl p-8 flex items-center gap-6">
@@ -83,15 +83,15 @@ const StockLogsModal = ({ item, onClose }) => {
               <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-inner">
                 <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <p className="text-slate-800 font-display font-bold text-xl uppercase tracking-tight">Registry Empty</p>
-              <p className="text-slate-400 text-sm mt-1">No historical transitions recorded for this asset.</p>
+              <p className="text-slate-800 font-display font-bold text-xl uppercase tracking-tight">No history yet</p>
+              <p className="text-slate-400 text-sm mt-1">No stock changes recorded for this item.</p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-3xl border border-slate-100 shadow-sm">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50">
                   <tr>
-                    {['Timestamp', 'Event Protocol', 'Inventory Delta', 'Registry Reason', 'Operator'].map((h) => (
+                    {['Date & time', 'Type', 'Change', 'Reason', 'By'].map((h) => (
                       <th key={h} className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{h}</th>
                     ))}
                   </tr>
@@ -121,7 +121,7 @@ const StockLogsModal = ({ item, onClose }) => {
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <p className="text-xs text-slate-600 font-medium max-w-xs truncate">{log.reason || 'SOP transition'}</p>
+                        <p className="text-xs text-slate-600 font-medium max-w-xs truncate">{log.reason || '—'}</p>
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ const StockLogsModal = ({ item, onClose }) => {
             onClick={onClose}
             className="px-8 py-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 font-bold text-xs uppercase tracking-widest transition-all shadow-premium hover:shadow-glow active:scale-95"
           >
-            Dismiss Audit
+            Close
           </button>
         </div>
       </div>

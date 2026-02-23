@@ -226,8 +226,6 @@ Once the server is running, visit:
 
 ## 👥 User Roles
 
-## 👥 User Roles
-
 ### Pharmacist
 - Digitally enter walk-in prescriptions
 - Manage local inventory and batch tracking

@@ -84,7 +84,7 @@ const ReportsDashboard = () => {
       alert('Failed to generate PDF report. Please try again.');
     }
   };
-  bitumen
+
   const exportToCSV = () => {
     alert('CSV export functionality will be implemented');
   };
@@ -93,7 +93,7 @@ const ReportsDashboard = () => {
     return (
       <div className="flex flex-col justify-center items-center h-[60vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-[3px] border-indigo-600 border-t-transparent shadow-glow-sm"></div>
-        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest animate-pulse">Scanning Data Repositories...</p>
+        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest animate-pulse">Loading...</p>
       </div>
     );
   }
@@ -107,10 +107,10 @@ const ReportsDashboard = () => {
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Intelligence</h1>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Reports &amp; Analytics</h1>
           </div>
           <p className="text-lg text-slate-500 max-w-2xl">
-            {user?.role === 'admin' ? 'Monitoring system-wide pharmaceutical trends, inventory velocity, and team performance.' : 'Review personal dispensing accuracy, daily velocity, and product mix.'}
+            {user?.role === 'admin' ? 'Track stock levels, sales trends, and how your pharmacy team is performing.' : 'See how many prescriptions you processed each day, which medicines you dispensed, and how much stock was used.'}
           </p>
         </div>
 
@@ -143,12 +143,15 @@ const ReportsDashboard = () => {
           <div className="p-2.5 bg-indigo-50 rounded-xl">
             <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
           </div>
-          <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Analysis Horizon</h2>
+          <div>
+            <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Select Date Range</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Choose a start and end date to filter the reports below.</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Start Point</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">From Date</label>
             <input
               type="date"
               value={dateRange.startDate}
@@ -157,7 +160,7 @@ const ReportsDashboard = () => {
             />
           </div>
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">End Point</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">To Date</label>
             <input
               type="date"
               value={dateRange.endDate}
@@ -171,7 +174,7 @@ const ReportsDashboard = () => {
               className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black shadow-card transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-              Refresh Dataset
+              Refresh
             </button>
           </div>
         </div>
@@ -187,15 +190,18 @@ const ReportsDashboard = () => {
                   <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                   </div>
-                  <h2 className="text-xl font-display font-bold text-slate-900">Dispensing Velocity</h2>
+                  <div>
+                    <h2 className="text-xl font-display font-bold text-slate-900">Daily Prescription Activity</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">How many prescriptions were approved, rejected, and dispensed each day.</p>
+                  </div>
                 </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-100">
                   <thead className="bg-slate-50/30">
                     <tr>
-                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reporting Date</th>
-                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validated</th>
+                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
+                      <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Approved</th>
                       <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rejected</th>
                       <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dispensed</th>
                     </tr>
@@ -219,7 +225,8 @@ const ReportsDashboard = () => {
             </div>
 
             <div className="lg:col-span-6 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
-              <h2 className="text-xl font-display font-bold text-slate-900 mb-8 border-l-4 border-indigo-500 pl-4">Product Output Mix</h2>
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-indigo-500 pl-4">Medicines Dispensed</h2>
+              <p className="text-xs text-slate-400 mb-8 pl-4">Medicines you dispensed in the selected period and their total sales value.</p>
               <div className="space-y-4">
                 {reportData.medicinesDispensed.map((item, index) => (
                   <div key={index} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 hover:bg-white hover:shadow-card transition-all">
@@ -227,7 +234,7 @@ const ReportsDashboard = () => {
                       <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">💊</div>
                       <div>
                         <p className="font-bold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{item.name}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Dispensed Qty: {item.quantity}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Approved: {item.validated}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -239,7 +246,8 @@ const ReportsDashboard = () => {
             </div>
 
             <div className="lg:col-span-6 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
-              <h2 className="text-xl font-display font-bold text-slate-900 mb-8 border-l-4 border-emerald-500 pl-4">Stock Utilization Ledger</h2>
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-emerald-500 pl-4">Stock Usage Summary</h2>
+              <p className="text-xs text-slate-400 mb-8 pl-4">Shows how much stock you started with, how much was dispensed, and what is left.</p>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
@@ -275,7 +283,10 @@ const ReportsDashboard = () => {
                   <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                   </div>
-                  <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">System Stock Dynamics</h2>
+                  <div>
+                    <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Stock Trends Over Time</h2>
+                    <p className="text-xs text-slate-400 mt-1">Shows how much stock was added (restocked) vs. used (dispensed) over the last 30 days.</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-6 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-emerald-50">
@@ -320,7 +331,10 @@ const ReportsDashboard = () => {
                 <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                   <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </div>
-                <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">Verification Throughput</h2>
+                <div>
+                  <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">Pharmacist Prescription Activity</h2>
+                  <p className="text-xs text-slate-400 mt-1">How many prescriptions each pharmacist verified in the selected period.</p>
+                </div>
               </div>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -337,7 +351,8 @@ const ReportsDashboard = () => {
 
             {/* Top Selling Mix */}
             <div className="lg:col-span-5 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium group">
-              <h2 className="text-xl font-display font-bold text-slate-900 mb-10 border-l-4 border-fuchsia-500 pl-4 tracking-tight">Supply Distribution Mix</h2>
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-fuchsia-500 pl-4 tracking-tight">Top Medicines by Volume</h2>
+              <p className="text-xs text-slate-400 mb-10 pl-4">The medicines dispensed most often, shown as a share of total dispensing.</p>
               <div className="h-80 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -381,11 +396,11 @@ const ReportsDashboard = () => {
                     <svg className="w-8 h-8 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Critical Replenishment Protocol</h2>
-                    <p className="text-slate-500 text-sm mt-1">Assets currently identified below safety reorder thresholds.</p>
+                    <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Low Stock Alerts</h2>
+                    <p className="text-slate-500 text-sm mt-1">These medicines are running low and need to be restocked soon.</p>
                   </div>
                 </div>
-                <button className="px-6 py-2.5 bg-rose-50 text-rose-600 font-bold text-xs rounded-xl border border-rose-100 uppercase tracking-widest hover:bg-rose-100 transition-all active:scale-[0.98]">Intelligence Ledger Export</button>
+                <button className="px-6 py-2.5 bg-rose-50 text-rose-600 font-bold text-xs rounded-xl border border-rose-100 uppercase tracking-widest hover:bg-rose-100 transition-all active:scale-[0.98]">Export Report</button>
               </div>
 
               {reportData.lowStockAlerts.length > 0 ? (
@@ -412,8 +427,8 @@ const ReportsDashboard = () => {
                   <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-soft mb-4">
                     <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                   </div>
-                  <p className="font-display font-bold text-slate-800">Inventory Status: Optimal</p>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">No critical stock interventions required</p>
+                  <p className="font-display font-bold text-slate-800">All stock levels are good</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">No medicines need restocking right now</p>
                 </div>
               )}
             </div>

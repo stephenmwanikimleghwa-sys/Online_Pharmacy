@@ -96,6 +96,7 @@ class ChangePasswordView(APIView):
         if serializer.is_valid():
             user = request.user
             user.set_password(serializer.validated_data["new_password"])
+            user.must_change_password = False
             user.save()
             return Response(
                 {"message": "Password changed successfully."}, status=status.HTTP_200_OK

@@ -12,7 +12,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const location = useLocation();
 
-  // Close mobile menu on navigation
   React.useEffect(() => {
     setIsOpen(false);
   }, [location]);
@@ -24,10 +23,13 @@ const Navbar = () => {
 
   if (loading) {
     return (
-      <nav className="bg-white shadow-lg">
+      <nav className="nav-premium sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-16">
-            <div className="text-gray-600">Loading...</div>
+            <div className="flex items-center gap-2 text-neutral-500">
+              <div className="w-5 h-5 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+              <span className="text-sm font-medium">Loading...</span>
+            </div>
           </div>
         </div>
       </nav>
@@ -35,36 +37,37 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="glass-panel sticky top-0 z-50 transition-all duration-300 border-b border-white/20">
+    <nav className="nav-premium sticky top-0 z-50" role="navigation" aria-label="Main">
+      <div className="nav-accent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo */}
+        <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 rounded-xl shadow-glow flex items-center justify-center transform group-hover:scale-105 transition-all duration-300"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
-                <span className="text-white font-bold text-lg font-display">TP</span>
-              </div>
-              <span className="text-xl font-bold text-slate-800 tracking-tight group-hover:text-primary-600 transition-colors font-display">
-                Transcounty
-              </span>
+            <Link
+              to="/"
+              className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-xl"
+              aria-label="Transcounty Pharmacy - Home"
+            >
+              <div
+                className="nav-logo-mark group-hover:scale-105 group-hover:shadow-premium transition-all duration-300"
+                aria-hidden
+              />
+              <span className="nav-brand-text">Transcounty</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
           <DesktopNav user={user} />
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-2">
             <UserMenu user={user} handleLogout={handleLogout} />
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
-              className="text-slate-600 hover:text-primary-600 p-2 rounded-lg hover:bg-slate-50 transition-colors"
-              aria-label="Toggle menu"
+              className="nav-mobile-btn"
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
             >
               <Bars3Icon className="h-6 w-6" />
             </button>
@@ -72,7 +75,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       <MobileNav isOpen={isOpen} user={user} handleLogout={handleLogout} />
     </nav>
   );
