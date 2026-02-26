@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -114,27 +115,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database
+# Database Configuration
 # Use DATABASE_URL from environment if available (e.g., on Render)
-# Fall back to separate environment variables for local development
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL",
-        default=f"postgresql://{env('DB_USER', default='postgres')}:{env('DB_PASSWORD', default='password')}@{env('DB_HOST', default='localhost')}:{env('DB_PORT', default='5432')}/{env('DB_NAME', default='transcounty_pharmacy')}"
-    )
-}
+if os.getenv("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            conn_max_age=600 if not DEBUG else 0,
+            conn_health_checks=True,
+            ssl_require=not DEBUG or (os.getenv("DATABASE_URL") and ".render.com" in os.getenv("DATABASE_URL")),
+        )
+    }
+else:
+    # Fall back to separate environment variables for local development
+    DATABASES = {
+        "default": env.db(
+            "DATABASE_URL",
+            default=f"postgresql://{env('DB_USER', default='postgres')}:{env('DB_PASSWORD', default='password')}@{env('DB_HOST', default='localhost')}:{env('DB_PORT', default='5432')}/{env('DB_NAME', default='transcounty_pharmacy')}"
+        )
+    }
 
-# If we are in production or connecting to a remote DB, ensure SSL
+# Explicitly ensure sslmode: require for remote hosts if not already set by dj_database_url
 _db_host = DATABASES["default"].get("HOST", "")
-if not DEBUG or (_db_host and _db_host not in ["localhost", "127.0.0.1", "db"]):
-    # Use connection pooling in production
-    if not DEBUG:
-        DATABASES["default"]["CONN_MAX_AGE"] = 600
-    
-    # Ensure SSL is enabled for remote connections
+if _db_host and _db_host not in ["localhost", "127.0.0.1", "db"]:
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    if "sslmode" not in DATABASES["default"]["OPTIONS"]:
+        DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

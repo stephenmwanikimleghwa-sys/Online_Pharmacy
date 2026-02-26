@@ -38,6 +38,15 @@ def health_check(request):
     try:
         redis_url = os.getenv('REDIS_URL')
         if redis_url:
+            # Mask sensitive info but show scheme and prefix for debugging
+            has_scheme = "://" in redis_url
+            scheme = redis_url.split("://")[0] if has_scheme else "none"
+            health_status["redis_debug"] = {
+                "has_scheme": has_scheme,
+                "scheme": scheme,
+                "prefix": redis_url[:10] + "..." if len(redis_url) > 10 else redis_url
+            }
+            
             r = redis.from_url(redis_url)
             r.ping()
             health_status["checks"]["redis"] = True
@@ -47,6 +56,7 @@ def health_check(request):
     except Exception as e:
         # Redis is optional, so we don't fail the health check
         health_status["checks"]["redis"] = False
+        health_status["redis_error_type"] = type(e).__name__
         health_status["redis_warning"] = "Redis error: " + str(e)
     
     # Diagnostic logging for Render (check for SSL/Proxy issues)
@@ -63,8 +73,7 @@ def health_check(request):
         "port": db_cfg.get("PORT"),
         "name": db_cfg.get("NAME"),
         "engine": db_cfg.get("ENGINE"),
-        "has_options": "OPTIONS" in db_cfg,
-        "ssl_mode": db_cfg.get("OPTIONS", {}).get("sslmode"),
+        "options": {k: v for k, v in db_cfg.get("OPTIONS", {}).items() if k != "password"},
     }
 
     # Return appropriate status code
