@@ -36,7 +36,7 @@ def health_check(request):
     
     # Check Redis connection (if configured)
     try:
-        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/1')
+        redis_url = os.getenv('REDIS_URL', 'rediss://localhost:6379/1')
         r = redis.from_url(redis_url)
         r.ping()
         health_status["checks"]["redis"] = True

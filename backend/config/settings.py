@@ -347,10 +347,10 @@ else:
 # Celery settings (for async tasks)
 # Celery: prefer explicit env vars, fall back to REDIS_URL if provided
 CELERY_BROKER_URL = env(
-    "CELERY_BROKER_URL", default=REDIS_URL or "redis://localhost:6379/0"
+    "CELERY_BROKER_URL", default=REDIS_URL or "rediss://localhost:6379/0"
 )
 CELERY_RESULT_BACKEND = env(
-    "CELERY_RESULT_BACKEND", default=REDIS_URL or "redis://localhost:6379/0"
+    "CELERY_RESULT_BACKEND", default=REDIS_URL or "rediss://localhost:6379/0"
 )
 
 # Sentry Configuration
