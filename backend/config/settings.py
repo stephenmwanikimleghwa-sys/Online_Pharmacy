@@ -133,6 +133,7 @@ if not DEBUG:
     # Render DBs often require SSL, especially cross-region (Ohio to Oregon).
     # 'require' is safer than 'prefer' for cross-region.
     DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    DATABASES["default"]["OPTIONS"]["ssl"] = True
     
     # Log connection info (SAFE: no passwords)
     db_info = {k: v for k, v in DATABASES["default"].items() if k != "PASSWORD"}
