@@ -132,9 +132,8 @@ if not DEBUG:
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
     
-    # Render DBs often require SSL. Using internalConnectionString avoids this usually,
-    # but let's be safe.
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "prefer"
+    # Render DBs often require SSL, especially cross-region (Ohio to Oregon).
+    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
