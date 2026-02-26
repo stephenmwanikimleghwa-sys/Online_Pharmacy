@@ -124,12 +124,17 @@ DATABASES = {
     )
 }
 
-# If we are in production, add performance and security settings
-if not DEBUG:
-    # Use connection pooling
-    DATABASES["default"]["CONN_MAX_AGE"] = 600
-    # Note: SSL is enforced via PGSSLMODE environment variable in render.yaml
-    # for better reliability with cross-region Render databases.
+# If we are in production or connecting to a remote DB, ensure SSL
+_db_host = DATABASES["default"].get("HOST", "")
+if not DEBUG or (_db_host and _db_host not in ["localhost", "127.0.0.1", "db"]):
+    # Use connection pooling in production
+    if not DEBUG:
+        DATABASES["default"]["CONN_MAX_AGE"] = 600
+    
+    # Ensure SSL is enabled for remote connections
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

@@ -36,14 +36,18 @@ def health_check(request):
     
     # Check Redis connection (if configured)
     try:
-        redis_url = os.getenv('REDIS_URL', 'rediss://localhost:6379/1')
-        r = redis.from_url(redis_url)
-        r.ping()
-        health_status["checks"]["redis"] = True
+        redis_url = os.getenv('REDIS_URL')
+        if redis_url:
+            r = redis.from_url(redis_url)
+            r.ping()
+            health_status["checks"]["redis"] = True
+        else:
+            health_status["checks"]["redis"] = False
+            health_status["redis_warning"] = "REDIS_URL not configured"
     except Exception as e:
         # Redis is optional, so we don't fail the health check
         health_status["checks"]["redis"] = False
-        health_status["redis_warning"] = "Redis not available: " + str(e)
+        health_status["redis_warning"] = "Redis error: " + str(e)
     
     # Diagnostic logging for Render (check for SSL/Proxy issues)
     import logging
