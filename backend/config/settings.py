@@ -124,6 +124,18 @@ DATABASES = {
     )
 }
 
+# If we are in production, add some robustness settings
+if not DEBUG:
+    DATABASES["default"]["CONN_MAX_AGE"] = 600
+    # On Render, the internal connection string might not need SSL, 
+    # but the external one certainly does. We'll set it to 'prefer' or 'require' if it fails.
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+    
+    # Render DBs often require SSL. Using internalConnectionString avoids this usually,
+    # but let's be safe.
+    DATABASES["default"]["OPTIONS"]["sslmode"] = "prefer"
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
