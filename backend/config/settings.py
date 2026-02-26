@@ -127,13 +127,16 @@ DATABASES = {
 # If we are in production, add some robustness settings
 if not DEBUG:
     DATABASES["default"]["CONN_MAX_AGE"] = 600
-    # On Render, the internal connection string might not need SSL, 
-    # but the external one certainly does. We'll set it to 'prefer' or 'require' if it fails.
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
     
     # Render DBs often require SSL, especially cross-region (Ohio to Oregon).
+    # 'require' is safer than 'prefer' for cross-region.
     DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    
+    # Log connection info (SAFE: no passwords)
+    db_info = {k: v for k, v in DATABASES["default"].items() if k != "PASSWORD"}
+    print(f"DEBUG: Connecting to database with: {db_info}")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
