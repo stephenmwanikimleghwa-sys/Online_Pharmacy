@@ -299,7 +299,8 @@ if LOG_TO_FILE:
 
 # Security settings
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Disable internal redirect loop; Render handles HTTPS redirection.
+    SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

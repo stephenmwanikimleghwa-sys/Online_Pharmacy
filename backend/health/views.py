@@ -45,6 +45,12 @@ def health_check(request):
         health_status["checks"]["redis"] = False
         health_status["redis_warning"] = "Redis not available: " + str(e)
     
+    # Diagnostic logging for Render (check for SSL/Proxy issues)
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("DEBUG: Health check request headers: %s", dict(request.headers))
+    logger.info("DEBUG: Request is_secure: %s", request.is_secure())
+
     # Return appropriate status code
     status_code = 200 if health_status["status"] == "healthy" else 503
     
