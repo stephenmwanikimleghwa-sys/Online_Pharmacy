@@ -51,6 +51,18 @@ def health_check(request):
     logger.info("DEBUG: Health check request headers: %s", dict(request.headers))
     logger.info("DEBUG: Request is_secure: %s", request.is_secure())
 
+    # Deeper diagnostics for the database issue
+    from django.conf import settings
+    db_cfg = settings.DATABASES.get("default", {})
+    health_status["database_params"] = {
+        "host": db_cfg.get("HOST"),
+        "port": db_cfg.get("PORT"),
+        "name": db_cfg.get("NAME"),
+        "engine": db_cfg.get("ENGINE"),
+        "has_options": "OPTIONS" in db_cfg,
+        "ssl_mode": db_cfg.get("OPTIONS", {}).get("sslmode"),
+    }
+
     # Return appropriate status code
     status_code = 200 if health_status["status"] == "healthy" else 503
     

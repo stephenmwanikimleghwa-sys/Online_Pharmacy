@@ -124,20 +124,12 @@ DATABASES = {
     )
 }
 
-# If we are in production, add some robustness settings
+# If we are in production, add performance and security settings
 if not DEBUG:
+    # Use connection pooling
     DATABASES["default"]["CONN_MAX_AGE"] = 600
-    if "OPTIONS" not in DATABASES["default"]:
-        DATABASES["default"]["OPTIONS"] = {}
-    
-    # Render DBs often require SSL, especially cross-region (Ohio to Oregon).
-    # 'require' is safer than 'prefer' for cross-region.
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
-    DATABASES["default"]["OPTIONS"]["ssl"] = True
-    
-    # Log connection info (SAFE: no passwords)
-    db_info = {k: v for k, v in DATABASES["default"].items() if k != "PASSWORD"}
-    print(f"DEBUG: Connecting to database with: {db_info}")
+    # Note: SSL is enforced via PGSSLMODE environment variable in render.yaml
+    # for better reliability with cross-region Render databases.
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

@@ -61,6 +61,10 @@ services:
           name: pharmacy-cache
           type: redis
           property: connectionString
+      - key: PGSSLMODE
+        value: "require"
+      - key: PGSSLMAXPROTOCOL
+        value: "TLSv1.3"
 
   # Frontend Service (Static Site)
   - type: web
@@ -119,3 +123,7 @@ services:
           name: pharmacy-cache
           type: redis
           property: connectionString
+      - key: PGSSLMODE
+        value: "require"
+      - key: PGSSLMAXPROTOCOL
+        value: "TLSv1.3"
