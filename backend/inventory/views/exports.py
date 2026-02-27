@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-from django.db import models
+from django.db.models import F
 from django.http import HttpResponse, StreamingHttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
