@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Count, Q
+from django.db import transaction
 from datetime import timedelta
 from .models import (
     Prescription,
@@ -20,7 +21,26 @@ from .serializers import (
 )
 from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 from users.models import User
-from django.http import HttpRequest  # Added import
+from django.http import HttpRequest
+
+
+def parse_date_range(request):
+    start_date_str = request.query_params.get("start_date")
+    end_date_str = request.query_params.get("end_date")
+    if not start_date_str or not end_date_str:
+        return None, None, Response(
+            {"error": "Start and end dates are required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        start_date = timezone.datetime.strptime(start_date_str, "%Y-%m-%d")
+        end_date = timezone.datetime.strptime(end_date_str, "%Y-%m-%d")
+    except ValueError:
+        return None, None, Response(
+            {"error": "Invalid date format. Use YYYY-MM-DD"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return start_date, end_date, None
 
 
 class PrescriptionUploadView(generics.CreateAPIView):
@@ -135,11 +155,12 @@ def pharmacist_dispensed_prescriptions(request):
 
 @api_view(["POST"])
 @permission_classes([IsPharmacistOrAdmin])
+@transaction.atomic
 def dispense_prescription(request, pk):
     """
     Dispense a prescription (mark as filled).
     """
-    prescription = get_object_or_404(Prescription, pk=pk)
+    prescription = get_object_or_404(Prescription.objects.select_for_update(), pk=pk)
     if prescription.status != PrescriptionStatusChoices.VALIDATED:
         return Response(
             {"error": "Prescription must be verified before dispensing."},
@@ -200,11 +221,12 @@ class ManualPrescriptionCreateView(generics.CreateAPIView):
 
 @api_view(["POST"])
 @permission_classes([IsPharmacistOrAdmin])
+@transaction.atomic
 def dispense_prescription_medicines(request: HttpRequest, pk: int):
     """
     Dispense medicines from a prescription and update inventory.
     """
-    prescription = get_object_or_404(Prescription, pk=pk)
+    prescription = get_object_or_404(Prescription.objects.select_for_update(), pk=pk)
 
     if prescription.status != PrescriptionStatusChoices.VALIDATED:
         return Response(
@@ -212,134 +234,6 @@ def dispense_prescription_medicines(request: HttpRequest, pk: int):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Move diagnostics-related reports to separate views
-    @api_view(["GET"])
-    @permission_classes([IsAdminUser])
-    def daily_prescriptions_report(request: HttpRequest):
-        start_date_str = request.query_params.get("start_date")
-        end_date_str = request.query_params.get("end_date")
-        if not start_date_str or not end_date_str:
-            return Response(
-                {"error": "Start and end dates are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            start_date = timezone.datetime.strptime(start_date_str, "%Y-%m-%d")
-            end_date = timezone.datetime.strptime(end_date_str, "%Y-%m-%d")
-        except ValueError:
-            return Response(
-                {"error": "Invalid date format. Use YYYY-MM-DD"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        prescriptions = Prescription.objects.filter(
-            uploaded_at__range=[start_date, end_date + timedelta(days=1)]
-        ).select_related("user")
-        daily_reports = []
-        for date in (
-            start_date + timedelta(days=x)
-            for x in range((end_date - start_date).days + 1)
-        ):
-            count = prescriptions.filter(uploaded_at__date=date).aggregate(
-                validated=Count("id"),
-                rejected=Count("id", filter=Q(status="rejected")),
-                dispensed=Count("id", filter=Q(status="dispensed")),
-            )
-            daily_reports.append(
-                {
-                    "date": date.strftime("%Y-%m-%d"),
-                    "validated": count["validated"],
-                    "rejected": count["rejected"],
-                    "dispensed": count["dispensed"],
-                }
-            )
-        return Response({"daily_prescriptions": daily_reports})
-
-    @api_view(["GET"])
-    @permission_classes([IsAdminUser])
-    def medicines_dispensed_report(request: HttpRequest):
-        start_date_str = request.query_params.get("start_date")
-        end_date_str = request.query_params.get("end_date")
-        if not start_date_str or not end_date_str:
-            return Response(
-                {"error": "Start and end dates are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            start_date = timezone.datetime.strptime(start_date_str, "%Y-%m-%d")
-            end_date = timezone.datetime.strptime(end_date_str, "%Y-%m-%d")
-        except ValueError:
-            return Response(
-                {"error": "Invalid date format. Use YYYY-MM-DD"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        prescriptions = Prescription.objects.filter(
-            uploaded_at__range=[start_date, end_date + timedelta(days=1)],
-            status="dispensed",
-        )
-        medicine_data = {}
-        for prescription in prescriptions:
-            for medicine in prescription.prescribed_medicines:
-                name = medicine["name"]
-                quantity = medicine["quantity"]
-                medicine_data[name] = medicine_data.get(name, 0) + quantity
-        medicines_list = [
-            {"name": name, "quantity": qty} for name, qty in medicine_data.items()
-        ]
-        return Response({"medicines_dispensed": medicines_list})
-
-    @api_view(["GET"])
-    @permission_classes([IsAdminUser])
-    def stock_usage_report(request: HttpRequest):
-        start_date_str = request.query_params.get("start_date")
-        end_date_str = request.query_params.get("end_date")
-        if not start_date_str or not end_date_str:
-            return Response(
-                {"error": "Start and end dates are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            start_date = timezone.datetime.strptime(start_date_str, "%Y-%m-%d")
-            end_date = timezone.datetime.strptime(end_date_str, "%Y-%m-%d")
-        except ValueError:
-            return Response(
-                {"error": "Invalid date format. Use YYYY-MM-DD"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        prescriptions = Prescription.objects.filter(
-            uploaded_at__range=[start_date, end_date + timedelta(days=1)],
-            status="dispensed",
-        )
-        medicine_usage = {}
-        for prescription in prescriptions:
-            for medicine in prescription.prescribed_medicines:
-                name = medicine["name"]
-                quantity = medicine["quantity"]
-                if name in medicine_usage:
-                    medicine_usage[name]["dispensed"] += quantity
-                    medicine_usage[name]["total_dispensed"] += quantity
-                else:
-                    medicine_usage[name] = {
-                        "dispensed": quantity,
-                        "total_dispensed": quantity,
-                    }
-        usage_list = [
-            {
-                "product": name,
-                "dispensed_today": data["dispensed"],
-                "total_dispensed": data["total_dispensed"],
-            }
-            for name, data in medicine_usage.items()
-        ]
-        return Response({"stock_usage": usage_list})
-
-    # Update prescription status
-    prescription.status = PrescriptionStatusChoices.DISPENSED
     prescription.fill_status = FillStatusChoices.FILLED
     prescription.dispensed_by = request.user
     prescription.dispensed_at = timezone.now()
@@ -347,6 +241,95 @@ def dispense_prescription_medicines(request: HttpRequest, pk: int):
 
     serializer = PrescriptionSerializer(prescription)
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def daily_prescriptions_report(request: HttpRequest):
+    start_date, end_date, error_response = parse_date_range(request)
+    if error_response:
+        return error_response
+
+    prescriptions = Prescription.objects.filter(
+        uploaded_at__range=[start_date, end_date + timedelta(days=1)]
+    ).select_related("user")
+    daily_reports = []
+    for date in (
+        start_date + timedelta(days=x)
+        for x in range((end_date - start_date).days + 1)
+    ):
+        count = prescriptions.filter(uploaded_at__date=date).aggregate(
+            validated=Count("id"),
+            rejected=Count("id", filter=Q(status=PrescriptionStatusChoices.REJECTED)),
+            dispensed=Count("id", filter=Q(status=PrescriptionStatusChoices.DISPENSED)),
+        )
+        daily_reports.append(
+            {
+                "date": date.strftime("%Y-%m-%d"),
+                "validated": count["validated"],
+                "rejected": count["rejected"],
+                "dispensed": count["dispensed"],
+            }
+        )
+    return Response({"daily_prescriptions": daily_reports})
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def medicines_dispensed_report(request: HttpRequest):
+    start_date, end_date, error_response = parse_date_range(request)
+    if error_response:
+        return error_response
+
+    prescriptions = Prescription.objects.filter(
+        uploaded_at__range=[start_date, end_date + timedelta(days=1)],
+        status=PrescriptionStatusChoices.DISPENSED,
+    )
+    medicine_data = {}
+    for prescription in prescriptions:
+        for medicine in prescription.prescribed_medicines:
+            name = medicine["name"]
+            quantity = medicine["quantity"]
+            medicine_data[name] = medicine_data.get(name, 0) + quantity
+    medicines_list = [
+        {"name": name, "quantity": qty} for name, qty in medicine_data.items()
+    ]
+    return Response({"medicines_dispensed": medicines_list})
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def stock_usage_report(request: HttpRequest):
+    start_date, end_date, error_response = parse_date_range(request)
+    if error_response:
+        return error_response
+
+    prescriptions = Prescription.objects.filter(
+        uploaded_at__range=[start_date, end_date + timedelta(days=1)],
+        status=PrescriptionStatusChoices.DISPENSED,
+    )
+    medicine_usage = {}
+    for prescription in prescriptions:
+        for medicine in prescription.prescribed_medicines:
+            name = medicine["name"]
+            quantity = medicine["quantity"]
+            if name in medicine_usage:
+                medicine_usage[name]["dispensed"] += quantity
+                medicine_usage[name]["total_dispensed"] += quantity
+            else:
+                medicine_usage[name] = {
+                    "dispensed": quantity,
+                    "total_dispensed": quantity,
+                }
+    usage_list = [
+        {
+            "product": name,
+            "dispensed_today": data["dispensed"],
+            "total_dispensed": data["total_dispensed"],
+        }
+        for name, data in medicine_usage.items()
+    ]
+    return Response({"stock_usage": usage_list})
 
 
 # ```

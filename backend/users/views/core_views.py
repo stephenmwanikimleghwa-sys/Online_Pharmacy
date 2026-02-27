@@ -179,9 +179,6 @@ class PasswordResetRequestView(APIView):
                     )
                 except Exception as e:
                     logger.error(f"Failed to send password reset email: {e}")
-                    # In development, it's helpful to see the URL anyway
-                    if settings.DEBUG:
-                        print(f"DEBUG: Password Reset URL: {reset_url}")
 
             return Response(
                 {"message": "If an account exists with this email, a reset link has been sent."},

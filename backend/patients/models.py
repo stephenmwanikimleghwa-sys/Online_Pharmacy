@@ -5,6 +5,13 @@ from django.utils import timezone
 User = get_user_model()
 
 
+class GenderChoices(models.TextChoices):
+    MALE = "MALE", "Male"
+    FEMALE = "FEMALE", "Female"
+    OTHER = "OTHER", "Other"
+    PREFER_NOT_TO_SAY = "PREFER_NOT_TO_SAY", "Prefer not to say"
+
+
 class Patient(models.Model):
     """
     Model for managing patient records.
@@ -12,9 +19,15 @@ class Patient(models.Model):
     Optionally linked to a User account for authentication.
     """
 
-    # Demographics
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="patient"
+    )
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    date_of_birth = models.DateField()
+    gender = models.CharField(
+        max_length=20,
+        choices=GenderChoices.choices,
     )
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)

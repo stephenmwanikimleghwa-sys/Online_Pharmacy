@@ -191,15 +191,15 @@ class Prescription(models.Model):
         return f"Prescription for {patient_name} - {self.status}"
 
     def save(self, *args, **kwargs):
-        if self.status == "validated" and not self.verified_at:
+        if self.status == PrescriptionStatusChoices.VALIDATED and not self.verified_at:
             self.verified_at = timezone.now()
-        if self.status == "dispensed" and not self.dispensed_at:
+        if self.status == PrescriptionStatusChoices.DISPENSED and not self.dispensed_at:
             self.dispensed_at = timezone.now()
         super().save(*args, **kwargs)
 
     def get_patient_info(self):
         """Return patient information based on prescription type"""
-        if self.prescription_type == "manual":
+        if self.prescription_type == PrescriptionTypeChoices.MANUAL:
             return {
                 "name": self.patient_name,
                 "age": self.patient_age,

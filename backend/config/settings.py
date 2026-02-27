@@ -36,13 +36,14 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 #  - single '*' -> allow all hosts (use with caution)
 _allowed_raw = env("ALLOWED_HOSTS", default="")
 if _allowed_raw.strip() == "":
-    ALLOWED_HOSTS = [
-        "localhost",
-        "127.0.0.1",
-        "pharmacy-aggregator.onrender.com",
-        "online-pharmacy-sn88.onrender.com",
-        ".onrender.com",
-    ]
+    ALLOWED_HOSTS = env.list(
+        "ALLOWED_HOSTS",
+        default=[
+            "localhost",
+            "127.0.0.1",
+            ".onrender.com",
+        ]
+    )
 elif _allowed_raw.strip() == "*":
     # Explicit wildcard requested
     ALLOWED_HOSTS = ["*"]
@@ -92,7 +93,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "django_ratelimit.middleware.RatelimitMiddleware",
+    "django_ratelimit.middleware.RatelimitMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -221,19 +222,21 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://online-pharmacy-1-np3y.onrender.com",
-    "https://online-pharmacy-sn88.onrender.com",
-]
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+)
+CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=False)
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.onrender\.com$",
-]
+CORS_ALLOWED_ORIGIN_REGEXES = env.list(
+    "CORS_ALLOWED_ORIGIN_REGEXES",
+    default=[r"^https://.*\.onrender\.com$"],
+)
 
 # Custom user model
 AUTH_USER_MODEL = "users.User"
