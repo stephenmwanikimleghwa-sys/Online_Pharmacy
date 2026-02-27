@@ -7,7 +7,12 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
-from .models import Prescription, PrescriptionStatusChoices
+from .models import (
+    Prescription,
+    PrescriptionStatusChoices,
+    PrescriptionTypeChoices,
+    FillStatusChoices
+)
 from .serializers import (
     PrescriptionCreateSerializer,
     PrescriptionSerializer,
@@ -135,13 +140,13 @@ def dispense_prescription(request, pk):
     Dispense a prescription (mark as filled).
     """
     prescription = get_object_or_404(Prescription, pk=pk)
-    if prescription.status != "verified":
+    if prescription.status != PrescriptionStatusChoices.VALIDATED:
         return Response(
             {"error": "Prescription must be verified before dispensing."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    prescription.fill_status = "filled"
+    prescription.fill_status = FillStatusChoices.FILLED
     prescription.dispensed_at = timezone.now()
     prescription.save()
 
@@ -187,7 +192,9 @@ class ManualPrescriptionCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(
-            prescription_type="manual", status="pending", added_by=self.request.user
+            prescription_type=PrescriptionTypeChoices.MANUAL,
+            status=PrescriptionStatusChoices.PENDING,
+            added_by=self.request.user
         )
 
 
@@ -199,7 +206,7 @@ def dispense_prescription_medicines(request: HttpRequest, pk: int):
     """
     prescription = get_object_or_404(Prescription, pk=pk)
 
-    if prescription.status != "verified":
+    if prescription.status != PrescriptionStatusChoices.VALIDATED:
         return Response(
             {"error": "Prescription must be verified before dispensing"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -332,7 +339,8 @@ def dispense_prescription_medicines(request: HttpRequest, pk: int):
         return Response({"stock_usage": usage_list})
 
     # Update prescription status
-    prescription.status = "dispensed"
+    prescription.status = PrescriptionStatusChoices.DISPENSED
+    prescription.fill_status = FillStatusChoices.FILLED
     prescription.dispensed_by = request.user
     prescription.dispensed_at = timezone.now()
     prescription.save()

@@ -26,6 +26,13 @@ class PrescriptionTypeChoices(models.TextChoices):
     MANUAL = "manual", "Manual Entry"
 
 
+class FillStatusChoices(models.TextChoices):
+    PENDING_FILL = "pending_fill", "Pending Fill"
+    FILLED = "filled", "Filled"
+    PARTIALLY_FILLED = "partially_filled", "Partially Filled"
+    EXPIRED = "expired", "Expired"
+
+
 class Prescription(models.Model):
     """
     Model for prescriptions in Transcounty Pharmacy.
@@ -61,6 +68,16 @@ class Prescription(models.Model):
         choices=PrescriptionStatusChoices.choices,
         default=PrescriptionStatusChoices.PENDING,
         verbose_name="Status",
+    )
+    fill_status = models.CharField(
+        max_length=20,
+        choices=FillStatusChoices.choices,
+        default=FillStatusChoices.PENDING_FILL,
+        verbose_name="Fill Status",
+    )
+    refill_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Refill Count",
     )
     verified_by = models.ForeignKey(
         User,
