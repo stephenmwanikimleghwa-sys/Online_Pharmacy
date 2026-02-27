@@ -10,6 +10,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Ensure pip, setuptools and wheel are available when building wheels
+RUN python -m pip install --upgrade pip setuptools wheel
+
 COPY requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
@@ -28,6 +31,10 @@ RUN apt-get update && \
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 
+# Ensure pip, setuptools and wheel are available at runtime (provides pkg_resources)
+RUN python -m pip install --upgrade pip setuptools wheel
+
+# Install built wheels
 RUN pip install --no-cache /wheels/*
 
 COPY . .
