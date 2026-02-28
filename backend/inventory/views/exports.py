@@ -43,7 +43,7 @@ def export_inventory(request):
         products = products.filter(category=category)
     if low_stock:
         products = products.filter(
-            stock_quantity__lte=models.F('reorder_threshold'),
+            stock_quantity__lte=F('reorder_threshold'),
             stock_quantity__gt=0
         )
     if out_of_stock:
