@@ -22,29 +22,26 @@ jobs:
     - name: Create virtual environment and install dependencies
       run: |
         python -m venv $VIRTUAL_ENV
-        export PATH="$VIRTUAL_ENV/bin:$PATH"
-        python -m pip install --upgrade pip wheel "setuptools>=65.5.1,<81"
-        pip install -r backend/requirements.txt
-        pip install "setuptools>=65.5.1,<81"
-        pip install flake8 pytest-django
-        python -c "import pkg_resources; print('setuptools OK')"
-        python -c "import django; print('Django path:', django.__file__)"
+        $VIRTUAL_ENV/bin/python -m pip install --upgrade pip wheel "setuptools>=65.5.1,<81"
+        $VIRTUAL_ENV/bin/pip install -r backend/requirements.txt
+        $VIRTUAL_ENV/bin/pip install "setuptools>=65.5.1,<81"
+        $VIRTUAL_ENV/bin/pip install flake8 pytest-django
+        $VIRTUAL_ENV/bin/python -c "import pkg_resources; print('setuptools OK')"
+        $VIRTUAL_ENV/bin/python -c "import django; print('Django path:', django.__file__)"
         
     - name: Lint with flake8
       run: |
-        export PATH="$VIRTUAL_ENV/bin:$PATH"
         # stop the build if there are Python syntax errors or undefined names
-        flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics --exclude='*/venv/*,*/test-venv/*,*/ci-venv/*,*/migrations/*'
+        $VIRTUAL_ENV/bin/flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics --exclude='*/venv/*,*/test-venv/*,*/ci-venv/*,*/migrations/*'
         # exit-zero treats all errors as warnings.
-        flake8 backend --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude='*/venv/*,*/test-venv/*,*/ci-venv/*,*/migrations/*'
+        $VIRTUAL_ENV/bin/flake8 backend --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude='*/venv/*,*/test-venv/*,*/ci-venv/*,*/migrations/*'
         
     - name: Run Tests
       run: |
-        export PATH="$VIRTUAL_ENV/bin:$PATH"
         cd backend
-        python -c "import pkg_resources; print('pkg_resources OK')"
-        python -c "import django; print('Django path:', django.__file__)"
-        python manage.py test
+        $VIRTUAL_ENV/bin/python -c "import pkg_resources; print('pkg_resources OK')"
+        $VIRTUAL_ENV/bin/python -c "import django; print('Django path:', django.__file__)"
+        $VIRTUAL_ENV/bin/python manage.py test
         
   test-frontend:
     runs-on: ubuntu-latest
