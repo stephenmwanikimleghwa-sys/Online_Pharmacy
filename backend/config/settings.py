@@ -334,7 +334,9 @@ if not DEBUG:
     SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 # Redis for caching (optional for future scaling)
-REDIS_URL = env("REDIS_URL", default="")
+_raw_redis_url = env("REDIS_URL", default="")
+# Validate that REDIS_URL is actually a URL and not a CLI command
+REDIS_URL = _raw_redis_url if _raw_redis_url.startswith(("redis://", "rediss://", "unix://")) else ""
 
 # Configure caches: use Redis when REDIS_URL is provided, otherwise use local memory
 if REDIS_URL:

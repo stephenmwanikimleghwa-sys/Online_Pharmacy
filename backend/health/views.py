@@ -38,18 +38,27 @@ def health_check(request):
     try:
         redis_url = os.getenv('REDIS_URL')
         if redis_url:
-            # Mask sensitive info but show scheme and prefix for debugging
-            has_scheme = "://" in redis_url
-            scheme = redis_url.split("://")[0] if has_scheme else "none"
-            health_status["redis_debug"] = {
-                "has_scheme": has_scheme,
-                "scheme": scheme,
-                "prefix": redis_url[:10] + "..." if len(redis_url) > 10 else redis_url
-            }
-            
-            r = redis.from_url(redis_url)
-            r.ping()
-            health_status["checks"]["redis"] = True
+            # Validate that the URL has a proper Redis scheme
+            valid_schemes = ("redis://", "rediss://", "unix://")
+            if not redis_url.startswith(valid_schemes):
+                health_status["checks"]["redis"] = False
+                health_status["redis_warning"] = (
+                    "REDIS_URL is not a valid Redis URL. "
+                    "It must start with redis://, rediss://, or unix://. "
+                    f"Got prefix: {redis_url[:15]}..."
+                )
+            else:
+                # Mask sensitive info but show scheme for debugging
+                scheme = redis_url.split("://")[0]
+                health_status["redis_debug"] = {
+                    "has_scheme": True,
+                    "scheme": scheme,
+                    "prefix": redis_url[:10] + "..."
+                }
+                
+                r = redis.from_url(redis_url)
+                r.ping()
+                health_status["checks"]["redis"] = True
         else:
             health_status["checks"]["redis"] = False
             health_status["redis_warning"] = "REDIS_URL not configured"
