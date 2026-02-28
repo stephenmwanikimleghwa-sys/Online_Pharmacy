@@ -9,6 +9,8 @@ on:
 jobs:
   test-backend:
     runs-on: ubuntu-latest
+    env:
+      VIRTUAL_ENV: ${{ github.workspace }}/venv
     steps:
     - uses: actions/checkout@v3
     
@@ -17,21 +19,20 @@ jobs:
       with:
         python-version: '3.12'
         
-    - name: Create virtual environment
-      run: python -m venv venv
-
-    - name: Install Dependencies
+    - name: Create virtual environment and install dependencies
       run: |
-        source venv/bin/activate
-        pip install --upgrade pip wheel "setuptools>=65.5.1,<81"
+        python -m venv $VIRTUAL_ENV
+        export PATH="$VIRTUAL_ENV/bin:$PATH"
+        python -m pip install --upgrade pip wheel "setuptools>=65.5.1,<81"
         pip install -r backend/requirements.txt
         pip install "setuptools>=65.5.1,<81"
         pip install flake8 pytest-django
         python -c "import pkg_resources; print('setuptools OK')"
+        python -c "import django; print('Django path:', django.__file__)"
         
     - name: Lint with flake8
       run: |
-        source venv/bin/activate
+        export PATH="$VIRTUAL_ENV/bin:$PATH"
         # stop the build if there are Python syntax errors or undefined names
         flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics --exclude='*/venv/*,*/test-venv/*,*/ci-venv/*,*/migrations/*'
         # exit-zero treats all errors as warnings.
@@ -39,8 +40,10 @@ jobs:
         
     - name: Run Tests
       run: |
-        source venv/bin/activate
+        export PATH="$VIRTUAL_ENV/bin:$PATH"
         cd backend
+        python -c "import pkg_resources; print('pkg_resources OK')"
+        python -c "import django; print('Django path:', django.__file__)"
         python manage.py test
         
   test-frontend:
