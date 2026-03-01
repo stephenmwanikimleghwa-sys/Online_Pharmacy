@@ -4,6 +4,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 import os
 from django.views.generic import RedirectView
+from django.shortcuts import redirect
+from django.http import HttpRequest
+from urllib.parse import urlparse
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -24,22 +27,29 @@ schema_view = get_schema_view(
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
-def _root_redirect_url():
-    """Return the URL to redirect the site root to.
 
-    Priority:
-    1. FRONTEND_URL env var (if set)
-    2. / (if you want to serve a simple landing)
-    3. /swagger/ as a safe default for API documentation
+def root_redirect(request: HttpRequest):
+    """Redirect root to frontend URL or local swagger UI.
+
+    Avoid redirecting to the same host (which causes an infinite loop).
+    If `FRONTEND_URL` is set and its network location differs from the
+    current request host, redirect there. Otherwise redirect to `/swagger/`.
     """
     if FRONTEND_URL:
-        return FRONTEND_URL
-    # Fall back to swagger UI when no frontend configured
-    return "/swagger/"
+        try:
+            parsed = urlparse(FRONTEND_URL)
+            frontend_host = parsed.netloc
+            # Compare hosts (may include port)
+            if frontend_host and frontend_host != request.get_host():
+                return redirect(FRONTEND_URL)
+        except Exception:
+            # If parsing fails, fall back to swagger redirect below
+            pass
+    return redirect("/swagger/")
 
 urlpatterns = [
     # Root: redirect to frontend (configurable) or docs by default
-    path("", RedirectView.as_view(url=_root_redirect_url(), permanent=False), name="root"),
+    path("", root_redirect, name="root"),
     # Admin site
     path("admin/", admin.site.urls),
     # API documentation
