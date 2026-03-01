@@ -9,7 +9,7 @@ services:
     # Run migrations and collectstatic before starting the app so DB tables exist
     # Use verbose output so we can see migration activity in Render logs
     startCommand: >
-      bash -lc "echo '=== START: running showmigrations ===' && python manage.py showmigrations && echo '=== START: running migrate ===' && python manage.py migrate --noinput --verbosity 2 && echo '=== MIGRATE COMPLETE ===' && echo '=== START: collectstatic ===' && python manage.py collectstatic --noinput --verbosity 1 && echo '=== COLLECTSTATIC COMPLETE ===' && exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
+      bash -lc "echo '=== START: running migrate ===' && python manage.py migrate --noinput --verbosity 2 && echo '=== MIGRATE COMPLETE ===' && echo '=== START: collectstatic ===' && python manage.py collectstatic --noinput --verbosity 1 && echo '=== COLLECTSTATIC COMPLETE ===' && exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
     healthCheckPath: /api/health/
     envVars:
       - key: DEBUG
@@ -20,32 +20,12 @@ services:
         value: ".onrender.com,online-pharmacy-sn88.onrender.com"
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
-      - key: DB_NAME
-        fromDatabase:
-          name: pharmacy-db
-          property: name
-      - key: DB_USER
-        fromDatabase:
-          name: pharmacy-db
-          property: username
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: pharmacy-db
-          property: password
-      - key: DB_HOST
-        fromDatabase:
-          name: pharmacy-db
-          property: host
-      - key: DB_PORT
-        value: "5432"
+      - key: DATABASE_URL
+        value: "postgresql://pharmacy_db_8k5i_user:9hsIiakXwYtEB7SasMjDANQj3L2wLDnb@dpg-d6hvm1haae7s73c6f540-a.oregon-postgres.render.com/pharmacy_db_8k5i"
       - key: CORS_ALLOWED_ORIGINS
         value: "https://online-pharmacy-1-np3y.onrender.com,https://online-pharmacy-sn88.onrender.com"
       - key: PYTHON_VERSION
         value: "3.11.0"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: pharmacy-db
-          property: connectionString
       - key: REDIS_URL
         fromService:
           name: pharmacy-cache
@@ -61,10 +41,6 @@ services:
           name: pharmacy-cache
           type: redis
           property: connectionString
-      - key: PGSSLMODE
-        value: "require"
-      - key: PGSSLMAXPROTOCOL
-        value: "TLSv1.3"
 
   # Frontend Service (Static Site)
   - type: web
@@ -105,9 +81,7 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
       - key: DATABASE_URL
-        fromDatabase:
-          name: pharmacy-db
-          property: internalConnectionString
+        value: "postgresql://pharmacy_db_8k5i_user:9hsIiakXwYtEB7SasMjDANQj3L2wLDnb@dpg-d6hvm1haae7s73c6f540-a.oregon-postgres.render.com/pharmacy_db_8k5i"
       - key: REDIS_URL
         fromService:
           name: pharmacy-cache
@@ -123,7 +97,3 @@ services:
           name: pharmacy-cache
           type: redis
           property: connectionString
-      - key: PGSSLMODE
-        value: "require"
-      - key: PGSSLMAXPROTOCOL
-        value: "TLSv1.3"

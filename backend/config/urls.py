@@ -52,14 +52,33 @@ urlpatterns = [
     path("", root_redirect, name="root"),
     # Admin site
     path("admin/", admin.site.urls),
-    # API documentation
-    path(
-        "swagger/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
-    # Health check
+]
+
+# Conditionally expose API documentation only in DEBUG or when explicitly enabled
+ENABLE_SWAGGER = os.getenv("ENABLE_SWAGGER", "").lower() == "true"
+if settings.DEBUG or ENABLE_SWAGGER:
+    urlpatterns += [
+        # API documentation
+        path(
+            "swagger/",
+            schema_view.with_ui("swagger", cache_timeout=0),
+            name="schema-swagger-ui",
+        ),
+        path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    ]
+else:
+    # Provide a safe placeholder to avoid 500s when swagger generation fails in prod
+    def _swagger_disabled(request):
+        from django.http import HttpResponse
+
+        return HttpResponse("API documentation is disabled on this deployment.", status=404)
+
+    urlpatterns += [
+        path("swagger/", _swagger_disabled, name="schema-swagger-disabled"),
+    ]
+
+# Health check
+urlpatterns += [
     path("api/health/", include("health.urls")),
     # API endpoints
     path("api/auth/", include("users.urls")),
