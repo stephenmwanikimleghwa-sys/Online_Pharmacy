@@ -21,7 +21,7 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
       - key: DATABASE_URL
-        value: "postgresql://pharmacy_db_8k5i_user:9hsIiakXwYtEB7SasMjDANQj3L2wLDnb@dpg-d6hvm1haae7s73c6f540-a.oregon-postgres.render.com/pharmacy_db_8k5i"
+        value: "postgresql://user:pass@host:port/dbname"
       - key: CORS_ALLOWED_ORIGINS
         value: "https://online-pharmacy-1-np3y.onrender.com,https://online-pharmacy-sn88.onrender.com"
       - key: PYTHON_VERSION
@@ -81,7 +81,7 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
       - key: DATABASE_URL
-        value: "postgresql://pharmacy_db_8k5i_user:9hsIiakXwYtEB7SasMjDANQj3L2wLDnb@dpg-d6hvm1haae7s73c6f540-a.oregon-postgres.render.com/pharmacy_db_8k5i"
+        value: "postgresql://user:pass@host:port/dbname"
       - key: REDIS_URL
         fromService:
           name: pharmacy-cache
