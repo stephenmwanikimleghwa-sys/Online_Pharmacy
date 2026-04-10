@@ -14,68 +14,74 @@ const Home = () => {
   useEffect(() => {
     // Fetch featured products from API
     const fetchFeaturedData = async () => {
+      const extractItems = (raw) => {
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw?.results)) return raw.results;
+        if (Array.isArray(raw?.data)) return raw.data;
+        return [];
+      };
+
+      const toValidProducts = (items) =>
+        items.filter((product) => (
+          product &&
+          typeof product === "object" &&
+          product.id &&
+          product.name &&
+          typeof product.price !== "undefined"
+        ));
+
       try {
         setLoading(true);
         setError(null);
-        console.log('[Home Debug] Fetching featured products from:', `${api.defaults.baseURL}/products/featured/`);
-
-        // First check if the API is accessible
-        try {
-          await api.get('/health/');
-        } catch (healthError) {
-          console.error('[Home Debug] API health check failed:', {
-            error: healthError.message,
-            status: healthError.response?.status
-          });
-          // Don't throw here, still try to fetch products
-        }
 
         // Use shared API instance (handles baseURL + auth interceptors)
-        const productsRes = await api.get(`/products/featured/`);
-
-        console.log('[Home Debug] Featured products response:', {
-          status: productsRes.status,
-          headers: productsRes.headers,
-          data: productsRes.data
-        });
-
-        // Safely extract and validate products data
-        const raw = productsRes?.data;
-        let items = [];
-
-        if (Array.isArray(raw)) {
-          items = raw;
-        } else if (Array.isArray(raw?.results)) {
-          items = raw.results;
-        } else if (Array.isArray(raw?.data)) {
-          items = raw.data;
-        } else {
-          console.warn('[Home Debug] Unexpected response format:', raw);
-        }
-
-        // Validate each product has required fields
-        const validProducts = items.filter(product => (
-          product &&
-          typeof product === 'object' &&
-          product.id &&
-          product.name &&
-          typeof product.price !== 'undefined'
-        ));
-
-        console.log('[Home Debug] Valid featured products:', validProducts);
+        const productsRes = await api.get("/products/featured/");
+        const items = extractItems(productsRes?.data);
+        const validProducts = toValidProducts(items);
 
         // Only take the first 4 products
         setFeaturedProducts(validProducts.slice(0, 4));
       } catch (error) {
-        console.error("[Home Debug] Error fetching featured data:", {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          url: error.config?.url,
-          baseURL: api.defaults.baseURL,
-          response: error.response?.data,
-        });
-        setError("Unable to load featured products. Please try again later.");
+        // Fallback: try generic products endpoint so the homepage can still render.
+        try {
+          const fallbackRes = await api.get("/products/");
+          const fallbackItems = extractItems(fallbackRes?.data);
+          const fallbackProducts = toValidProducts(fallbackItems).slice(0, 4);
+
+          if (fallbackProducts.length > 0) {
+            setFeaturedProducts(fallbackProducts);
+            setError(null);
+            return;
+          }
+        } catch (fallbackError) {
+          if (import.meta.env.DEV) {
+            console.error("[Home Debug] Fallback products request failed:", {
+              message: fallbackError.message,
+              status: fallbackError.response?.status,
+              url: fallbackError.config?.url,
+              response: fallbackError.response?.data,
+            });
+          }
+        }
+
+        if (import.meta.env.DEV) {
+          console.error("[Home Debug] Error fetching featured data:", {
+            message: error.message,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            url: error.config?.url,
+            baseURL: api.defaults.baseURL,
+            response: error.response?.data,
+          });
+        }
+
+        const status = error.response?.status;
+        const serviceDown = [500, 502, 503, 504].includes(status);
+        setError(
+          serviceDown
+            ? "Featured products are temporarily unavailable while our service recovers."
+            : "Unable to load featured products. Please try again later."
+        );
         setFeaturedProducts([]);
       } finally {
         setLoading(false);

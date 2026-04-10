@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import timedelta
 import environ
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -118,12 +119,36 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database Configuration
 # Use DATABASE_URL from environment if available (e.g., on Render)
-if os.getenv("DATABASE_URL"):
+raw_database_url = os.getenv("DATABASE_URL", "")
+database_url = raw_database_url.strip()
+
+if database_url:
+    if not database_url.startswith(
+        (
+            "postgres://",
+            "postgresql://",
+            "pgsql://",
+            "redshift://",
+            "mysql://",
+            "sqlite://",
+            "oracle://",
+            "mssql://",
+            "cockroach://",
+            "timescale://",
+        )
+    ):
+        raise ImproperlyConfigured(
+            "DATABASE_URL is set but invalid. It must start with a supported scheme "
+            "(e.g. postgresql://...)."
+        )
+
     DATABASES = {
         "default": dj_database_url.config(
+            default=database_url,
             conn_max_age=600 if not DEBUG else 0,
             conn_health_checks=True,
-            ssl_require=not DEBUG or (os.getenv("DATABASE_URL") and ".render.com" in os.getenv("DATABASE_URL")),
+            ssl_require=not DEBUG
+            or (database_url and ".render.com" in database_url),
         )
     }
 else:
