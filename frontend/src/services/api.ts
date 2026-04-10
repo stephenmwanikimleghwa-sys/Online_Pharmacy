@@ -21,8 +21,8 @@ const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  // Add timeout and validate status
-  timeout: 10000,
+  // Cold starts on free hosts (e.g. Render) often exceed 10s; keep a generous ceiling.
+  timeout: 60000,
   validateStatus: (status: number) => status >= 200 && status < 300,
 });
 

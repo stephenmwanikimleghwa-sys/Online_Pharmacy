@@ -52,6 +52,36 @@ else:
     # Parse comma-separated list
     ALLOWED_HOSTS = [h.strip() for h in _allowed_raw.split(",") if h.strip()]
 
+# CSRF: required for HTTPS (e.g. Django admin login on Render). Comma-separated full origins.
+# Example: https://online-pharmacy-sn88.onrender.com,https://example.com
+_csrf_origins_raw = env("CSRF_TRUSTED_ORIGINS", default="")
+
+
+def _csrf_trusted_origins_from_allowed_hosts() -> list:
+    origins: list = []
+    for host in ALLOWED_HOSTS:
+        if not host or host == "*" or host.startswith("."):
+            continue
+        origins.append(f"https://{host}")
+    return origins
+
+
+if _csrf_origins_raw.strip():
+    CSRF_TRUSTED_ORIGINS = [
+        o.strip() for o in _csrf_origins_raw.split(",") if o.strip()
+    ]
+elif DEBUG:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = _csrf_trusted_origins_from_allowed_hosts()
+    # Render sets this to the service public URL (helps when ALLOWED_HOSTS is only ".onrender.com")
+    _render_url = os.getenv("RENDER_EXTERNAL_URL", "").strip().rstrip("/")
+    if _render_url and _render_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_render_url)
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
