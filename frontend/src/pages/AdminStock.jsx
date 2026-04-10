@@ -363,7 +363,8 @@ const AdminStock = () => {
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
 
-			<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+			{/* header bar sticks to top so Add Medicine is always reachable */}
+			<div className="sticky top-0 bg-white z-10 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
 					<h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Manage Stock</h1>
 					<p className="mt-1 text-slate-500">Add, edit, and manage pharmaceutical products.</p>

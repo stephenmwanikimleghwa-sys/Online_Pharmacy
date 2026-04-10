@@ -82,12 +82,20 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
               : expiryInfo.type === 'near' ? 'bg-sky-50 border-sky-200'
                 : 'bg-emerald-50 border-emerald-200'
         }`}>
-        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 ${
-          !expiryInfo ? 'text-slate-400' :
-          expiryInfo.type === 'expired' ? 'text-rose-500' :
-          expiryInfo.type === 'soon' ? 'text-amber-500' :
-          expiryInfo.type === 'near' ? 'text-sky-500' : 'text-emerald-500'
-        }">Expiry Date</p>
+        <p
+          className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${!expiryInfo
+            ? "text-slate-400"
+            : expiryInfo.type === "expired"
+              ? "text-rose-500"
+              : expiryInfo.type === "soon"
+                ? "text-amber-500"
+                : expiryInfo.type === "near"
+                  ? "text-sky-500"
+                  : "text-emerald-500"
+            }`}
+        >
+          Expiry date
+        </p>
         {!expiryInfo ? (
           <p className="text-xs font-bold text-slate-400">No expiry date recorded</p>
         ) : (

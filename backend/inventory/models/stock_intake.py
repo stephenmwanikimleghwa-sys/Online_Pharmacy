@@ -101,6 +101,12 @@ class StockIntake(models.Model):
                     expiry_date=self.expiry_date
                 )
 
+            # Keep a simple "next expiry" on the Product for quick UI display.
+            # If multiple batches exist, we store the earliest expiry date.
+            if self.expiry_date:
+                if not self.product.expiry_date or self.expiry_date < self.product.expiry_date:
+                    self.product.expiry_date = self.expiry_date
+
             # Update product stock (Legacy support + Total stock)
             self.product.stock_quantity += self.quantity_received
             self.product.save()

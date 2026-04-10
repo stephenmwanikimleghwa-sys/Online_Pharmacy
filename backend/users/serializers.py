@@ -14,7 +14,8 @@ class PharmacyDocumentSerializer(serializers.ModelSerializer):
             'file', 'expiry_date', 'is_verified', 
             'uploaded_at', 'updated_at', 'is_expired'
         ]
-        read_only_fields = ['is_verified', 'uploaded_at', 'updated_at']
+        # Pharmacy is set by the backend for pharmacists; clients should not send it.
+        read_only_fields = ['pharmacy', 'is_verified', 'uploaded_at', 'updated_at']
 
 class PharmacySerializer(serializers.ModelSerializer):
     """Serializer for the Pharmacy model."""

@@ -86,7 +86,7 @@ const ReportsDashboard = () => {
   };
 
   const exportToCSV = () => {
-    alert('CSV export functionality will be implemented');
+    alert('CSV export is coming soon.');
   };
 
   if (loading) {
@@ -144,14 +144,14 @@ const ReportsDashboard = () => {
             <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
           </div>
           <div>
-            <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Select Date Range</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Choose a start and end date to filter the reports below.</p>
+            <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Choose dates</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Pick a start and end date to update the reports below.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">From Date</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Start date</label>
             <input
               type="date"
               value={dateRange.startDate}
@@ -160,7 +160,7 @@ const ReportsDashboard = () => {
             />
           </div>
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">To Date</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">End date</label>
             <input
               type="date"
               value={dateRange.endDate}
@@ -246,16 +246,16 @@ const ReportsDashboard = () => {
             </div>
 
             <div className="lg:col-span-6 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
-              <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-emerald-500 pl-4">Stock Usage Summary</h2>
-              <p className="text-xs text-slate-400 mb-8 pl-4">Shows how much stock you started with, how much was dispensed, and what is left.</p>
+                    <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-emerald-500 pl-4">Stock used</h2>
+              <p className="text-xs text-slate-400 mb-8 pl-4">This shows what you started with, what you dispensed, and what is left.</p>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      <th className="text-left pb-6">Asset Name</th>
-                      <th className="text-right pb-6">Starting</th>
-                      <th className="text-right pb-6">Delta</th>
-                      <th className="text-right pb-6">Current</th>
+                      <th className="text-left pb-6">Medicine</th>
+                      <th className="text-right pb-6">Start</th>
+                      <th className="text-right pb-6">Dispensed</th>
+                      <th className="text-right pb-6">Left</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -284,8 +284,8 @@ const ReportsDashboard = () => {
                     <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Stock Trends Over Time</h2>
-                    <p className="text-xs text-slate-400 mt-1">Shows how much stock was added (restocked) vs. used (dispensed) over the last 30 days.</p>
+                    <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Stock changes</h2>
+                    <p className="text-xs text-slate-400 mt-1">This shows stock added vs. stock used in the last 30 days.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
@@ -295,7 +295,7 @@ const ReportsDashboard = () => {
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-rose-50">
                     <span className="w-2.5 h-2.5 bg-rose-400 rounded-full shadow-[0_0_8px_rgba(251,113,133,0.5)]"></span>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Consumption</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Used</span>
                   </div>
                 </div>
               </div>
@@ -332,8 +332,8 @@ const ReportsDashboard = () => {
                   <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </div>
                 <div>
-                  <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">Pharmacist Prescription Activity</h2>
-                  <p className="text-xs text-slate-400 mt-1">How many prescriptions each pharmacist verified in the selected period.</p>
+                  <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">Staff activity</h2>
+                  <p className="text-xs text-slate-400 mt-1">How many prescriptions each staff member verified in the selected period.</p>
                 </div>
               </div>
               <div className="h-80">
@@ -351,8 +351,8 @@ const ReportsDashboard = () => {
 
             {/* Top Selling Mix */}
             <div className="lg:col-span-5 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium group">
-              <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-fuchsia-500 pl-4 tracking-tight">Top Medicines by Volume</h2>
-              <p className="text-xs text-slate-400 mb-10 pl-4">The medicines dispensed most often, shown as a share of total dispensing.</p>
+              <h2 className="text-xl font-display font-bold text-slate-900 mb-2 border-l-4 border-fuchsia-500 pl-4 tracking-tight">Most sold medicines</h2>
+              <p className="text-xs text-slate-400 mb-10 pl-4">These are the medicines sold most often in the selected period.</p>
               <div className="h-80 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

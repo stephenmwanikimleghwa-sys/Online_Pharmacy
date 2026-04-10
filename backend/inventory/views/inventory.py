@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q, Count
 from django.db import models
+from django.db.models import Min
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
@@ -41,7 +42,11 @@ def inventory_summary(request):
 def inventory_list(request):
     """List all inventory items with search, filtering and pagination."""
     try:
-        products = Product.objects.filter(is_active=True).order_by("name")
+        products = (
+            Product.objects.filter(is_active=True)
+            .annotate(next_batch_expiry=Min("batches__expiry_date"))
+            .order_by("name")
+        )
 
         if hasattr(request.user, "pharmacy") and request.user.pharmacy:
             products = products.filter(pharmacy=request.user.pharmacy)
@@ -81,13 +86,38 @@ def inventory_list(request):
         except EmptyPage:
             products_page = paginator.page(paginator.num_pages)
 
-        # Serialize and prepare response with additional debug fields
+        # Serialize and prepare response
         serialized_products = ProductSerializer(products_page, many=True).data
         
         # Add computed fields that we use in the frontend
         for product in serialized_products:
             product['is_low_stock'] = product['stock_quantity'] <= product.get('reorder_threshold', 10)
             product['in_stock'] = product['stock_quantity'] > 0
+
+        # If Product.expiry_date is missing, use the earliest Batch expiry date.
+        # Also back-fill expiry_status + days_until_expiry for the UI.
+        # Note: serializer properties use Product.expiry_date, so we compute here.
+        today = timezone.now().date()
+        next_expiry_by_id = {
+            p.id: getattr(p, "next_batch_expiry", None) for p in products_page
+        }
+        for product in serialized_products:
+            if product.get("expiry_date"):
+                continue
+            next_expiry = next_expiry_by_id.get(product.get("id"))
+            if not next_expiry:
+                continue
+            product["expiry_date"] = str(next_expiry)
+            days = (next_expiry - today).days
+            product["days_until_expiry"] = days
+            if days < 0:
+                product["expiry_status"] = "expired"
+            elif days <= 30:
+                product["expiry_status"] = "expiring_soon"
+            elif days <= 90:
+                product["expiry_status"] = "near_expiry"
+            else:
+                product["expiry_status"] = "valid"
         
         response_data = {
             "products": serialized_products,
