@@ -38,6 +38,17 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "is_low_stock", "expiry_status", "days_until_expiry", "created_at", "updated_at")
 
+    def to_representation(self, instance):
+        """Handle missing pricing_tier gracefully."""
+        data = super().to_representation(instance)
+        # Check if pricing_tier exists
+        try:
+            if not hasattr(instance, 'pricing_tier') or instance.pricing_tier is None:
+                data['pricing_tier'] = None
+        except Exception:
+            data['pricing_tier'] = None
+        return data
+
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     """

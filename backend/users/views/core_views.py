@@ -40,6 +40,8 @@ class UserLoginView(APIView):
             serializer = UserLoginSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.validated_data["user"]
+                # Optimize: prefetch pharmacy to avoid N+1 query
+                user = User.objects.select_related('pharmacy').get(pk=user.pk)
                 refresh = RefreshToken.for_user(user)
                 return Response(
                     {

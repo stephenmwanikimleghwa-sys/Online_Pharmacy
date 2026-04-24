@@ -40,7 +40,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
         Get the list of items for this view.
         Returns active products ordered by name.
         """
-        return Product.objects.filter(is_active=True).order_by('name')
+        return Product.objects.filter(is_active=True).select_related(
+            'pharmacy', 'pricing_tier'
+        ).prefetch_related('pricing_tier').order_by('name')
 
     def get_permissions(self) -> List[Any]:
         """
@@ -142,7 +144,9 @@ def search_products(request: Request) -> Response:
     min_price = request.GET.get("min_price", "")
     max_price = request.GET.get("max_price", "")
 
-    products = Product.objects.filter(is_active=True)
+    products = Product.objects.filter(is_active=True).select_related(
+        'pharmacy', 'pricing_tier'
+    ).prefetch_related('pricing_tier')
 
     if query:
         products = products.filter(
@@ -180,7 +184,9 @@ def my_products(request: Request) -> Response:
             success=False
         )
     
-    products = Product.objects.filter(is_active=True)
+    products = Product.objects.filter(is_active=True).select_related(
+        'pharmacy', 'pricing_tier'
+    ).prefetch_related('pricing_tier')
     if request.user.pharmacy:
         products = products.filter(pharmacy=request.user.pharmacy)
     else:
@@ -210,7 +216,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         - List/Retrieve: All active products (aggregator view).
         - Update/Destroy: Only products belonging to user's pharmacy.
         """
-        queryset = Product.objects.filter(is_active=True)
+        queryset = Product.objects.filter(is_active=True).select_related(
+            'pharmacy', 'pricing_tier'
+        ).prefetch_related('pricing_tier')
         
         if self.action in ['update', 'partial_update', 'destroy']:
             if self.request.user.is_authenticated and self.request.user.role == 'pharmacist':

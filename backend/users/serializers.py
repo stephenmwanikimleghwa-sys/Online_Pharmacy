@@ -28,7 +28,7 @@ class PharmacySerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile information."""
-    pharmacy_name = serializers.CharField(source='pharmacy.name', read_only=True)
+    pharmacy_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -39,6 +39,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'must_change_password'
         ]
         read_only_fields = ['id', 'role', 'is_verified', 'full_name']
+
+    def get_pharmacy_name(self, obj):
+        """Handle null pharmacy gracefully."""
+        if obj.pharmacy:
+            return obj.pharmacy.name
+        return None
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating user profile."""
