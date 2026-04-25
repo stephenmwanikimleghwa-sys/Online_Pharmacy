@@ -1,5 +1,4 @@
 from django.db import models
-from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from typing import Union, Optional
@@ -317,12 +316,12 @@ class PricingTier(models.Model):
         self.wholesale_price = self.buying_price * Decimal('1.1')
         # Retail: Buying Price × 1.5
         self.retail_price = self.buying_price * Decimal('1.5')
-        
+
         # Update the product's main price to retail price
         if self.product:
             self.product.price = self.retail_price
             self.product.save(update_fields=['price'])
-        
+
         super().save(*args, **kwargs)
 
     def __str__(self):

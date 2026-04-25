@@ -91,16 +91,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         role: credentials.role,
       });
 
-      // support multiple response shapes
       const resp = response.data || {};
       const access = resp.access || resp.token || resp.access_token;
       const userData = resp.user || resp.profile || resp.user_data || resp;
-
-      console.log('[Auth Debug] Login response:', {
-        rawResponse: response.data,
-        parsedAccess: access,
-        parsedUser: userData
-      });
 
       // store token if present
       if (access) {
@@ -110,8 +103,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Extract and normalize user role from response data
       const normalizeUserRole = (data: any): "admin" | "pharmacist" | "customer" | "cashier" | "auditor" | null => {
-        console.log('[Auth Debug] Normalizing user role from:', data);
-
         // Check various possible role fields
         const role = data?.role || data?.user_type || null;
 
@@ -128,44 +119,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // First try to use the user data from login response
         if (userData && typeof userData === "object") {
-          console.log('[Auth Debug] Initial user data from login:', userData);
           const initialRole = normalizeUserRole(userData);
           if (initialRole) {
             finalUser = { ...userData, role: initialRole } as User;
-            console.log('[Auth Debug] Normalized initial user data:', finalUser);
           }
         }
 
         // Then fetch the full profile to ensure we have complete data
-        console.log('[Auth Debug] Fetching full profile...');
         const profileRes = await api.get("/auth/profile");
         const profileData = profileRes.data?.user || profileRes.data?.profile || profileRes.data;
-
-        if (profileData && typeof profileData === "object") {
-          console.log('[Auth Debug] Received profile data:', profileData);
-          const profileRole = normalizeUserRole(profileData);
-          // Merge profile data with any existing user data, preferring profile role
-          finalUser = {
-            ...finalUser,
-            ...profileData,
-            role: profileRole || finalUser?.role
-          } as User;
-          console.log('[Auth Debug] Merged and normalized user data:', finalUser);
-        } else {
-          console.warn('[Auth Debug] Profile endpoint returned invalid data:', profileRes.data);
-        }
       } catch (profileErr: any) {
-        console.error('[Auth Debug] Failed to fetch profile:', {
-          error: profileErr.message,
-          status: profileErr.response?.status,
-          data: profileErr.response?.data
-        });
         // If we have userData from login, use that as fallback
         if (!finalUser && userData && typeof userData === "object") {
           const fallbackRole = normalizeUserRole(userData);
           if (fallbackRole) {
             finalUser = { ...userData, role: fallbackRole } as User;
-            console.log('[Auth Debug] Using fallback user data:', finalUser);
           }
         }
       }
@@ -222,15 +190,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const getDashboardPath = (): string => {
-    console.log('[Auth Debug] Getting dashboard path:', {
-      user,
-      role: user?.role,
-      isPharmacist: user?.is_pharmacist,
-      isAdmin: user?.is_admin
-    });
-
     if (!user) {
-      console.warn('[Auth Debug] No user found, returning home path');
       return "/";
     }
 
@@ -250,7 +210,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         else if (user.is_customer) role = 'customer';
       }
 
-      console.log('[Auth Debug] Determined user role:', role);
+      console.warn(`[Auth Debug] Unknown role "${role}", using default path`);
 
       let path = "/";
       switch (role) {
@@ -279,12 +239,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             path = "/customer/dashboard";  // Default to customer dashboard if role is unknown
           }
       }
-
-      console.log('[Auth Debug] Resolved dashboard path:', {
-        role,
-        path,
-        user
-      });
 
       return path;
     } catch (error) {

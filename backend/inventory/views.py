@@ -58,21 +58,9 @@ def inventory_list(request):
     - page: Page number
     - per_page: Items per page
     """
-    # Debug authentication and permissions
-    print("[Debug] Inventory List Request:")
-    print(f"  User: {request.user.username}")
-    print(f"  User ID: {request.user.id}")
-    print(f"  Is Authenticated: {request.user.is_authenticated}")
-    print(f"  Is Staff: {request.user.is_staff}")
-    print(f"  Groups: {[g.name for g in request.user.groups.all()]}")
-    print(f"  Is Pharmacist: {hasattr(request.user, 'is_pharmacist') and request.user.is_pharmacist}")
-    print(f"  Is Admin: {hasattr(request.user, 'is_admin') and request.user.is_admin}")
-    
     # Check if user has required permissions
-    if not (request.user.is_staff or 
-            (hasattr(request.user, 'is_pharmacist') and request.user.is_pharmacist) or
-            (hasattr(request.user, 'is_admin') and request.user.is_admin)):
-        print("[Debug] Permission denied: User lacks required role")
+    if not (request.user.is_staff or request.user.role in ["pharmacist", "admin", "cashier"]):
+        logger.warning(f"Permission denied for user {request.user.username} accessing inventory list")
         return Response(
             {"detail": "You do not have permission to view inventory."},
             status=status.HTTP_403_FORBIDDEN
@@ -157,25 +145,13 @@ def inventory_list(request):
         products_page = paginator.page(paginator.num_pages)
 
     products_list = ProductSerializer(products_page, many=True).data
-    # Debug response data
-    print("[Debug] Inventory Response:")
-    print(f"  Total Items: {paginator.count}")
-    print(f"  Current Page: {page}")
-    print(f"  Items on Page: {len(products_list)}")
-    print(f"  Sample Items: {[{'id': p['id'], 'name': p['name']} for p in products_list[:2]]}")
-    
+
     return Response(
         {
             "products": products_list or [],  # Ensure we always return a list
             "totalPages": paginator.num_pages,
             "currentPage": int(page),
             "totalItems": paginator.count,
-            "debug": {
-                "user": request.user.username,
-                "isPharmacist": hasattr(request.user, 'is_pharmacist') and request.user.is_pharmacist,
-                "isAdmin": hasattr(request.user, 'is_admin') and request.user.is_admin,
-                "groups": [g.name for g in request.user.groups.all()],
-            }
         }
     )
 
@@ -267,9 +243,13 @@ def adjust_inventory(request, pk):
     reason = request.data.get("reason", "Adjustment")
     change_type = request.data.get("change_type", "adjustment")
 
+    # Validate quantity is provided and is a valid integer
+    if quantity is None:
+        return Response({"error": "Quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         quantity = int(quantity)
-    except Exception:
+    except (ValueError, TypeError):
         return Response({"error": "Quantity must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
 
     if quantity == 0:

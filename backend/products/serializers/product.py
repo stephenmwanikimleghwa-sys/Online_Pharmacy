@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from products.models import Product, CategoryChoices
+from products.models import Product
 from django.core.exceptions import ValidationError
 from .pricing_tier import PricingTierSerializer
 from typing import Any, Dict

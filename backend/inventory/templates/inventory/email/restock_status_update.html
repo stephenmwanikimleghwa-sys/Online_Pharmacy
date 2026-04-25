@@ -42,7 +42,7 @@
             <p>The status of your restock request has been updated:</p>
             
             <ul>
-                <li><strong>Product:</strong> {{ product.name }}</li>
+                <li><strong>Product:</strong> {{ request.product.name }}</li>
                 <li><strong>Requested Quantity:</strong> {{ request.requested_quantity }}</li>
                 <li><strong>Current Status:</strong> <span class="status">{{ status }}</span></li>
                 {% if request.notes %}

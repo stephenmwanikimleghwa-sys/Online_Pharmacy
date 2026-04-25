@@ -17,24 +17,30 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db import transaction
 import requests
 import base64
 import json
+import logging
 from datetime import datetime
 from django.core.cache import cache
 from products.models import Product
 from .models import Order, OrderItem, OrderStatusChoices
 
+logger = logging.getLogger(__name__)
+
 
 @api_view(['POST'])
 @permission_classes([IsPharmacistOrAdmin])
+@transaction.atomic
 def quick_sale(request):
     """
     Create a quick sale order without patient association.
     Only for pharmacists and admins.
     """
     try:
-        print("Quick sale request data:", request.data)
+        logger.debug(f"Quick sale initiated by user {request.user.id}")
+
         # Validate input data
         items = request.data.get('items', [])
         if not items:
@@ -55,7 +61,6 @@ def quick_sale(request):
 
         # Process each item
         for item in items:
-            print("Processing item:", item)
             product_id = item.get('id')
             if not product_id:
                 order.delete()
@@ -66,12 +71,12 @@ def quick_sale(request):
             quantity = item.get('quantity', 1)
 
             try:
-                print(f"Looking for product with ID: {product_id}")
                 product = Product.objects.get(id=product_id)
-                print(f"Found product: {product.name}")
+                logger.debug(f"Processing product {product.id}: {product.name}")
             except Product.DoesNotExist:
                 # Rollback on error
                 order.delete()
+                logger.warning(f"Product not found: {product_id}")
                 return Response(
                     {'error': f'Product with ID {product_id} not found'},
                     status=status.HTTP_404_NOT_FOUND
@@ -80,6 +85,7 @@ def quick_sale(request):
             if product.stock_quantity < quantity:
                 # Rollback on insufficient stock
                 order.delete()
+                logger.warning(f"Insufficient stock for product {product_id}: required={quantity}, available={product.stock_quantity}")
                 return Response(
                     {'error': f'Insufficient stock for product {product.name}'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -96,7 +102,7 @@ def quick_sale(request):
 
             # Record previous stock for logging
             previous_stock = product.stock_quantity
-            
+
             # Update product stock
             product.stock_quantity -= quantity
             product.save()
@@ -107,7 +113,7 @@ def quick_sale(request):
                 dispenser_name = (
                     request.user.get_full_name() if hasattr(request.user, 'get_full_name') else str(request.user)
                 )
-                print(f"Creating DispensingLog: product={product.id} quantity={quantity} prev_stock={previous_stock} new_stock={product.stock_quantity} total_cost={order_item.subtotal} dispensed_by={dispenser_name}")
+                logger.info(f"Creating DispensingLog: product_id={product.id}, quantity={quantity}, prev_stock={previous_stock}, new_stock={product.stock_quantity}, total_cost={order_item.subtotal}, dispensed_by={dispenser_name}")
                 DispensingLog.objects.create(
                     product=product,
                     quantity=quantity,
@@ -119,9 +125,7 @@ def quick_sale(request):
                     notes=f"Quick sale by {dispenser_name}"
                 )
             except Exception as log_exc:
-                import traceback as _tb
-                print(f"Failed to create DispensingLog for product {product.id}: {str(log_exc)}")
-                _tb.print_exc()
+                logger.error(f"Failed to create DispensingLog for product {product.id}: {str(log_exc)}", exc_info=True)
                 # Rollback order to avoid inconsistent state
                 try:
                     order.delete()
@@ -145,10 +149,9 @@ def quick_sale(request):
                 status='completed',
                 reference=f'CASH-{order.id}'
             )
+            logger.info(f"Quick sale completed: order_id={order.id}, total_amount={total_amount}, user_id={request.user.id}")
         except Exception as pay_exc:
-            import traceback as _tb
-            print(f"Failed to create Payment record for order {order.id}: {str(pay_exc)}")
-            _tb.print_exc()
+            logger.error(f"Failed to create Payment record for order {order.id}: {str(pay_exc)}", exc_info=True)
             try:
                 order.delete()
             except Exception:
@@ -168,13 +171,9 @@ def quick_sale(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
-        # Log the error for debugging
-        import traceback
-        print(f'Quick sale error: {str(e)}')
-        print('Full traceback:')
-        traceback.print_exc()
+        logger.error(f'Quick sale error: {str(e)}', exc_info=True)
         return Response(
-            {'error': str(e)},
+            {'error': 'Internal server error processing quick sale'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -311,7 +310,7 @@ def initiate_stripe_payment(request):
     except Order.DoesNotExist:
         return Response(
             {"error": "Order not found or not pending."},
-            status=status.HTTP_404_NOT_CONTENT,
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     # Create Stripe Payment Intent
@@ -463,95 +462,102 @@ def get_mpesa_access_token():
         raise Exception(f"Failed to get M-Pesa token: {response.text}")
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def mpesa_callback(request):
     """
-    Handle M-Pesa callback (asynchronous validation).
+    DEPRECATED: Use payments.views.mpesa_callback instead for secure webhook handling.
+    This endpoint is kept for backward compatibility only.
     """
+    logger.warning("M-Pesa callback received on deprecated endpoint (orders.views). Use payments.views instead.")
     try:
         callback_data = json.loads(request.body)
-        print(f"M-Pesa Callback: {callback_data}")
+        logger.debug("M-Pesa callback received (deprecated endpoint)")
 
         # Process each transaction
-        for result in callback_data["Body"]["stkCallback"]["CallbackMetadata"] or []:
-            if result["Name"] == "ResultCode":
-                result_code = result["Value"]
+        for result in callback_data.get("Body", {}).get("stkCallback", {}).get("CallbackMetadata", []) or []:
+            if result.get("Name") == "ResultCode":
+                result_code = result.get("Value")
                 if result_code == 0:  # Success
                     # Extract details
-                    for item in callback_data["Body"]["stkCallback"][
-                        "CallbackMetadata"
-                    ]:
+                    amount = None
+                    receipt = None
+                    tx_time = None
+                    phone = None
+                    for item in callback_data["Body"]["stkCallback"].get("CallbackMetadata", []):
                         if item["Name"] == "Amount":
                             amount = item["Value"]
                         elif item["Name"] == "MpesaReceiptNumber":
                             receipt = item["Value"]
                         elif item["Name"] == "TransactionDate":
-                            # Convert timestamp
                             timestamp = int(item["Value"]) / 1000
                             tx_time = datetime.fromtimestamp(timestamp)
                         elif item["Name"] == "PhoneNumber":
                             phone = item["Value"]
 
                     # Find payment by CheckoutRequestID
-                    checkout_id = callback_data["Body"]["stkCallback"][
-                        "CheckoutRequestID"
-                    ]
-                    payment = Payment.objects.get(reference=checkout_id, method="mpesa")
+                    checkout_id = callback_data["Body"]["stkCallback"].get("CheckoutRequestID")
+                    try:
+                        payment = Payment.objects.get(reference=checkout_id, method="mpesa")
+                        payment.status = "completed"
+                        payment.reference = receipt  # Update to receipt number
+                        payment.transaction_date = tx_time
+                        payment.save()
 
-                    payment.status = "completed"
-                    payment.reference = receipt  # Update to receipt number
-                    payment.transaction_date = tx_time
-                    payment.save()
-
-                    # Update order
-                    payment.order.status = "paid"
-                    payment.order.save()
-
-                    # Trigger fulfillment (e.g., email, Celery task)
-                    # send_order_confirmation(payment.order)
+                        # Update order
+                        payment.order.status = "paid"
+                        payment.order.save()
+                        logger.info(f"M-Pesa payment completed (deprecated endpoint): receipt={receipt}")
+                    except Payment.DoesNotExist:
+                        logger.error(f"Payment not found for checkout_id {checkout_id}")
 
                 else:
-                    # Handle failure
-                    error_msg = callback_data["Body"]["stkCallback"].get(
-                        "ResultDesc", "Payment failed"
-                    )
-                    checkout_id = callback_data["Body"]["stkCallback"][
-                        "CheckoutRequestID"
-                    ]
-                    payment = Payment.objects.get(reference=checkout_id, method="mpesa")
-                    payment.status = "failed"
-                    payment.save()
+                    error_msg = callback_data["Body"]["stkCallback"].get("ResultDesc", "Payment failed")
+                    checkout_id = callback_data["Body"]["stkCallback"].get("CheckoutRequestID")
+                    try:
+                        payment = Payment.objects.get(reference=checkout_id, method="mpesa")
+                        payment.status = "failed"
+                        payment.save()
+                        logger.warning(f"M-Pesa payment failed: {error_msg}")
+                    except Payment.DoesNotExist:
+                        logger.error(f"Payment not found for failed checkout_id {checkout_id}")
 
-        return JsonResponse({"ResultCode": 1, "ResultDesc": "Accepted"})
+        return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
     except Exception as e:
-        print(f"M-Pesa callback error: {str(e)}")
+        logger.error(f"M-Pesa callback error (deprecated endpoint): {str(e)}", exc_info=True)
         return JsonResponse(
-            {"ResultCode": 1, "ResultDesc": "Accepted"}
-        )  # Acknowledge anyway
+            {"ResultCode": 1, "ResultDesc": "Processing error"},
+            status=500
+        )
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def stripe_webhook(request):
     """
-    Handle Stripe webhook for payment confirmation.
+    DEPRECATED: Use payments.views.stripe_webhook instead for secure webhook handling.
+    This endpoint is kept for backward compatibility only.
     """
+    logger.warning("Stripe webhook received on deprecated endpoint (orders.views). Use payments.views instead.")
     payload = request.body
-    sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
-    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET  # Add to .env
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
+    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+
+    if not endpoint_secret:
+        logger.error("STRIPE_WEBHOOK_SECRET not configured")
+        return JsonResponse({"error": "Webhook not configured"}, status=500)
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-    except ValueError:
+    except ValueError as e:
+        logger.warning(f"Invalid Stripe webhook payload: {str(e)}")
         return JsonResponse({"error": "Invalid payload"}, status=400)
-    except stripe.error.SignatureVerificationError:
-        return JsonResponse({"error": "Invalid signature"}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        logger.warning(f"Invalid Stripe webhook signature: {str(e)}")
+        return JsonResponse({"error": "Invalid signature"}, status=401)
 
     if event["type"] == "payment_intent.succeeded":
         payment_intent = event["data"]["object"]
         reference = payment_intent["id"]
-        order_id = payment_intent["metadata"]["order_id"]
+        order_id = payment_intent.get("metadata", {}).get("order_id")
 
         try:
             payment = Payment.objects.get(reference=reference, method="stripe")
@@ -563,10 +569,10 @@ def stripe_webhook(request):
             order.status = "paid"
             order.save()
 
-            # Trigger order fulfillment (e.g., email, Celery task)
-            # send_order_confirmation(order)
+            logger.info(f"Stripe payment completed (deprecated endpoint): order_id={order_id}, reference={reference}")
 
         except Payment.DoesNotExist:
+            logger.error(f"Payment not found for Stripe reference {reference}")
             return JsonResponse({"error": "Payment not found"}, status=404)
 
     return JsonResponse({"status": "success"}, status=200)
