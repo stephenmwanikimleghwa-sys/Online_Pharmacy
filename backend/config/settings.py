@@ -342,17 +342,8 @@ STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY", default="")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 
-if not DEBUG and not STRIPE_WEBHOOK_SECRET:
-    raise ImproperlyConfigured(
-        "STRIPE_WEBHOOK_SECRET must be set in production for webhook verification"
-    )
-
 # Frontend URL for password reset and callback links
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000" if DEBUG else "")
-if not DEBUG and not FRONTEND_URL:
-    raise ImproperlyConfigured(
-        "FRONTEND_URL must be set in production for password reset links"
-    )
 
 # Mpesa Daraja settings
 MPESA_CONSUMER_KEY = env("MPESA_CONSUMER_KEY", default="")
@@ -362,13 +353,6 @@ MPESA_PASSKEY = env("MPESA_PASSKEY", default="")
 MPESA_CALLBACK_URL = env("MPESA_CALLBACK_URL", default="")
 MPESA_OAUTH_URL = env("MPESA_OAUTH_URL", default="https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials")
 MPESA_LIPA_URL = env("MPESA_LIPA_URL", default="https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest")
-
-# Validate M-Pesa configuration in production
-if not DEBUG:
-    if not MPESA_CONSUMER_KEY or not MPESA_CONSUMER_SECRET:
-        raise ImproperlyConfigured(
-            "MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET must be set in production for M-Pesa payments"
-        )
 
 # Logging configuration
 # By default, log to console only (suitable for platforms like Render).
