@@ -19,6 +19,7 @@ from users.serializers import (
     PasswordResetConfirmSerializer,
 )
 from users.models import User, RoleChoices
+from users.permissions import IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 
@@ -107,7 +108,7 @@ class ChangePasswordView(APIView):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, permissions.IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def admin_user_list(request):
     """
     Admin-only view to list all users.

@@ -1,13 +1,14 @@
-from rest_framework import generics, permissions, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from users.models import User, RoleChoices
+from users.permissions import IsAdminUser
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated, permissions.IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def admin_create_user(request):
     """
     Admin endpoint to create a user (admin or pharmacist).
@@ -45,7 +46,7 @@ def admin_create_user(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, permissions.IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def list_pharmacists(request):
     """
     Admin endpoint to list all pharmacists. Kept for backward compatibility.
@@ -67,7 +68,7 @@ def list_pharmacists(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated, permissions.IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def delete_pharmacist(request, user_id):
     """
     Admin endpoint to delete a pharmacist account (kept for compatibility).
@@ -81,7 +82,7 @@ def delete_pharmacist(request, user_id):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated, permissions.IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def delete_user(request, user_id):
     """
     Admin endpoint to delete any user by id.
@@ -95,7 +96,7 @@ def delete_user(request, user_id):
 
 
 @api_view(['PATCH', 'PUT'])
-@permission_classes([IsAuthenticated, permissions.IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def update_user(request, user_id):
     """
     Admin endpoint to update user fields (first_name, last_name, email, role, is_verified).

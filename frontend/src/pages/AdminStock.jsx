@@ -51,6 +51,7 @@ const AdminStock = () => {
 		supplier: '',
 		description: '',
 		reorder_threshold: 10,
+		image: null,
 	});
 
 	const [logEntries, setLogEntries] = useState([]);
@@ -180,6 +181,7 @@ const AdminStock = () => {
 			supplier: '',
 			description: '',
 			reorder_threshold: 10,
+			image: null,
 		});
 		console.log('[Modal Debug] About to set isModalOpen to true');
 		setIsModalOpen(true);
@@ -203,6 +205,7 @@ const AdminStock = () => {
 			supplier: item.supplier || '',
 			description: item.description || '',
 			reorder_threshold: item.reorder_threshold ?? 10,
+			image: item.image || null,
 		});
 		setIsModalOpen(true);
 	};
@@ -262,35 +265,54 @@ const AdminStock = () => {
 		if (!validateForm()) return;
 
 		try {
-			const payload = {
-				name: form.name.trim(),
-				category: form.category.trim(),
-				price: Number(form.price),
-				stock_quantity: Number(form.stock_quantity),
-				description: form.description?.trim() || '',
-				supplier: form.supplier?.trim() || null,
-				expiry_date: form.expiry_date || null,
-			};
+			// Use FormData if image is present, otherwise use JSON
+			let data;
+			let headers = {};
+
+			if (form.image && form.image instanceof File) {
+				data = new FormData();
+				data.append('name', form.name.trim());
+				data.append('category', form.category.trim());
+				data.append('price', Number(form.price));
+				data.append('stock_quantity', Number(form.stock_quantity));
+				data.append('description', form.description?.trim() || '');
+				data.append('supplier', form.supplier?.trim() || '');
+				if (form.expiry_date) {
+					data.append('expiry_date', form.expiry_date);
+				}
+				data.append('image', form.image);
+			} else {
+				data = {
+					name: form.name.trim(),
+					category: form.category.trim(),
+					price: Number(form.price),
+					stock_quantity: Number(form.stock_quantity),
+					description: form.description?.trim() || '',
+					supplier: form.supplier?.trim() || null,
+					expiry_date: form.expiry_date || null,
+				};
+				headers['Content-Type'] = 'application/json';
+			}
 
 			if (isEditMode && editingItem) {
-				await api.patch(`/products/${editingItem.id}/`, payload);
+				await api.patch(`/products/${editingItem.id}/`, data, { headers });
 			} else {
 				// Optimistic UI: append a temporary item so user sees the new product immediately
 				const optimisticId = `tmp-${Date.now()}`;
 				const optimisticItem = {
 					id: optimisticId,
-					name: payload.name,
-					category: payload.category,
-					price: payload.price,
-					stock_quantity: payload.stock_quantity,
-					expiry_date: payload.expiry_date,
-					description: payload.description,
-					supplier: payload.supplier,
+					name: data instanceof FormData ? data.get('name') : data.name,
+					category: data instanceof FormData ? data.get('category') : data.category,
+					price: data instanceof FormData ? data.get('price') : data.price,
+					stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
+					expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
+					description: data instanceof FormData ? data.get('description') : data.description,
+					supplier: data instanceof FormData ? data.get('supplier') : data.supplier,
 					optimistic: true,
 				};
 				setItems(prev => [optimisticItem, ...prev]);
 				try {
-					const response = await api.post('/products/', payload);
+					const response = await api.post('/products/', data, { headers });
 					console.log('Product created:', response.data);
 					// Replace optimistic item with server response immediately
 					setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
