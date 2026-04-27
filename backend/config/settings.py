@@ -311,23 +311,36 @@ SIMPLE_JWT = {
 
 # CORS settings
 # Allow all origins in production for debugging (can be restricted later)
-CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
-CORS_ALLOWED_ORIGINS = env.list(
-    "CORS_ALLOWED_ORIGINS",
-    default=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://online-pharmacy-1-np3y.onrender.com",
-        "https://online-pharmacy-sn88.onrender.com",
-    ]
-)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGIN_REGEXES = env.list(
-    "CORS_ALLOWED_ORIGIN_REGEXES",
-    default=[r"^https://.*\.onrender\.com$"],
-)
+
+# Explicitly list allowed origins as a fallback and for documentation
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://online-pharmacy-1-np3y.onrender.com",
+    "https://online-pharmacy-sn88.onrender.com",
+]
+
+# Support regex for any onrender.com subdomain (useful for review apps)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.onrender\.com$",
+]
+
+# Allow specific headers for DRF and JWT
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # Custom user model
 AUTH_USER_MODEL = "users.User"
