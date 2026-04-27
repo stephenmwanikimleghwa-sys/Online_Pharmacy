@@ -9,6 +9,8 @@
 import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./components/Toast";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import PharmacistDashboard from "./pages/PharmacistDashboard";
@@ -35,6 +37,7 @@ import StockIntakeLog from "./pages/StockIntakeLog";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ManageUsers from "./pages/ManageUsers";
+import BottomNav from "./components/BottomNav";
 import "./App.css";
 
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -44,10 +47,12 @@ function App() {
   const isAuthPage = ["/login", "/force-password-change"].includes(location.pathname);
 
   return (
-    <AuthProvider>
-      <div className="App">
-        {!isAuthPage && <Navbar />}
-        <main className="main-content">
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <div className="App">
+            {!isAuthPage && <Navbar />}
+            <main className="main-content">
           <ErrorBoundary>
             <Routes>
               {/* Public Routes */}
@@ -137,8 +142,11 @@ function App() {
           </ErrorBoundary>
         </main>
         {!isAuthPage && <Footer />}
+        <BottomNav />
       </div>
     </AuthProvider>
+    </ToastProvider>
+    </ThemeProvider>
   );
 }
 
