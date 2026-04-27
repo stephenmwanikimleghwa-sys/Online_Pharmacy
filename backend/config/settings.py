@@ -312,14 +312,13 @@ SIMPLE_JWT = {
 # CORS settings
 # NOTE: CORS_ALLOW_ALL_ORIGINS=True and CORS_ALLOW_CREDENTIALS=True are
 # mutually exclusive in django-cors-headers. When both are set the middleware
-# silently refuses to add the Access-Control-Allow-Origin header (the HTTP
-# spec forbids "Access-Control-Allow-Origin: *" with credentials).
+# silently refuses to add the Access-Control-Allow-Origin header.
 # Instead, we list allowed origins explicitly + use a regex catch-all for
 # Render subdomains. The middleware will echo back the matching origin.
 CORS_ALLOW_CREDENTIALS = True
 
-# Explicitly list allowed origins as a fallback and for documentation
-CORS_ALLOWED_ORIGINS = [
+# Build allowed origins: merge hardcoded defaults with env var (comma-separated)
+_cors_defaults = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
@@ -327,10 +326,23 @@ CORS_ALLOWED_ORIGINS = [
     "https://online-pharmacy-1-np3y.onrender.com",
     "https://online-pharmacy-sn88.onrender.com",
 ]
+_cors_env = env("CORS_ALLOWED_ORIGINS", default="")
+_cors_from_env = [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else []
+CORS_ALLOWED_ORIGINS = list(set(_cors_defaults + _cors_from_env))
 
 # Support regex for any onrender.com subdomain (useful for review apps)
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
+]
+
+# Explicitly allow all standard methods (including OPTIONS for preflight)
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
 # Allow specific headers for DRF and JWT
@@ -345,6 +357,9 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+# Cache preflight responses for 1 hour to reduce OPTIONS requests
+CORS_PREFLIGHT_MAX_AGE = 3600
 
 # Custom user model
 AUTH_USER_MODEL = "users.User"

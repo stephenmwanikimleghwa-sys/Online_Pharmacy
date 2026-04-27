@@ -69,6 +69,11 @@ RUN apt-get update \
 # Copy backend from backend stage
 COPY --from=backend /app /app
 
+# Copy installed Python packages and executables from the backend build stage
+# (pip installs to /usr/local, not /app – without this, all dependencies are missing)
+COPY --from=backend /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend /usr/local/bin /usr/local/bin
+
 # Copy frontend build from frontend stage
 COPY --from=frontend /app/frontend/dist /app/staticfiles/frontend
 
