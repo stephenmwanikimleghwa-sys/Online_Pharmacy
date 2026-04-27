@@ -10,6 +10,7 @@ import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { CartProvider } from "./context/CartContext";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -49,27 +50,28 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#171717',
-              color: '#ffffff',
-              border: '1px solid #e20074',
-              borderRadius: '12px'
-            },
-            success: {
-              iconTheme: { primary: '#00b3ff', secondary: '#000000' }
-            },
-            error: {
-              iconTheme: { primary: '#e20074', secondary: '#ffffff' }
-            }
-          }}
-        />
-        <div className="App">
-          {!isAuthPage && <Navbar />}
-          <main className="main-content">
-        <ErrorBoundary>
+        <CartProvider>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: '#171717',
+                color: '#ffffff',
+                border: '1px solid #e20074',
+                borderRadius: '12px'
+              },
+              success: {
+                iconTheme: { primary: '#00b3ff', secondary: '#000000' }
+              },
+              error: {
+                iconTheme: { primary: '#e20074', secondary: '#ffffff' }
+              }
+            }}
+          />
+          <div className="App">
+            {!isAuthPage && <Navbar />}
+            <main className="main-content">
+          <ErrorBoundary>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
@@ -160,6 +162,7 @@ function App() {
         {!isAuthPage && <Footer />}
         <BottomNav />
       </div>
+        </CartProvider>
     </AuthProvider>
     </ThemeProvider>
   );
