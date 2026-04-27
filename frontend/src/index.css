@@ -106,67 +106,81 @@
   --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-/* Dark mode colors */
+/* Dark mode colors - Splunk Inspired (Deep blacks, high contrast) */
 @media (prefers-color-scheme: dark) {
   :root {
     /* Background colors */
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-tertiary: #171717;
 
     /* Text colors */
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #94a3b8;
-    --text-inverse: #0f172a;
+    --text-primary: #ffffff;
+    --text-secondary: #a3a3a3;
+    --text-tertiary: #737373;
+    --text-inverse: #ffffff; /* Explicitly white for buttons in dark mode */
 
     /* Border colors */
-    --border-primary: #334155;
-    --border-secondary: #475569;
+    --border-primary: #262626;
+    --border-secondary: #404040;
 
-    /* Glassmorphism */
-    --glass-bg: rgba(30, 41, 59, 0.88);
-    --glass-border: rgba(71, 85, 105, 0.6);
-    --glass-shadow: rgba(99, 102, 241, 0.15);
+    /* Primary Accent (Splunk Pink/Magenta) */
+    --primary-50: #660033;
+    --primary-500: #e20074;
+    --primary-600: #c20063;
+    
+    /* Secondary Accent (Electric Blue/Cyan) */
+    --secondary-50: #002233;
+    --secondary-500: #00b3ff;
+
+    /* Glassmorphism - sharp and contrasting */
+    --glass-bg: rgba(15, 15, 15, 0.85);
+    --glass-border: rgba(226, 0, 116, 0.3);
+    --glass-shadow: rgba(226, 0, 116, 0.15);
 
     /* Navigation */
-    --nav-bg: rgba(15, 23, 42, 0.82);
-    --nav-border: rgba(51, 65, 85, 0.8);
-    --nav-text: #f1f5f9;
+    --nav-bg: rgba(0, 0, 0, 0.9);
+    --nav-border: rgba(226, 0, 116, 0.4);
+    --nav-text: #ffffff;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-    --shadow-premium: 0 8px 32px 0 rgba(99, 102, 241, 0.2);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.8);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.9);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 1);
+    --shadow-premium: 0 8px 32px 0 rgba(226, 0, 116, 0.2);
+    --shadow-glow: 0 0 20px rgba(226, 0, 116, 0.5);
   }
 }
 
 /* Manual dark mode toggle support */
 .dark {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --text-inverse: #0f172a;
-  --border-primary: #334155;
-  --border-secondary: #475569;
-  --glass-bg: rgba(30, 41, 59, 0.88);
-  --glass-border: rgba(71, 85, 105, 0.6);
-  --glass-shadow: rgba(99, 102, 241, 0.15);
-  --nav-bg: rgba(15, 23, 42, 0.82);
-  --nav-border: rgba(51, 65, 85, 0.8);
-  --nav-text: #f1f5f9;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-  --shadow-premium: 0 8px 32px 0 rgba(99, 102, 241, 0.2);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #171717;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+  --text-inverse: #ffffff;
+  --border-primary: #262626;
+  --border-secondary: #404040;
+  --primary-50: #660033;
+  --primary-500: #e20074;
+  --primary-600: #c20063;
+  --secondary-50: #002233;
+  --secondary-500: #00b3ff;
+  --glass-bg: rgba(15, 15, 15, 0.85);
+  --glass-border: rgba(226, 0, 116, 0.3);
+  --glass-shadow: rgba(226, 0, 116, 0.15);
+  --nav-bg: rgba(0, 0, 0, 0.9);
+  --nav-border: rgba(226, 0, 116, 0.4);
+  --nav-text: #ffffff;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.9);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 1);
+  --shadow-premium: 0 8px 32px 0 rgba(226, 0, 116, 0.2);
+  --shadow-glow: 0 0 20px rgba(226, 0, 116, 0.5);
 }
 
 /* Body — rich gradient background */
@@ -174,7 +188,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.6;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--accent-50) 45%, var(--secondary-50) 100%);
+  background: var(--bg-primary); /* Splunk is flat dark/clean */
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -184,12 +198,12 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background: linear-gradient(135deg, var(--neutral-900) 0%, var(--primary-900) 45%, var(--secondary-900) 100%);
+    background: radial-gradient(circle at 50% 0%, #1a000e 0%, #000000 60%);
   }
 }
 
 .dark body {
-  background: linear-gradient(135deg, var(--neutral-900) 0%, var(--primary-900) 45%, var(--secondary-900) 100%);
+  background: radial-gradient(circle at 50% 0%, #1a000e 0%, #000000 60%);
 }
 
 /* Glassmorphism — indigo-tinted */

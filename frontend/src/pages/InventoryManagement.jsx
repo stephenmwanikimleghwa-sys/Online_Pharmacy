@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import inventoryService from '../services/inventoryService';
 import InventoryItemCard from '../components/InventoryItemCard';
+import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
 import RestockModal from '../components/RestockModal';
 import StockLogsModal from '../components/StockLogsModal';
 import SupplierList from './inventory/SupplierList';
@@ -18,12 +20,31 @@ const InventoryManagement = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filter, activeTab]);
 
   useEffect(() => {
     if (activeTab === 'inventory') {
       fetchInventory();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const fetchInventory = async () => {
     try {
@@ -34,6 +55,7 @@ const InventoryManagement = () => {
       setInventory(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error('Error fetching inventory:', error);
+      toast.error('Failed to load inventory.');
       setInventory([]);
     } finally {
       setLoading(false);
@@ -43,10 +65,11 @@ const InventoryManagement = () => {
   const handleRestock = async (itemId, quantity, reason) => {
     try {
       await inventoryService.restockInventory(itemId, quantity, reason);
+      toast.success('Inventory restocked successfully!');
       fetchInventory(); // Refresh list
     } catch (error) {
       console.error('Error restocking item:', error);
-      alert('Failed to restock item');
+      toast.error('Failed to restock item.');
     }
   };
 
@@ -65,6 +88,9 @@ const InventoryManagement = () => {
             filter === 'expiring' ? (item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry') : true;
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
@@ -120,16 +146,18 @@ const InventoryManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Search */}
                 <div className="relative group">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
-                    Search
+                  <label className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
+                    <span>Search</span>
+                    <span className="hidden md:inline-block bg-slate-800 border border-slate-700 text-slate-400 px-2 py-0.5 rounded text-[9px]">Cmd K</span>
                   </label>
                   <div className="relative">
                     <input
+                      ref={searchInputRef}
                       type="text"
                       placeholder="Search by medicine name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-6 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white dark:bg-slate-900/50 dark:border-slate-800 dark:focus:ring-primary-500/20 dark:focus:border-primary-500 dark:focus:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500 transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
                     />
                     <svg className="w-5 h-5 text-slate-300 absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </div>
@@ -162,8 +190,22 @@ const InventoryManagement = () => {
             {/* Quick Stats Cell */}
             <div className="lg:col-span-4 bg-slate-900 rounded-[2.5rem] p-8 shadow-glow-indigo text-white flex flex-col justify-between relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-700"></div>
-              <h3 className="text-[10px] font-bold text-indigo-300 uppercase tracking-[0.2em] mb-6 relative z-10">Summary</h3>
-              <div className="space-y-5 relative z-10">
+              <h3 className="text-[10px] font-bold text-indigo-300 dark:text-primary-400 uppercase tracking-[0.2em] mb-6 relative z-10">Summary</h3>
+              <div className="space-y-4 relative z-10">
+                {/* Visual health bar */}
+                <div className="mb-2">
+                  <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+                    <span>Stock Health</span>
+                    <span>{inventory.length > 0 ? Math.round(((inventory.length - inventory.filter(i => i.is_low_stock && i.stock_quantity > 0).length) / inventory.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000" 
+                      style={{ width: `${inventory.length > 0 ? Math.round(((inventory.length - inventory.filter(i => i.is_low_stock && i.stock_quantity > 0).length) / inventory.length) * 100) : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group/stat">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Total items</span>
                   <span className="font-display font-bold text-2xl group-hover:scale-110 transition-transform">{inventory.length}</span>
@@ -253,32 +295,34 @@ const InventoryManagement = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {loading ? (
-              <div className="col-span-full py-32 flex flex-col items-center justify-center space-y-6 opacity-80">
-                <div className="relative">
-                  <div className="w-16 h-16 border-[3px] border-indigo-100 rounded-2xl"></div>
-                  <div className="w-16 h-16 border-[3px] border-indigo-600 border-t-transparent rounded-2xl animate-spin absolute top-0 left-0 shadow-glow-indigo"></div>
-                </div>
-                <div className="text-center">
-                  <p className="text-slate-900 font-display font-bold text-xl tracking-tight">Synchronizing Registry</p>
-                  <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Accessing secure pharmaceutical database...</p>
-                </div>
-              </div>
+              Array.from({ length: 6 }).map((_, idx) => (
+                <InventoryItemCardSkeleton key={idx} />
+              ))
             ) : filteredInventory.length === 0 ? (
-              <div className="col-span-full py-32 glass-card rounded-[2.5rem] border-dashed border-2 border-slate-200 flex flex-col items-center justify-center text-center px-10">
-                <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
-                  <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+              <div className="col-span-full py-24 glass-card rounded-[2.5rem] border border-white/10 dark:border-slate-800 flex flex-col items-center justify-center text-center px-10 relative overflow-hidden group transition-all duration-500 hover:shadow-glow">
+                <div className="absolute inset-0 bg-primary-500/5 blur-[100px] rounded-full group-hover:bg-primary-500/10 transition-colors duration-700"></div>
+                <div className="w-24 h-24 bg-slate-100 dark:bg-slate-900/50 rounded-3xl flex items-center justify-center mb-6 shadow-inner relative z-10 border border-white/50 dark:border-white/5">
+                  <svg className="w-12 h-12 text-slate-400 dark:text-primary-500 group-hover:scale-110 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
-                <h3 className="text-2xl font-display font-bold text-slate-900 tracking-tight">No items found</h3>
-                <p className="text-slate-500 mt-2 max-w-sm">No items match your search or filter. Try changing the search or filter above.</p>
-                <button
-                  onClick={() => { setSearchTerm(''); setFilter('all'); }}
-                  className="mt-8 px-6 py-2.5 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-xl border border-indigo-100 uppercase tracking-widest hover:bg-indigo-100 transition-all"
-                >
-                  Clear search and filter
-                </button>
+                <h3 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 tracking-tight relative z-10">No items found</h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm relative z-10">We couldn't find any medicine matching your criteria. Try adjusting your filters or search.</p>
+                <div className="flex gap-4 mt-8 relative z-10">
+                  <button
+                    onClick={() => { setSearchTerm(''); setFilter('all'); }}
+                    className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  >
+                    Clear Filters
+                  </button>
+                  <button
+                    onClick={() => searchInputRef.current?.focus()}
+                    className="px-6 py-3 bg-indigo-600 dark:bg-primary-600 text-white font-bold text-xs rounded-xl border border-indigo-500 dark:border-primary-500 uppercase tracking-widest hover:bg-indigo-500 dark:hover:bg-primary-500 shadow-sm dark:shadow-glow transition-all"
+                  >
+                    Search Again
+                  </button>
+                </div>
               </div>
             ) : (
-              filteredInventory.map(item => (
+              paginatedInventory.map(item => (
                 <InventoryItemCard
                   key={item.id}
                   item={item}
@@ -291,6 +335,31 @@ const InventoryManagement = () => {
               ))
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 mt-8 pt-6 border-t border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Page <span className="text-slate-900 dark:text-slate-200">{currentPage}</span> of {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Modals with Premium Styling */}
           {showRestockModal && selectedItem && (
