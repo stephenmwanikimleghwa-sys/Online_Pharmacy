@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
-import { Breadcrumb } from '../components';
-import { SearchBar } from '../components/SearchBar';
-import { ProductCardSkeleton } from '../components/Skeleton';
+import { Breadcrumb, SearchBar, ProductCardSkeleton } from '../components';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
