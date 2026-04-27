@@ -124,8 +124,14 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_ratelimit.middleware.RatelimitMiddleware",
 ]
+
+# Add ratelimit middleware only if the package is installed
+try:
+    import django_ratelimit  # noqa: F401
+    MIDDLEWARE.append("django_ratelimit.middleware.RatelimitMiddleware")
+except ImportError:
+    pass
 
 ROOT_URLCONF = "config.urls"
 
