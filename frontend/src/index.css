@@ -176,7 +176,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.8;
   color: var(--text-primary);
-  background: var(--bg-primary); /* #ffffff for light mode */
+  background: #ffffff !important;
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -186,12 +186,12 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background: radial-gradient(circle at 50% 0%, #0a2e4a 0%, #051624 60%);
+    background: #ffffff !important;
   }
 }
 
 .dark body {
-  background: radial-gradient(circle at 50% 0%, #0a2e4a 0%, #051624 60%);
+  background: #ffffff !important;
 }
 
 /* Glassmorphism — tint-adjusted */
