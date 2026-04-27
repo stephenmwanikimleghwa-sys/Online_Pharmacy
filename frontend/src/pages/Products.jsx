@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../components/Toast';
+import toast from 'react-hot-toast';
 import ProductCard from '../components/ProductCard';
 import { Breadcrumb, SearchBar, ProductCardSkeleton, TableSkeleton } from '../components';
 import {
@@ -18,7 +18,7 @@ const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuth();
   const { addToCart } = useCart();
-  const { success } = useToast();
+  // const { success } = useToast(); -> Now using toast from react-hot-toast
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +113,7 @@ const Products = () => {
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    success(`${product.name} added to cart!`);
+    toast.success(`${product.name} added to cart!`);
   };
 
   const handleSearch = (query) => {
