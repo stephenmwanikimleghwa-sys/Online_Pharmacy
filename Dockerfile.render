@@ -1,5 +1,5 @@
 # Multi-stage build for Render deployment
-FROM python:3.11-slim as backend
+FROM python:3.11-slim AS backend
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -26,11 +26,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy backend code
 COPY backend/ .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Collect static files (needs Django settings importable)
+RUN SECRET_KEY=build-placeholder python manage.py collectstatic --noinput
 
 # Frontend build stage
-FROM node:18-alpine as frontend
+FROM node:18-alpine AS frontend
 
 WORKDIR /app/frontend
 
@@ -38,7 +38,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production=false
+RUN npm ci
 
 # Copy frontend source
 COPY frontend/ .
@@ -46,75 +46,35 @@ COPY frontend/ .
 # Build frontend
 RUN npm run build
 
-# Final stage
+# ─── Final stage ───────────────────────────────────────────────
 FROM python:3.11-slim
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install only runtime system dependencies (no build tools needed)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        gcc \
-        postgresql-client \
-        libpq-dev \
+        libpq5 \
         curl \
-        nginx \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend from backend stage
-COPY --from=backend /app /app
-
-# Copy installed Python packages and executables from the backend build stage
-# (pip installs to /usr/local, not /app – without this, all dependencies are missing)
+# Copy installed Python packages and executables from the build stage
+# (pip installs to /usr/local, not /app)
 COPY --from=backend /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=backend /usr/local/bin /usr/local/bin
 
-# Copy frontend build from frontend stage
+# Copy backend application code and collected static files
+COPY --from=backend /app /app
+
+# Copy frontend build
 COPY --from=frontend /app/frontend/dist /app/staticfiles/frontend
 
-# Create nginx config
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /app/staticfiles; \
-    index index.html; \
-    \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    \
-    location /admin/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Host $host;
-    }
-    } \
-    \
-    location /admin/ { \
-        proxy_pass http://127.0.0.1:8000; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-    } \
-    \
-    location /static/ { \
-        alias /app/staticfiles/; \
-        expires 1y; \
-        add_header Cache-Control "public, immutable"; \
-    } \
-}' > /etc/nginx/sites-available/default
-
-# Expose port
+# Expose port (Render sets $PORT at runtime)
 EXPOSE 8000
 
-# Start script
-CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+# Default command (Render overrides via startCommand in render.yaml)
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
+
