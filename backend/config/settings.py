@@ -310,8 +310,12 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-# Allow all origins in production for debugging (can be restricted later)
-CORS_ALLOW_ALL_ORIGINS = True
+# NOTE: CORS_ALLOW_ALL_ORIGINS=True and CORS_ALLOW_CREDENTIALS=True are
+# mutually exclusive in django-cors-headers. When both are set the middleware
+# silently refuses to add the Access-Control-Allow-Origin header (the HTTP
+# spec forbids "Access-Control-Allow-Origin: *" with credentials).
+# Instead, we list allowed origins explicitly + use a regex catch-all for
+# Render subdomains. The middleware will echo back the matching origin.
 CORS_ALLOW_CREDENTIALS = True
 
 # Explicitly list allowed origins as a fallback and for documentation
