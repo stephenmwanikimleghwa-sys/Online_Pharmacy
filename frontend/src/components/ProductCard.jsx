@@ -25,7 +25,7 @@ const ProductCard = ({ product }) => {
       {/* Product Details */}
       <div className="p-4">
         {/* Category Badge */}
-        <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full mb-2">
+        <span className="inline-block px-2 py-1 text-xs font-semibold category-pill rounded-full mb-2">
           {category}
         </span>
 
@@ -41,7 +41,7 @@ const ProductCard = ({ product }) => {
 
         {/* Price */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-2xl font-bold text-blue-600">
+          <span className="text-2xl font-bold text-secondary-500">
             KSh {price.toLocaleString()}
           </span>
         </div>
