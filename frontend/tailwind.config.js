@@ -44,7 +44,7 @@ module.exports = {
           950: "#080b0f",
         },
         neutral: {
-          50: "#f5f8fa", // Near-white cool blue
+          50: "#ffffff", // Pure white
           100: "#e5ecf0",
           200: "#cbd6de",
           300: "#abb8c3",
@@ -57,7 +57,7 @@ module.exports = {
           950: "#000000",
         },
         surface: {
-          light: "#f5f8fa",
+          light: "#ffffff",
           dark: "#0a2e4a",
           "glass-light": "rgba(255, 255, 255, 0.7)",
           "glass-dark": "rgba(15, 23, 42, 0.7)",

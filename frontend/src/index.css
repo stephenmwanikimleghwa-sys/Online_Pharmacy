@@ -176,7 +176,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.8;
   color: var(--text-primary);
-  background: var(--bg-primary); /* F5F8FA for light mode */
+  background: var(--bg-primary); /* #ffffff for light mode */
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
