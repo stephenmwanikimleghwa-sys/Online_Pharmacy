@@ -18,7 +18,6 @@ const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuth();
   const { addToCart } = useCart();
-  // const { success } = useToast(); -> Now using toast from react-hot-toast
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +28,7 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
 
   const categories = [
     { value: 'pain_relief', label: 'Pain Relief', icon: '💊' },
@@ -74,7 +73,6 @@ const Products = () => {
     fetchProducts();
   }, [token]);
 
-  // Filter and sort products
   const filteredProducts = products
     .filter(product => {
       const matchesCategory = !selectedCategory || product.category === selectedCategory;
@@ -137,54 +135,42 @@ const Products = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+        <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 animate-shake">
+          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
+          <p className="text-rose-900 font-bold text-sm tracking-tight">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Products', active: true }
-        ]}
-        className="mb-6"
-      />
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+      <div className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Products
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Browse our collection of quality medicines
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+              <SparklesIcon className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Browse <span className="text-indigo-600">Products</span></h1>
+          </div>
+          <p className="text-lg text-slate-500 font-medium">
+            Browse our collection of quality pharmaceutical products.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* View toggle */}
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/50">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-2.5 rounded-xl transition-all ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-white text-indigo-600 shadow-premium'
+                  : 'text-slate-400 hover:text-slate-600'
               }`}
               aria-label="Grid view"
               aria-pressed={viewMode === 'grid'}
@@ -195,10 +181,10 @@ const Products = () => {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-2.5 rounded-xl transition-all ${
                 viewMode === 'list'
-                  ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-white text-indigo-600 shadow-premium'
+                  : 'text-slate-400 hover:text-slate-600'
               }`}
               aria-label="List view"
               aria-pressed={viewMode === 'list'}
@@ -214,7 +200,7 @@ const Products = () => {
             <select
               value={sortBy}
               onChange={(e) => handleSort(e.target.value)}
-              className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-5 py-3 bg-white border border-slate-200/60 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-sm appearance-none pr-10 transition-all"
             >
               {sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -222,19 +208,19 @@ const Products = () => {
                 </option>
               ))}
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
               {sortOrder === 'asc' ? (
-                <ArrowUpIcon className="h-4 w-4 text-gray-400" />
+                <ArrowUpIcon className="h-4 w-4" />
               ) : (
-                <ArrowDownIcon className="h-4 w-4 text-gray-400" />
+                <ArrowDownIcon className="h-4 w-4" />
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-8">
+      {/* Search and Filters */}
+      <div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium mb-10">
         <SearchBar
           placeholder="Search medicines by name, category, or description..."
           onSearch={handleSearch}
@@ -257,47 +243,38 @@ const Products = () => {
 
       {/* Active Filters */}
       {hasActiveFilters && (
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Active filters:</span>
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active filters:</span>
           {selectedCategory && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
               {categories.find(c => c.value === selectedCategory)?.label}
-              <button
-                onClick={() => setSelectedCategory('')}
-                className="hover:text-indigo-900 dark:hover:text-indigo-100"
-              >
-                <XMarkIcon className="h-4 w-4" />
+              <button onClick={() => setSelectedCategory('')} className="hover:text-indigo-900 transition-colors">
+                <XMarkIcon className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
           {inStockOnly && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
               In Stock Only
-              <button
-                onClick={() => setInStockOnly(false)}
-                className="hover:text-green-900 dark:hover:text-green-100"
-              >
-                <XMarkIcon className="h-4 w-4" />
+              <button onClick={() => setInStockOnly(false)} className="hover:text-emerald-900 transition-colors">
+                <XMarkIcon className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
           {searchTerm && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-slate-200 shadow-sm">
               "{searchTerm}"
               <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSearchParams({});
-                }}
-                className="hover:text-gray-900 dark:hover:text-gray-100"
+                onClick={() => { setSearchTerm(''); setSearchParams({}); }}
+                className="hover:text-slate-900 transition-colors"
               >
-                <XMarkIcon className="h-4 w-4" />
+                <XMarkIcon className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
           <button
             onClick={clearFilters}
-            className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+            className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-700 transition-colors px-3 py-1.5"
           >
             Clear all
           </button>
@@ -312,21 +289,19 @@ const Products = () => {
           ))}
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="mx-auto h-24 w-24 text-gray-300 dark:text-gray-600 mb-4">
-            <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium py-24 flex flex-col items-center justify-center text-center px-10">
+          <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-6">
+            <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            No products found
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <h3 className="text-2xl font-display font-bold text-slate-900 tracking-tight">No products found</h3>
+          <p className="text-slate-500 mt-2 max-w-sm">
             Try adjusting your filters or search terms.
           </p>
           <button
             onClick={clearFilters}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="mt-8 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 font-bold text-xs uppercase tracking-widest"
           >
             <FunnelIcon className="h-5 w-5" />
             Clear Filters
@@ -334,10 +309,13 @@ const Products = () => {
         </div>
       ) : (
         <>
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-            </p>
+          <div className="mb-6 flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                Showing <span className="text-slate-900">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</span>
+              </p>
+            </div>
           </div>
 
           <div className={`grid gap-6 ${

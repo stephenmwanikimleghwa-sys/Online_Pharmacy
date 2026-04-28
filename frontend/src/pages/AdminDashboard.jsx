@@ -56,32 +56,42 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 opacity-40">
+          <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-      <div className="mb-10">
-        <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">
-          Admin Dashboard
-        </h1>
-        <p className="mt-2 text-lg text-slate-500">
-          Welcome back, <span className="text-primary-600 font-semibold">{user.full_name || user.username}</span>. Monitor system growth and manage core assets.
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+      <div className="mb-12">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+            <ChartBarIcon className="w-6 h-6 text-white" />
+          </div>
+          <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">
+            Admin <span className="text-indigo-600">Dashboard</span>
+          </h1>
+        </div>
+        <p className="text-lg text-slate-500 font-medium">
+          Welcome back, <span className="text-indigo-600 font-bold">{user.full_name || user.username}</span>. Monitor system growth and manage core assets.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center gap-3">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span className="font-medium">{error}</span>
+        <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 animate-shake">
+          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          </div>
+          <p className="text-rose-900 font-bold text-sm tracking-tight">{error}</p>
         </div>
       )}
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 mb-12">
 
         {/* Stats Section - Bento Cells */}
         <div className="lg:col-span-4 flex flex-col gap-6">
@@ -181,34 +191,34 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => navigate('/admin/users')}
-          className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-primary-500 hover:shadow-card transition-all group"
+          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-indigo-200 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-primary-600">User Management</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-primary-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 group-hover:text-indigo-600 text-sm transition-colors">User Management</span>
+          <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button
           onClick={() => navigate('/admin/stock')}
-          className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-secondary-500 hover:shadow-card transition-all group"
+          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-emerald-200 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-secondary-600">Inventory Control</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-secondary-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 group-hover:text-emerald-600 text-sm transition-colors">Inventory Control</span>
+          <svg className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button
           onClick={() => navigate('/dispensing-logs')}
-          className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-accent-500 hover:shadow-card transition-all group"
+          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-amber-200 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-accent-600">Audit Logs</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-accent-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 group-hover:text-amber-600 text-sm transition-colors">Audit Logs</span>
+          <svg className="w-5 h-5 text-slate-400 group-hover:text-amber-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button
           onClick={() => navigate('/reports')}
-          className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-purple-500 hover:shadow-card transition-all group"
+          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-violet-200 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-purple-600">Reports Panel</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-purple-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 group-hover:text-violet-600 text-sm transition-colors">Reports Panel</span>
+          <svg className="w-5 h-5 text-slate-400 group-hover:text-violet-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
     </div>

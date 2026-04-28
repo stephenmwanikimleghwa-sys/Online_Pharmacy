@@ -378,47 +378,62 @@ const AdminStock = () => {
 
 	if (loading) return (
 		<div className="min-h-screen flex items-center justify-center">
-			<div className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+			<div className="flex flex-col items-center gap-4 opacity-40">
+				<div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
+				<p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
+			</div>
 		</div>
 	);
 
 	return (
-		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
 
-			{/* header bar sticks to top so Add Medicine is always reachable */}
-			<div className="sticky top-0 bg-white z-10 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+			{/* Header Section */}
+			<div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
 				<div>
-					<h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Manage Stock</h1>
-					<p className="mt-1 text-slate-500">Add, edit, and manage pharmaceutical products.</p>
+					<div className="flex items-center gap-3 mb-2">
+						<div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+							<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+						</div>
+						<h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Manage <span className="text-indigo-600">Stock</span></h1>
+					</div>
+					<p className="text-lg text-slate-500 font-medium">Add, edit, and manage pharmaceutical products in your inventory.</p>
 				</div>
 				<div className="flex gap-3">
 					<button
 						onClick={() => navigate('/admin/restock-requests')}
-						className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all"
+						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-card hover:bg-slate-50 transition-all active:scale-[0.98]"
 					>
 						Restock Requests
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); openAddModal(); }}
-						className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-[0_4px_20px_rgba(79,70,229,0.35)] hover:shadow-[0_6px_28px_rgba(79,70,229,0.45)] hover:scale-[1.02] transition-all"
-						style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}
+						className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
 					>
-						<PlusIcon className="h-4 w-4" /> Add Medicine
+						<PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+						<span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add Medicine</span>
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); handleRefresh(); }}
 						disabled={loading}
-						className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-all"
+						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-card hover:bg-slate-50 disabled:opacity-40 transition-all active:scale-[0.98]"
 					>
 						Refresh
 					</button>
 				</div>
 			</div>
 
-			{error && <div className="mb-4 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm">{error}</div>}
+			{error && (
+				<div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 animate-shake">
+					<div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
+						<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+					</div>
+					<p className="text-rose-900 font-bold text-sm tracking-tight">{error}</p>
+				</div>
+			)}
 
 			{/* Search and Filters */}
-			<div className="glass-card rounded-2xl mb-6 p-5">
+			<div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium mb-10">
 				<div className="flex flex-wrap gap-4">
 					<div className="flex-1 min-w-[200px]">
 						<label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Search</label>
@@ -457,7 +472,7 @@ const AdminStock = () => {
 			</div>
 
 			<ErrorBoundary>
-				<div className="glass-card rounded-2xl overflow-hidden">
+				<div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
 					<div className="overflow-x-auto">
 						<table className="min-w-full divide-y divide-slate-100">
 							<thead className="bg-slate-50/50">
@@ -550,8 +565,8 @@ const AdminStock = () => {
 								<option value={50}>50 / page</option>
 								<option value={100}>100 / page</option>
 							</select>
-							<button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all">Previous</button>
-							<button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-3 py-1.5 rounded-lg text-sm text-white disabled:opacity-40 transition-all" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>Next</button>
+							<button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-40">Previous</button>
+							<button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-700 shadow-premium transition-all active:scale-95 disabled:opacity-40">Next</button>
 						</div>
 					</div>
 				</div>
@@ -559,12 +574,12 @@ const AdminStock = () => {
 
 			{/* Adjust Section */}
 			{selectedItemForLogs && (
-				<div className="mt-6 glass-card rounded-2xl p-6">
+				<div className="mt-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
 					<h3 className="font-display font-bold text-slate-800 mb-4">Adjust Stock — {selectedItemForLogs.name}</h3>
 					<div className="flex gap-3">
 						<input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" placeholder="+10 or -5" />
 						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" placeholder="Reason for adjustment" />
-						<button onClick={() => handleAdjust(selectedItemForLogs)} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>Apply</button>
+						<button onClick={() => handleAdjust(selectedItemForLogs)} className="px-6 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">Apply</button>
 					</div>
 					{logEntries.length > 0 && (
 						<div className="mt-5">
