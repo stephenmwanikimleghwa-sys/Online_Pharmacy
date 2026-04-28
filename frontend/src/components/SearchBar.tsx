@@ -157,7 +157,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             onKeyDown={handleKeyDown}
             onFocus={() => setShowSuggestions(query.length > 0)}
             placeholder={placeholder}
-            className="flex-1 px-4 py-3 bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            className="flex-1 min-w-0 px-2 sm:px-4 py-3 bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-sm sm:text-base"
             aria-label="Search"
             aria-expanded={showSuggestions}
             aria-controls="search-suggestions"
@@ -189,10 +189,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
           )}
           <button
             onClick={handleSearch}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-r-2xl transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-r-2xl transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shrink-0"
             aria-label="Search"
           >
-            Search
+            <MagnifyingGlassIcon className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:inline">Search</span>
           </button>
         </div>
 

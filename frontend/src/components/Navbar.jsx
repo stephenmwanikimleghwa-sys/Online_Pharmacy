@@ -70,7 +70,14 @@ const Navbar = () => {
             <UserMenu user={user} handleLogout={handleLogout} />
           </div>
 
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#1a1a1a] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#262626] border border-transparent dark:border-white/5 transition-all shadow-sm"
+              aria-label="Toggle Dark Mode"
+            >
+              {effectiveTheme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+            </button>
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
