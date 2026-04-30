@@ -42,9 +42,14 @@ const MobileNav = ({ isOpen, user, handleLogout }) => {
             <Link to="/" className={`${linkBase} mobile-nav-link`}>Home</Link>
             <Link to="/products" className={`${linkBase} mobile-nav-link`}>Products</Link>
 
-            {(user.role === "admin" || user.role === "pharmacist" || user.role === "auditor") && (
+            {(user.role === "admin" || user.role === "pharmacist" || user.role === "auditor" || user.role === "cashier") && (
               <>
-                <Link to="/inventory" className={`${linkBase} mobile-nav-link`}>Inventory</Link>
+                {(user.role !== "auditor") && (
+                  <Link to="/otc-sales" className={`${linkBase} mobile-nav-link`}>OTC Sales</Link>
+                )}
+                {(user.role !== "cashier") && (
+                  <Link to="/inventory" className={`${linkBase} mobile-nav-link`}>Inventory</Link>
+                )}
                 <Link to="/reports" className={`${linkBase} mobile-nav-link`}>Reports</Link>
                 {(user.role === "admin" || user.role === "pharmacist") && (
                   <>

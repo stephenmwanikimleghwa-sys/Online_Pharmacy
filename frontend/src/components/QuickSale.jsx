@@ -69,16 +69,15 @@ const QuickSale = ({ isOpen, onClose }) => {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `receipt_order_${orderId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      // Cleanup the blob URL after a short delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (error) {
-      console.error('Receipt download error:', error);
-      alert('Failed to download receipt.');
+      console.error('Receipt print error:', error);
+      alert('Failed to generate receipt.');
     }
   };
 

@@ -44,6 +44,8 @@ def inventory_list(request):
     try:
         products = (
             Product.objects.filter(is_active=True)
+            .select_related("pharmacy", "pricing_tier")
+            .prefetch_related("pricing_tier")
             .annotate(next_batch_expiry=Min("batches__expiry_date"))
             .order_by("name")
         )

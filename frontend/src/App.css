@@ -8,7 +8,7 @@
   flex: 1;
   min-height: calc(100vh - 80px - 120px);
   padding: 2rem 0;
-  background: linear-gradient(180deg, rgba(238, 242, 255, 0.5) 0%, rgba(250, 245, 255, 0.3) 50%, rgba(236, 253, 245, 0.4) 100%);
+  background: transparent;
 }
 
 .container {

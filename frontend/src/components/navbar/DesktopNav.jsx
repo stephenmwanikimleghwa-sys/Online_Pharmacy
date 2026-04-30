@@ -11,9 +11,15 @@ const navLinks = (user) => {
   if (user?.role === "admin" || user?.role === "pharmacist") {
     base.push(
       { to: "/inventory", label: "Inventory" },
+      { to: "/otc-sales", label: "OTC Sales" },
       { to: "/reports", label: "Reports" },
+      { to: "/documents", label: "Documents" },
       { to: "/licensing", label: "Licensing" },
       { to: "/dispensing-logs", label: "Logs" }
+    );
+  } else if (user?.role === "cashier") {
+    base.push(
+      { to: "/otc-sales", label: "OTC Sales" }
     );
   } else if (user?.role === "auditor") {
     base.push(

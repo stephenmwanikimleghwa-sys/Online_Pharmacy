@@ -35,6 +35,8 @@ import PasswordResetConfirm from "./pages/PasswordResetConfirm";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStock from "./pages/AdminStock";
 import StockIntakeLog from "./pages/StockIntakeLog";
+import OTCSales from "./pages/OTCSales";
+import DocumentRegistry from "./pages/DocumentRegistry";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ManageUsers from "./pages/ManageUsers";
@@ -140,6 +142,14 @@ function App() {
               <Route
                 path="/reports"
                 element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
+              />
+              <Route
+                path="/documents"
+                element={<ProtectedRoute element={DocumentRegistry} allowedRoles={['admin', 'pharmacist']} />}
+              />
+              <Route
+                path="/otc-sales"
+                element={<ProtectedRoute element={OTCSales} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
               />
               <Route
                 path="/dispensing-logs"

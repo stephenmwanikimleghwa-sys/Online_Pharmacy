@@ -19,8 +19,8 @@ class CategoryChoices(models.TextChoices):
 
 class PricingTierChoices(models.TextChoices):
     """Pricing tier options."""
-    RETAIL = "retail", "Retail (1.5× markup)"
-    WHOLESALE = "wholesale", "Wholesale (1.1× markup)"
+    RETAIL = "retail", "Retail (1.33× markup)"
+    WHOLESALE = "wholesale", "Wholesale (1.15× markup)"
 
 
 class Product(models.Model):
@@ -258,8 +258,8 @@ class PricingTier(models.Model):
     Allows different prices for wholesale vs retail buyers.
     
     Pricing formula:
-    - Wholesale: Buying Price × 1.1 (10% markup)
-    - Retail: Buying Price × 1.5 (50% markup)
+    - Wholesale: Buying Price × 1.15 (15% markup)
+    - Retail: Buying Price × 1.33 (33% markup)
     """
     
     product = models.OneToOneField(
@@ -281,7 +281,7 @@ class PricingTier(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)],
         editable=False,
-        help_text='Wholesale price (Buying Price × 1.1)'
+        help_text='Wholesale price (Buying Price × 1.15)'
     )
     
     retail_price = models.DecimalField(
@@ -289,7 +289,7 @@ class PricingTier(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)],
         editable=False,
-        help_text='Retail price (Buying Price × 1.5)'
+        help_text='Retail price (Buying Price × 1.33)'
     )
     
     minimum_wholesale_quantity = models.PositiveIntegerField(
@@ -312,10 +312,10 @@ class PricingTier(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Automatically calculate wholesale and retail prices."""
-        # Wholesale: Buying Price × 1.1
-        self.wholesale_price = self.buying_price * Decimal('1.1')
-        # Retail: Buying Price × 1.5
-        self.retail_price = self.buying_price * Decimal('1.5')
+        # Wholesale: Buying Price × 1.15
+        self.wholesale_price = self.buying_price * Decimal('1.15')
+        # Retail: Buying Price × 1.33
+        self.retail_price = self.buying_price * Decimal('1.33')
 
         # Update the product's main price to retail price
         if self.product:

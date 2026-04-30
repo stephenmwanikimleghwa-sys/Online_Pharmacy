@@ -1,0 +1,15 @@
+{
+  "short_name": "Transcounty",
+  "name": "Transcounty Pharmacy Aggregator",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff"
+}

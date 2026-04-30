@@ -5,6 +5,7 @@ from .views.dispensing import PrescriptionViewSet, DispensationViewSet
 from .views.stock_intake import StockIntakeViewSet
 from .views.supplier import SupplierViewSet
 from .views.batch import BatchViewSet
+from .views.document import DocumentViewSet
 from .views.inventory import (
     inventory_summary,
     inventory_list,
@@ -25,6 +26,7 @@ router.register(r'stock-intake', StockIntakeViewSet)
 router.register(r'prescriptions', PrescriptionViewSet)
 router.register(r'suppliers', SupplierViewSet)
 router.register(r'batches', BatchViewSet)
+router.register(r'documents', DocumentViewSet, basename='document')
 
 app_name = "inventory"
 

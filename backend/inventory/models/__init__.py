@@ -1,9 +1,9 @@
-# Import models to make them available at package level
 from .dispensing import Prescription, PrescriptionItem, Dispensation, DispensationItem
 from .restock import RestockRequest
-from .stock_intake import StockIntake
-from .supplier import Supplier
 from .batch import Batch
+from .stock_intake import StockIntake
+from .document import Document
+from .supplier import Supplier
 
 __all__ = [
     'Prescription',
@@ -14,4 +14,5 @@ __all__ = [
     'StockIntake',
     'Supplier',
     'Batch',
+    'Document',
 ]

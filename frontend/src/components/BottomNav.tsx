@@ -35,6 +35,7 @@ const BottomNav: React.FC = () => {
     { label: 'Home', href: '/', icon: HomeIcon },
     { label: 'Dashboard', href: getDashboardHref(user?.role), icon: Squares2X2Icon },
     { label: 'Products', href: '/products', icon: ShoppingBagIcon },
+    { label: 'OTC Sales', href: '/otc-sales', icon: ClipboardDocumentListIcon },
     { label: 'Inventory', href: '/inventory', icon: ClipboardDocumentListIcon },
     { label: 'Reports', href: '/reports', icon: ChartBarIcon },
   ];

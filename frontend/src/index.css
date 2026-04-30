@@ -176,7 +176,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.8;
   color: var(--text-primary);
-  background: #ffffff !important;
+  background: var(--bg-primary);
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -186,12 +186,12 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    background: #ffffff !important;
+    background: var(--bg-primary);
   }
 }
 
 .dark body {
-  background: #ffffff !important;
+  background: var(--bg-primary);
 }
 
 /* Glassmorphism — tint-adjusted */
