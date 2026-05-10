@@ -3,8 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { Bars3Icon, SunIcon, MoonIcon } from "@heroicons/react/24/outline";
-import DesktopNav from "./navbar/DesktopNav";
-import UserMenu from "./navbar/UserMenu";
 import MobileNav from "./navbar/MobileNav";
 
 const Navbar = () => {
@@ -39,7 +37,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="nav-premium sticky top-0 z-50" role="navigation" aria-label="Main">
+    <nav className="nav-premium sticky top-0 z-50 md:hidden" role="navigation" aria-label="Main">
       <div className="nav-accent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -57,20 +55,7 @@ const Navbar = () => {
             </Link>
           </div>
 
-          <DesktopNav user={user} />
-
-          <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-[#1a1a1a] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#262626] border border-transparent dark:border-white/5 transition-all shadow-sm"
-              aria-label="Toggle Dark Mode"
-            >
-              {effectiveTheme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
-            </button>
-            <UserMenu user={user} handleLogout={handleLogout} />
-          </div>
-
-          <div className="md:hidden flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-xl bg-slate-100 dark:bg-[#1a1a1a] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#262626] border border-transparent dark:border-white/5 transition-all shadow-sm"

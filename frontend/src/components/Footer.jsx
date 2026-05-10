@@ -20,7 +20,7 @@ const Footer = () => {
               <div className="footer-logo-mark">
                 <span className="text-white font-bold text-sm font-display">TP</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-800 font-display">Transcounty</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white font-display">Transcounty</h3>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed">
               Your trusted pharmacy management platform in Kenya. Secure, convenient, and accessible healthcare.
@@ -28,7 +28,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="footer-heading">Quick Links</h4>
+            <h4 className="footer-heading dark:text-slate-200">Quick Links</h4>
             <ul className="space-y-2.5">
               {quickLinks.map(({ to, label }) => (
                 <li key={to}>
@@ -41,8 +41,8 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="footer-heading">Contact Us</h4>
-            <ul className="space-y-2.5 text-sm text-slate-500">
+            <h4 className="footer-heading dark:text-slate-200">Contact Us</h4>
+            <ul className="space-y-2.5 text-sm text-slate-500 dark:text-slate-400">
               <li className="flex items-center gap-2">
                 <EnvelopeIcon className="w-4 h-4 text-primary-400 flex-shrink-0" />
                 <span>info@transcountypharmacy.co.ke</span>
@@ -59,7 +59,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="footer-heading">Follow Us</h4>
+            <h4 className="footer-heading dark:text-slate-200">Follow Us</h4>
             <div className="flex items-center gap-3">
               {[
                 { href: "https://facebook.com", Icon: FaFacebook, label: "Facebook" },

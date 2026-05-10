@@ -41,6 +41,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ManageUsers from "./pages/ManageUsers";
 import BottomNav from "./components/BottomNav";
+import Sidebar from "./components/navbar/Sidebar";
 import "./App.css";
 
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -70,12 +71,16 @@ function App() {
               }
             }}
           />
-          <div className="App">
-            {!isAuthPage && <Navbar />}
-            <main className="main-content">
-          <ErrorBoundary>
-            <Routes>
-              {/* Public Routes */}
+          <div className="flex h-screen bg-slate-50 dark:bg-[#051624] overflow-hidden">
+            {!isAuthPage && <Sidebar />}
+            
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+              {!isAuthPage && <Navbar />}
+
+              <main className="main-content flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <ErrorBoundary>
+                  <Routes>
+                    {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/password-reset" element={<PasswordResetRequest />} />
@@ -164,13 +169,14 @@ function App() {
                 element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
               />
 
-              {/* Catch-all redirect */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </ErrorBoundary>
-        </main>
-        {!isAuthPage && <Footer />}
-        <BottomNav />
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </ErrorBoundary>
+          </main>
+          {!isAuthPage && <Footer />}
+        </div>
+        {!isAuthPage && <BottomNav />}
       </div>
         </CartProvider>
     </AuthProvider>

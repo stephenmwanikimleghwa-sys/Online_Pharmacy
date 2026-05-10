@@ -265,6 +265,15 @@ if USE_S3 and AWS_STORAGE_BUCKET_NAME and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCES
         else f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
     )
 else:
+    # Allow WhiteNoise to serve media in production when S3 is missing
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
     MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
 

@@ -16,17 +16,35 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
+  const url = new URL(event.request.url);
+
+  // Exclude non-GET requests from caching
+  if (event.request.method !== 'GET') return;
+
+  // Network-First for API requests
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const resClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
           return response;
-        }
-        return fetch(event.request).catch(error => {
-          console.log('Fetch failed; returning offline page instead.', error);
-          // Potential fallback here
-        });
-      })
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for UI assets (JS, CSS, HTML, Images)
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      const fetchPromise = fetch(event.request).then(networkResponse => {
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      }).catch(() => cachedResponse);
+      
+      return cachedResponse || fetchPromise;
+    })
   );
 });
 

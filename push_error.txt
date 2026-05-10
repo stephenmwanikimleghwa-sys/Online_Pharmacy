@@ -1,0 +1,4 @@
+I tried to push the code but it failed with:
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+
+Can you execute the `git push` manually, or use a Personal Access Token / SSH key? All changes have been cleanly committed locally.

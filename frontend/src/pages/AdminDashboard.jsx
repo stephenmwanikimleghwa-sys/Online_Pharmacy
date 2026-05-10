@@ -72,8 +72,8 @@ const AdminDashboard = () => {
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
             <ChartBarIcon className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">
-            Admin <span className="text-indigo-600">Dashboard</span>
+          <h1 className="text-4xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
+            Admin <span className="text-indigo-600 dark:text-indigo-400">Dashboard</span>
           </h1>
         </div>
         <p className="text-lg text-slate-500 font-medium">
@@ -101,8 +101,8 @@ const AdminDashboard = () => {
                 <UserIcon className="h-7 w-7 text-primary-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Users</p>
-                <p className="text-3xl font-display font-bold text-slate-800">{stats.totalUsers}</p>
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Users</p>
+                <p className="text-3xl font-display font-bold text-slate-800 dark:text-white">{stats.totalUsers}</p>
               </div>
             </div>
           </div>
@@ -113,10 +113,10 @@ const AdminDashboard = () => {
                 <ChartBarIcon className="h-7 w-7 text-secondary-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">System Health</p>
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">System Health</p>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-secondary-500 rounded-full animate-pulse-subtle"></span>
-                  <p className="text-xl font-display font-bold text-slate-800">Operational</p>
+                  <p className="text-xl font-display font-bold text-slate-800 dark:text-white">Operational</p>
                 </div>
               </div>
             </div>
@@ -139,9 +139,9 @@ const AdminDashboard = () => {
         </div>
 
         {/* Users Table - Large Bento Cell */}
-        <div className="lg:col-span-8 glass-card rounded-2xl p-0 overflow-hidden border border-slate-100">
-          <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-            <h2 className="text-xl font-display font-bold text-slate-800">Recent Accounts</h2>
+        <div className="lg:col-span-8 glass-card rounded-2xl p-0 overflow-hidden border border-slate-100 dark:border-slate-800/60">
+          <div className="px-6 py-5 border-b border-slate-50 dark:border-slate-800/60 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/40">
+            <h2 className="text-xl font-display font-bold text-slate-800 dark:text-white">Recent Accounts</h2>
             <button
               onClick={() => navigate('/admin/users')}
               className="text-primary-600 hover:text-primary-700 text-sm font-bold"
@@ -160,13 +160,13 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {users.slice(0, 6).map((userItem) => (
-                  <tr key={userItem.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={userItem.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-slate-800">{userItem.username}</div>
-                      <div className="text-xs text-slate-400">{userItem.email}</div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{userItem.username}</div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500">{userItem.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">
                         {userItem.role}
                       </span>
                     </td>
@@ -191,34 +191,34 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => navigate('/admin/users')}
-          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-indigo-200 transition-all group"
+          className="flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-card hover:border-indigo-200 dark:hover:border-indigo-500 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-indigo-600 text-sm transition-colors">User Management</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 text-sm transition-colors">User Management</span>
+          <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button
           onClick={() => navigate('/admin/stock')}
-          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-emerald-200 transition-all group"
+          className="flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-card hover:border-emerald-200 dark:hover:border-emerald-500 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-emerald-600 text-sm transition-colors">Inventory Control</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 text-sm transition-colors">Inventory Control</span>
+          <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button
           onClick={() => navigate('/dispensing-logs')}
-          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-amber-200 transition-all group"
+          className="flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-card hover:border-amber-200 dark:hover:border-amber-500 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-amber-600 text-sm transition-colors">Audit Logs</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-amber-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 text-sm transition-colors">Audit Logs</span>
+          <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-amber-500 dark:group-hover:text-amber-400 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button
           onClick={() => navigate('/reports')}
-          className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-card hover:border-violet-200 transition-all group"
+          className="flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-card hover:border-violet-200 dark:hover:border-violet-500 transition-all group"
         >
-          <span className="font-bold text-slate-700 group-hover:text-violet-600 text-sm transition-colors">Reports Panel</span>
-          <svg className="w-5 h-5 text-slate-400 group-hover:text-violet-500 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-violet-600 dark:group-hover:text-violet-400 text-sm transition-colors">Reports Panel</span>
+          <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-violet-500 dark:group-hover:text-violet-400 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
     </div>
