@@ -71,13 +71,13 @@ function App() {
               }
             }}
           />
-          <div className="flex h-screen bg-slate-50 dark:bg-[#051624] overflow-hidden">
+          <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-[#051624] overflow-hidden">
             {!isAuthPage && <Sidebar />}
             
-            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <div className="flex-1 flex flex-col w-full min-w-0 h-full overflow-y-auto overflow-x-hidden relative pb-16 md:pb-0">
               {!isAuthPage && <Navbar />}
 
-              <main className="main-content flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+              <main className="main-content flex-auto flex-shrink-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                 <ErrorBoundary>
                   <Routes>
                     {/* Public Routes */}
