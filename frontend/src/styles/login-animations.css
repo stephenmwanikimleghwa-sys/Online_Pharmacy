@@ -146,6 +146,42 @@
   animation: glow 2s ease-in-out infinite;
 }
 
+.animate-slide-in-page {
+  animation: slideInPage 0.75s ease-out forwards;
+  opacity: 0;
+}
+
+.loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner .spinner {
+  border-radius: 9999px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes slideInPage {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Input field animations */
 input:focus {
   animation: none;
