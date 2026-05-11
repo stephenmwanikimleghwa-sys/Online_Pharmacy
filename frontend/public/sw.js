@@ -69,7 +69,7 @@ self.addEventListener('fetch', event => {
             });
         }
         return networkResponse;
-      }).catch(() => cachedResponse);
+      }).catch(() => cachedResponse || new Response('Offline', { status: 504, statusText: 'Offline' }));
       
       return cachedResponse || fetchPromise;
     })

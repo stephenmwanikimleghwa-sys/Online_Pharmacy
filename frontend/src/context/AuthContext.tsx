@@ -215,16 +215,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       let path = "/";
       switch (role) {
         case "pharmacist":
-          path = "/pharmacist/dashboard";  // Updated to match route structure
+          path = "/pharmacist/dashboard";
           break;
         case "admin":
-          path = "/admin/dashboard";  // Consistent route structure
+          path = "/admin/dashboard";
           break;
         case "cashier":
           path = "/cashier/dashboard";
           break;
         case "auditor":
-          path = "/reports"; // Auditors go to reports by default
+          path = "/reports";
           break;
         case "customer":
           path = "/customer/dashboard";
@@ -235,8 +235,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } else if (user.is_admin) {
             path = "/admin/dashboard";
           } else {
-            console.warn(`[Auth Debug] Unknown role "${role}", using default path`);
-            path = "/customer/dashboard";  // Default to customer dashboard if role is unknown
+            console.warn(`[Auth Debug] Unknown role "${role}", using fallback customer dashboard`);
+            path = "/customer/dashboard";
           }
       }
 
