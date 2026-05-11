@@ -175,7 +175,7 @@ const Login: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Username */}
-              <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div>
                 <label htmlFor="username" className={`block text-sm font-semibold mb-1.5 transition-colors duration-300 ${
                   focusedField === 'username' ? 'text-indigo-600' : 'text-slate-700'
                 }`}>
@@ -200,7 +200,7 @@ const Login: React.FC = () => {
               </div>
 
               {/* Password */}
-              <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div>
                 <label htmlFor="password" className={`block text-sm font-semibold mb-1.5 transition-colors duration-300 ${
                   focusedField === 'password' ? 'text-indigo-600' : 'text-slate-700'
                 }`}>
@@ -254,8 +254,8 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm shadow-glow hover:shadow-2xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 transition-all duration-300 group animate-fade-in hover:translate-y-[-2px]"
-                style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)", animationDelay: '0.5s' }}
+                className="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm shadow-glow hover:shadow-2xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 transition-all duration-300 group hover:translate-y-[-2px]"
+                style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
