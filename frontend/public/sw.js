@@ -6,6 +6,17 @@ const URLS_TO_CACHE = [
   '/vite.svg'
 ];
 
+// Helper function to check if a URL scheme is cacheable
+const isCacheableRequest = (request) => {
+  try {
+    const url = new URL(request.url);
+    // Only cache http and https schemes
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (e) {
+    return false;
+  }
+};
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -26,8 +37,11 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+          // Only cache if request is cacheable
+          if (isCacheableRequest(event.request)) {
+            const resClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+          }
           return response;
         })
         .catch(() => caches.match(event.request))
@@ -39,8 +53,11 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       const fetchPromise = fetch(event.request).then(networkResponse => {
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+        // Only cache if request is cacheable
+        if (isCacheableRequest(event.request)) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+        }
         return networkResponse;
       }).catch(() => cachedResponse);
       
