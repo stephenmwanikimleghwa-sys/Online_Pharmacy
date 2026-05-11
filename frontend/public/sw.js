@@ -40,7 +40,12 @@ self.addEventListener('fetch', event => {
           // Only cache if request is cacheable
           if (isCacheableRequest(event.request)) {
             const resClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(event.request, resClone))
+              .catch(err => {
+                // Silently ignore caching errors (e.g., unsupported schemes)
+                console.debug('Cache put error:', err);
+              });
           }
           return response;
         })
@@ -56,7 +61,12 @@ self.addEventListener('fetch', event => {
         // Only cache if request is cacheable
         if (isCacheableRequest(event.request)) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, responseToCache))
+            .catch(err => {
+              // Silently ignore caching errors (e.g., unsupported schemes)
+              console.debug('Cache put error:', err);
+            });
         }
         return networkResponse;
       }).catch(() => cachedResponse);
