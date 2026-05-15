@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, LoginCredentials, User } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
 
-/* ─── Inline styles (no Tailwind needed) ─────────────────────────────── */
-const styles: Record<string, React.CSSProperties> = {
+const getStyles = (isDark: boolean): Record<string, React.CSSProperties> => ({
   page: {
     minHeight: "100vh",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "linear-gradient(135deg, #9b59b6 0%, #8e44ad 25%, #e056a0 65%, #d98ee6 100%)",
+    background: isDark
+      ? "linear-gradient(135deg, #051624 0%, #0a2e4a 40%, #02111f 100%)"
+      : "linear-gradient(135deg, #9b59b6 0%, #8e44ad 25%, #e056a0 65%, #d98ee6 100%)",
     padding: "24px",
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
   },
@@ -22,23 +24,25 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: "360px",
     borderRadius: "20px",
     overflow: "hidden",
-    background: "rgba(230, 200, 230, 0.35)",
+    background: isDark ? "rgba(10, 30, 58, 0.88)" : "rgba(230, 200, 230, 0.35)",
     backdropFilter: "blur(18px)",
     WebkitBackdropFilter: "blur(18px)",
-    border: "1px solid rgba(255,255,255,0.3)",
-    boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+    border: isDark ? "1px solid rgba(74, 125, 169, 0.35)" : "1px solid rgba(255,255,255,0.3)",
+    boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.35)" : "0 25px 60px rgba(0,0,0,0.25)",
   },
   // ── LEFT PANEL ──────────────────────────────────────────────────────────
-  leftPanel: {
+  leftPanel: (isDark: boolean) => ({
     flex: "0 0 45%",
     position: "relative",
     overflow: "hidden",
     borderRadius: "16px",
-    background: "linear-gradient(145deg, #1a0533 0%, #2d0b6b 30%, #4a0e8f 55%, #6b0f5e 80%, #1a0533 100%)",
+    background: isDark
+      ? "linear-gradient(145deg, #071224 0%, #102848 35%, #0d3a6f 65%, #071224 100%)"
+      : "linear-gradient(145deg, #1a0533 0%, #2d0b6b 30%, #4a0e8f 55%, #6b0f5e 80%, #1a0533 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-  },
+  }),
   // ── RIGHT PANEL ─────────────────────────────────────────────────────────
   rightPanel: {
     flex: 1,
@@ -48,45 +52,45 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     padding: "40px 36px",
   },
-  title: {
+  title: (isDark: boolean) => ({
     fontSize: "2.2rem",
     fontWeight: 400,
-    color: "#3b2045",
+    color: isDark ? "#dbeafe" : "#3b2045",
     marginBottom: "32px",
     textAlign: "center",
     letterSpacing: "0.02em",
-  },
+  }),
   inputWrapper: {
     position: "relative",
     width: "100%",
     marginBottom: "20px",
   },
-  input: {
+  input: (isDark: boolean) => ({
     width: "100%",
     border: "none",
-    borderBottom: "1.5px solid #9b6eae",
+    borderBottom: isDark ? "1.5px solid rgba(148, 163, 184, 0.55)" : "1.5px solid #9b6eae",
     background: "transparent",
     padding: "10px 36px 10px 0",
     fontSize: "0.95rem",
-    color: "#3b2045",
+    color: isDark ? "#e2e8f0" : "#3b2045",
     outline: "none",
     boxSizing: "border-box",
     fontFamily: "inherit",
-  },
-  inputIcon: {
+  }),
+  inputIcon: (isDark: boolean) => ({
     position: "absolute",
     right: "2px",
     top: "50%",
     transform: "translateY(-50%)",
-    color: "#9b6eae",
+    color: isDark ? "rgba(226, 232, 240, 0.75)" : "#9b6eae",
     fontSize: "1rem",
-  },
-  loginBtn: {
+  }),
+  loginBtn: (isDark: boolean) => ({
     display: "block",
     marginLeft: "auto",
     marginTop: "8px",
     padding: "10px 32px",
-    background: "#1a0a2e",
+    background: isDark ? "#2563eb" : "#1a0a2e",
     color: "#fff",
     border: "none",
     borderRadius: "24px",
@@ -95,74 +99,94 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     letterSpacing: "0.04em",
     transition: "background 0.2s, transform 0.15s",
-  },
+  }),
   footerLinks: {
     display: "flex",
     justifyContent: "space-between",
     width: "100%",
     marginTop: "20px",
   },
-  footerLink: {
+  footerLink: (isDark: boolean) => ({
     fontSize: "0.8rem",
-    color: "#7a4d8a",
+    color: isDark ? "#93c5fd" : "#7a4d8a",
     background: "none",
     border: "none",
     cursor: "pointer",
     padding: 0,
     fontFamily: "inherit",
     textDecoration: "none",
-  },
-  errorBox: {
+  }),
+  errorBox: (isDark: boolean) => ({
     display: "flex",
     alignItems: "flex-start",
     gap: "8px",
     padding: "10px 14px",
-    background: "rgba(220,38,38,0.08)",
-    border: "1px solid rgba(220,38,38,0.2)",
+    background: isDark ? "rgba(248,113,113,0.12)" : "rgba(220,38,38,0.08)",
+    border: isDark ? "1px solid rgba(248,113,113,0.25)" : "1px solid rgba(220,38,38,0.2)",
     borderRadius: "10px",
-    color: "#b91c1c",
+    color: isDark ? "#fecaca" : "#b91c1c",
     fontSize: "0.85rem",
     marginBottom: "12px",
     width: "100%",
     boxSizing: "border-box",
-  },
-};
+  }),
+});
 
 /* ─── Animated orbs canvas (CSS-only, no canvas API) ─────────────────── */
-const OrbsPanel: React.FC = () => (
-  <div style={styles.leftPanel}>
+const OrbsPanel: React.FC<{ dark: boolean }> = ({ dark }) => {
+  const styles = getStyles(dark);
+  return (
+    <div className="login-card-left" style={styles.leftPanel(dark)}>
     {/* Orb layers */}
     <div style={{
       position: "absolute", width: "260px", height: "260px", borderRadius: "50%",
-      background: "radial-gradient(circle at 35% 35%, rgba(255,100,60,0.85), rgba(180,30,140,0.7) 55%, rgba(60,10,120,0.5) 85%)",
+      background: dark
+        ? "radial-gradient(circle at 35% 35%, rgba(115, 170, 255, 0.9), rgba(90, 120, 240, 0.7) 55%, rgba(15, 35, 80, 0.55) 85%)"
+        : "radial-gradient(circle at 35% 35%, rgba(255,100,60,0.85), rgba(180,30,140,0.7) 55%, rgba(60,10,120,0.5) 85%)",
       top: "10%", left: "5%",
-      boxShadow: "inset -20px -20px 40px rgba(0,0,0,0.4), inset 10px 10px 30px rgba(255,180,100,0.3)",
+      boxShadow: dark
+        ? "inset -20px -20px 40px rgba(0,0,0,0.35), inset 10px 10px 30px rgba(90, 130, 255, 0.18)"
+        : "inset -20px -20px 40px rgba(0,0,0,0.4), inset 10px 10px 30px rgba(255,180,100,0.3)",
       animation: "orbFloat1 8s ease-in-out infinite",
     }} />
     <div style={{
       position: "absolute", width: "200px", height: "200px", borderRadius: "50%",
-      background: "radial-gradient(circle at 40% 30%, rgba(200,80,220,0.8), rgba(100,20,180,0.6) 60%, rgba(20,5,80,0.4) 90%)",
+      background: dark
+        ? "radial-gradient(circle at 40% 30%, rgba(120, 180, 255, 0.85), rgba(80, 130, 235, 0.65) 60%, rgba(10, 30, 60, 0.45) 90%)"
+        : "radial-gradient(circle at 40% 30%, rgba(200,80,220,0.8), rgba(100,20,180,0.6) 60%, rgba(20,5,80,0.4) 90%)",
       top: "30%", left: "35%",
-      boxShadow: "inset -15px -15px 35px rgba(0,0,0,0.35), inset 8px 8px 20px rgba(220,130,255,0.2)",
+      boxShadow: dark
+        ? "inset -15px -15px 35px rgba(0,0,0,0.34), inset 8px 8px 20px rgba(120, 170, 255, 0.15)"
+        : "inset -15px -15px 35px rgba(0,0,0,0.35), inset 8px 8px 20px rgba(220,130,255,0.2)",
       animation: "orbFloat2 10s ease-in-out infinite",
     }} />
     <div style={{
       position: "absolute", width: "150px", height: "150px", borderRadius: "50%",
-      background: "radial-gradient(circle at 38% 32%, rgba(255,140,40,0.9), rgba(220,60,100,0.7) 50%, rgba(80,10,150,0.5) 85%)",
+      background: dark
+        ? "radial-gradient(circle at 38% 32%, rgba(120, 205, 255, 0.9), rgba(100, 150, 255, 0.7) 50%, rgba(35, 55, 105, 0.6) 85%)"
+        : "radial-gradient(circle at 38% 32%, rgba(255,140,40,0.9), rgba(220,60,100,0.7) 50%, rgba(80,10,150,0.5) 85%)",
       bottom: "18%", left: "10%",
-      boxShadow: "inset -12px -12px 30px rgba(0,0,0,0.35), inset 6px 6px 15px rgba(255,200,100,0.3)",
+      boxShadow: dark
+        ? "inset -12px -12px 30px rgba(0,0,0,0.34), inset 6px 6px 15px rgba(120, 180, 255, 0.16)"
+        : "inset -12px -12px 30px rgba(0,0,0,0.35), inset 6px 6px 15px rgba(255,200,100,0.3)",
       animation: "orbFloat3 7s ease-in-out infinite",
     }} />
     <div style={{
       position: "absolute", width: "90px", height: "90px", borderRadius: "50%",
-      background: "radial-gradient(circle at 40% 35%, rgba(180,180,255,0.5), rgba(100,50,200,0.4) 60%, transparent 85%)",
+      background: dark
+        ? "radial-gradient(circle at 40% 35%, rgba(155, 190, 255, 0.48), rgba(100, 110, 220, 0.38) 60%, transparent 85%)"
+        : "radial-gradient(circle at 40% 35%, rgba(180,180,255,0.5), rgba(100,50,200,0.4) 60%, transparent 85%)",
       bottom: "10%", right: "15%",
-      boxShadow: "inset -8px -8px 20px rgba(0,0,0,0.3)",
+      boxShadow: dark
+        ? "inset -8px -8px 20px rgba(0,0,0,0.32)"
+        : "inset -8px -8px 20px rgba(0,0,0,0.3)",
       animation: "orbFloat4 9s ease-in-out infinite",
     }} />
     <div style={{
       position: "absolute", width: "60px", height: "60px", borderRadius: "50%",
-      background: "radial-gradient(circle at 38% 35%, rgba(255,80,120,0.6), rgba(150,20,180,0.4) 60%, transparent 80%)",
+      background: dark
+        ? "radial-gradient(circle at 38% 35%, rgba(140, 165, 255, 0.6), rgba(120, 130, 255, 0.35) 60%, transparent 80%)"
+        : "radial-gradient(circle at 38% 35%, rgba(255,80,120,0.6), rgba(150,20,180,0.4) 60%, transparent 80%)",
       top: "12%", right: "20%",
       animation: "orbFloat5 6s ease-in-out infinite",
     }} />
@@ -216,6 +240,9 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredBtn, setHoveredBtn] = useState(false);
   const { login, isAuthenticated, getDashboardPath } = useAuth();
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+  const styles = getStyles(isDark);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -298,11 +325,11 @@ const Login: React.FC = () => {
     <div style={styles.page}>
       <div style={styles.card}>
         {/* Left – animated orbs */}
-        <OrbsPanel />
+        <OrbsPanel dark={isDark} />
 
         {/* Right – form */}
         <div style={styles.rightPanel}>
-          <h1 style={styles.title}>Login</h1>
+<h1 style={styles.title(isDark)}>Login</h1>
 
           <form onSubmit={handleSubmit} style={{ width: "100%" }}>
             {/* Email / Username */}
@@ -315,9 +342,10 @@ const Login: React.FC = () => {
                 value={credentials.username}
                 onChange={handleChange}
                 placeholder="Email"
-                style={styles.input}
+                className="login-input"
+                style={styles.input(isDark)}
               />
-              <span style={styles.inputIcon}>✉</span>
+              <span style={styles.inputIcon(isDark)}>✉</span>
             </div>
 
             {/* Password */}
@@ -329,15 +357,16 @@ const Login: React.FC = () => {
                 required
                 value={credentials.password}
                 onChange={handleChange}
-                placeholder="password"
-                style={styles.input}
+                placeholder="Password"
+                className="login-input"
+                style={styles.input(isDark)}
               />
-              <span style={styles.inputIcon}>🔒</span>
+              <span style={styles.inputIcon(isDark)}>🔒</span>
             </div>
 
             {/* Error */}
             {error && (
-              <div style={styles.errorBox}>
+              <div style={styles.errorBox(isDark)}>
                 <ExclamationCircleIcon style={{ width: 18, height: 18, flexShrink: 0, marginTop: 1 }} />
                 <span>{error}</span>
               </div>
@@ -348,8 +377,12 @@ const Login: React.FC = () => {
               type="submit"
               disabled={loading}
               style={{
-                ...styles.loginBtn,
-                background: hoveredBtn ? "#2d1060" : "#1a0a2e",
+                ...styles.loginBtn(isDark),
+                background: hoveredBtn
+                  ? isDark
+                    ? "#1d4ed8"
+                    : "#2d1060"
+                  : styles.loginBtn(isDark).background,
                 transform: hoveredBtn ? "translateY(-1px)" : "none",
               }}
               onMouseEnter={() => setHoveredBtn(true)}
@@ -366,10 +399,10 @@ const Login: React.FC = () => {
 
           {/* Footer links */}
           <div style={styles.footerLinks}>
-            <button style={styles.footerLink} onClick={() => navigate("/register")}>
-              Creat an account
+            <button style={styles.footerLink(isDark)} onClick={() => navigate("/register")}>
+              Create an account
             </button>
-            <button style={styles.footerLink} onClick={() => navigate("/password-reset")}>
+            <button style={styles.footerLink(isDark)} onClick={() => navigate("/password-reset")}>
               Forgot your password
             </button>
           </div>
@@ -380,6 +413,10 @@ const Login: React.FC = () => {
       <style>{`
         @media (max-width: 600px) {
           .login-card-left { display: none !important; }
+        }
+        .login-input::placeholder {
+          color: ${isDark ? 'rgba(226,232,240,0.62)' : 'rgba(59,32,69,0.6)'};
+          opacity: 1;
         }
       `}</style>
     </div>
