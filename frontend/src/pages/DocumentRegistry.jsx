@@ -73,7 +73,7 @@ const DocumentRegistry = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight dark:text-white">
-            Document <span className="text-indigo-600 dark:text-indigo-400">Filing System</span>
+            Document <span className="text-primary dark:text-indigo-400">Filing System</span>
           </h1>
           <p className="text-slate-500 font-medium">Securely store and manage invoices, receipts, and operational records.</p>
         </div>
@@ -90,7 +90,7 @@ const DocumentRegistry = () => {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300  rounded-xl bg-white  text-gray-900 dark:text-white"
                 placeholder="e.g. May 2025 Meds Invoice"
                 required
               />
@@ -100,7 +100,7 @@ const DocumentRegistry = () => {
               <select
                 value={formData.document_type}
                 onChange={(e) => setFormData({ ...formData, document_type: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300  rounded-xl bg-white  text-gray-900 dark:text-white"
               >
                 <option value="invoice">Invoice</option>
                 <option value="receipt">Receipt</option>
@@ -114,7 +114,7 @@ const DocumentRegistry = () => {
                 id="file-upload"
                 type="file"
                 onChange={handleFileChange}
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/40 dark:file:text-indigo-300"
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-primary hover:file:bg-indigo-100 dark:file:bg-indigo-900/40 dark:file:text-indigo-300"
                 required
               />
             </div>
@@ -123,14 +123,14 @@ const DocumentRegistry = () => {
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300  rounded-xl bg-white  text-gray-900 dark:text-white"
                 rows="3"
               />
             </div>
             <button
               type="submit"
               disabled={uploading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all"
+              className="w-full btn-primary  text-white font-bold py-3 px-4 rounded-xl transition-all"
             >
               {uploading ? "Uploading..." : "Save Document"}
             </button>
@@ -144,7 +144,7 @@ const DocumentRegistry = () => {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-3 py-1.5 border border-gray-200  rounded-lg text-sm bg-white  text-gray-900 dark:text-white"
             >
               <option value="">All Types</option>
               <option value="invoice">Invoices</option>
@@ -188,7 +188,7 @@ const DocumentRegistry = () => {
                           href={doc.file}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60 rounded-lg text-xs font-bold uppercase"
+                          className="px-3 py-1.5 bg-indigo-50 text-primary hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60 rounded-lg text-xs font-bold uppercase"
                         >
                           View / DL
                         </a>

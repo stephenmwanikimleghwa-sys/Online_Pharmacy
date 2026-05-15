@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const getStyles = (isDark: boolean): Record<string, React.CSSProperties> => ({
+const getStyles = (isDark: boolean): any => ({
   page: {
     minHeight: "100vh",
     display: "flex",
@@ -231,7 +231,8 @@ const OrbsPanel: React.FC<{ dark: boolean }> = ({ dark }) => {
       }
     `}</style>
   </div>
-);
+  );
+};
 
 /* ─── Main component ──────────────────────────────────────────────────── */
 const Login: React.FC = () => {

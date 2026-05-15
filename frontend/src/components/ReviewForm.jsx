@@ -44,7 +44,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-lg shadow-md">
+    <form onSubmit={handleSubmit} className="p-4 glass-card ">
       <h3 className="text-lg font-semibold mb-4">Add Your Review</h3>
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">Rating (1-5):</label>
@@ -77,7 +77,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full btn-primary text-white py-2 px-4 rounded-md  disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? 'Submitting...' : 'Submit Review'}
       </button>

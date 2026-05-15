@@ -4,7 +4,7 @@ import { UserIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon, X
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 
 const roleColors = {
-  admin: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  admin: "bg-indigo-50 text-primary border-indigo-100",
   pharmacist: "bg-emerald-50 text-emerald-600 border-emerald-100",
   customer: "bg-slate-100 text-slate-500 border-slate-200",
 };
@@ -105,16 +105,16 @@ const ManageUsers = () => {
       <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <UserIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">User <span className="text-indigo-600">Management</span></h1>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">User <span className="text-primary">Management</span></h1>
           </div>
           <p className="text-lg text-slate-500 font-medium">View, create, and manage all system users and their roles.</p>
         </div>
         <button
           onClick={() => { setIsModalOpen(true); setIsEditMode(false); setEditingUserId(null); setFormData(prev => ({ ...prev, role: 'pharmacist' })); }}
-          className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
+          className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <UserPlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
           <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add User</span>
@@ -133,7 +133,7 @@ const ManageUsers = () => {
       {/* Table Container */}
       <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
         <div className="px-8 py-6 border-b border-slate-100 bg-white/30 backdrop-blur-md flex items-center gap-3">
-          <UserIcon className="h-5 w-5 text-indigo-600" />
+          <UserIcon className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-display font-bold text-slate-900">All Users</h2>
           <span className="ml-auto text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">{users.length} total</span>
         </div>
@@ -151,11 +151,11 @@ const ManageUsers = () => {
                 <tr key={user.id} className="hover:bg-indigo-50/30 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+                      <div className="w-8 h-8 rounded-full btn-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
                         {user.username?.[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{user.username}</p>
+                        <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{user.username}</p>
                         {user.full_name && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">{user.full_name}</p>}
                       </div>
                     </div>
@@ -176,7 +176,7 @@ const ManageUsers = () => {
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2">
                       <button onClick={() => handleEdit(user)}
-                        className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm flex items-center gap-1">
+                        className="px-3 py-1.5 bg-indigo-50 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm flex items-center gap-1">
                         <PencilSquareIcon className="h-3.5 w-3.5" /> Edit
                       </button>
                       <button onClick={() => handleDelete(user)}
@@ -200,9 +200,9 @@ const ManageUsers = () => {
             <div className="relative z-10 w-full max-w-2xl bg-white rounded-[2.5rem] shadow-premium overflow-hidden flex flex-col md:flex-row animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
               {/* Visual Panel */}
               <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                 <div>
-                  <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
+                  <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
                     {isEditMode ? <PencilSquareIcon className="w-6 h-6" /> : <UserPlusIcon className="w-6 h-6" />}
                   </div>
                   <h2 className="text-3xl font-display font-bold leading-tight">
@@ -228,7 +228,7 @@ const ManageUsers = () => {
                         name={name}
                         id={name}
                         required={required}
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
                         value={formData[name]}
                         onChange={handleChange}
                       />
@@ -241,7 +241,7 @@ const ManageUsers = () => {
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
                     >
                       <option value="pharmacist">Pharmacist</option>
                       <option value="admin">Admin</option>
@@ -255,7 +255,7 @@ const ManageUsers = () => {
                     Cancel
                   </button>
                   <button type="submit"
-                    className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">
+                    className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">
                     {isEditMode ? 'Save Changes' : `Add ${formData.role === 'admin' ? 'Admin' : 'Pharmacist'}`}
                   </button>
                 </div>

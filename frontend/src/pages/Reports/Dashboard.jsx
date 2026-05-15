@@ -61,7 +61,7 @@ const Dashboard = () => {
       <h1 className="text-3xl font-bold text-primary-700 mb-6">Reports Dashboard</h1>
 
       {/* Prescription Volume Chart */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="glass-card  p-6 mb-6">
         <h2 className="text-xl font-semibold text-primary-700 mb-4">Prescription Volumes</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={prescriptionData}>
@@ -77,7 +77,7 @@ const Dashboard = () => {
       </div>
 
       {/* Turnaround Times Trend */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="glass-card  p-6 mb-6">
         <h2 className="text-xl font-semibold text-primary-700 mb-4">Turnaround Times (Hours)</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={prescriptionData.map(d => ({ ...d, turnaround: Math.random() * 24 }))}>
@@ -92,7 +92,7 @@ const Dashboard = () => {
       </div>
 
       {/* Inventory Monitoring */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="glass-card  p-6 mb-6">
         <h2 className="text-xl font-semibold text-primary-700 mb-4">Inventory Usage by Category</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={inventoryData}>

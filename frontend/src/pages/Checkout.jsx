@@ -127,7 +127,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold text-blue-600">Your cart is empty</h1>
+          <h1 className="text-2xl font-bold text-primary">Your cart is empty</h1>
           <p className="mt-2 text-gray-600">Add items to cart to proceed with checkout.</p>
           <button
             onClick={() => navigate('/products')}
@@ -143,8 +143,8 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h1 className="text-3xl font-bold text-blue-600 mb-6">Checkout</h1>
+        <div className="glass-card p-6">
+          <h1 className="text-3xl font-bold text-primary mb-6">Checkout</h1>
 
           {/* Order Summary */}
           <div className="mb-6 p-4 bg-gray-100 rounded-md">
@@ -176,7 +176,7 @@ const Checkout = () => {
                   placeholder="Full Name"
                   value={address.fullName}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 "
                   required
                 />
                 <input
@@ -185,7 +185,7 @@ const Checkout = () => {
                   placeholder="Phone Number"
                   value={address.phoneNumber}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 "
                   required
                 />
                 <input
@@ -194,7 +194,7 @@ const Checkout = () => {
                   placeholder="Address Line 1"
                   value={address.addressLine1}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 md:col-span-2"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2  md:col-span-2"
                   required
                 />
                 <input
@@ -203,7 +203,7 @@ const Checkout = () => {
                   placeholder="Address Line 2 (Optional)"
                   value={address.addressLine2}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 md:col-span-2"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2  md:col-span-2"
                 />
                 <input
                   type="text"
@@ -211,7 +211,7 @@ const Checkout = () => {
                   placeholder="City"
                   value={address.city}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 "
                   required
                 />
                 <input
@@ -220,7 +220,7 @@ const Checkout = () => {
                   placeholder="County"
                   value={address.county}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 "
                   required
                 />
                 <input
@@ -229,7 +229,7 @@ const Checkout = () => {
                   placeholder="Postal Code"
                   value={address.postalCode}
                   onChange={handleAddressChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 "
                 />
               </div>
             </div>

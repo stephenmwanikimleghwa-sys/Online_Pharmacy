@@ -36,7 +36,7 @@ const ProductDetails = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-blue-600 text-xl">Loading product...</div>
+        <div className="text-primary text-xl">Loading product...</div>
       </div>
     );
   }
@@ -57,7 +57,7 @@ const ProductDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="glass-card  overflow-hidden">
           <div className="md:flex">
             {/* Product Image */}
             <div className="md:w-1/2 p-6">
@@ -73,7 +73,7 @@ const ProductDetails = () => {
             <div className="md:w-1/2 p-6">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
               <p className="text-gray-600 mb-4">{product.description}</p>
-              <p className="text-2xl font-semibold text-blue-600 mb-4">KSh {product.price}</p>
+              <p className="text-2xl font-semibold text-primary mb-4">KSh {product.price}</p>
               <p className="text-sm text-gray-500 mb-4">Category: {product.category}</p>
               <p className="text-sm text-gray-500 mb-6">Available at: {product.pharmacy.name}</p>
 
@@ -85,7 +85,7 @@ const ProductDetails = () => {
                   min="1"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))}
-                  className="w-16 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-16 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 "
                 />
               </div>
 

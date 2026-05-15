@@ -101,7 +101,7 @@ const Home = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-lg text-blue-600 dark:text-blue-400">Loading...</div>
+        <div className="text-lg text-primary dark:text-blue-400">Loading...</div>
       </div>
     );
   }
@@ -111,14 +111,14 @@ const Home = () => {
       {/* Hero Section - Premium Indigo/Violet Gradient */}
       <section className="relative overflow-hidden pt-20 pb-40">
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-[120px] -mr-96 -mt-96 animate-pulse"></div>
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] btn-primary/10 rounded-full blur-[120px] -mr-96 -mt-96 animate-pulse"></div>
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-violet-500/10 rounded-full blur-[100px] -ml-72 -mb-72"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-8">
-              <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-indigo-100 dark:border-indigo-800 shadow-sm animate-fade-in">
+              <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-primary dark:text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-indigo-100 dark:border-indigo-800 shadow-sm animate-fade-in">
                 Next-Gen Pharmaceutical Network
               </span>
             </div>
@@ -142,13 +142,13 @@ const Home = () => {
             <div className="flex flex-wrap justify-center gap-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
               <Link
                 to="/products"
-                className="inline-flex items-center px-8 py-4 rounded-2xl bg-white dark:bg-gray-800 text-slate-700 dark:text-gray-300 font-bold text-xs uppercase tracking-widest border border-slate-200 dark:border-gray-700 hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm hover:shadow-premium"
+                className="inline-flex items-center px-8 py-4 rounded-2xl bg-white  text-slate-700 dark:text-gray-300 font-bold text-xs uppercase tracking-widest border border-slate-200  hover:border-indigo-500 hover:text-primary transition-all shadow-sm hover:shadow-premium"
               >
                 Browse Registry
               </Link>
               <Link
                 to="/upload-prescription"
-                className="inline-flex items-center px-8 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-indigo-200"
+                className="inline-flex items-center px-8 py-4 rounded-2xl btn-primary text-white font-bold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-indigo-200"
               >
                 Submit Prescription
               </Link>
@@ -163,8 +163,8 @@ const Home = () => {
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-1 w-10 bg-indigo-600 rounded-full"></div>
-                <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em]">Popular</span>
+                <div className="h-1 w-10 btn-primary rounded-full"></div>
+                <span className="text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-[0.3em]">Popular</span>
               </div>
               <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
                 Featured <span className="text-slate-400 dark:text-gray-500">medicines</span>
@@ -172,7 +172,7 @@ const Home = () => {
             </div>
             <Link
               to="/products"
-              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all border border-slate-200/50 dark:border-gray-700"
+              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100  text-slate-600 dark:text-gray-400 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-primary dark:hover:text-indigo-400 transition-all border border-slate-200/50 "
             >
               View all products
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -195,14 +195,14 @@ const Home = () => {
               <p className="text-rose-900 dark:text-rose-100 font-bold text-lg tracking-tight">{error}</p>
             </div>
           ) : (!Array.isArray(featuredProducts) || featuredProducts.length === 0) ? (
-            <div className="text-center py-32 glass-card rounded-[3rem] border-dashed border-2 border-slate-200 dark:border-gray-700">
+            <div className="text-center py-32 glass-card rounded-[3rem] border-dashed border-2 border-slate-200 ">
               <div className="max-w-md mx-auto">
-                <div className="w-24 h-24 bg-slate-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8">
+                <div className="w-24 h-24 bg-slate-100  rounded-full flex items-center justify-center mx-auto mb-8">
                   <svg className="h-10 w-10 text-slate-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 </div>
                 <h3 className="text-2xl font-display font-bold text-slate-900 dark:text-white">No featured products right now</h3>
                 <p className="mt-2 text-slate-500 dark:text-gray-400 font-medium">Featured products will show here. Check back soon or browse all products.</p>
-                <Link to="/products" className="mt-10 inline-flex items-center px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-glow-indigo">
+                <Link to="/products" className="mt-10 inline-flex items-center px-8 py-3 btn-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-glow-indigo">
                   View all products
                 </Link>
               </div>
@@ -212,9 +212,9 @@ const Home = () => {
               {featuredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="group glass-card rounded-[2.5rem] p-4 border border-white/60 dark:border-gray-700 hover:shadow-premium transition-all duration-500 flex flex-col"
+                  className="group glass-card rounded-[2.5rem] p-4 border border-white/60  hover:shadow-premium transition-all duration-500 flex flex-col"
                 >
-                  <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-slate-50 dark:bg-gray-800 mb-6">
+                  <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-slate-50  mb-6">
                     {product.image ? (
                       <img
                         src={product.image}
@@ -230,7 +230,7 @@ const Home = () => {
                     <div className="absolute inset-x-4 bottom-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                       <Link
                         to={`/products/${product.id}`}
-                        className="w-full bg-slate-900/90 dark:bg-gray-800/90 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-600 transition-colors text-center inline-block shadow-xl"
+                        className="w-full bg-slate-900/90 /90 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:btn-primary transition-colors text-center inline-block shadow-xl"
                       >
                         View details
                       </Link>
@@ -248,7 +248,7 @@ const Home = () => {
                     <p className="text-sm text-slate-500 dark:text-gray-400 mb-6 line-clamp-2 font-medium leading-relaxed">
                       {product.description || 'Product details.'}
                     </p>
-                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50 dark:border-gray-700">
+                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50 ">
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Price / Unit</p>
                         <p className="text-xl font-display font-bold text-slate-900 dark:text-white">
@@ -256,7 +256,7 @@ const Home = () => {
                           {product.price.toLocaleString()}
                         </p>
                       </div>
-                      <button className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-90 group">
+                      <button className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-primary dark:text-indigo-400 flex items-center justify-center hover:btn-primary hover:text-white transition-all shadow-sm active:scale-90 group">
                         <PlusIcon className="w-6 h-6 group-hover:rotate-90 transition-transform" />
                       </button>
                     </div>

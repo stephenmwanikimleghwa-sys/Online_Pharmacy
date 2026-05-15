@@ -5,7 +5,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-50 text-amber-600 border-amber-100',
-  approved: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+  approved: 'bg-indigo-50 text-primary border-indigo-100',
   rejected: 'bg-rose-50 text-rose-600 border-rose-100',
   completed: 'bg-emerald-50 text-emerald-600 border-emerald-100',
   cancelled: 'bg-slate-50 text-slate-400 border-slate-200',
@@ -127,16 +127,16 @@ const RestockRequests = () => {
       <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Supply <span className="text-indigo-600">Requisitions</span></h1>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Supply <span className="text-primary">Requisitions</span></h1>
           </div>
           <p className="text-lg text-slate-500 font-medium">Coordinate procurement channels and restock logistics across the network.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
+          className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
           <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Authorize Requisition</span>
@@ -160,7 +160,7 @@ const RestockRequests = () => {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+              className="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
             >
               <option value="">Full Range View</option>
               {['pending', 'approved', 'rejected', 'completed', 'cancelled'].map(s => (
@@ -174,7 +174,7 @@ const RestockRequests = () => {
             <select
               value={filters.product}
               onChange={(e) => setFilters({ ...filters, product: e.target.value })}
-              className="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+              className="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
             >
               <option value="">Across Entire Inventory</option>
               {products.map((product) => (
@@ -224,7 +224,7 @@ const RestockRequests = () => {
                 requests.map((request) => (
                   <tr key={request.id} className="hover:bg-indigo-50/30 transition-colors group">
                     <td className="px-8 py-6">
-                      <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{request.product_details?.name}</p>
+                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{request.product_details?.name}</p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">{request.supplier || 'Generic Channel'}</p>
                     </td>
                     <td className="px-8 py-6">
@@ -254,7 +254,7 @@ const RestockRequests = () => {
                           <>
                             <button
                               onClick={() => handleStatusUpdate(request.id, 'approve')}
-                              className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm"
+                              className="px-3 py-1.5 bg-indigo-50 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm"
                             >
                               Approve
                             </button>
@@ -334,9 +334,9 @@ const RestockRequests = () => {
             <div className="bg-white rounded-[2.5rem] shadow-premium max-w-2xl w-full overflow-hidden flex flex-col md:flex-row border-[8px] border-white ring-1 ring-slate-200 animate-scale-up">
               {/* Visual Panel */}
               <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                 <div>
-                  <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
+                  <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
                     <PlusIcon className="w-6 h-6" />
                   </div>
                   <h2 className="text-3xl font-display font-bold leading-tight">Authorize Requisition</h2>
@@ -352,7 +352,7 @@ const RestockRequests = () => {
                     <select
                       value={formData.product}
                       onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                      className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                      className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                     >
                       <option value="">Identify Asset...</option>
                       {products.map((product) => (
@@ -370,7 +370,7 @@ const RestockRequests = () => {
                         min="1"
                         value={formData.requested_quantity}
                         onChange={(e) => setFormData({ ...formData, requested_quantity: e.target.value })}
-                        className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.requested_quantity ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                        className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.requested_quantity ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                         placeholder="Quantity..."
                       />
                       {formErrors.requested_quantity && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.requested_quantity}</p>}
@@ -384,7 +384,7 @@ const RestockRequests = () => {
                         min="0"
                         value={formData.estimated_cost}
                         onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
                         placeholder="KES Value..."
                       />
                     </div>
@@ -396,7 +396,7 @@ const RestockRequests = () => {
                       type="text"
                       value={formData.supplier}
                       onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
                       placeholder="Supplier identity..."
                     />
                   </div>
@@ -407,7 +407,7 @@ const RestockRequests = () => {
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={3}
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
+                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
                       placeholder="Contextual details for procurement review..."
                     />
                   </div>
@@ -423,7 +423,7 @@ const RestockRequests = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                    className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
                   >
                     Finalize Requisition
                   </button>

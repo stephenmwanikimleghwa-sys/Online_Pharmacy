@@ -80,7 +80,7 @@ const SupplierList = () => {
     if (loading) return <div className="p-4">Loading suppliers...</div>;
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card  p-6">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">Suppliers</h2>
                 <button
@@ -89,7 +89,7 @@ const SupplierList = () => {
                         setFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
                         setIsModalOpen(true);
                     }}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="flex items-center px-4 py-2 btn-primary text-white rounded-md "
                 >
                     <PlusIcon className="h-5 w-5 mr-2" />
                     Add Supplier
@@ -119,7 +119,7 @@ const SupplierList = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
                                         onClick={() => handleEdit(supplier)}
-                                        className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                        className="text-primary hover:text-indigo-900 mr-4"
                                     >
                                         <PencilIcon className="h-5 w-5" />
                                     </button>
@@ -144,7 +144,7 @@ const SupplierList = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-                    <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <div className="relative glass-card  max-w-md w-full mx-4">
                         <div className="p-6">
                             <h3 className="text-lg font-medium text-gray-900 mb-4">
                                 {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
@@ -157,7 +157,7 @@ const SupplierList = () => {
                                         required
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500  border p-2"
                                     />
                                 </div>
                                 <div>
@@ -166,7 +166,7 @@ const SupplierList = () => {
                                         type="text"
                                         value={formData.contact_person}
                                         onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500  border p-2"
                                     />
                                 </div>
                                 <div>
@@ -175,7 +175,7 @@ const SupplierList = () => {
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500  border p-2"
                                     />
                                 </div>
                                 <div>
@@ -184,7 +184,7 @@ const SupplierList = () => {
                                         type="text"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500  border p-2"
                                     />
                                 </div>
                                 <div>
@@ -192,7 +192,7 @@ const SupplierList = () => {
                                     <textarea
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500  border p-2"
                                         rows="3"
                                     />
                                 </div>
@@ -206,7 +206,7 @@ const SupplierList = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                        className="px-4 py-2 btn-primary text-white rounded-md "
                                     >
                                         Save
                                     </button>

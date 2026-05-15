@@ -161,7 +161,7 @@ const QuickSale = ({ isOpen, onClose }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
                       <button
                         onClick={() => handleDownloadReceipt(lastOrder.id)}
-                        className="flex items-center justify-center gap-3 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-glow hover:opacity-90 transition-all active:scale-[0.98]"
+                        className="flex items-center justify-center gap-3 py-4 btn-primary text-white font-bold rounded-2xl shadow-glow hover:opacity-90 transition-all active:scale-[0.98]"
                       >
                         <ArrowDownTrayIcon className="w-5 h-5" />
                         Print Order Receipt
@@ -186,7 +186,7 @@ const QuickSale = ({ isOpen, onClose }) => {
                   <>
                     <div className="flex justify-between items-center mb-8">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-glow">
+                        <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center shadow-glow">
                           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         </div>
                         <div>
@@ -206,7 +206,7 @@ const QuickSale = ({ isOpen, onClose }) => {
 
                     <div className="relative mb-8 group">
                       <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                        <SearchIcon className="h-6 w-6 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                        <SearchIcon className="h-6 w-6 text-slate-400 group-focus-within:text-primary transition-colors" />
                       </div>
                       <input
                         type="text"
@@ -229,7 +229,7 @@ const QuickSale = ({ isOpen, onClose }) => {
                       <div className="lg:col-span-7 flex flex-col min-h-0">
                         <div className="flex items-center justify-between mb-4 px-2">
                           <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Available Inventory</h3>
-                          <span className="text-[11px] font-bold text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-full uppercase">{searchResults.length} results</span>
+                          <span className="text-[11px] font-bold text-primary bg-indigo-50 px-2.5 py-1 rounded-full uppercase">{searchResults.length} results</span>
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-custom">
@@ -247,10 +247,10 @@ const QuickSale = ({ isOpen, onClose }) => {
                               >
                                 <div className="flex items-center gap-4">
                                   <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                                    <svg className="w-6 h-6 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                    <svg className="w-6 h-6 text-slate-400 group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                                   </div>
                                   <div>
-                                    <h4 className="font-bold text-slate-900 leading-tight group-hover:text-indigo-600 transition-colors">{product.name}</h4>
+                                    <h4 className="font-bold text-slate-900 leading-tight group-hover:text-primary transition-colors">{product.name}</h4>
                                     <div className="flex items-center gap-2 mt-1">
                                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${product.stock_quantity < 10 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
                                         {product.stock_quantity} left
@@ -260,8 +260,8 @@ const QuickSale = ({ isOpen, onClose }) => {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-lg font-display font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">KES {product.price}</p>
-                                  <span className="text-[10px] font-bold text-indigo-500 uppercase flex items-center gap-1 mt-1">
+                                  <p className="text-lg font-display font-bold text-slate-900 group-hover:text-primary transition-colors">KES {product.price}</p>
+                                  <span className="text-[10px] font-bold text-primary uppercase flex items-center gap-1 mt-1">
                                     <PlusIcon className="w-3 h-3" /> Add to Sale
                                   </span>
                                 </div>
@@ -293,7 +293,7 @@ const QuickSale = ({ isOpen, onClose }) => {
                             selectedItems.map((item) => (
                               <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-white group/item hover:border-indigo-100 transition-all">
                                 <div className="flex justify-between items-start mb-3">
-                                  <h4 className="font-bold text-slate-800 text-sm leading-tight group-hover/item:text-indigo-600 transition-colors">{item.name}</h4>
+                                  <h4 className="font-bold text-slate-800 text-sm leading-tight group-hover/item:text-primary transition-colors">{item.name}</h4>
                                   <button
                                     onClick={() => removeItem(item.id)}
                                     className="p-1.5 hover:bg-rose-50 rounded-lg group/del transition-all"
@@ -312,7 +312,7 @@ const QuickSale = ({ isOpen, onClose }) => {
                                     <span className="w-8 text-center font-display font-bold text-sm text-slate-700">{item.quantity}</span>
                                     <button
                                       onClick={() => updateQuantity(item.id, 1)}
-                                      className="p-1.5 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all"
+                                      className="p-1.5 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-primary transition-all"
                                     >
                                       <PlusIcon className="h-4 w-4" />
                                     </button>

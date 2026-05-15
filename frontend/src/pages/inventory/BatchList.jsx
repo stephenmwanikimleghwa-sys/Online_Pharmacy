@@ -27,7 +27,7 @@ const BatchList = () => {
     if (error) return <div className="p-4 text-red-600">{error}</div>;
 
     return (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="glass-card  overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800">Batch Management</h2>
                 <p className="text-sm text-gray-600 mt-1">View and track inventory batches</p>

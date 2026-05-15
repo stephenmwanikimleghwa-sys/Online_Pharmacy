@@ -27,7 +27,7 @@ const Cart = () => {
             </p>
             <Link
               to="/products"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="btn-primary  text-white font-bold py-2 px-4 rounded-lg transition duration-200"
             >
               Continue Shopping
             </Link>
@@ -40,7 +40,7 @@ const Cart = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
           </div>
@@ -61,7 +61,7 @@ const Cart = () => {
                     <h3 className="text-sm font-medium text-gray-900">
                       <Link
                         to={`/products/${item.id}`}
-                        className="hover:text-blue-600"
+                        className="hover:text-primary"
                       >
                         {item.name}
                       </Link>
@@ -84,7 +84,7 @@ const Cart = () => {
                         onChange={(e) =>
                           updateQuantity(item.id, parseInt(e.target.value))
                         }
-                        className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 "
                       >
                         {[1, 2, 3, 4, 5].map((num) => (
                           <option key={num} value={num}>
@@ -119,7 +119,7 @@ const Cart = () => {
             <div className="mt-6 flex justify-center space-x-4">
               <Link
                 to="/products"
-                className="text-center text-sm text-blue-600 hover:text-blue-500 font-medium"
+                className="text-center text-sm text-primary hover:text-primary font-medium"
               >
                 Continue Shopping
                 <span aria-hidden="true"> &rarr;</span>

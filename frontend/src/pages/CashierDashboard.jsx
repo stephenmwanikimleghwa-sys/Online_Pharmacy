@@ -61,7 +61,7 @@ const CashierDashboard = () => {
                             <p className="text-indigo-100 text-lg mb-10 font-medium max-w-xl opacity-90 italic">Manage over-the-counter transactions and generate instant receipts.</p>
                             <button
                                 onClick={() => setIsQuickSaleOpen(true)}
-                                className="px-12 py-5 bg-white text-indigo-700 text-2xl font-display font-bold rounded-[2rem] shadow-2xl transform hover:scale-105 active:scale-[0.98] transition-all bg-gradient-to-r from-white to-slate-50"
+                                className="px-12 py-5 bg-white text-primary text-2xl font-display font-bold rounded-[2rem] shadow-2xl transform hover:scale-105 active:scale-[0.98] transition-all bg-gradient-to-r from-white to-slate-50"
                             >
                                 Process New Sale
                             </button>
@@ -84,7 +84,7 @@ const CashierDashboard = () => {
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Session Total</p>
-                                <p className="text-2xl font-display font-bold text-indigo-600">
+                                <p className="text-2xl font-display font-bold text-primary">
                                     KES {recentSales.reduce((acc, sale) => acc + parseFloat(sale.total_amount || 0), 0).toLocaleString()}
                                 </p>
                             </div>

@@ -27,7 +27,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-white rounded-[2.5rem] shadow-premium max-w-md w-full overflow-hidden animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
         <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
+          <div className="absolute top-0 right-0 w-24 h-24 btn-primary/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
           <h2 className="text-2xl font-display font-bold relative z-10">Add stock</h2>
           <p className="text-slate-400 text-xs mt-2 font-medium relative z-10 uppercase tracking-widest">{item.name}</p>
         </div>
@@ -43,7 +43,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required
-              className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+              className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
               placeholder="Number of units..."
             />
           </div>
@@ -55,7 +55,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
+              className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
               placeholder="e.g. new delivery, supplier name..."
               rows="3"
             />
@@ -72,7 +72,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
             </button>
             <button
               type="submit"
-              className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Saving...' : 'Add stock'}

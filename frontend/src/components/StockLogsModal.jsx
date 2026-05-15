@@ -40,7 +40,7 @@ const StockLogsModal = ({ item, onClose }) => {
       case 'sale':
         return 'text-red-600';
       case 'adjustment':
-        return 'text-blue-600';
+        return 'text-primary';
       case 'expiry':
         return 'text-orange-600';
       default:
@@ -54,7 +54,7 @@ const StockLogsModal = ({ item, onClose }) => {
         {/* Header Section */}
         <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
-            <h2 className="text-3xl font-display font-bold text-slate-900 tracking-tight">Stock history: <span className="text-indigo-600">{item.name}</span></h2>
+            <h2 className="text-3xl font-display font-bold text-slate-900 tracking-tight">Stock history: <span className="text-primary">{item.name}</span></h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">See when stock went up or down</p>
           </div>
           <button
@@ -104,7 +104,7 @@ const StockLogsModal = ({ item, onClose }) => {
                       </td>
                       <td className="px-8 py-6">
                         <span className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${log.change_type === 'restock' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                            log.change_type === 'sale' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                            log.change_type === 'sale' ? 'bg-indigo-50 text-primary border-indigo-100' :
                               'bg-slate-100 text-slate-600 border-slate-200'
                           }`}>
                           {log.change_type?.replace('_', ' ')}

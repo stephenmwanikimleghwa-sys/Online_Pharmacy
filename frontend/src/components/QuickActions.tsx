@@ -76,7 +76,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
       {/* Main button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="w-14 h-14 btn-primary  text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2  focus:ring-offset-2"
         aria-label="Quick actions"
         aria-expanded={isOpen}
       >
@@ -117,7 +117,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
                 </div>
                 <span className="font-medium text-sm">{item.label}</span>
                 {item.badge && (
-                  <span className="ml-auto bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-indigo-100 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">
                     {item.badge}
                   </span>
                 )}
@@ -142,7 +142,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
               </div>
               <span className="font-medium text-sm">{item.label}</span>
               {item.badge && (
-                <span className="ml-auto bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-indigo-100 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">
                   {item.badge}
                 </span>
               )}

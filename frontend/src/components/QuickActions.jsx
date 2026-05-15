@@ -5,7 +5,7 @@ const QuickActions = ({ onAddPrescription, onViewReports, onViewInventory }) => 
     <div className="glass-card rounded-2xl p-6 border border-white/50 shadow-premium">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-2 bg-indigo-50 rounded-lg">
-          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         </div>
         <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Quick Operations</h2>
       </div>
@@ -15,7 +15,7 @@ const QuickActions = ({ onAddPrescription, onViewReports, onViewInventory }) => 
           onClick={onAddPrescription}
           className="flex flex-col items-center justify-center p-6 bg-indigo-50/50 hover:bg-white rounded-2xl transition-all duration-300 group border border-indigo-100/50 hover:border-indigo-200 hover:shadow-glow active:scale-[0.98]"
         >
-          <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300 ring-4 ring-indigo-50 group-hover:ring-indigo-100">
+          <div className="w-14 h-14 btn-primary rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300 ring-4 ring-indigo-50 group-hover:ring-indigo-100">
             <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
@@ -48,7 +48,7 @@ const QuickActions = ({ onAddPrescription, onViewReports, onViewInventory }) => 
         </button>
 
         <button className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-white rounded-2xl transition-all duration-300 group border border-slate-100 hover:border-indigo-200 hover:shadow-soft active:scale-[0.98]">
-          <div className="w-14 h-14 bg-slate-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300 group-hover:bg-indigo-600 ring-4 ring-slate-100 group-hover:ring-indigo-50">
+          <div className="w-14 h-14 bg-slate-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300 group-hover:btn-primary ring-4 ring-slate-100 group-hover:ring-indigo-50">
             <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>

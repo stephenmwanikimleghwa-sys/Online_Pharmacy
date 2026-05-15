@@ -41,12 +41,12 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
       <div className="flex justify-between items-start mb-6">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(79,70,229,0.4)]"></div>
+            <div className="w-2 h-2 rounded-full btn-primary shadow-[0_0_8px_rgba(79,70,229,0.4)]"></div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
               {item.category?.replace('_', ' ')}
             </p>
           </div>
-          <h3 className="text-xl font-display font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors tracking-tight">
+          <h3 className="text-xl font-display font-bold text-slate-900 truncate group-hover:text-primary transition-colors tracking-tight">
             {item.name}
           </h3>
         </div>
@@ -120,7 +120,7 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
         {item.price && (
           <div className="flex items-center justify-between px-2 py-2 bg-indigo-50/30 rounded-xl border border-indigo-100/50">
             <span className="text-xs font-bold text-indigo-900/40 uppercase tracking-widest">Pricing</span>
-            <span className="font-display font-bold text-indigo-700 text-sm">KES {parseFloat(item.price).toLocaleString()}</span>
+            <span className="font-display font-bold text-primary text-sm">KES {parseFloat(item.price).toLocaleString()}</span>
           </div>
         )}
 
@@ -128,14 +128,14 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
           {onRestock && (
             <button
               onClick={onRestock}
-              className="flex-1 px-4 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-soft hover:shadow-card active:scale-[0.97] transition-all text-[11px] font-bold uppercase tracking-widest"
+              className="flex-1 px-4 py-3.5 btn-primary text-white rounded-2xl  shadow-soft hover:shadow-card active:scale-[0.97] transition-all text-[11px] font-bold uppercase tracking-widest"
             >
               Add stock
             </button>
           )}
           <button
             onClick={onViewLogs}
-            className="px-4 py-3.5 bg-slate-100 text-slate-600 rounded-2xl hover:bg-white hover:text-indigo-600 border border-transparent hover:border-indigo-100 transition-all active:scale-[0.97] group/btn"
+            className="px-4 py-3.5 bg-slate-100 text-slate-600 rounded-2xl hover:bg-white hover:text-primary border border-transparent hover:border-indigo-100 transition-all active:scale-[0.97] group/btn"
             aria-label="View history"
           >
             <svg className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>

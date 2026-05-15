@@ -99,10 +99,10 @@ const InventoryManagement = () => {
         <div>
           <div className="flex flex-wrap items-center gap-4 mb-3">
             <h1 className="text-5xl font-display font-bold text-slate-900 tracking-tight">
-              Stock <span className="text-indigo-600">management</span>
+              Stock <span className="text-primary">management</span>
             </h1>
             {user?.pharmacy_name && (
-              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 uppercase tracking-[0.2em] shadow-sm">
+              <span className="text-[10px] font-bold text-primary bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 uppercase tracking-[0.2em] shadow-sm">
                 {user.pharmacy_name}
               </span>
             )}
@@ -122,7 +122,7 @@ const InventoryManagement = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 lg:flex-none px-8 py-3.5 rounded-[1.5rem] text-[11px] font-bold transition-all duration-500 uppercase tracking-widest ${activeTab === tab.id
-                ? 'bg-white text-indigo-600 shadow-premium transform scale-[1.02] border border-indigo-50/50'
+                ? 'bg-white text-primary shadow-premium transform scale-[1.02] border border-indigo-50/50'
                 : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
                 }`}
             >
@@ -157,9 +157,9 @@ const InventoryManagement = () => {
                       placeholder="Search by medicine name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-6 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white dark:bg-slate-900/50 dark:border-slate-800 dark:focus:ring-primary-500/20 dark:focus:border-primary-500 dark:focus:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500 transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 focus:bg-white dark:bg-slate-900/50 dark:border-slate-800 dark:focus:ring-primary-500/20 dark:focus:border-primary-500 dark:focus:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500 transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
                     />
-                    <svg className="w-5 h-5 text-slate-300 absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="w-5 h-5 text-slate-300 absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </div>
                 </div>
 
@@ -172,7 +172,7 @@ const InventoryManagement = () => {
                     <select
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      className="w-full pl-6 pr-12 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all font-bold text-slate-700 appearance-none shadow-sm cursor-pointer"
+                      className="w-full pl-6 pr-12 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 focus:bg-white transition-all font-bold text-slate-700 appearance-none shadow-sm cursor-pointer"
                     >
                       <option value="all">All items</option>
                       <option value="low">Low stock</option>
@@ -189,7 +189,7 @@ const InventoryManagement = () => {
 
             {/* Quick Stats Cell */}
             <div className="lg:col-span-4 bg-slate-900 rounded-[2.5rem] p-8 shadow-glow-indigo text-white flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-700"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 btn-primary/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:btn-primary/20 transition-colors duration-700"></div>
               <h3 className="text-[10px] font-bold text-indigo-300 dark:text-primary-400 uppercase tracking-[0.2em] mb-6 relative z-10">Summary</h3>
               <div className="space-y-4 relative z-10">
                 {/* Visual health bar */}
@@ -315,7 +315,7 @@ const InventoryManagement = () => {
                   </button>
                   <button
                     onClick={() => searchInputRef.current?.focus()}
-                    className="px-6 py-3 bg-indigo-600 dark:bg-primary-600 text-white font-bold text-xs rounded-xl border border-indigo-500 dark:border-primary-500 uppercase tracking-widest hover:bg-indigo-500 dark:hover:bg-primary-500 shadow-sm dark:shadow-glow transition-all"
+                    className="px-6 py-3 btn-primary dark:bg-primary-600 text-white font-bold text-xs rounded-xl border border-indigo-500 dark:border-primary-500 uppercase tracking-widest hover:btn-primary dark:hover:bg-primary-500 shadow-sm dark:shadow-glow transition-all"
                   >
                     Search Again
                   </button>

@@ -104,7 +104,7 @@ const ReportsDashboard = () => {
       <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             </div>
             <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Reports &amp; Analytics</h1>
@@ -125,7 +125,7 @@ const ReportsDashboard = () => {
           </button>
           <button
             onClick={exportToCSV}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-glow hover:shadow-premium hover:bg-indigo-700 transition-all flex items-center gap-2.5 active:scale-[0.98]"
+            className="px-6 py-3 btn-primary text-white rounded-2xl font-bold shadow-glow hover:shadow-premium  transition-all flex items-center gap-2.5 active:scale-[0.98]"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l-4-4h3V4h2v8h3l-4 4zm9-4v10H3V12h2v8h14v-8h2z" /></svg>
             Excel Dataset
@@ -141,7 +141,7 @@ const ReportsDashboard = () => {
 
         <div className="flex items-center gap-3 mb-8">
           <div className="p-2.5 bg-indigo-50 rounded-xl">
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
           </div>
           <div>
             <h2 className="text-xl font-display font-bold text-slate-800 tracking-tight">Choose dates</h2>
@@ -188,7 +188,7 @@ const ReportsDashboard = () => {
               <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-display font-bold text-slate-900">Daily Prescription Activity</h2>
@@ -211,7 +211,7 @@ const ReportsDashboard = () => {
                       <tr key={index} className="hover:bg-indigo-50/20 transition-colors">
                         <td className="px-8 py-5 whitespace-nowrap font-display font-bold text-slate-700">{item.date}</td>
                         <td className="px-8 py-5 whitespace-nowrap">
-                          <span className="text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full text-sm border border-indigo-100/50">{item.validated}</span>
+                          <span className="text-primary font-bold bg-indigo-50 px-3 py-1 rounded-full text-sm border border-indigo-100/50">{item.validated}</span>
                         </td>
                         <td className="px-8 py-5 whitespace-nowrap">
                           <span className="text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full text-sm border border-rose-100/50">{item.rejected || 0}</span>
@@ -233,12 +233,12 @@ const ReportsDashboard = () => {
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">💊</div>
                       <div>
-                        <p className="font-bold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{item.name}</p>
+                        <p className="font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors">{item.name}</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Approved: {item.validated}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-display font-bold text-indigo-600 text-lg">KES {item.totalValue}</p>
+                      <p className="font-display font-bold text-primary text-lg">KES {item.totalValue}</p>
                     </div>
                   </div>
                 ))}
@@ -289,11 +289,11 @@ const ReportsDashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-6 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-emerald-50">
+                  <div className="flex items-center gap-2 px-3 py-1.5 glass-card  border border-emerald-50">
                     <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Restock</span>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-rose-50">
+                  <div className="flex items-center gap-2 px-3 py-1.5 glass-card  border border-rose-50">
                     <span className="w-2.5 h-2.5 bg-rose-400 rounded-full shadow-[0_0_8px_rgba(251,113,133,0.5)]"></span>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Used</span>
                   </div>
@@ -329,7 +329,7 @@ const ReportsDashboard = () => {
             <div className="lg:col-span-7 glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
               <div className="flex items-center gap-3 mb-10">
                 <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </div>
                 <div>
                   <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">Staff activity</h2>

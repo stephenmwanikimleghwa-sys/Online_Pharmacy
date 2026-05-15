@@ -31,7 +31,7 @@ const ReviewList = ({ reviews, productId }) => {
       {/* Individual Reviews */}
       <div className="space-y-4">
         {reviews.map((review) => (
-          <div key={review.id} className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div key={review.id} className="p-4 glass-card  border border-gray-200">
             {/* Rating and User */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">

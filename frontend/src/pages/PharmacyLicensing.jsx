@@ -101,7 +101,7 @@ const PharmacyLicensing = () => {
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-[2.5rem] p-8 shadow-card border border-slate-100 h-fit sticky top-8">
                         <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <UploadIcon className="w-6 h-6 text-indigo-600" />
+                            <UploadIcon className="w-6 h-6 text-primary" />
                             Upload Document
                         </h3>
 
@@ -153,7 +153,7 @@ const PharmacyLicensing = () => {
                                         onChange={handleFileChange}
                                     />
                                     <div className="text-center">
-                                        <DocIcon className="w-10 h-10 text-slate-300 group-hover:text-indigo-500 mx-auto mb-3" />
+                                        <DocIcon className="w-10 h-10 text-slate-300 group-hover:text-primary mx-auto mb-3" />
                                         <p className="text-sm font-bold text-slate-500 group-hover:text-slate-700">
                                             {formData.file ? formData.file.name : 'Click or drop to upload'}
                                         </p>
@@ -165,7 +165,7 @@ const PharmacyLicensing = () => {
                                 type="submit"
                                 disabled={uploading}
                                 className={`w-full py-5 rounded-2xl text-white font-display font-bold text-lg shadow-soft transition-all active:scale-[0.98] 
-                  ${uploading ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:shadow-glow hover:opacity-95'}`}
+                  ${uploading ? 'bg-slate-400 cursor-not-allowed' : 'btn-primary hover:shadow-glow hover:opacity-95'}`}
                             >
                                 {uploading ? 'Uploading...' : 'Upload Document'}
                             </button>
@@ -209,8 +209,8 @@ const PharmacyLicensing = () => {
                             {documents.map((doc) => (
                                 <div key={doc.id} className="group relative bg-white p-7 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-card hover:border-indigo-100 transition-all">
                                     <div className="flex justify-between items-start mb-6">
-                                        <div className="p-4 bg-indigo-50 rounded-2xl group-hover:bg-indigo-600 transition-colors">
-                                            <DocIcon className="w-8 h-8 text-indigo-600 group-hover:text-white" />
+                                        <div className="p-4 bg-indigo-50 rounded-2xl group-hover:btn-primary transition-colors">
+                                            <DocIcon className="w-8 h-8 text-primary group-hover:text-white" />
                                         </div>
                                         <button
                                             onClick={() => handleDelete(doc.id)}
@@ -221,7 +221,7 @@ const PharmacyLicensing = () => {
                                     </div>
 
                                     <div>
-                                        <h3 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors mb-2 line-clamp-1">{doc.title}</h3>
+                                        <h3 className="text-xl font-bold text-slate-900 group-hover:text-primary transition-colors mb-2 line-clamp-1">{doc.title}</h3>
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">{doc.document_type}</span>
                                     </div>
 
@@ -257,7 +257,7 @@ const PharmacyLicensing = () => {
                                         href={doc.file}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-6 block w-full text-center py-3.5 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-transparent hover:border-indigo-100"
+                                        className="mt-6 block w-full text-center py-3.5 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-indigo-50 hover:text-primary transition-all border border-transparent hover:border-indigo-100"
                                     >
                                         View Document
                                     </a>

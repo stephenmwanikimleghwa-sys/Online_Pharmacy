@@ -95,7 +95,7 @@ const DispensePrescription = () => {
           <h1 className="text-2xl font-bold text-gray-800">Prescription Not Found</h1>
           <button
             onClick={() => navigate('/pharmacist/dashboard')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 btn-primary text-white rounded-md "
           >
             Back to Dashboard
           </button>
@@ -111,16 +111,16 @@ const DispensePrescription = () => {
         <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+              <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
               </div>
-              <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Dispensing <span className="text-indigo-600">Terminal</span></h1>
+              <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Dispensing <span className="text-primary">Terminal</span></h1>
             </div>
             <p className="text-lg text-slate-500 font-medium">Verify stock availability and authorize medication release to patient.</p>
           </div>
           <button
             onClick={() => navigate('/pharmacist/dashboard')}
-            className="px-6 py-3 bg-white text-slate-600 rounded-2xl font-bold text-[10px] uppercase tracking-widest border border-slate-200 hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm hover:shadow-premium"
+            className="px-6 py-3 bg-white text-slate-600 rounded-2xl font-bold text-[10px] uppercase tracking-widest border border-slate-200 hover:border-indigo-500 hover:text-primary transition-all shadow-sm hover:shadow-premium"
           >
             Terminal Dashboard
           </button>
@@ -128,10 +128,10 @@ const DispensePrescription = () => {
 
         {/* Prescription Details Card */}
         <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium mb-10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-40 h-40 btn-primary/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
 
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 border border-indigo-100">
+            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-primary border border-indigo-100">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             </div>
             <h2 className="text-xl font-display font-bold text-slate-900">Patient Specification</h2>
@@ -147,7 +147,7 @@ const DispensePrescription = () => {
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">System Status</p>
               <div className="flex">
-                <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-widest border border-indigo-100 shadow-sm">
+                <span className="px-4 py-1.5 bg-indigo-50 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest border border-indigo-100 shadow-sm">
                   {prescription.status}
                 </span>
               </div>
@@ -170,7 +170,7 @@ const DispensePrescription = () => {
         {/* Medicines Section */}
         <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium mb-10">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 border border-indigo-100">
+            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-primary border border-indigo-100">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.638.319a4 4 0 01-2.154.493H8.5a4 4 0 01-4-4V7a4 4 0 014-4h2a4 4 0 011.929.5L13 3.5a2 2 0 011 1.732V9a2 2 0 01-2 2h-1M14 6a2 2 0 00-2 2v1M17 10a2 2 0 00-2 2v1" /></svg>
             </div>
             <h2 className="text-xl font-display font-bold text-slate-900">Release Protocol</h2>

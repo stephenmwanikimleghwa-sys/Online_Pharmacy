@@ -69,15 +69,15 @@ const AdminDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+          <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
             <ChartBarIcon className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-4xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
-            Admin <span className="text-indigo-600 dark:text-indigo-400">Dashboard</span>
+            Admin <span className="text-primary dark:text-indigo-400">Dashboard</span>
           </h1>
         </div>
         <p className="text-lg text-slate-500 font-medium">
-          Welcome back, <span className="text-indigo-600 font-bold">{user.full_name || user.username}</span>. Monitor system growth and manage core assets.
+          Welcome back, <span className="text-primary font-bold">{user.full_name || user.username}</span>. Monitor system growth and manage core assets.
         </p>
       </div>
 
@@ -193,8 +193,8 @@ const AdminDashboard = () => {
           onClick={() => navigate('/admin/users')}
           className="flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm hover:shadow-card hover:border-indigo-200 dark:hover:border-indigo-500 transition-all group"
         >
-          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 text-sm transition-colors">User Management</span>
-          <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-indigo-400 text-sm transition-colors">User Management</span>
+          <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-primary dark:group-hover:text-indigo-400 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
 
         <button

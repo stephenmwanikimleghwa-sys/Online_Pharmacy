@@ -392,10 +392,10 @@ const AdminStock = () => {
 			<div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
 				<div>
 					<div className="flex items-center gap-3 mb-2">
-						<div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+						<div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
 							<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
 						</div>
-						<h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Manage <span className="text-indigo-600">Stock</span></h1>
+						<h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Manage <span className="text-primary">Stock</span></h1>
 					</div>
 					<p className="text-lg text-slate-500 font-medium">Add, edit, and manage pharmaceutical products in your inventory.</p>
 				</div>
@@ -408,7 +408,7 @@ const AdminStock = () => {
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); openAddModal(); }}
-						className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
+						className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
 					>
 						<PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
 						<span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add Medicine</span>
@@ -442,7 +442,7 @@ const AdminStock = () => {
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Search by name, category, or supplier..."
-							className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+							className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 /30 focus:border-indigo-400 transition-all"
 						/>
 					</div>
 					<div className="w-48">
@@ -450,7 +450,7 @@ const AdminStock = () => {
 						<select
 							value={filters.category}
 							onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-							className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+							className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 focus:outline-none focus:ring-2 /30 focus:border-indigo-400 transition-all"
 						>
 							<option value="">All Categories</option>
 							{categories.map(cat => (
@@ -559,14 +559,14 @@ const AdminStock = () => {
 							Showing <span className="font-semibold text-slate-600">{Math.min((currentPage - 1) * perPage + 1, Number(totalItems) || 0)}</span>–<span className="font-semibold text-slate-600">{Math.min(currentPage * perPage, Number(totalItems) || 0)}</span> of <span className="font-semibold text-slate-600">{Number(totalItems) || 0}</span>
 						</p>
 						<div className="flex items-center gap-2">
-							<select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }} className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
+							<select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }} className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 bg-slate-50 focus:outline-none focus:ring-2 /30">
 								<option value={10}>10 / page</option>
 								<option value={20}>20 / page</option>
 								<option value={50}>50 / page</option>
 								<option value={100}>100 / page</option>
 							</select>
 							<button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-40">Previous</button>
-							<button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-700 shadow-premium transition-all active:scale-95 disabled:opacity-40">Next</button>
+							<button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-5 py-2.5 btn-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest  shadow-premium transition-all active:scale-95 disabled:opacity-40">Next</button>
 						</div>
 					</div>
 				</div>
@@ -577,9 +577,9 @@ const AdminStock = () => {
 				<div className="mt-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
 					<h3 className="font-display font-bold text-slate-800 mb-4">Adjust Stock — {selectedItemForLogs.name}</h3>
 					<div className="flex gap-3">
-						<input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" placeholder="+10 or -5" />
-						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" placeholder="Reason for adjustment" />
-						<button onClick={() => handleAdjust(selectedItemForLogs)} className="px-6 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">Apply</button>
+						<input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm w-40 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="+10 or -5" />
+						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="Reason for adjustment" />
+						<button onClick={() => handleAdjust(selectedItemForLogs)} className="px-6 py-3 btn-primary text-white rounded-2xl  shadow-premium font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">Apply</button>
 					</div>
 					{logEntries.length > 0 && (
 						<div className="mt-5">

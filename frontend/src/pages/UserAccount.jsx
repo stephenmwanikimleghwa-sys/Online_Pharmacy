@@ -75,10 +75,10 @@ const UserAccount = () => {
       {/* Header Section */}
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+          <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
             <UserCircleIcon className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">My <span className="text-indigo-600">Account</span></h1>
+          <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">My <span className="text-primary">Account</span></h1>
         </div>
         <p className="text-lg text-slate-500 font-medium">Manage your profile and account settings.</p>
       </div>
@@ -127,7 +127,7 @@ const UserAccount = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Role</p>
-                  <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100 capitalize">
+                  <span className="px-3 py-1 bg-indigo-50 text-primary rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100 capitalize">
                     {profile.role}
                   </span>
                 </div>
@@ -158,7 +158,7 @@ const UserAccount = () => {
                     alert(error.response?.data?.message || "Failed to update profile. Please try again.");
                   });
                 }}
-                className="mt-8 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group font-bold text-xs uppercase tracking-widest"
+                className="mt-8 px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group font-bold text-xs uppercase tracking-widest"
               >
                 <PencilIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
                 Edit Profile
@@ -168,7 +168,7 @@ const UserAccount = () => {
 
           {/* Side Panel */}
           <div className="lg:col-span-4 bg-slate-900 rounded-[2.5rem] p-8 shadow-glow-indigo text-white flex flex-col justify-between relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-700"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 btn-primary/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:btn-primary/20 transition-colors duration-700"></div>
             <div>
               <h3 className="text-[10px] font-bold text-indigo-300 uppercase tracking-[0.2em] mb-6 relative z-10">Account Status</h3>
               <div className="space-y-4 relative z-10">

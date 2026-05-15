@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+          <div className="max-w-md w-full bg-white  rounded-2xl shadow-xl p-8 text-center">
             <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
               <ExclamationTriangleIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
@@ -94,7 +94,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={this.handleReset}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 btn-primary  text-white font-medium rounded-xl transition-colors focus:outline-none focus:ring-2  focus:ring-offset-2"
               >
                 <ArrowPathIcon className="h-5 w-5" />
                 Try Again

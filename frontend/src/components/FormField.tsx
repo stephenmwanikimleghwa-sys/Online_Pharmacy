@@ -161,11 +161,11 @@ const FormField: React.FC<FormFieldProps> = ({
             ${RightIcon || showPasswordToggle ? 'pr-10' : ''}
             ${hasError
               ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-500 focus:ring-red-500/20'
-              : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500/20'
+              : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 /20'
             }
             ${isFocused ? 'ring-2 ring-indigo-500/20' : ''}
             ${disabled ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60' : ''}
-            ${readOnly ? 'bg-gray-50 dark:bg-gray-800' : 'bg-white dark:bg-gray-800'}
+            ${readOnly ? 'bg-gray-50 ' : 'bg-white '}
             ${hasValue ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}
             ${inputClassName}
           `}
@@ -178,7 +178,7 @@ const FormField: React.FC<FormFieldProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2  rounded"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
               >
@@ -193,7 +193,7 @@ const FormField: React.FC<FormFieldProps> = ({
               <button
                 type="button"
                 onClick={onRightIconClick}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2  rounded"
                 aria-label="Clear input"
               >
                 <RightIcon className="h-5 w-5" />

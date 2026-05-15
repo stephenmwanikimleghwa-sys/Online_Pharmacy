@@ -66,9 +66,9 @@ const toastColors = {
   info: {
     bg: 'bg-blue-50 dark:bg-blue-900/30',
     border: 'border-blue-200 dark:border-blue-800',
-    icon: 'text-blue-500 dark:text-blue-400',
+    icon: 'text-primary dark:text-blue-400',
     title: 'text-blue-900 dark:text-blue-100',
-    message: 'text-blue-700 dark:text-blue-300'
+    message: 'text-primary dark:text-blue-300'
   }
 };
 
@@ -189,7 +189,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
           {toast.action && (
             <button
               onClick={toast.action.onClick}
-              className="mt-2 text-sm font-medium underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="mt-2 text-sm font-medium underline focus:outline-none focus:ring-2 focus:ring-offset-2 "
             >
               {toast.action.label}
             </button>
@@ -197,7 +197,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
         </div>
         <button
           onClick={() => onRemove(toast.id)}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded"
+          className="flex-shrink-0 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2  rounded"
           aria-label="Dismiss notification"
         >
           <XMarkIcon className="h-5 w-5" />

@@ -8,7 +8,7 @@ const Pharmacies = () => {
       <div className="max-w-3xl mx-auto px-4 text-center">
         <h1 className="text-2xl font-semibold mb-4">Pharmacies (disabled)</h1>
         <p className="text-gray-600 mb-6">The Pharmacies directory has been disabled in this deployment.</p>
-        <Link to="/" className="text-blue-600 hover:underline">Return to home</Link>
+        <Link to="/" className="text-primary hover:underline">Return to home</Link>
       </div>
     </div>
   );

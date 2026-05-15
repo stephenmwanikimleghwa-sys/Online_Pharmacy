@@ -73,7 +73,7 @@ const ForcePasswordChange: React.FC = () => {
             <div className="w-full max-w-md">
                 <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-premium border border-white/70 p-8">
                     <div className="mb-8 text-center">
-                        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600">
+                        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
                             <ShieldCheckIcon className="w-10 h-10" />
                         </div>
                         <h2 className="text-3xl font-display font-bold text-slate-900 mb-1">Security Update</h2>
@@ -90,7 +90,7 @@ const ForcePasswordChange: React.FC = () => {
                                     required
                                     value={passwords.oldPassword}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition-all"
+                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 /40 focus:border-indigo-400 transition-all"
                                 />
                                 <button type="button" onClick={() => setShowPasswords(p => ({ ...p, old: !p.old }))} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400">
                                     {showPasswords.old ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
@@ -107,7 +107,7 @@ const ForcePasswordChange: React.FC = () => {
                                     required
                                     value={passwords.newPassword}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition-all"
+                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 /40 focus:border-indigo-400 transition-all"
                                 />
                                 <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400">
                                     {showPasswords.new ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
@@ -124,7 +124,7 @@ const ForcePasswordChange: React.FC = () => {
                                     required
                                     value={passwords.confirmPassword}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition-all"
+                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 /40 focus:border-indigo-400 transition-all"
                                 />
                                 <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400">
                                     {showPasswords.confirm ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}

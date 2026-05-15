@@ -60,8 +60,8 @@ const PrescriptionUpload = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-blue-600 mb-6 text-center">Upload Prescription</h1>
+      <div className="max-w-md mx-auto glass-card  p-6">
+        <h1 className="text-2xl font-bold text-primary mb-6 text-center">Upload Prescription</h1>
 
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Select Prescription File</label>
@@ -70,7 +70,7 @@ const PrescriptionUpload = () => {
             ref={fileInputRef}
             onChange={handleFileChange}
             accept=".pdf,.jpg,.jpeg,.png"
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100"
           />
         </div>
 
@@ -107,7 +107,7 @@ const PrescriptionUpload = () => {
 
         <button
           onClick={() => navigate('/account')}
-          className="w-full mt-4 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-200"
+          className="w-full mt-4 py-2 px-4 btn-primary  text-white rounded-md transition duration-200"
         >
           Back to Account
         </button>

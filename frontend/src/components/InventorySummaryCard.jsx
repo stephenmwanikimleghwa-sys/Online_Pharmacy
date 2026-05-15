@@ -16,7 +16,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         </div>
         <button
           onClick={onViewInventory}
-          className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-soft hover:shadow-glow hover:bg-indigo-700 transition-all active:scale-[0.98] text-sm"
+          className="px-5 py-2.5 btn-primary text-white rounded-xl font-bold shadow-soft hover:shadow-glow  transition-all active:scale-[0.98] text-sm"
         >
           View stock list
         </button>
@@ -30,7 +30,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
               <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Total Products</p>
               <p className="text-3xl font-display font-bold text-indigo-900">{totalProducts}</p>
             </div>
-            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>

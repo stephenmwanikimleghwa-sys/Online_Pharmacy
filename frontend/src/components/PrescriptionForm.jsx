@@ -53,7 +53,7 @@ const PrescriptionForm = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+    <div className="max-w-md mx-auto glass-card  p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Upload Prescription</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -65,7 +65,7 @@ const PrescriptionForm = ({ onUploadSuccess }) => {
             type="file"
             accept=".pdf"
             onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100"
             required
           />
           {file && <p className="mt-1 text-sm text-green-600">Selected: {file.name}</p>}

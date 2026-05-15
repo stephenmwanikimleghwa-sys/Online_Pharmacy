@@ -5,62 +5,45 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: "#e0f0fa",
-          100: "#c8e8f5",
-          200: "#96ccde",
-          300: "#5a7f98", // Steel blue
-          400: "#2a597a",
-          500: "#0a2e4a", // Deep Navy - Main Brand Color
-          600: "#0d3f60", // Deep Navy - Hover State
-          700: "#082338",
-          800: "#051624",
-          900: "#030d15",
-          950: "#01060a",
+          DEFAULT: 'var(--color-primary)',
+          50: 'var(--bg-field)',
+          100: 'var(--bg-card)',
+          500: 'var(--color-primary)',
+          600: 'var(--color-primary)',
+          700: 'var(--text-muted)',
+          800: 'var(--text-primary)',
         },
         secondary: {
-          50: "#fdf8e6",
-          100: "#faefc2",
-          200: "#f5dda3",
-          300: "#edc16b",
-          400: "#e3a842",
-          500: "#c8a84b", // Warm Gold
-          600: "#a68a35",
-          700: "#806622",
-          800: "#5a4515",
-          900: "#36270b",
-          950: "#170f03",
+          DEFAULT: 'var(--color-highlight)',
+          500: 'var(--color-highlight)',
         },
         accent: {
-          50: "#e0f0fa",
-          100: "#c8e8f5",
-          200: "#a1d7eb",
-          300: "#75beda",
-          400: "#4ea1c5",
-          500: "#5a7f98", // Steel Blue Accent
-          600: "#446479",
-          700: "#324959",
-          800: "#22323e",
-          900: "#131d24",
-          950: "#080b0f",
+          DEFAULT: 'var(--color-accent)',
+          500: 'var(--color-accent)',
         },
-        neutral: {
-          50: "#ffffff", // Pure white
-          100: "#e5ecf0",
-          200: "#cbd6de",
-          300: "#abb8c3",
-          400: "#8996a1",
-          500: "#606b74",
-          600: "#464f56",
-          700: "#1a1a1a", // Body text on light
-          800: "#121212",
-          900: "#0d0d0d",
-          950: "#000000",
+        blue: {
+          100: 'var(--bg-card)',
+          500: 'var(--color-primary)',
+          600: 'var(--color-primary)',
+          700: 'var(--text-primary)',
+        },
+        indigo: {
+          100: 'var(--bg-card)',
+          500: 'var(--color-primary)',
+          600: 'var(--color-primary)',
+          700: 'var(--text-primary)',
+        },
+        purple: {
+          100: 'var(--bg-card)',
+          500: 'var(--color-primary)',
+          600: 'var(--color-primary)',
+          700: 'var(--text-primary)',
         },
         surface: {
-          light: "#ffffff",
-          dark: "#0a2e4a",
-          "glass-light": "rgba(255, 255, 255, 0.7)",
-          "glass-dark": "rgba(15, 23, 42, 0.7)",
+          light: 'var(--color-bg-card-light)',
+          dark: 'var(--color-bg-card-dark)',
+          "glass-light": "var(--color-bg-card-light)",
+          "glass-dark": "var(--color-bg-card-dark)",
         },
       },
       fontFamily: {

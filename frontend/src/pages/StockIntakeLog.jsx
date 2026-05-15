@@ -153,10 +153,10 @@ const StockIntakeLog = () => {
       <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Stock <span className="text-indigo-600">received</span></h1>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Stock <span className="text-primary">received</span></h1>
           </div>
           <p className="text-lg text-slate-500 font-medium">
             Use this page to record new deliveries. This helps you track what came in, who supplied it, cost, batch number, and expiry date.
@@ -164,7 +164,7 @@ const StockIntakeLog = () => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
+          className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
           <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add a delivery</span>
@@ -214,9 +214,9 @@ const StockIntakeLog = () => {
               placeholder="Search by supplier..."
               value={filterDistributor}
               onChange={(e) => setFilterDistributor(e.target.value)}
-              className="w-full pl-12 pr-6 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
+              className="w-full pl-12 pr-6 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
             />
-            <svg className="w-5 h-5 text-slate-300 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <svg className="w-5 h-5 text-slate-300 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">All Records</span>
@@ -257,7 +257,7 @@ const StockIntakeLog = () => {
                 intakeRecords.map((record) => (
                   <tr key={record.id} className="hover:bg-indigo-50/30 transition-colors group">
                     <td className="px-8 py-6">
-                      <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{record.product_name}</p>
+                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{record.product_name}</p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Batch: {record.batch_number || 'ST-ALPHA'}</p>
                     </td>
                     <td className="px-8 py-6">
@@ -269,7 +269,7 @@ const StockIntakeLog = () => {
                     </td>
                     <td className="px-8 py-6 font-medium text-slate-600 text-sm">KES {parseFloat(record.unit_cost).toLocaleString()}</td>
                     <td className="px-8 py-6">
-                      <p className="font-display font-bold text-indigo-600">KES {parseFloat(record.total_cost).toLocaleString()}</p>
+                      <p className="font-display font-bold text-primary">KES {parseFloat(record.total_cost).toLocaleString()}</p>
                     </td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${record.expiry_date && new Date(record.expiry_date) < new Date()
@@ -282,7 +282,7 @@ const StockIntakeLog = () => {
                     <td className="px-8 py-6">
                       <button
                         onClick={() => setSelectedRecord(record)}
-                        className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-card transition-all active:scale-90"
+                        className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary hover:border-indigo-100 hover:shadow-card transition-all active:scale-90"
                       >
                         <EyeIcon className="w-5 h-5" />
                       </button>
@@ -301,9 +301,9 @@ const StockIntakeLog = () => {
           <div className="bg-white rounded-[2.5rem] shadow-premium max-w-2xl w-full overflow-hidden flex flex-col md:flex-row animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
             {/* Visual Panel */}
             <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
               <div>
-                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
+                <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                 </div>
                 <h2 className="text-3xl font-display font-bold leading-tight">Record a New Delivery</h2>
@@ -319,7 +319,7 @@ const StockIntakeLog = () => {
                   <select
                     value={formData.product}
                     onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                   >
                     <option value="">Select a product...</option>
                     {products.map((product) => (
@@ -336,7 +336,7 @@ const StockIntakeLog = () => {
                     value={formData.distributor_name}
                     onChange={(e) => setFormData({ ...formData, distributor_name: e.target.value })}
                     placeholder="Search or enter distributor..."
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.distributor_name ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.distributor_name ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                   />
                   <datalist id="distributors-list">
                     {suppliers.map(supplier => <option key={supplier.id} value={supplier.name} />)}
@@ -350,7 +350,7 @@ const StockIntakeLog = () => {
                     min="1"
                     value={formData.quantity_received}
                     onChange={(e) => setFormData({ ...formData, quantity_received: e.target.value })}
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.quantity_received ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.quantity_received ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                   />
                 </div>
 
@@ -362,7 +362,7 @@ const StockIntakeLog = () => {
                     min="0"
                     value={formData.unit_cost}
                     onChange={(e) => setFormData({ ...formData, unit_cost: e.target.value })}
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.unit_cost ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.unit_cost ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
                   />
                 </div>
 
@@ -372,7 +372,7 @@ const StockIntakeLog = () => {
                     type="date"
                     value={formData.expiry_date}
                     onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
                   />
                 </div>
 
@@ -383,7 +383,7 @@ const StockIntakeLog = () => {
                     value={formData.batch_number}
                     onChange={(e) => setFormData({ ...formData, batch_number: e.target.value })}
                     placeholder="LOT-ID-000"
-                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
                   />
                 </div>
               </div>
@@ -398,7 +398,7 @@ const StockIntakeLog = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                  className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
                 >
                   Save Record
                 </button>
@@ -427,13 +427,13 @@ const StockIntakeLog = () => {
 
             <div className="p-10 space-y-8 bg-white">
               <div className="flex items-start gap-4 p-5 bg-indigo-50/50 rounded-3xl border border-indigo-100/50">
-                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-glow-indigo flex-shrink-0">
+                <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center text-white shadow-glow-indigo flex-shrink-0">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Product</p>
                   <p className="text-xl font-display font-bold text-indigo-900">{selectedRecord.product_name}</p>
-                  <p className="text-xs font-bold text-indigo-600/60 mt-0.5">Supplier: {selectedRecord.distributor_name}</p>
+                  <p className="text-xs font-bold text-primary/60 mt-0.5">Supplier: {selectedRecord.distributor_name}</p>
                 </div>
               </div>
 
@@ -444,7 +444,7 @@ const StockIntakeLog = () => {
                 </div>
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Cost</p>
-                  <p className="text-xl font-display font-bold text-indigo-600">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
+                  <p className="text-xl font-display font-bold text-primary">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
                   <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">Unit Cost: {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
                 </div>
               </div>

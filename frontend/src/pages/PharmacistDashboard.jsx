@@ -143,7 +143,7 @@ const PharmacistDashboard = () => {
               {pendingPrescriptions.length > 4 && (
                 <button
                   onClick={() => navigate("/prescriptions/pending")}
-                  className="w-full py-4 bg-slate-50 hover:bg-white text-slate-600 hover:text-indigo-600 font-bold text-sm rounded-2xl border border-slate-100 hover:border-indigo-100 hover:shadow-soft transition-all active:scale-[0.99]"
+                  className="w-full py-4 bg-slate-50 hover:bg-white text-slate-600 hover:text-primary font-bold text-sm rounded-2xl border border-slate-100 hover:border-indigo-100 hover:shadow-soft transition-all active:scale-[0.99]"
                 >
                   View full queue ({pendingPrescriptions.length} items) →
                 </button>
@@ -181,7 +181,7 @@ const PharmacistDashboard = () => {
                 {dispensedPrescriptions.length > 3 && (
                   <button
                     onClick={() => navigate("/prescriptions/dispensed")}
-                    className="w-full py-3 text-indigo-600 hover:text-indigo-700 text-sm font-bold bg-indigo-50 rounded-xl transition-all active:scale-[0.98]"
+                    className="w-full py-3 text-primary hover:text-primary text-sm font-bold bg-indigo-50 rounded-xl transition-all active:scale-[0.98]"
                   >
                     Open Dispensing Ledger
                   </button>
@@ -204,7 +204,7 @@ const PharmacistDashboard = () => {
               <p className="text-indigo-100 text-sm mb-8 font-medium leading-relaxed opacity-90">Handle non-prescription over-the-counter sales instantly and update inventory.</p>
               <button
                 onClick={() => setIsQuickSaleOpen(true)}
-                className="w-full py-4 bg-white text-indigo-700 text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-white text-primary text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Quick Sale (OTC)
               </button>

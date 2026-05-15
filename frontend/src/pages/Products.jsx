@@ -152,10 +152,10 @@ const Products = () => {
       <div className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-glow">
+            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <SparklesIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Browse <span className="text-indigo-600">Products</span></h1>
+            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Browse <span className="text-primary">Products</span></h1>
           </div>
           <p className="text-lg text-slate-500 font-medium">
             Browse our collection of quality pharmaceutical products.
@@ -169,7 +169,7 @@ const Products = () => {
               onClick={() => setViewMode('grid')}
               className={`p-2.5 rounded-xl transition-all ${
                 viewMode === 'grid'
-                  ? 'bg-white text-indigo-600 shadow-premium'
+                  ? 'bg-white text-primary shadow-premium'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
               aria-label="Grid view"
@@ -183,7 +183,7 @@ const Products = () => {
               onClick={() => setViewMode('list')}
               className={`p-2.5 rounded-xl transition-all ${
                 viewMode === 'list'
-                  ? 'bg-white text-indigo-600 shadow-premium'
+                  ? 'bg-white text-primary shadow-premium'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
               aria-label="List view"
@@ -200,7 +200,7 @@ const Products = () => {
             <select
               value={sortBy}
               onChange={(e) => handleSort(e.target.value)}
-              className="px-5 py-3 bg-white border border-slate-200/60 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-sm appearance-none pr-10 transition-all"
+              className="px-5 py-3 bg-white border border-slate-200/60 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 /10 focus:border-indigo-500 shadow-sm appearance-none pr-10 transition-all"
             >
               {sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -246,7 +246,7 @@ const Products = () => {
         <div className="mb-8 flex flex-wrap items-center gap-3">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active filters:</span>
           {selectedCategory && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-primary rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
               {categories.find(c => c.value === selectedCategory)?.label}
               <button onClick={() => setSelectedCategory('')} className="hover:text-indigo-900 transition-colors">
                 <XMarkIcon className="h-3.5 w-3.5" />
@@ -274,7 +274,7 @@ const Products = () => {
           )}
           <button
             onClick={clearFilters}
-            className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-700 transition-colors px-3 py-1.5"
+            className="text-[10px] font-bold text-primary uppercase tracking-widest hover:text-primary transition-colors px-3 py-1.5"
           >
             Clear all
           </button>
@@ -301,7 +301,7 @@ const Products = () => {
           </p>
           <button
             onClick={clearFilters}
-            className="mt-8 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 font-bold text-xs uppercase tracking-widest"
+            className="mt-8 px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 font-bold text-xs uppercase tracking-widest"
           >
             <FunnelIcon className="h-5 w-5" />
             Clear Filters

@@ -44,7 +44,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-40 md:hidden"
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200  z-40 md:hidden"
       role="navigation"
       aria-label="Bottom navigation"
     >
@@ -60,14 +60,14 @@ const BottomNav: React.FC = () => {
               to={item.href}
               className={`relative flex flex-col items-center justify-center flex-1 max-w-[80px] h-full transition-colors ${
                 isActive
-                  ? 'text-indigo-600 dark:text-indigo-400'
+                  ? 'text-primary dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
             >
               {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 btn-primary dark:bg-indigo-400 rounded-full" />
               )}
               <Icon className="h-6 w-6" aria-hidden="true" />
               <span className="text-[10px] font-medium mt-1">{item.label}</span>

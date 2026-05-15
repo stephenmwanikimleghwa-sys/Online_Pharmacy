@@ -140,7 +140,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     <div className={`relative ${className}`}>
       <div className="relative group">
         {/* Search input */}
-        <div className="relative flex items-center bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-200">
+        <div className="relative flex items-center bg-white  rounded-2xl shadow-lg border border-gray-200  focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-200">
           <MagnifyingGlassIcon
             className="h-5 w-5 text-gray-400 ml-4"
             aria-hidden="true"
@@ -178,7 +178,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               onClick={() => setShowFilterPanel(!showFilterPanel)}
               className={`p-2 mr-2 rounded-lg transition-colors ${
                 hasActiveFilters
-                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-primary dark:text-indigo-400'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               aria-label="Toggle filters"
@@ -189,7 +189,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           )}
           <button
             onClick={handleSearch}
-            className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-r-2xl transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shrink-0"
+            className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3 btn-primary  text-white font-medium rounded-r-2xl transition-colors focus:outline-none focus:ring-2  focus:ring-offset-2 shrink-0"
             aria-label="Search"
           >
             <MagnifyingGlassIcon className="h-5 w-5 sm:hidden" />
@@ -202,7 +202,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <div
             ref={suggestionsRef}
             id="search-suggestions"
-            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
+            className="absolute top-full left-0 right-0 mt-2 bg-white  rounded-xl shadow-xl border border-gray-200  overflow-hidden z-50"
             role="listbox"
           >
             {filteredSuggestions.map((suggestion, index) => (
@@ -245,13 +245,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Filter panel */}
       {showFilterPanel && showFilters && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 z-40">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white  rounded-xl shadow-xl border border-gray-200  p-4 z-40">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">Filters</h3>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                className="text-sm text-primary dark:text-indigo-400 hover:text-primary dark:hover:text-indigo-300"
               >
                 Clear all
               </button>
@@ -273,7 +273,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         type="checkbox"
                         checked={activeFilters.has(category.id)}
                         onChange={() => handleFilterToggle(category.id)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-gray-300 text-primary "
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {category.label}
@@ -301,7 +301,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         type="checkbox"
                         checked={activeFilters.has(range.id)}
                         onChange={() => handleFilterToggle(range.id)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-gray-300 text-primary "
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {range.label}
@@ -326,7 +326,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         type="checkbox"
                         checked={activeFilters.has(rating.id)}
                         onChange={() => handleFilterToggle(rating.id)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-gray-300 text-primary "
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {rating.label}
@@ -338,7 +338,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+          <div className="mt-4 pt-4 border-t border-gray-200  flex justify-end gap-2">
             <button
               onClick={() => setShowFilterPanel(false)}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -350,7 +350,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 handleSearch();
                 setShowFilterPanel(false);
               }}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white btn-primary  rounded-lg transition-colors"
             >
               Apply Filters
             </button>

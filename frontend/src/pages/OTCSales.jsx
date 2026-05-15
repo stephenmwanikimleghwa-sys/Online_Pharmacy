@@ -68,7 +68,7 @@ const OTCSales = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight dark:text-white">
-            OTC <span className="text-indigo-600 dark:text-indigo-400">Sales Dashboard</span>
+            OTC <span className="text-primary dark:text-indigo-400">Sales Dashboard</span>
           </h1>
           <p className="text-slate-500 font-medium">Quickly view explicit pricing and process over-the-counter metrics.</p>
         </div>
@@ -83,7 +83,7 @@ const OTCSales = () => {
               placeholder="Search explicitly by medicine name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm text-slate-800 dark:text-gray-200"
+              className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-gray-900 border border-slate-200  rounded-xl focus:ring-2  font-medium text-sm text-slate-800 dark:text-gray-200"
             />
             <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
@@ -94,7 +94,7 @@ const OTCSales = () => {
                 <tr className="border-b border-gray-100 dark:border-gray-800">
                   <th className="pb-4 pt-2 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Medicine Name</th>
                   <th className="pb-4 pt-2 px-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Expiry Date</th>
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">B.P (Cost)</th>
+                  <th className="pb-4 pt-2 px-4 text-xs font-bold text-primary dark:text-indigo-400 uppercase tracking-wider">B.P (Cost)</th>
                   <th className="pb-4 pt-2 px-4 text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">WSP (1.15x)</th>
                   <th className="pb-4 pt-2 px-4 text-xs font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">SP (1.33x)</th>
                   <th className="pb-4 pt-2 px-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
@@ -120,7 +120,7 @@ const OTCSales = () => {
                         <td className="py-4 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">
                           {p.expiry_date ? format(new Date(p.expiry_date), "MMM dd, yyyy") : "N/A"}
                         </td>
-                        <td className="py-4 px-4 font-bold text-indigo-600 dark:text-indigo-400 text-sm">{renderPrice(bp)}</td>
+                        <td className="py-4 px-4 font-bold text-primary dark:text-indigo-400 text-sm">{renderPrice(bp)}</td>
                         <td className="py-4 px-4 font-bold text-emerald-600 dark:text-emerald-400 text-sm">{renderPrice(wsp)}</td>
                         <td className="py-4 px-4 font-bold text-rose-600 dark:text-rose-400 text-sm">{renderPrice(sp)}</td>
                         <td className="py-4 px-4 text-right">
@@ -129,8 +129,8 @@ const OTCSales = () => {
                             disabled={p.stock_quantity <= 0}
                             className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
                               p.stock_quantity > 0
-                                ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                                ? "bg-indigo-50 text-primary hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed  dark:text-gray-600"
                             }`}
                           >
                             {p.stock_quantity > 0 ? "Add +" : "Out"}
@@ -156,12 +156,12 @@ const OTCSales = () => {
               </div>
             ) : (
               cart.map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center bg-white dark:bg-gray-800/80 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div key={idx} className="flex justify-between items-center bg-white /80 p-3 rounded-xl border border-gray-100 ">
                   <div>
                     <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">{item.product.name}</h4>
                     <p className="text-xs text-gray-500">Qty: {item.quantity} × {renderPrice(item.product.pricing_tier?.retail_price || item.product.price)}</p>
                   </div>
-                  <div className="font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+                  <div className="font-bold text-primary dark:text-indigo-400 text-sm">
                     {renderPrice((item.product.pricing_tier?.retail_price || item.product.price) * item.quantity)}
                   </div>
                 </div>
@@ -169,7 +169,7 @@ const OTCSales = () => {
             )}
           </div>
 
-          <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-auto">
+          <div className="border-t border-gray-100  pt-4 mt-auto">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-bold text-gray-500 uppercase">Subtotal</span>
               <span className="font-bold text-gray-800 dark:text-gray-200">{renderPrice(calculateSubtotal())}</span>
@@ -183,13 +183,13 @@ const OTCSales = () => {
                 max="100"
                 value={discountMargin}
                 onChange={(e) => setDiscountMargin(e.target.value)}
-                className="w-20 pl-2 pr-1 py-1 text-right bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold"
+                className="w-20 pl-2 pr-1 py-1 text-right bg-gray-50 dark:bg-gray-900 border border-gray-200  rounded-lg text-sm font-bold"
               />
             </div>
 
-            <div className="flex justify-between items-center mb-6 py-3 border-y border-dashed border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center mb-6 py-3 border-y border-dashed border-gray-200 ">
               <span className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-widest">Total SP</span>
-              <span className="text-2xl font-display font-bold text-indigo-600 dark:text-indigo-400">
+              <span className="text-2xl font-display font-bold text-primary dark:text-indigo-400">
                 {renderPrice(calculateTotal())}
               </span>
             </div>
@@ -198,7 +198,7 @@ const OTCSales = () => {
               disabled={cart.length === 0}
               className={`w-full py-4 rounded-xl text-white font-bold text-sm uppercase tracking-widest transition-all ${
                 cart.length > 0
-                  ? "bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg"
+                  ? "btn-primary  shadow-md hover:shadow-lg"
                   : "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
               }`}
             >

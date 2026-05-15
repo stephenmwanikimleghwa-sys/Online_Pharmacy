@@ -85,7 +85,7 @@ const ValidatePrescription = () => {
           <h1 className="text-2xl font-bold text-gray-800">Prescription Not Found</h1>
           <button
             onClick={() => navigate('/pharmacist/dashboard')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 btn-primary text-white rounded-md "
           >
             Back to Dashboard
           </button>
@@ -107,7 +107,7 @@ const ValidatePrescription = () => {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="glass-card  p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Prescription Details</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -138,7 +138,7 @@ const ValidatePrescription = () => {
                 href={prescription.file_path}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline"
+                className="text-primary hover:text-primary underline"
               >
                 View Prescription
               </a>
@@ -146,7 +146,7 @@ const ValidatePrescription = () => {
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="glass-card  p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Inventory Check</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -168,7 +168,7 @@ const ValidatePrescription = () => {
             </div>
             <div className="p-4 rounded-lg bg-blue-100">
               <label className="block text-sm font-medium text-gray-700">Current Quantity</label>
-              <p className="text-blue-800">{inventoryCheck.quantity || 'N/A'}</p>
+              <p className="text-primary">{inventoryCheck.quantity || 'N/A'}</p>
             </div>
           </div>
 
@@ -184,7 +184,7 @@ const ValidatePrescription = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="glass-card  p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Validation Actions</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
