@@ -84,10 +84,10 @@
 /* Glow animation */
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
   }
   50% {
-    box-shadow: 0 0 40px rgba(79, 70, 229, 0.6);
+    box-shadow: 0 0 40px rgba(192, 38, 211, 0.6);
   }
 }
 
@@ -206,7 +206,7 @@ input:focus {
 }
 
 .shadow-glow {
-  box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
 }
 
 /* Smooth scale and transform effects */
@@ -222,13 +222,13 @@ input:focus::placeholder {
 /* Button ripple effect preparation */
 @keyframes ripple {
   0% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+    box-shadow: 0 0 0 10px rgba(192, 38, 211, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+    box-shadow: 0 0 0 0 rgba(192, 38, 211, 0);
   }
 }
 

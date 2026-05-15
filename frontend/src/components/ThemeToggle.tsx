@@ -14,18 +14,30 @@ const ThemeToggle: React.FC = () => {
   return (
     <div className="relative group">
       <button
-        className="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="p-2 rounded-lg backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+        style={{
+          background: 'var(--bg-field)',
+          border: '1px solid var(--border-primary)',
+          color: 'var(--text-secondary)',
+        }}
         aria-label="Toggle theme"
       >
         {effectiveTheme === 'dark' ? (
-          <MoonIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          <MoonIcon className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
         ) : (
-          <SunIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          <SunIcon className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
         )}
       </button>
 
       {/* Theme dropdown */}
-      <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+      <div
+        className="absolute right-0 mt-2 w-36 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-primary)',
+          backdropFilter: 'blur(18px)',
+        }}
+      >
         {themes.map((t) => {
           const Icon = t.icon;
           const isActive = theme === t.value;
@@ -34,18 +46,21 @@ const ThemeToggle: React.FC = () => {
             <button
               key={t.value}
               onClick={() => setTheme(t.value)}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
-                isActive
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors"
+              style={{
+                background: isActive ? 'rgba(217, 70, 239, 0.12)' : 'transparent',
+                color: isActive ? 'var(--color-highlight)' : 'var(--text-primary)',
+              }}
               aria-label={`Switch to ${t.label} theme`}
               aria-pressed={isActive}
             >
               <Icon className="h-4 w-4" />
               <span>{t.label}</span>
               {isActive && (
-                <span className="ml-auto w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+                <span
+                  className="ml-auto w-1.5 h-1.5 rounded-full"
+                  style={{ background: 'var(--color-accent)' }}
+                />
               )}
             </button>
           );

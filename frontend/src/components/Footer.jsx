@@ -20,15 +20,15 @@ const Footer = () => {
               <div className="footer-logo-mark">
                 <span className="text-white font-bold text-sm font-display">TP</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white font-display">Transcounty</h3>
+              <h3 className="text-lg font-bold font-display" style={{ color: 'var(--text-primary)' }}>Transcounty</h3>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               Your trusted pharmacy management platform in Kenya. Secure, convenient, and accessible healthcare.
             </p>
           </div>
 
           <div>
-            <h4 className="footer-heading dark:text-slate-200">Quick Links</h4>
+            <h4 className="footer-heading">Quick Links</h4>
             <ul className="space-y-2.5">
               {quickLinks.map(({ to, label }) => (
                 <li key={to}>
@@ -41,25 +41,25 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="footer-heading dark:text-slate-200">Contact Us</h4>
-            <ul className="space-y-2.5 text-sm text-slate-500 dark:text-slate-400">
+            <h4 className="footer-heading">Contact Us</h4>
+            <ul className="space-y-2.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
               <li className="flex items-center gap-2">
-                <EnvelopeIcon className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                <EnvelopeIcon className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
                 <span>info@transcountypharmacy.co.ke</span>
               </li>
               <li className="flex items-center gap-2">
-                <PhoneIcon className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                <PhoneIcon className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
                 <span>+254 700 123 456</span>
               </li>
               <li className="flex items-center gap-2">
-                <MapPinIcon className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                <MapPinIcon className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
                 <span>Nairobi, Kenya</span>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="footer-heading dark:text-slate-200">Follow Us</h4>
+            <h4 className="footer-heading">Follow Us</h4>
             <div className="flex items-center gap-3">
               {[
                 { href: "https://facebook.com", Icon: FaFacebook, label: "Facebook" },
@@ -82,7 +82,8 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="footer-copyright border-t border-slate-200/60 pt-8 mt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+        <div className="footer-copyright pt-8 mt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs"
+          style={{ borderTop: '1px solid var(--border-primary)', color: 'var(--text-secondary)' }}>
           <p>© 2025 Transcounty Pharmacy. All rights reserved.</p>
           <p>Licensed under PPB Kenya.</p>
         </div>

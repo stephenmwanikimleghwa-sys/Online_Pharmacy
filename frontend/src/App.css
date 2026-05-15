@@ -16,8 +16,8 @@
 }
 
 .error-message {
-  background-color: #fee2e2;
-  border: 1px solid #fecaca;
+  background-color: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.25);
   color: #dc2626;
   padding: 1rem;
   border-radius: 0.5rem;
@@ -28,8 +28,8 @@
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #1d4ed8;
+  border: 3px solid var(--bg-field);
+  border-top: 3px solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -72,11 +72,11 @@
   display: flex;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .cart-total {
   font-size: 1.25rem;
   font-weight: bold;
-  color: #1d4ed8;
+  color: var(--color-primary);
 }
