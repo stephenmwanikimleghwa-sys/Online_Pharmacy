@@ -210,8 +210,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         else if (user.is_customer) role = 'customer';
       }
 
-      console.warn(`[Auth Debug] Unknown role "${role}", using default path`);
-
       let path = "/";
       switch (role) {
         case "pharmacist":

@@ -11,9 +11,15 @@ import axios, {
 // In development, if VITE_API_BASE_URL isn't set, use localhost
 const isDevelopment = import.meta.env.MODE === 'development';
 const defaultDevUrl = 'http://localhost:8000/api';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (isDevelopment ? defaultDevUrl : '/api');
+const userProvidedApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = userProvidedApiBaseUrl || (isDevelopment ? defaultDevUrl : `${window.location.origin}/api`);
 
-// Log API configuration (removed for production)
+if (!userProvidedApiBaseUrl && !isDevelopment) {
+  console.warn(
+    '[API] VITE_API_BASE_URL is not set in production. Falling back to same-origin /api.\n' +
+    'If the frontend and backend are hosted separately, set VITE_API_BASE_URL to the backend API URL.'
+  );
+}
 
 // Create Axios instance
 const api: AxiosInstance = axios.create({
@@ -47,6 +53,16 @@ api.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
+    if (error.config) {
+      console.error('[API] Request failed', {
+        method: error.config.method,
+        url: error.config.url,
+        baseURL: error.config.baseURL,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    }
+
     if (error.response?.status === 401) {
       // Token expired or invalid - cleanup and redirect
       localStorage.removeItem("access_token");
