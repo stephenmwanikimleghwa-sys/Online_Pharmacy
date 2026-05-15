@@ -1,27 +1,226 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, LoginCredentials, User } from '../context/AuthContext';
-import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
-import '../styles/login-animations.css';
 
+/* ─── Inline styles (no Tailwind needed) ─────────────────────────────── */
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "linear-gradient(135deg, #9b59b6 0%, #8e44ad 25%, #e056a0 65%, #d98ee6 100%)",
+    padding: "24px",
+    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+  },
+  card: {
+    display: "flex",
+    width: "100%",
+    maxWidth: "820px",
+    minHeight: "360px",
+    borderRadius: "20px",
+    overflow: "hidden",
+    background: "rgba(230, 200, 230, 0.35)",
+    backdropFilter: "blur(18px)",
+    WebkitBackdropFilter: "blur(18px)",
+    border: "1px solid rgba(255,255,255,0.3)",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
+  },
+  // ── LEFT PANEL ──────────────────────────────────────────────────────────
+  leftPanel: {
+    flex: "0 0 45%",
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: "16px",
+    background: "linear-gradient(145deg, #1a0533 0%, #2d0b6b 30%, #4a0e8f 55%, #6b0f5e 80%, #1a0533 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // ── RIGHT PANEL ─────────────────────────────────────────────────────────
+  rightPanel: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "40px 36px",
+  },
+  title: {
+    fontSize: "2.2rem",
+    fontWeight: 400,
+    color: "#3b2045",
+    marginBottom: "32px",
+    textAlign: "center",
+    letterSpacing: "0.02em",
+  },
+  inputWrapper: {
+    position: "relative",
+    width: "100%",
+    marginBottom: "20px",
+  },
+  input: {
+    width: "100%",
+    border: "none",
+    borderBottom: "1.5px solid #9b6eae",
+    background: "transparent",
+    padding: "10px 36px 10px 0",
+    fontSize: "0.95rem",
+    color: "#3b2045",
+    outline: "none",
+    boxSizing: "border-box",
+    fontFamily: "inherit",
+  },
+  inputIcon: {
+    position: "absolute",
+    right: "2px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#9b6eae",
+    fontSize: "1rem",
+  },
+  loginBtn: {
+    display: "block",
+    marginLeft: "auto",
+    marginTop: "8px",
+    padding: "10px 32px",
+    background: "#1a0a2e",
+    color: "#fff",
+    border: "none",
+    borderRadius: "24px",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    letterSpacing: "0.04em",
+    transition: "background 0.2s, transform 0.15s",
+  },
+  footerLinks: {
+    display: "flex",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: "20px",
+  },
+  footerLink: {
+    fontSize: "0.8rem",
+    color: "#7a4d8a",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    fontFamily: "inherit",
+    textDecoration: "none",
+  },
+  errorBox: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "8px",
+    padding: "10px 14px",
+    background: "rgba(220,38,38,0.08)",
+    border: "1px solid rgba(220,38,38,0.2)",
+    borderRadius: "10px",
+    color: "#b91c1c",
+    fontSize: "0.85rem",
+    marginBottom: "12px",
+    width: "100%",
+    boxSizing: "border-box",
+  },
+};
+
+/* ─── Animated orbs canvas (CSS-only, no canvas API) ─────────────────── */
+const OrbsPanel: React.FC = () => (
+  <div style={styles.leftPanel}>
+    {/* Orb layers */}
+    <div style={{
+      position: "absolute", width: "260px", height: "260px", borderRadius: "50%",
+      background: "radial-gradient(circle at 35% 35%, rgba(255,100,60,0.85), rgba(180,30,140,0.7) 55%, rgba(60,10,120,0.5) 85%)",
+      top: "10%", left: "5%",
+      boxShadow: "inset -20px -20px 40px rgba(0,0,0,0.4), inset 10px 10px 30px rgba(255,180,100,0.3)",
+      animation: "orbFloat1 8s ease-in-out infinite",
+    }} />
+    <div style={{
+      position: "absolute", width: "200px", height: "200px", borderRadius: "50%",
+      background: "radial-gradient(circle at 40% 30%, rgba(200,80,220,0.8), rgba(100,20,180,0.6) 60%, rgba(20,5,80,0.4) 90%)",
+      top: "30%", left: "35%",
+      boxShadow: "inset -15px -15px 35px rgba(0,0,0,0.35), inset 8px 8px 20px rgba(220,130,255,0.2)",
+      animation: "orbFloat2 10s ease-in-out infinite",
+    }} />
+    <div style={{
+      position: "absolute", width: "150px", height: "150px", borderRadius: "50%",
+      background: "radial-gradient(circle at 38% 32%, rgba(255,140,40,0.9), rgba(220,60,100,0.7) 50%, rgba(80,10,150,0.5) 85%)",
+      bottom: "18%", left: "10%",
+      boxShadow: "inset -12px -12px 30px rgba(0,0,0,0.35), inset 6px 6px 15px rgba(255,200,100,0.3)",
+      animation: "orbFloat3 7s ease-in-out infinite",
+    }} />
+    <div style={{
+      position: "absolute", width: "90px", height: "90px", borderRadius: "50%",
+      background: "radial-gradient(circle at 40% 35%, rgba(180,180,255,0.5), rgba(100,50,200,0.4) 60%, transparent 85%)",
+      bottom: "10%", right: "15%",
+      boxShadow: "inset -8px -8px 20px rgba(0,0,0,0.3)",
+      animation: "orbFloat4 9s ease-in-out infinite",
+    }} />
+    <div style={{
+      position: "absolute", width: "60px", height: "60px", borderRadius: "50%",
+      background: "radial-gradient(circle at 38% 35%, rgba(255,80,120,0.6), rgba(150,20,180,0.4) 60%, transparent 80%)",
+      top: "12%", right: "20%",
+      animation: "orbFloat5 6s ease-in-out infinite",
+    }} />
+    {/* Glare highlight on large orb */}
+    <div style={{
+      position: "absolute", width: "80px", height: "40px", borderRadius: "50%",
+      background: "rgba(255,255,255,0.15)",
+      top: "17%", left: "12%",
+      filter: "blur(6px)",
+      transform: "rotate(-30deg)",
+    }} />
+    {/* Pink light leak */}
+    <div style={{
+      position: "absolute", bottom: 0, right: 0,
+      width: "120px", height: "120px",
+      background: "radial-gradient(circle, rgba(255,80,200,0.35), transparent 70%)",
+      filter: "blur(20px)",
+    }} />
+
+    <style>{`
+      @keyframes orbFloat1 {
+        0%,100% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(8px,-12px) scale(1.03); }
+        66% { transform: translate(-6px,8px) scale(0.98); }
+      }
+      @keyframes orbFloat2 {
+        0%,100% { transform: translate(0,0) scale(1); }
+        40% { transform: translate(-10px,10px) scale(1.04); }
+        70% { transform: translate(6px,-8px) scale(0.97); }
+      }
+      @keyframes orbFloat3 {
+        0%,100% { transform: translate(0,0); }
+        50% { transform: translate(10px,-10px); }
+      }
+      @keyframes orbFloat4 {
+        0%,100% { transform: translate(0,0); }
+        45% { transform: translate(-8px,8px); }
+      }
+      @keyframes orbFloat5 {
+        0%,100% { transform: translate(0,0) scale(1); }
+        50% { transform: translate(5px,6px) scale(1.1); }
+      }
+    `}</style>
+  </div>
+);
+
+/* ─── Main component ──────────────────────────────────────────────────── */
 const Login: React.FC = () => {
-  const [credentials, setCredentials] = useState<LoginCredentials>({
-    username: "",
-    password: "",
-  });
-  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [credentials, setCredentials] = useState<LoginCredentials>({ username: "", password: "" });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [hoveredBtn, setHoveredBtn] = useState(false);
   const { login, isAuthenticated, getDashboardPath } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(getDashboardPath());
-    }
+    if (isAuthenticated) navigate(getDashboardPath());
   }, [isAuthenticated, navigate, getDashboardPath]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +237,6 @@ const Login: React.FC = () => {
 
     if (result.success) {
       const returnedUser = result.user;
-
       const determineRole = (user: User | null | undefined): string | null => {
         if (!user) return null;
         if (user.role) return user.role.toString().toLowerCase();
@@ -72,13 +270,11 @@ const Login: React.FC = () => {
       navigate(target);
     } else {
       const err = result.error;
-
       const formatError = (errObj: any): string => {
         if (!errObj) return "Login failed. Please check your credentials.";
         if (typeof errObj === "string") return errObj;
         if (errObj.non_field_errors?.length) return errObj.non_field_errors[0];
         if (errObj.detail) return errObj.detail;
-
         const fieldMessages: string[] = [];
         ["username", "password", "email"].forEach((f) => {
           if (errObj[f]) {
@@ -87,187 +283,105 @@ const Login: React.FC = () => {
           }
         });
         if (fieldMessages.length) return fieldMessages.join(" ");
-
         try {
           return Object.values(errObj).flat().filter(Boolean).join(" ") || "Login failed. Please check your credentials.";
         } catch {
           return "Login failed. Please check your credentials.";
         }
       };
-
       setError(formatError(err));
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen h-screen w-screen flex animate-slide-in-page overflow-hidden">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #c026d3 100%)" }}>
-        {/* Decorative blobs - animated */}
-        <div className="absolute top-[-80px] left-[-80px] w-80 h-80 bg-white/10 rounded-full blur-3xl animate-blob" />
-        <div className="absolute bottom-[-60px] right-[-60px] w-96 h-96 bg-white/10 rounded-full blur-3xl animate-blob-delayed-1" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-blob-delayed-2" />
+    <div style={styles.page}>
+      <div style={styles.card}>
+        {/* Left – animated orbs */}
+        <OrbsPanel />
 
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full animate-fade-in">
-          {/* Logo */}
-          <div className="flex items-center gap-3 transform transition-transform hover:scale-105 duration-300">
-            <div className="w-11 h-11 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 group hover:bg-white/30 transition-colors">
-              <span className="text-white font-bold text-lg font-display">TP</span>
+        {/* Right – form */}
+        <div style={styles.rightPanel}>
+          <h1 style={styles.title}>Login</h1>
+
+          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+            {/* Email / Username */}
+            <div style={styles.inputWrapper}>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={credentials.username}
+                onChange={handleChange}
+                placeholder="Email"
+                style={styles.input}
+              />
+              <span style={styles.inputIcon}>✉</span>
             </div>
-            <span className="text-white font-display font-bold text-xl tracking-tight">Transcounty</span>
-          </div>
 
-          {/* Hero copy */}
-          <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <h1 className="text-5xl font-display font-bold text-white leading-tight mb-4">
-              Pharmacy<br />
-              <span className="text-white/70">Management</span><br />
-              Platform
-            </h1>
-            <p className="text-white/60 text-lg leading-relaxed max-w-sm">
-              A unified system for managing prescriptions, inventory, and dispensing across all pharmacies.
-            </p>
+            {/* Password */}
+            <div style={styles.inputWrapper}>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={credentials.password}
+                onChange={handleChange}
+                placeholder="password"
+                style={styles.input}
+              />
+              <span style={styles.inputIcon}>🔒</span>
+            </div>
 
-            {/* Feature pills - staggered animation */}
-            <div className="flex flex-wrap gap-2 mt-8">
-              {["Stock", "Prescriptions", "Reports", "Logs"].map((f, i) => (
-                <span 
-                  key={f} 
-                  className="px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full text-white/80 text-xs font-medium animate-slide-up hover:bg-white/25 transition-colors cursor-default"
-                  style={{ animationDelay: `${0.3 + i * 0.1}s` }}
-                >
-                  {f}
+            {/* Error */}
+            {error && (
+              <div style={styles.errorBox}>
+                <ExclamationCircleIcon style={{ width: 18, height: 18, flexShrink: 0, marginTop: 1 }} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                ...styles.loginBtn,
+                background: hoveredBtn ? "#2d1060" : "#1a0a2e",
+                transform: hoveredBtn ? "translateY(-1px)" : "none",
+              }}
+              onMouseEnter={() => setHoveredBtn(true)}
+              onMouseLeave={() => setHoveredBtn(false)}
+            >
+              {loading ? (
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <LoadingSpinner size="sm" color="white" />
+                  Signing in…
                 </span>
-              ))}
-            </div>
-          </div>
+              ) : "Login"}
+            </button>
+          </form>
 
-          {/* Footer */}
-          <p className="text-white/30 text-xs">© 2025 Transcounty Pharmacy Aggregator</p>
-        </div>
-      </div>
-
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #eef2ff 0%, #faf5ff 50%, #ecfdf5 100%)" }}>
-        {/* Animated background elements */}
-        <div className="absolute top-10 right-10 w-40 h-40 bg-indigo-100/30 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 left-10 w-52 h-52 bg-purple-100/20 rounded-full blur-3xl animate-float-delayed" />
-        
-        <div className="w-full max-w-md relative z-10">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8 animate-fade-in">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #c026d3)" }}>
-              <span className="text-white font-bold text-base font-display">TP</span>
-            </div>
-            <span className="font-display font-bold text-xl text-slate-800">Transcounty</span>
-          </div>
-
-          {/* Card */}
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-premium border border-white/70 p-8 animate-slide-up hover:shadow-2xl transition-shadow duration-500" style={{ animationDelay: '0.1s' }}>
-            <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <h2 className="text-3xl font-display font-bold text-slate-900 mb-1">Welcome back</h2>
-              <p className="text-slate-500 text-sm">Sign in to your account to continue</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Username */}
-              <div>
-                <label htmlFor="username" className={`block text-sm font-semibold mb-1.5 transition-colors duration-300 ${
-                  focusedField === 'username' ? 'text-indigo-600' : 'text-slate-700'
-                }`}>
-                  Username
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={credentials.username}
-                  onChange={handleChange}
-                  onFocus={() => setFocusedField('username')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="Enter your username"
-                  className={`w-full px-4 py-3 rounded-xl border text-slate-900 placeholder-slate-400 text-sm focus:outline-none transition-all duration-300 ${
-                    focusedField === 'username'
-                      ? 'border-indigo-500 bg-indigo-50/30 ring-2 ring-indigo-500/20 scale-[1.01]'
-                      : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
-                  }`}
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label htmlFor="password" className={`block text-sm font-semibold mb-1.5 transition-colors duration-300 ${
-                  focusedField === 'password' ? 'text-indigo-600' : 'text-slate-700'
-                }`}>
-                  Password
-                </label>
-                <div className="relative group">
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={credentials.password}
-                    onChange={handleChange}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="Enter your password"
-                    className={`w-full px-4 py-3 pr-11 rounded-xl border text-slate-900 placeholder-slate-400 text-sm focus:outline-none transition-all duration-300 ${
-                      focusedField === 'password'
-                        ? 'border-indigo-500 bg-indigo-50/30 ring-2 ring-indigo-500/20 scale-[1.01]'
-                        : 'border-slate-200 bg-slate-50/50 hover:border-slate-300'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-all duration-200 group-hover:text-slate-500"
-                  >
-                    {showPassword ? <EyeIcon className="h-5 w-5 animate-pulse-subtle" /> : <EyeSlashIcon className="h-5 w-5 animate-pulse-subtle" />}
-                  </button>
-                </div>
-                <div className="flex justify-end mt-1.5">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/password-reset")}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-all duration-200 hover:underline hover:translate-x-0.5"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm animate-shake">
-                  <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5 animate-bounce-subtle" />
-                  <p>{error}</p>
-                </div>
-              )}
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm shadow-glow hover:shadow-2xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 transition-all duration-300 group hover:translate-y-[-2px]"
-                style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <LoadingSpinner size="sm" color="white" />
-                    <span>Signing in...</span>
-                  </span>
-                ) : "Sign in"}
-              </button>
-            </form>
+          {/* Footer links */}
+          <div style={styles.footerLinks}>
+            <button style={styles.footerLink} onClick={() => navigate("/register")}>
+              Creat an account
+            </button>
+            <button style={styles.footerLink} onClick={() => navigate("/password-reset")}>
+              Forgot your password
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Responsive tweak for small screens */}
+      <style>{`
+        @media (max-width: 600px) {
+          .login-card-left { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };
