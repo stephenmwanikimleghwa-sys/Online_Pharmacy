@@ -77,16 +77,34 @@ export const AddMedicineModal = ({
               {formErrors.category && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.category}</p>}
             </div>
 
-            {/* Price */}
+            {/* Buying Price (BP) */}
             <div>
-              <label className="form-label">Price (KES)</label>
+              <label className="form-label">Buying Price / B.P (KES)</label>
+              <input
+                name="buying_price"
+                type="number"
+                step="0.01"
+                value={form.buying_price}
+                onChange={(e) => setForm({ ...form, buying_price: e.target.value })}
+                placeholder="Cost from supplier, e.g. 100"
+                className={inputBase(formErrors.buying_price)}
+              />
+              <p className="mt-1.5 text-[10px] text-slate-400 px-1">
+                WSP auto-set to <span className="font-bold text-emerald-600">BP × 1.15</span> &nbsp;·&nbsp; SP to <span className="font-bold text-rose-500">BP × 1.33</span>
+              </p>
+              {formErrors.buying_price && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.buying_price}</p>}
+            </div>
+
+            {/* Price (optional override) */}
+            <div>
+              <label className="form-label">Price Override (KES) <span className="normal-case font-normal text-slate-400">— leave blank to use SP</span></label>
               <input
                 name="price"
                 type="number"
                 step="0.01"
                 value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
-                placeholder="0.00"
+                placeholder="Auto-calculated from B.P if blank"
                 className={inputBase(formErrors.price)}
               />
               {formErrors.price && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.price}</p>}

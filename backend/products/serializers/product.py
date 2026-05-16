@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from products.models import Product
+from products.models import Product, PricingTier
 from django.core.exceptions import ValidationError
 from .pricing_tier import PricingTierSerializer
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from decimal import Decimal
 
 
@@ -54,10 +54,16 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating a new product.
     Validates price > 0, stock >= 0, requires pharmacy.
+    Optionally accepts buying_price to auto-create a PricingTier.
     """
 
-    price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01, required=False)
     stock_quantity = serializers.IntegerField(min_value=0)
+    buying_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0.01,
+        required=False, write_only=True,
+        help_text='Buying/cost price from supplier. WSP (×1.15) and SP (×1.33) are auto-calculated.'
+    )
 
     class Meta:
         model = Product
@@ -69,48 +75,74 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "manufacturer",
             "strength",
             "price",
+            "buying_price",
             "stock_quantity",
             "supplier",
             "expiry_date",
             "image",
         )
 
-    # Removed validate_pharmacy since we're auto-assigning pharmacy
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Require either price or buying_price to be supplied."""
+        if not data.get('price') and not data.get('buying_price'):
+            raise serializers.ValidationError(
+                {'price': 'Provide either a Price or a Buying Price.'}
+            )
+        return data
 
-    def validate_price(self, value: Decimal) -> Decimal:
-        """
-        Validate that the price is greater than 0.
-        """
-        if value <= 0:
+    def validate_price(self, value: Optional[Decimal]) -> Optional[Decimal]:
+        """Validate that the price is greater than 0 when provided."""
+        if value is not None and value <= 0:
             raise ValidationError("Price must be greater than 0.")
         return value
 
+    def validate_buying_price(self, value: Optional[Decimal]) -> Optional[Decimal]:
+        """Validate that the buying price is greater than 0 when provided."""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Buying price must be greater than 0.")
+        return value
+
     def validate_stock_quantity(self, value: int) -> int:
-        """
-        Validate that stock quantity is non-negative.
-        """
+        """Validate that stock quantity is non-negative."""
         if value < 0:
             raise ValidationError("Stock quantity cannot be negative.")
         return value
 
     def create(self, validated_data: Dict[str, Any]) -> Product:
-        """
-        Create a new product instance.
-        """
-        # Create products without pharmacy association
-        return super().create(validated_data)
+        """Create product, then auto-create PricingTier if buying_price was supplied."""
+        buying_price = validated_data.pop('buying_price', None)
+
+        # If only buying_price was given, derive a fallback price (retail SP = ×1.33)
+        if buying_price and not validated_data.get('price'):
+            validated_data['price'] = buying_price * Decimal('1.33')
+
+        product = super().create(validated_data)
+
+        if buying_price is not None:
+            PricingTier.objects.create(
+                product=product,
+                buying_price=buying_price
+            )
+
+        return product
 
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating product details (partial updates).
     Validates price/stock if changed.
+    Optionally accepts buying_price to create-or-update the PricingTier.
     """
 
     price = serializers.DecimalField(
         max_digits=10, decimal_places=2, min_value=0.01, required=False
     )
     stock_quantity = serializers.IntegerField(min_value=0, required=False)
+    buying_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0.01,
+        required=False, write_only=True,
+        help_text='Buying/cost price from supplier. WSP (×1.15) and SP (×1.33) are auto-calculated.'
+    )
 
     class Meta:
         model = Product
@@ -122,23 +154,41 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "manufacturer",
             "strength",
             "price",
+            "buying_price",
             "stock_quantity",
             "image",
             "is_active",
         )
 
-    def validate_price(self, value: Decimal) -> Decimal:
-        """
-        Validate that the price is greater than 0 if provided.
-        """
+    def validate_price(self, value: Optional[Decimal]) -> Optional[Decimal]:
+        """Validate that the price is greater than 0 if provided."""
         if value is not None and value <= 0:
             raise ValidationError("Price must be greater than 0.")
         return value
 
+    def validate_buying_price(self, value: Optional[Decimal]) -> Optional[Decimal]:
+        """Validate that the buying price is greater than 0 when provided."""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Buying price must be greater than 0.")
+        return value
+
     def validate_stock_quantity(self, value: int) -> int:
-        """
-        Validate that stock quantity is non-negative if provided.
-        """
+        """Validate that stock quantity is non-negative if provided."""
         if value is not None and value < 0:
             raise ValidationError("Stock quantity cannot be negative.")
         return value
+
+    def update(self, instance: Product, validated_data: Dict[str, Any]) -> Product:
+        """Update product and create-or-update PricingTier if buying_price was supplied."""
+        buying_price = validated_data.pop('buying_price', None)
+        product = super().update(instance, validated_data)
+
+        if buying_price is not None:
+            try:
+                tier = product.pricing_tier
+                tier.buying_price = buying_price
+                tier.save()
+            except PricingTier.DoesNotExist:
+                PricingTier.objects.create(product=product, buying_price=buying_price)
+
+        return product

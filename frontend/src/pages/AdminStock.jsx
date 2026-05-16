@@ -45,6 +45,7 @@ const AdminStock = () => {
 	const [form, setForm] = useState({
 		name: '',
 		category: '',
+		buying_price: '',
 		price: '',
 		stock_quantity: 0,
 		expiry_date: '',
@@ -175,6 +176,7 @@ const AdminStock = () => {
 		setForm({
 			name: '',
 			category: '',
+			buying_price: '',
 			price: '',
 			stock_quantity: 0,
 			expiry_date: '',
@@ -199,6 +201,7 @@ const AdminStock = () => {
 		setForm({
 			name: item.name || '',
 			category: item.category || '',
+			buying_price: item.pricing_tier?.buying_price || '',
 			price: item.price || '',
 			stock_quantity: item.stock_quantity || 0,
 			expiry_date: item.expiry_date || '',
@@ -232,7 +235,16 @@ const AdminStock = () => {
 			errors.category = 'Category is required';
 		}
 
-		if (!form.price || isNaN(form.price) || Number(form.price) <= 0) {
+		// At least one of buying_price or price is required
+		const hasBP = form.buying_price && !isNaN(form.buying_price) && Number(form.buying_price) > 0;
+		const hasPrice = form.price && !isNaN(form.price) && Number(form.price) > 0;
+		if (!hasBP && !hasPrice) {
+			errors.buying_price = 'Buying Price is required';
+		}
+		if (hasBP && Number(form.buying_price) <= 0) {
+			errors.buying_price = 'Buying Price must be a positive number';
+		}
+		if (hasPrice && Number(form.price) <= 0) {
 			errors.price = 'Price must be a positive number';
 		}
 
@@ -248,7 +260,7 @@ const AdminStock = () => {
 		if (form.expiry_date) {
 			const expiryDate = new Date(form.expiry_date);
 			const today = new Date();
-			today.setHours(0, 0, 0, 0); // Reset time part for date-only comparison
+			today.setHours(0, 0, 0, 0);
 
 			if (expiryDate < today) {
 				errors.expiry_date = 'Expiry date must be in the future';
@@ -273,7 +285,8 @@ const AdminStock = () => {
 				data = new FormData();
 				data.append('name', form.name.trim());
 				data.append('category', form.category.trim());
-				data.append('price', Number(form.price));
+				if (form.buying_price) data.append('buying_price', Number(form.buying_price));
+				if (form.price) data.append('price', Number(form.price));
 				data.append('stock_quantity', Number(form.stock_quantity));
 				data.append('description', form.description?.trim() || '');
 				data.append('supplier', form.supplier?.trim() || '');
@@ -285,7 +298,8 @@ const AdminStock = () => {
 				data = {
 					name: form.name.trim(),
 					category: form.category.trim(),
-					price: Number(form.price),
+					...(form.buying_price ? { buying_price: Number(form.buying_price) } : {}),
+					...(form.price ? { price: Number(form.price) } : {}),
 					stock_quantity: Number(form.stock_quantity),
 					description: form.description?.trim() || '',
 					supplier: form.supplier?.trim() || null,
