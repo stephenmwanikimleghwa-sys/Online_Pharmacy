@@ -26,6 +26,7 @@ jobs:
     env:
       VIRTUAL_ENV: ${{ github.workspace }}/venv
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+      DEBUG: "True"
     steps:
     - uses: actions/checkout@v3
     
