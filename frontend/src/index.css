@@ -105,6 +105,20 @@
   --glass-shadow: 0 20px 80px rgba(217, 70, 239, 0.14);
 }
 
+/* Manual light mode — overrides prefers-color-scheme: dark when user explicitly picks light */
+.light {
+  --bg-gradient: var(--bg-gradient-light);
+  --bg-primary: var(--color-bg-light);
+  --bg-card: var(--color-bg-card-light);
+  --bg-field: var(--color-field-bg-light);
+  --text-primary: var(--color-text-light);
+  --text-secondary: var(--color-text-muted-light);
+  --border-primary: var(--color-border-light);
+  --btn-gradient: var(--btn-gradient-light);
+  --glass-border: rgba(160, 60, 200, 0.3);
+  --glass-shadow: 0 20px 80px rgba(124, 58, 237, 0.12);
+}
+
 /* Body — rich gradient background */
 body {
   font-family: var(--font-body);

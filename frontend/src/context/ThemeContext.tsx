@@ -30,10 +30,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setEffectiveTheme(resolved);
 
-      // Update document class
+      // Update document class — both .dark and .light must be managed
+      // so that the CSS .light class overrides prefers-color-scheme: dark
       if (resolved === 'dark') {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
       } else {
+        document.documentElement.classList.add('light');
         document.documentElement.classList.remove('dark');
       }
     };

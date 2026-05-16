@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('products', '0002_stocklog_product_reorder_threshold_and_more'),
-        ('products', 'add_featured_field'),
     ]
 
     operations = [
