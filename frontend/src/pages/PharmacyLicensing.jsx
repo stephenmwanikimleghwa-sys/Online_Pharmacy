@@ -92,9 +92,8 @@ const PharmacyLicensing = () => {
     return (
         <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="mb-12">
-                <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Licensing & Permits</h1>
-                <h1 className="text-4xl font-display font-bold text-primary-text tracking-tight">Licensing & Permits</h1>
-                <p className="text-secondary-text mt-2 text-lg">Manage and track your pharmacy's legal documentation and compliance status.</p>
+                <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Licensing &amp; Permits</h1>
+                <p className="mt-2 text-lg" style={{ color: 'var(--text-secondary)' }}>Manage and track your pharmacy's legal documentation and compliance status.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
