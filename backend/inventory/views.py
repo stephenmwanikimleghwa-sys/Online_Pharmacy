@@ -10,7 +10,9 @@ from users.permissions import IsPharmacistOrAdmin
 from products.models import Product
 from products.models import StockLog
 from users.models import User
+import logging
 
+logger = logging.getLogger(__name__)
 
 from products.serializers import ProductSerializer
 from .serializers import StockLogSerializer
