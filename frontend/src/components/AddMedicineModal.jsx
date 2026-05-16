@@ -13,13 +13,13 @@ export const AddMedicineModal = ({
   if (!isOpen) return null;
 
   const inputBase = (hasError) =>
-    `w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${hasError ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`;
+    `form-input ${hasError ? 'border-rose-300 ring-4 ring-rose-500/5 border-rose-400' : ''}`;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white rounded-[2.5rem] shadow-premium max-w-3xl w-full overflow-hidden flex flex-col md:flex-row animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
+    <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="modal-card rounded-[2.5rem] shadow-premium max-w-3xl w-full overflow-hidden flex flex-col md:flex-row animate-scale-up">
         {/* Visual Panel */}
-        <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="md:w-1/3 p-10 text-white flex flex-col justify-between relative overflow-hidden" style={{background:'var(--btn-gradient)'}}>
           <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
           <div>
             <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
@@ -32,21 +32,21 @@ export const AddMedicineModal = ({
             <h2 className="text-3xl font-display font-bold leading-tight">
               {isEditMode ? 'Edit Medicine' : 'Add New Medicine'}
             </h2>
-            <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">
+            <p className="text-sm mt-4 font-medium leading-relaxed" style={{color:'rgba(255,255,255,0.75)'}}>
               {isEditMode
                 ? 'Update the details for this product in your pharmacy inventory.'
                 : 'Register a new pharmaceutical product into your inventory system.'}
             </p>
           </div>
-          <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.3em] opacity-40 mt-8">Inventory Module</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 mt-8" style={{color:'rgba(255,255,255,0.7)'}}>Inventory Module</div>
         </div>
 
         {/* Form Panel */}
-        <form onSubmit={onSubmit} className="md:w-2/3 p-10 bg-slate-50/30 overflow-y-auto max-h-[85vh]">
+        <form onSubmit={onSubmit} className="md:w-2/3 p-10 overflow-y-auto max-h-[85vh]" style={{background:'var(--bg-field)'}}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name — full width */}
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Medicine Name</label>
+              <label className="form-label">Medicine Name</label>
               <input
                 name="name"
                 value={form.name}
@@ -59,7 +59,7 @@ export const AddMedicineModal = ({
 
             {/* Category */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Category</label>
+              <label className="form-label">Category</label>
               <select
                 name="category"
                 value={form.category}
@@ -79,7 +79,7 @@ export const AddMedicineModal = ({
 
             {/* Price */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Price (KES)</label>
+              <label className="form-label">Price (KES)</label>
               <input
                 name="price"
                 type="number"
@@ -94,7 +94,7 @@ export const AddMedicineModal = ({
 
             {/* Stock Quantity */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Initial Stock Qty</label>
+              <label className="form-label">Initial Stock Qty</label>
               <input
                 name="stock_quantity"
                 type="number"
@@ -107,7 +107,7 @@ export const AddMedicineModal = ({
 
             {/* Reorder Threshold */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Reorder Threshold</label>
+              <label className="form-label">Reorder Threshold</label>
               <input
                 name="reorder_threshold"
                 type="number"
@@ -120,7 +120,7 @@ export const AddMedicineModal = ({
 
             {/* Dosage Form */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Dosage Form</label>
+              <label className="form-label">Dosage Form</label>
               <select
                 name="dosage_form"
                 value={form.dosage_form || 'other'}
@@ -142,7 +142,7 @@ export const AddMedicineModal = ({
 
             {/* Strength */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Strength</label>
+              <label className="form-label">Strength</label>
               <input
                 name="strength"
                 value={form.strength || ''}
@@ -154,7 +154,7 @@ export const AddMedicineModal = ({
 
             {/* Manufacturer */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Manufacturer</label>
+              <label className="form-label">Manufacturer</label>
               <input
                 name="manufacturer"
                 value={form.manufacturer || ''}
@@ -166,7 +166,7 @@ export const AddMedicineModal = ({
 
             {/* Supplier */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Supplier</label>
+              <label className="form-label">Supplier</label>
               <input
                 name="supplier"
                 value={form.supplier}
@@ -178,7 +178,7 @@ export const AddMedicineModal = ({
 
             {/* Expiry Date */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Expiry Date</label>
+              <label className="form-label">Expiry Date</label>
               <input
                 name="expiry_date"
                 type="date"
@@ -191,21 +191,21 @@ export const AddMedicineModal = ({
 
             {/* Description — full width */}
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Description</label>
+              <label className="form-label">Description</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
                 placeholder="Brief description of the medicine..."
-                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
+                className="form-input"
               />
             </div>
 
             {/* Product Image — full width */}
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Product Image</label>
-              <div className="relative group border-2 border-dashed border-slate-200 rounded-2xl p-6 hover:border-indigo-400 hover:bg-white transition-all cursor-pointer">
+              <label className="form-label">Product Image</label>
+              <div className="relative group border-2 border-dashed rounded-2xl p-6 transition-all cursor-pointer" style={{borderColor:'var(--border-primary)', background:'var(--bg-field)'}}>
                 <input
                   name="image"
                   type="file"
@@ -231,7 +231,7 @@ export const AddMedicineModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
+              className="flex-1 form-cancel-btn rounded-2xl px-6 py-4"
             >
               Cancel
             </button>

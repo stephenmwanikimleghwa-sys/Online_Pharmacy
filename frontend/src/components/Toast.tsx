@@ -41,34 +41,34 @@ const toastIcons = {
   info: InformationCircleIcon
 };
 
-const toastColors = {
+/** Glass-morphism colour config using CSS-var token classes */
+const toastConfig: Record<
+  ToastType,
+  { glassClass: string; iconColor: string; titleColor: string; msgColor: string }
+> = {
   success: {
-    bg: 'bg-green-50 dark:bg-green-900/30',
-    border: 'border-green-200 dark:border-green-800',
-    icon: 'text-green-500 dark:text-green-400',
-    title: 'text-green-900 dark:text-green-100',
-    message: 'text-green-700 dark:text-green-300'
+    glassClass: 'toast-success-glass',
+    iconColor: '#10b981',
+    titleColor: 'var(--text-primary)',
+    msgColor: 'var(--text-secondary)'
   },
   error: {
-    bg: 'bg-red-50 dark:bg-red-900/30',
-    border: 'border-red-200 dark:border-red-800',
-    icon: 'text-red-500 dark:text-red-400',
-    title: 'text-red-900 dark:text-red-100',
-    message: 'text-red-700 dark:text-red-300'
+    glassClass: 'toast-error-glass',
+    iconColor: '#dc2626',
+    titleColor: 'var(--text-primary)',
+    msgColor: 'var(--text-secondary)'
   },
   warning: {
-    bg: 'bg-yellow-50 dark:bg-yellow-900/30',
-    border: 'border-yellow-200 dark:border-yellow-800',
-    icon: 'text-yellow-500 dark:text-yellow-400',
-    title: 'text-yellow-900 dark:text-yellow-100',
-    message: 'text-yellow-700 dark:text-yellow-300'
+    glassClass: 'toast-warning-glass',
+    iconColor: '#f59e0b',
+    titleColor: 'var(--text-primary)',
+    msgColor: 'var(--text-secondary)'
   },
   info: {
-    bg: 'bg-blue-50 dark:bg-blue-900/30',
-    border: 'border-blue-200 dark:border-blue-800',
-    icon: 'text-primary dark:text-blue-400',
-    title: 'text-blue-900 dark:text-blue-100',
-    message: 'text-primary dark:text-blue-300'
+    glassClass: 'toast-info-glass',
+    iconColor: 'var(--color-primary)',
+    titleColor: 'var(--text-primary)',
+    msgColor: 'var(--text-secondary)'
   }
 };
 
@@ -77,64 +77,37 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 9);
-    const newToast: Toast = {
-      ...toast,
-      id,
-      duration: toast.duration ?? 5000
-    };
-
+    const newToast: Toast = { ...toast, id, duration: toast.duration ?? 5000 };
     setToasts(prev => [...prev, newToast]);
-
-    // Auto-remove after duration
     if (newToast.duration && newToast.duration > 0) {
-      setTimeout(() => {
-        removeToast(id);
-      }, newToast.duration);
+      setTimeout(() => removeToast(id), newToast.duration);
     }
-
     return id;
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const clearToasts = useCallback(() => {
-    setToasts([]);
-  }, []);
+  const clearToasts = useCallback(() => { setToasts([]); }, []);
 
-  const success = useCallback((message: string, title?: string) => {
-    return addToast({ type: 'success', message, title });
-  }, [addToast]);
+  const success = useCallback((message: string, title?: string) =>
+    addToast({ type: 'success', message, title }), [addToast]);
+  const error = useCallback((message: string, title?: string) =>
+    addToast({ type: 'error', message, title, duration: 8000 }), [addToast]);
+  const warning = useCallback((message: string, title?: string) =>
+    addToast({ type: 'warning', message, title }), [addToast]);
+  const info = useCallback((message: string, title?: string) =>
+    addToast({ type: 'info', message, title }), [addToast]);
 
-  const error = useCallback((message: string, title?: string) => {
-    return addToast({ type: 'error', message, title, duration: 8000 });
-  }, [addToast]);
-
-  const warning = useCallback((message: string, title?: string) => {
-    return addToast({ type: 'warning', message, title });
-  }, [addToast]);
-
-  const info = useCallback((message: string, title?: string) => {
-    return addToast({ type: 'info', message, title });
-  }, [addToast]);
-
-  // Keyboard shortcut to dismiss all toasts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        clearToasts();
-      }
-    };
-
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') clearToasts(); };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [clearToasts]);
 
   return (
-    <ToastContext.Provider
-      value={{ toasts, addToast, removeToast, clearToasts, success, error, warning, info }}
-    >
+    <ToastContext.Provider value={{ toasts, addToast, removeToast, clearToasts, success, error, warning, info }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </ToastContext.Provider>
@@ -142,11 +115,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 };
 
 const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: string) => void }> = ({
-  toasts,
-  onRemove
+  toasts, onRemove
 }) => {
   if (toasts.length === 0) return null;
-
   return (
     <div
       className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"
@@ -162,34 +133,39 @@ const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: string) => void
 };
 
 const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
-  toast,
-  onRemove
+  toast, onRemove
 }) => {
-  const colors = toastColors[toast.type];
+  const config = toastConfig[toast.type];
   const Icon = toastIcons[toast.type];
 
   return (
     <div
-      className={`pointer-events-auto max-w-md w-full ${colors.bg} ${colors.border} border rounded-lg shadow-lg p-4 transition-all duration-300 transform animate-slide-in`}
+      className={`pointer-events-auto max-w-md w-full toast-glass ${config.glassClass} p-4 fade-in`}
       role="alert"
       aria-labelledby={`toast-title-${toast.id}`}
     >
       <div className="flex items-start gap-3">
-        <Icon className={`h-5 w-5 flex-shrink-0 ${colors.icon}`} aria-hidden="true" />
+        <Icon
+          className="h-5 w-5 flex-shrink-0"
+          style={{ color: config.iconColor }}
+          aria-hidden="true"
+        />
         <div className="flex-1 min-w-0">
           {toast.title && (
             <h3
               id={`toast-title-${toast.id}`}
-              className={`font-semibold text-sm ${colors.title}`}
+              className="font-semibold text-sm mb-0.5"
+              style={{ color: config.titleColor }}
             >
               {toast.title}
             </h3>
           )}
-          <p className={`text-sm ${colors.message}`}>{toast.message}</p>
+          <p className="text-sm" style={{ color: config.msgColor }}>{toast.message}</p>
           {toast.action && (
             <button
               onClick={toast.action.onClick}
-              className="mt-2 text-sm font-medium underline focus:outline-none focus:ring-2 focus:ring-offset-2 "
+              className="mt-2 text-sm font-medium underline focus:outline-none"
+              style={{ color: 'var(--color-primary)' }}
             >
               {toast.action.label}
             </button>
@@ -197,7 +173,8 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
         </div>
         <button
           onClick={() => onRemove(toast.id)}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2  rounded"
+          className="flex-shrink-0 rounded focus:outline-none"
+          style={{ color: 'var(--text-secondary)' }}
           aria-label="Dismiss notification"
         >
           <XMarkIcon className="h-5 w-5" />
@@ -209,9 +186,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
 
 export const useToast = () => {
   const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
+  if (!context) throw new Error('useToast must be used within a ToastProvider');
   return context;
 };
 

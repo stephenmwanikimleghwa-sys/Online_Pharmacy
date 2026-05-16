@@ -11,8 +11,8 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
     <div className="glass-card rounded-2xl p-6 border border-white/50 shadow-premium">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Inventory Summary</h2>
-          <p className="text-slate-500 text-sm mt-1">Quick view of your current stock.</p>
+          <h2 className="text-2xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>Inventory Summary</h2>
+          <p className="text-sm mt-1" style={{color:'var(--text-secondary)'}}>Quick view of your current stock.</p>
         </div>
         <button
           onClick={onViewInventory}
@@ -24,11 +24,11 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Products */}
-        <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 group hover:border-indigo-200 transition-all">
+        <div className="data-cell p-5 rounded-2xl group hover:shadow-premium transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Total Products</p>
-              <p className="text-3xl font-display font-bold text-indigo-900">{totalProducts}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-primary">Total Products</p>
+              <p className="text-3xl font-display font-bold" style={{color:'var(--text-primary)'}}>{totalProducts}</p>
             </div>
             <div className="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         </div>
 
         {/* Low Stock */}
-        <div className={`p-5 rounded-2xl border transition-all group ${lowStockItems > 0 ? 'bg-amber-50/50 border-amber-100 hover:border-amber-200' : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'}`}>
+        <div className={`p-5 rounded-2xl border transition-all group ${lowStockItems > 0 ? 'bg-amber-50/50 border-amber-100' : 'bg-emerald-50/50 border-emerald-100'}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${lowStockItems > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>Low Stock Items</p>
@@ -56,7 +56,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         </div>
 
         {/* Out of Stock */}
-        <div className={`p-5 rounded-2xl border transition-all group ${outOfStockItems > 0 ? 'bg-rose-50/50 border-rose-100 hover:border-rose-200' : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'}`}>
+        <div className={`p-5 rounded-2xl border transition-all group ${outOfStockItems > 0 ? 'bg-rose-50/50 border-rose-100' : 'bg-emerald-50/50 border-emerald-100'}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${outOfStockItems > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>Out of Stock</p>

@@ -116,9 +116,10 @@ const FormField: React.FC<FormFieldProps> = ({
           htmlFor={inputId}
           className={`block text-sm font-medium transition-colors ${
             hasError
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-gray-700 dark:text-gray-300'
+              ? 'text-red-500'
+              : ''
           } ${labelClassName}`}
+          style={!hasError ? { color: 'var(--text-primary)' } : undefined}
         >
           {label}
           {required && <span className="text-red-500 ml-1" aria-label="required">*</span>}
@@ -127,7 +128,7 @@ const FormField: React.FC<FormFieldProps> = ({
 
       <div className="relative">
         {LeftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }}>
             <LeftIcon className="h-5 w-5" aria-hidden="true" />
           </div>
         )}
@@ -155,18 +156,12 @@ const FormField: React.FC<FormFieldProps> = ({
             hasError ? errorId : helperText ? helperId : undefined
           }
           aria-required={required}
-          className={`
-            w-full px-4 py-3 rounded-lg border transition-all duration-200
+          className={`form-input
             ${LeftIcon ? 'pl-10' : ''}
             ${RightIcon || showPasswordToggle ? 'pr-10' : ''}
-            ${hasError
-              ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-500 focus:ring-red-500/20'
-              : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 /20'
-            }
-            ${isFocused ? 'ring-2 ring-indigo-500/20' : ''}
-            ${disabled ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60' : ''}
-            ${readOnly ? 'bg-gray-50 ' : 'bg-white '}
-            ${hasValue ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}
+            ${hasError ? '!border-red-400 focus:!border-red-500 focus:!shadow-[0_0_0_3px_rgba(220,38,38,0.12)]' : ''}
+            ${isFocused ? 'border-[var(--color-primary)]' : ''}
+            ${disabled ? 'opacity-60 cursor-not-allowed' : ''}
             ${inputClassName}
           `}
         />
@@ -178,7 +173,8 @@ const FormField: React.FC<FormFieldProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2  rounded"
+                className="p-1 rounded transition-colors focus:outline-none"
+                style={{ color: 'var(--text-secondary)' }}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
               >
@@ -193,7 +189,8 @@ const FormField: React.FC<FormFieldProps> = ({
               <button
                 type="button"
                 onClick={onRightIconClick}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2  rounded"
+                className="p-1 rounded transition-colors focus:outline-none"
+                style={{ color: 'var(--text-secondary)' }}
                 aria-label="Clear input"
               >
                 <RightIcon className="h-5 w-5" />
@@ -204,7 +201,7 @@ const FormField: React.FC<FormFieldProps> = ({
 
         {/* Status icon */}
         {isTouched && !hasError && hasValue && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#10b981' }}>
             <CheckCircleIcon className="h-5 w-5" aria-hidden="true" />
           </div>
         )}
@@ -212,7 +209,7 @@ const FormField: React.FC<FormFieldProps> = ({
 
       {/* Error message */}
       {hasError && (
-        <p id={errorId} className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400" role="alert">
+        <p id={errorId} className="alert-error !py-1.5 !px-2 text-sm" role="alert">
           <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
           <span>{displayError}</span>
         </p>
@@ -220,14 +217,14 @@ const FormField: React.FC<FormFieldProps> = ({
 
       {/* Helper text */}
       {!hasError && helperText && (
-        <p id={helperId} className="text-sm text-gray-500 dark:text-gray-400">
+        <p id={helperId} className="text-sm" style={{ color: 'var(--text-secondary)' }}>
           {helperText}
         </p>
       )}
 
       {/* Character count */}
       {maxLength && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-right">
+        <p className="text-xs text-right" style={{ color: 'var(--text-secondary)' }}>
           {value.length} / {maxLength}
         </p>
       )}

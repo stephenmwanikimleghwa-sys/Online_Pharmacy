@@ -112,7 +112,7 @@ const AddPrescription = () => {
           <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 btn-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-primary border border-indigo-100">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{ background: 'var(--bg-mist)', borderColor: 'var(--border-primary)' }}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               </div>
               <h2 className="text-xl font-display font-bold text-slate-900">Patient Identity</h2>
@@ -128,7 +128,7 @@ const AddPrescription = () => {
                   onChange={handlePatientChange}
                   required
                   placeholder="Identity as per official records..."
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                  className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                 />
               </div>
               <div>
@@ -140,7 +140,7 @@ const AddPrescription = () => {
                   onChange={handlePatientChange}
                   required
                   placeholder="Digital age..."
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                  className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                 />
               </div>
               <div>
@@ -150,7 +150,7 @@ const AddPrescription = () => {
                   value={patientDetails.gender}
                   onChange={handlePatientChange}
                   required
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+                  className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm appearance-none"
                 >
                   <option value="">Profile...</option>
                   <option value="male">Male</option>
@@ -167,7 +167,7 @@ const AddPrescription = () => {
                   onChange={handlePatientChange}
                   required
                   placeholder="+254..."
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                  className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                 />
               </div>
               <div>
@@ -178,7 +178,7 @@ const AddPrescription = () => {
                   value={patientDetails.idNumber}
                   onChange={handlePatientChange}
                   placeholder="National ID / Passport..."
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                  className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                 />
               </div>
             </div>
@@ -188,7 +188,7 @@ const AddPrescription = () => {
           <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium relative">
             <div className="flex justify-between items-center mb-10">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-primary border border-indigo-100">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{ background: 'var(--bg-mist)', borderColor: 'var(--border-primary)' }}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.638.319a4 4 0 01-2.154.493H8.5a4 4 0 01-4-4V7a4 4 0 014-4h2a4 4 0 011.929.5L13 3.5a2 2 0 011 1.732V9a2 2 0 01-2 2h-1M14 6a2 2 0 00-2 2v1M17 10a2 2 0 00-2 2v1" /></svg>
                 </div>
                 <h2 className="text-xl font-display font-bold text-slate-900">Prescribed Regimen</h2>
@@ -205,7 +205,7 @@ const AddPrescription = () => {
 
             <div className="space-y-8">
               {medicines.map((medicine, index) => (
-                <div key={index} className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100/80 relative group animate-scale-up">
+                <div key={index} className="data-cell p-8 rounded-3xl relative group animate-scale-up">
                   <div className="absolute -left-3 top-8 w-6 h-10 btn-primary rounded-lg flex items-center justify-center text-[10px] font-bold text-white shadow-glow-indigo">
                     {index + 1}
                   </div>
@@ -220,7 +220,7 @@ const AddPrescription = () => {
                         onChange={(e) => handleMedicineChange(index, e)}
                         required
                         placeholder="Search pharmaceutical name..."
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                       />
                     </div>
                     <div>
@@ -232,7 +232,7 @@ const AddPrescription = () => {
                         onChange={(e) => handleMedicineChange(index, e)}
                         required
                         placeholder="e.g. 500mg BD"
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                       />
                     </div>
                     <div>
@@ -244,7 +244,7 @@ const AddPrescription = () => {
                         onChange={(e) => handleMedicineChange(index, e)}
                         required
                         placeholder="Total units..."
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                       />
                     </div>
                     <div className="lg:col-span-4">
@@ -255,7 +255,7 @@ const AddPrescription = () => {
                         value={medicine.instructions}
                         onChange={(e) => handleMedicineChange(index, e)}
                         placeholder="Specify usage protocol, timing, and conditions..."
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
+                        className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-medium shadow-sm"
                       />
                     </div>
                   </div>
@@ -277,13 +277,13 @@ const AddPrescription = () => {
           {/* Prescription Upload Section */}
           <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium relative overflow-hidden">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-primary border border-indigo-100">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{ background: 'var(--bg-mist)', borderColor: 'var(--border-primary)' }}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               </div>
               <h2 className="text-xl font-display font-bold text-slate-900">Ledger Documentation <span className="text-slate-400 font-medium text-sm ml-2">(Optional)</span></h2>
             </div>
 
-            <div className="p-10 border-2 border-dashed border-slate-200 rounded-[2.5rem] bg-slate-50/50 text-center hover:border-indigo-400 transition-colors group">
+            <div className="p-10 border-2 border-dashed rounded-[2.5rem] text-center hover:border-indigo-400 transition-colors group" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
               <input
                 type="file"
                 id="prescription-file"

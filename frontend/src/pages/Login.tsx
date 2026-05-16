@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, LoginCredentials, User } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const getStyles = (isDark: boolean): any => ({
@@ -12,8 +12,8 @@ const getStyles = (isDark: boolean): any => ({
     alignItems: "center",
     justifyContent: "center",
     background: isDark
-      ? "linear-gradient(135deg, #051624 0%, #0a2e4a 40%, #02111f 100%)"
-      : "linear-gradient(135deg, #9b59b6 0%, #8e44ad 25%, #e056a0 65%, #d98ee6 100%)",
+      ? "var(--bg-gradient-dark)"
+      : "var(--bg-gradient-light)",
     padding: "24px",
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
   },
@@ -24,13 +24,16 @@ const getStyles = (isDark: boolean): any => ({
     minHeight: "360px",
     borderRadius: "20px",
     overflow: "hidden",
-    background: isDark ? "rgba(10, 30, 58, 0.88)" : "rgba(230, 200, 230, 0.35)",
+    background: isDark
+      ? "var(--color-bg-card-dark)"
+      : "var(--color-bg-card-light)",
     backdropFilter: "blur(18px)",
     WebkitBackdropFilter: "blur(18px)",
-    border: isDark ? "1px solid rgba(74, 125, 169, 0.35)" : "1px solid rgba(255,255,255,0.3)",
-    boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.35)" : "0 25px 60px rgba(0,0,0,0.25)",
+    border: isDark
+      ? "1px solid var(--color-border-dark)"
+      : "1px solid var(--color-border-light)",
+    boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.35)" : "0 25px 60px rgba(124,58,237,0.18)",
   },
-  // ── LEFT PANEL ──────────────────────────────────────────────────────────
   leftPanel: (isDark: boolean) => ({
     flex: "0 0 45%",
     position: "relative",
@@ -43,7 +46,6 @@ const getStyles = (isDark: boolean): any => ({
     alignItems: "center",
     justifyContent: "center",
   }),
-  // ── RIGHT PANEL ─────────────────────────────────────────────────────────
   rightPanel: {
     flex: 1,
     display: "flex",
@@ -55,7 +57,7 @@ const getStyles = (isDark: boolean): any => ({
   title: (isDark: boolean) => ({
     fontSize: "2.2rem",
     fontWeight: 400,
-    color: isDark ? "#dbeafe" : "#3b2045",
+    color: isDark ? "var(--color-text-dark)" : "var(--color-text-light)",
     marginBottom: "32px",
     textAlign: "center",
     letterSpacing: "0.02em",
@@ -68,11 +70,13 @@ const getStyles = (isDark: boolean): any => ({
   input: (isDark: boolean) => ({
     width: "100%",
     border: "none",
-    borderBottom: isDark ? "1.5px solid rgba(148, 163, 184, 0.55)" : "1.5px solid #9b6eae",
+    borderBottom: isDark
+      ? `1.5px solid var(--color-border-dark)`
+      : `1.5px solid var(--color-border-light)`,
     background: "transparent",
     padding: "10px 36px 10px 0",
     fontSize: "0.95rem",
-    color: isDark ? "#e2e8f0" : "#3b2045",
+    color: isDark ? "var(--color-text-dark)" : "var(--color-text-light)",
     outline: "none",
     boxSizing: "border-box",
     fontFamily: "inherit",
@@ -82,7 +86,7 @@ const getStyles = (isDark: boolean): any => ({
     right: "2px",
     top: "50%",
     transform: "translateY(-50%)",
-    color: isDark ? "rgba(226, 232, 240, 0.75)" : "#9b6eae",
+    color: isDark ? "var(--color-text-muted-dark)" : "var(--color-text-muted-light)",
     fontSize: "1rem",
   }),
   loginBtn: (isDark: boolean) => ({
@@ -90,7 +94,7 @@ const getStyles = (isDark: boolean): any => ({
     marginLeft: "auto",
     marginTop: "8px",
     padding: "10px 32px",
-    background: isDark ? "#2563eb" : "#1a0a2e",
+    background: isDark ? "var(--btn-gradient-dark)" : "var(--btn-gradient-light)",
     color: "#fff",
     border: "none",
     borderRadius: "24px",
@@ -98,7 +102,7 @@ const getStyles = (isDark: boolean): any => ({
     fontWeight: 600,
     cursor: "pointer",
     letterSpacing: "0.04em",
-    transition: "background 0.2s, transform 0.15s",
+    transition: "opacity 0.2s, transform 0.15s",
   }),
   footerLinks: {
     display: "flex",
@@ -108,7 +112,7 @@ const getStyles = (isDark: boolean): any => ({
   },
   footerLink: (isDark: boolean) => ({
     fontSize: "0.8rem",
-    color: isDark ? "#93c5fd" : "#7a4d8a",
+    color: isDark ? "var(--color-text-muted-dark)" : "var(--color-text-muted-light)",
     background: "none",
     border: "none",
     cursor: "pointer",
@@ -202,7 +206,7 @@ const OrbsPanel: React.FC<{ dark: boolean }> = ({ dark }) => {
     <div style={{
       position: "absolute", bottom: 0, right: 0,
       width: "120px", height: "120px",
-      background: "radial-gradient(circle, rgba(255,80,200,0.35), transparent 70%)",
+      background: "radial-gradient(circle, var(--pink-leak), transparent 70%)",
       filter: "blur(20px)",
     }} />
 
@@ -240,6 +244,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredBtn, setHoveredBtn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isAuthenticated, getDashboardPath } = useAuth();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -330,10 +335,10 @@ const Login: React.FC = () => {
 
         {/* Right – form */}
         <div style={styles.rightPanel}>
-<h1 style={styles.title(isDark)}>Login</h1>
+          <h1 style={styles.title(isDark)}>Login</h1>
 
           <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-            {/* Email / Username */}
+            {/* Username / Email */}
             <div style={styles.inputWrapper}>
               <input
                 id="username"
@@ -342,7 +347,7 @@ const Login: React.FC = () => {
                 required
                 value={credentials.username}
                 onChange={handleChange}
-                placeholder="Email"
+                placeholder="Username / Email Address"
                 className="login-input"
                 style={styles.input(isDark)}
               />
@@ -354,7 +359,7 @@ const Login: React.FC = () => {
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={credentials.password}
                 onChange={handleChange}
@@ -362,7 +367,16 @@ const Login: React.FC = () => {
                 className="login-input"
                 style={styles.input(isDark)}
               />
-              <span style={styles.inputIcon(isDark)}>🔒</span>
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                style={{ ...styles.inputIcon(isDark), background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword
+                  ? <EyeSlashIcon style={{ width: 18, height: 18 }} />
+                  : <EyeIcon style={{ width: 18, height: 18 }} />}
+              </button>
             </div>
 
             {/* Error */}
@@ -379,11 +393,7 @@ const Login: React.FC = () => {
               disabled={loading}
               style={{
                 ...styles.loginBtn(isDark),
-                background: hoveredBtn
-                  ? isDark
-                    ? "#1d4ed8"
-                    : "#2d1060"
-                  : styles.loginBtn(isDark).background,
+                opacity: hoveredBtn ? 0.9 : 1,
                 transform: hoveredBtn ? "translateY(-1px)" : "none",
               }}
               onMouseEnter={() => setHoveredBtn(true)}
@@ -398,15 +408,7 @@ const Login: React.FC = () => {
             </button>
           </form>
 
-          {/* Footer links */}
-          <div style={styles.footerLinks}>
-            <button style={styles.footerLink(isDark)} onClick={() => navigate("/register")}>
-              Create an account
-            </button>
-            <button style={styles.footerLink(isDark)} onClick={() => navigate("/password-reset")}>
-              Forgot your password
-            </button>
-          </div>
+
         </div>
       </div>
 
@@ -416,7 +418,7 @@ const Login: React.FC = () => {
           .login-card-left { display: none !important; }
         }
         .login-input::placeholder {
-          color: ${isDark ? 'rgba(226,232,240,0.62)' : 'rgba(59,32,69,0.6)'};
+          color: ${isDark ? 'var(--color-text-muted-dark)' : 'var(--color-text-muted-light)'};
           opacity: 1;
         }
       `}</style>

@@ -3,10 +3,10 @@ import api from '../services/api';
 import { UserIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 
-const roleColors = {
-  admin: "bg-indigo-50 text-primary border-indigo-100",
-  pharmacist: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  customer: "bg-slate-100 text-slate-500 border-slate-200",
+const getRoleStyle = (role) => {
+  if (role === 'admin') return { background: 'var(--brand-mist)', color: 'var(--color-primary)', borderColor: 'var(--brand-border-soft)' };
+  if (role === 'pharmacist') return { background: 'rgba(16,185,129,0.08)', color: '#059669', borderColor: 'rgba(16,185,129,0.18)' };
+  return { background: 'var(--bg-field)', color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' };
 };
 
 const ManageUsers = () => {
@@ -39,8 +39,9 @@ const ManageUsers = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 opacity-40">
-          <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
+          <div className="w-10 h-10 border-[3px] border-t-transparent rounded-xl animate-spin"
+            style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
       </div>
     );
@@ -105,16 +106,18 @@ const ManageUsers = () => {
       <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
+            <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center">
               <UserIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">User <span className="text-primary">Management</span></h1>
+            <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              User <span style={{ color: 'var(--color-primary)' }}>Management</span>
+            </h1>
           </div>
-          <p className="text-lg text-slate-500 font-medium">View, create, and manage all system users and their roles.</p>
+          <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>View, create, and manage all system users and their roles.</p>
         </div>
         <button
           onClick={() => { setIsModalOpen(true); setIsEditMode(false); setEditingUserId(null); setFormData(prev => ({ ...prev, role: 'pharmacist' })); }}
-          className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
+          className="btn-primary px-6 py-3.5 text-white rounded-2xl transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <UserPlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
           <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add User</span>
@@ -122,53 +125,61 @@ const ManageUsers = () => {
       </div>
 
       {error && (
-        <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 animate-shake">
-          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
+        <div className="mb-8 p-4 rounded-2xl flex items-center gap-4 animate-shake"
+          style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(244,63,94,0.12)', color: '#f43f5e' }}>
             <XCircleIcon className="w-5 h-5" />
           </div>
-          <p className="text-rose-900 font-bold text-sm tracking-tight">{error}</p>
+          <p className="font-bold text-sm tracking-tight" style={{ color: '#be123c' }}>{error}</p>
         </div>
       )}
 
       {/* Table Container */}
-      <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
-        <div className="px-8 py-6 border-b border-slate-100 bg-white/30 backdrop-blur-md flex items-center gap-3">
-          <UserIcon className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-display font-bold text-slate-900">All Users</h2>
-          <span className="ml-auto text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">{users.length} total</span>
+      <div className="glass-card rounded-[2.5rem] overflow-hidden">
+        <div className="table-header-row px-8 py-6 flex items-center gap-3">
+          <UserIcon className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
+          <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>All Users</h2>
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+            style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
+            {users.length} total
+          </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50">
+              <tr style={{ background: 'var(--bg-field)' }}>
                 {["Username", "Email", "Role", "Status", "Actions"].map(h => (
-                  <th key={h} className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{h}</th>
+                  <th key={h} className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ color: 'var(--text-secondary)' }}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody style={{ borderTop: '1px solid var(--border-primary)' }}>
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-indigo-50/30 transition-colors group">
+                <tr key={user.id} className="group transition-colors"
+                  style={{ borderBottom: '1px solid var(--border-primary)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-mist)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full btn-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+                      <div className="w-8 h-8 rounded-full btn-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {user.username?.[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{user.username}</p>
-                        {user.full_name && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">{user.full_name}</p>}
+                        <p className="font-bold transition-colors" style={{ color: 'var(--text-primary)' }}>{user.username}</p>
+                        {user.full_name && <p className="text-[10px] font-bold uppercase tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>{user.full_name}</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-sm text-slate-500 font-medium">{user.email || '—'}</td>
+                  <td className="px-8 py-6 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{user.email || '—'}</td>
                   <td className="px-8 py-6">
-                    <span className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm capitalize ${roleColors[user.role] || roleColors.customer}`}>
+                    <span className="px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm capitalize"
+                      style={getRoleStyle(user.role)}>
                       {user.role}
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${user.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${user.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${user.is_verified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                       {user.is_verified ? 'Verified' : 'Pending'}
                     </span>
@@ -176,7 +187,8 @@ const ManageUsers = () => {
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2">
                       <button onClick={() => handleEdit(user)}
-                        className="px-3 py-1.5 bg-indigo-50 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm flex items-center gap-1">
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
+                        style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)', borderColor: 'var(--brand-border-soft)' }}>
                         <PencilSquareIcon className="h-3.5 w-3.5" /> Edit
                       </button>
                       <button onClick={() => handleDelete(user)}
@@ -196,52 +208,52 @@ const ManageUsers = () => {
       <Transition show={isModalOpen} as={React.Fragment}>
         <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={() => setIsModalOpen(false)}>
           <div className="min-h-screen flex items-center justify-center px-4">
-            <DialogBackdrop className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <div className="relative z-10 w-full max-w-2xl bg-white rounded-[2.5rem] shadow-premium overflow-hidden flex flex-col md:flex-row animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
+            <DialogBackdrop className="fixed inset-0 modal-overlay" />
+            <div className="relative z-10 w-full max-w-2xl modal-card overflow-hidden flex flex-col md:flex-row animate-scale-up">
               {/* Visual Panel */}
-              <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+              <div className="modal-header md:w-1/3 flex flex-col justify-between" style={{ borderRadius: '24px 0 0 24px' }}>
                 <div>
-                  <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
-                    {isEditMode ? <PencilSquareIcon className="w-6 h-6" /> : <UserPlusIcon className="w-6 h-6" />}
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+                    {isEditMode ? <PencilSquareIcon className="w-6 h-6 text-white" /> : <UserPlusIcon className="w-6 h-6 text-white" />}
                   </div>
-                  <h2 className="text-3xl font-display font-bold leading-tight">
+                  <h2 className="text-3xl font-display font-bold leading-tight text-white">
                     {isEditMode ? 'Edit User' : `Add New ${formData.role === 'admin' ? 'Admin' : 'Pharmacist'}`}
                   </h2>
-                  <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">
+                  <p className="text-white/60 text-sm mt-4 font-medium leading-relaxed">
                     {isEditMode
-                      ? 'Update this user\'s details and access permissions.'
+                      ? "Update this user's details and access permissions."
                       : 'Create a new user account with the appropriate role and permissions.'}
                   </p>
                 </div>
-                <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.3em] opacity-40 mt-8">Access Control</div>
+                <div className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] mt-8">Access Control</div>
               </div>
 
               {/* Form Panel */}
-              <form onSubmit={handleSubmit} className="md:w-2/3 p-10 bg-slate-50/30 overflow-y-auto max-h-[85vh]">
+              <form onSubmit={handleSubmit} className="md:w-2/3 p-10 overflow-y-auto max-h-[85vh]"
+                style={{ background: 'var(--bg-card)' }}>
                 <div className="space-y-6">
                   {formFields.map(({ name, label, type, required }) => (
                     <div key={name}>
-                      <label htmlFor={name} className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">{label}</label>
+                      <label htmlFor={name} className="form-label">{label}</label>
                       <input
                         type={type}
                         name={name}
                         id={name}
                         required={required}
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="form-input"
                         value={formData[name]}
                         onChange={handleChange}
                       />
                     </div>
                   ))}
                   <div>
-                    <label htmlFor="role" className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Role</label>
+                    <label htmlFor="role" className="form-label">Role</label>
                     <select
                       id="role"
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+                      className="form-input appearance-none"
                     >
                       <option value="pharmacist">Pharmacist</option>
                       <option value="admin">Admin</option>
@@ -251,11 +263,11 @@ const ManageUsers = () => {
 
                 <div className="flex gap-4 mt-8">
                   <button type="button" onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all">
+                    className="form-cancel-btn flex-1">
                     Cancel
                   </button>
                   <button type="submit"
-                    className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">
+                    className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">
                     {isEditMode ? 'Save Changes' : `Add ${formData.role === 'admin' ? 'Admin' : 'Pharmacist'}`}
                   </button>
                 </div>
@@ -267,8 +279,9 @@ const ManageUsers = () => {
 
       {/* Toast */}
       {successMessage && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-white border border-emerald-100 text-emerald-700 px-5 py-3.5 rounded-2xl shadow-premium text-sm font-bold animate-slide-up">
-          <CheckCircleIcon className="h-5 w-5 text-emerald-500" />
+        <div className="fixed bottom-6 right-6 flex items-center gap-2 px-5 py-3.5 rounded-2xl shadow-premium text-sm font-bold animate-slide-up"
+          style={{ background: 'var(--bg-card)', border: '1px solid rgba(16,185,129,0.25)', color: '#059669', backdropFilter: 'blur(12px)' }}>
+          <CheckCircleIcon className="h-5 w-5" style={{ color: '#10b981' }} />
           {successMessage}
         </div>
       )}

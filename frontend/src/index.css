@@ -569,3 +569,373 @@ html {
   border-color: var(--color-accent);
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.2);
 }
+
+/* ---- Semantic modal utilities ---- */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow);
+}
+
+.modal-header {
+  background: var(--btn-gradient);
+  color: #ffffff;
+  padding: 2rem;
+  border-radius: 20px 20px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-header::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  filter: blur(20px);
+}
+
+/* ---- Form field utilities ---- */
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  background: var(--bg-field);
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 0.5rem;
+}
+
+.form-cancel-btn {
+  background: var(--bg-field);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.875rem 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.form-cancel-btn:hover {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ---- Alert boxes ---- */
+.alert-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.dark .alert-error {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.25);
+  color: #fca5a5;
+}
+
+.alert-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  color: #059669;
+  font-size: 0.875rem;
+}
+
+.dark .alert-success {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.2);
+  color: #6ee7b7;
+}
+
+/* ---- Page wrapper utility ---- */
+.page-bg {
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+}
+
+/* ---- Data cell utility (replaces bg-slate-50/80) ---- */
+.data-cell {
+  padding: 1rem;
+  background: var(--bg-field);
+  border: 1px solid var(--border-primary);
+  border-radius: 14px;
+  transition: background 0.2s ease;
+}
+
+.data-cell:hover {
+  background: rgba(124, 58, 237, 0.06);
+}
+
+/* ---- Table header utility ---- */
+.table-header-row {
+  background: var(--bg-field);
+  border-bottom: 1px solid var(--border-primary);
+  backdrop-filter: blur(12px);
+}
+
+/* ============================================================
+   PREMIUM MICRO-ANIMATIONS & POLISH
+   ============================================================ */
+
+/* ---- Shimmer skeleton wave ---- */
+@keyframes shimmer-wave {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-field) 25%,
+    rgba(124, 58, 237, 0.12) 50%,
+    var(--bg-field) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer-wave 1.6s ease-in-out infinite;
+}
+
+/* Override Tailwind animate-pulse to use brand colour */
+.animate-pulse {
+  animation: brand-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes brand-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ---- Page / route fade-up entrance ---- */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---- Card staggered entrance ---- */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-enter {
+  animation: card-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.card-enter-1 { animation-delay: 0.05s; }
+.card-enter-2 { animation-delay: 0.10s; }
+.card-enter-3 { animation-delay: 0.15s; }
+.card-enter-4 { animation-delay: 0.20s; }
+.card-enter-5 { animation-delay: 0.25s; }
+.card-enter-6 { animation-delay: 0.30s; }
+
+/* ---- btn-primary: sliding shimmer on hover ---- */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  transition: left 0.45s ease;
+  pointer-events: none;
+}
+
+.btn-primary:hover::before {
+  left: 160%;
+}
+
+/* ---- form-input: pulsing glow on focus ---- */
+@keyframes input-glow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12); }
+  50%       { box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.22); }
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  animation: input-glow 1.6s ease-in-out infinite;
+}
+
+/* ---- data-cell: left accent flash on hover ---- */
+.data-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.data-cell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--btn-gradient);
+  border-radius: 3px 0 0 3px;
+  transform: scaleY(0);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center;
+}
+
+.data-cell:hover::before {
+  transform: scaleY(1);
+}
+
+/* ---- glass-card: enhanced hover lift + glow ---- */
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 28px 90px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(217, 70, 239, 0.12);
+}
+
+/* ---- Floating orb ambience (decorative, pointer-events none) ---- */
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-14px) scale(1.04); }
+}
+
+.orb-float {
+  animation: orb-float 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ---- Fade-in utility ---- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease both;
+}
+
+/* ---- Toast — branded glass style ---- */
+.toast-glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  color: var(--text-primary);
+}
+
+.toast-success-glass {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.toast-error-glass {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.toast-warning-glass {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.toast-info-glass {
+  border-color: rgba(124, 58, 237, 0.35);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+/* ---- Loading spinner premium ---- */
+@keyframes spin-a {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spin-b {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+.spinner-premium {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-premium .ring-a,
+.spinner-premium .ring-b {
+  position: absolute;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+}
+
+.spinner-premium .ring-a {
+  border-top-color: var(--color-primary);
+  border-right-color: var(--color-primary);
+  animation: spin-a 0.9s linear infinite;
+}
+
+.spinner-premium .ring-b {
+  border-bottom-color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  animation: spin-b 0.7s linear infinite;
+  opacity: 0.7;
+}

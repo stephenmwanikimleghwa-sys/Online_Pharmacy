@@ -93,35 +93,36 @@ const PharmacyLicensing = () => {
         <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="mb-12">
                 <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Licensing & Permits</h1>
-                <p className="text-slate-500 mt-2 text-lg">Manage and track your pharmacy's legal documentation and compliance status.</p>
+                <h1 className="text-4xl font-display font-bold text-primary-text tracking-tight">Licensing & Permits</h1>
+                <p className="text-secondary-text mt-2 text-lg">Manage and track your pharmacy's legal documentation and compliance status.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Upload Section */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-[2.5rem] p-8 shadow-card border border-slate-100 h-fit sticky top-8">
-                        <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <div className="glass-card rounded-[2.5rem] p-8 border border-white/60 shadow-premium h-fit sticky top-8">
+                        <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <UploadIcon className="w-6 h-6 text-primary" />
                             Upload Document
                         </h3>
 
                         <form onSubmit={handleUpload} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Document Title</label>
+                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">Document Title</label>
                                 <input
                                     type="text"
                                     required
                                     placeholder="e.g. Health Ops Permit 2026"
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-semibold"
+                                    className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-semibold"
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Category</label>
+                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">Category</label>
                                 <select
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-semibold"
+                                    className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-semibold"
                                     value={formData.document_type}
                                     onChange={e => setFormData({ ...formData, document_type: e.target.value })}
                                 >
@@ -134,18 +135,18 @@ const PharmacyLicensing = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Expiry Date</label>
+                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">Expiry Date</label>
                                 <input
                                     type="date"
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-semibold"
+                                    className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-semibold"
                                     value={formData.expiry_date}
                                     onChange={e => setFormData({ ...formData, expiry_date: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">File (PDF or Image)</label>
-                                <div className="relative group border-2 border-dashed border-slate-200 rounded-2xl p-6 hover:border-indigo-400 hover:bg-slate-50 transition-all cursor-pointer">
+                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">File (PDF or Image)</label>
+                                <div className="relative group border-2 border-dashed rounded-2xl p-6 hover:bg-indigo-50/20 transition-all cursor-pointer" style={{ borderColor: 'var(--border-primary)' }}>
                                     <input
                                         type="file"
                                         required
@@ -200,14 +201,14 @@ const PharmacyLicensing = () => {
                             ))}
                         </div>
                     ) : documents.length === 0 ? (
-                        <div className="bg-slate-50 border-2 border-dashed border-slate-100 rounded-[2.5rem] py-24 text-center">
+                        <div className="glass-card border-2 border-dashed rounded-[2.5rem] py-24 text-center" style={{ borderColor: 'var(--border-primary)' }}>
                             <DocIcon className="w-20 h-20 text-slate-200 mx-auto mb-6" />
                             <p className="text-slate-400 font-bold uppercase tracking-widest">No documents uploaded yet</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {documents.map((doc) => (
-                                <div key={doc.id} className="group relative bg-white p-7 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-card hover:border-indigo-100 transition-all">
+                                <div key={doc.id} className="group relative glass-card p-7 rounded-[2rem] border border-white/60 shadow-premium hover:shadow-glow transition-all">
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="p-4 bg-indigo-50 rounded-2xl group-hover:btn-primary transition-colors">
                                             <DocIcon className="w-8 h-8 text-primary group-hover:text-white" />
@@ -257,7 +258,7 @@ const PharmacyLicensing = () => {
                                         href={doc.file}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-6 block w-full text-center py-3.5 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-indigo-50 hover:text-primary transition-all border border-transparent hover:border-indigo-100"
+                                        className="form-cancel-btn mt-6 block w-full text-center py-3.5 text-sm rounded-xl border transition-all hover:border-indigo-200"
                                     >
                                         View Document
                                     </a>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import { Breadcrumb, SearchBar, ProductCardSkeleton } from '../components';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,6 +13,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { effectiveTheme, setTheme } = useTheme();
 
   useEffect(() => {
     // Fetch featured products from API
@@ -100,33 +104,85 @@ const Home = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-lg text-primary dark:text-blue-400">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
+        <div className="flex flex-col items-center gap-4 opacity-40">
+          <div className="w-10 h-10 border-[3px] border-t-transparent rounded-xl animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/30 dark:bg-gray-900">
+    <div className="min-h-screen" style={{ background: 'var(--bg-base)' }}>
+      {/* Minimal unauthenticated header — visible only when not logged in */}
+      {!isAuthenticated && (
+        <header
+          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3"
+          style={{
+            background: 'var(--bg-card)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            borderBottom: '1px solid var(--border-primary)',
+            boxShadow: '0 2px 16px rgba(124,58,237,0.08)',
+          }}
+        >
+          {/* Brand */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 group focus:outline-none"
+          >
+            <div
+              className="nav-logo-mark w-8 h-8 flex items-center justify-center text-white font-bold text-xs group-hover:scale-105 transition-transform"
+            >
+              TP
+            </div>
+            <span className="nav-brand-text font-bold text-base tracking-tight hidden sm:inline">
+              Transcounty
+            </span>
+          </Link>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
+              className="form-cancel-btn p-2 rounded-xl"
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              {effectiveTheme === 'dark'
+                ? <SunIcon className="w-5 h-5" />
+                : <MoonIcon className="w-5 h-5" />}
+            </button>
+            <Link
+              to="/login"
+              className="btn-primary px-5 py-2 rounded-xl text-white text-sm font-semibold"
+            >
+              Sign In
+            </Link>
+          </div>
+        </header>
+      )}
+
       {/* Hero Section - Premium Indigo/Violet Gradient */}
-      <section className="relative overflow-hidden pt-20 pb-40">
+      <section className={`relative overflow-hidden pb-40 ${!isAuthenticated ? 'pt-32' : 'pt-20'}`}>
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] btn-primary/10 rounded-full blur-[120px] -mr-96 -mt-96 animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-violet-500/10 rounded-full blur-[100px] -ml-72 -mb-72"></div>
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full blur-[120px] -mr-96 -mt-96 animate-pulse" style={{ background: 'var(--color-primary)', opacity: 0.07 }}></div>
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full blur-[100px] -ml-72 -mb-72" style={{ background: 'var(--color-accent)', opacity: 0.07 }}></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-8">
-              <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-primary dark:text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-indigo-100 dark:border-indigo-800 shadow-sm animate-fade-in">
+              <span className="brand-mist px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] shadow-sm animate-fade-in">
                 Next-Gen Pharmaceutical Network
               </span>
             </div>
-            <h1 className="text-6xl md:text-8xl font-display font-bold text-slate-900 dark:text-white mb-8 tracking-tight animate-fade-in leading-[1.1]">
+            <h1 className="text-6xl md:text-8xl font-display font-bold mb-8 tracking-tight animate-fade-in leading-[1.1]" style={{ color: 'var(--text-primary)' }}>
               Precision care. <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-300% animate-gradient-flow">Seamless access.</span>
             </h1>
-            <p className="text-xl text-slate-500 dark:text-gray-400 mb-12 animate-slide-up font-medium leading-relaxed max-w-2xl mx-auto" style={{ animationDelay: '0.1s' }}>
+            <p className="text-xl mb-12 animate-slide-up font-medium leading-relaxed max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)', animationDelay: '0.1s' }}>
               Your trusted partner for authentic medications. Fast delivery, secure payments, and professional care coordinated through our specialized registry.
             </p>
 
@@ -142,7 +198,7 @@ const Home = () => {
             <div className="flex flex-wrap justify-center gap-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
               <Link
                 to="/products"
-                className="inline-flex items-center px-8 py-4 rounded-2xl bg-white  text-slate-700 dark:text-gray-300 font-bold text-xs uppercase tracking-widest border border-slate-200  hover:border-indigo-500 hover:text-primary transition-all shadow-sm hover:shadow-premium"
+                className="form-cancel-btn inline-flex items-center px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:shadow-premium"
               >
                 Browse Registry
               </Link>
@@ -164,15 +220,15 @@ const Home = () => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-1 w-10 btn-primary rounded-full"></div>
-                <span className="text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-[0.3em]">Popular</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--color-primary)' }}>Popular</span>
               </div>
-              <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
-                Featured <span className="text-slate-400 dark:text-gray-500">medicines</span>
+              <h2 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                Featured <span style={{ color: 'var(--text-muted)' }}>medicines</span>
               </h2>
             </div>
             <Link
               to="/products"
-              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100  text-slate-600 dark:text-gray-400 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-primary dark:hover:text-indigo-400 transition-all border border-slate-200/50 "
+              className="form-cancel-btn flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all"
             >
               View all products
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -188,7 +244,7 @@ const Home = () => {
               ))}
             </div>
           ) : error ? (
-            <div className="glass-card rounded-[2.5rem] py-16 text-center border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-900/10">
+            <div className="alert-error glass-card rounded-[2.5rem] py-16 text-center">
               <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto mb-4">
                 <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
@@ -238,25 +294,25 @@ const Home = () => {
                   </div>
                   <div className="px-4 pb-4 flex-1 flex flex-col">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[9px] font-bold text-indigo-50 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
+                      <span className="brand-mist text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
                         {product.category || 'Product'}
                       </span>
                     </div>
-                    <h3 className="text-xl font-display font-bold text-slate-900 dark:text-white mb-2 truncate">
+                    <h3 className="text-xl font-display font-bold mb-2 truncate" style={{ color: 'var(--text-primary)' }}>
                       {product.name}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-gray-400 mb-6 line-clamp-2 font-medium leading-relaxed">
+                    <p className="text-sm mb-6 font-medium leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                       {product.description || 'Product details.'}
                     </p>
-                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50 ">
+                    <div className="mt-auto flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border-primary)' }}>
                       <div>
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Price / Unit</p>
-                        <p className="text-xl font-display font-bold text-slate-900 dark:text-white">
-                          <span className="text-sm font-medium text-slate-400 dark:text-gray-500 mr-1">KSh</span>
+                        <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-muted)' }}>Price / Unit</p>
+                        <p className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+                          <span className="text-sm font-medium mr-1" style={{ color: 'var(--text-muted)' }}>KSh</span>
                           {product.price.toLocaleString()}
                         </p>
                       </div>
-                      <button className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-primary dark:text-indigo-400 flex items-center justify-center hover:btn-primary hover:text-white transition-all shadow-sm active:scale-90 group">
+                      <button className="w-12 h-12 rounded-2xl flex items-center justify-center hover:btn-primary hover:text-white transition-all shadow-sm active:scale-90 group" style={{ background: 'var(--bg-mist)', color: 'var(--color-primary)' }}>
                         <PlusIcon className="w-6 h-6 group-hover:rotate-90 transition-transform" />
                       </button>
                     </div>

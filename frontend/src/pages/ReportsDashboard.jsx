@@ -92,8 +92,8 @@ const ReportsDashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-[60vh] gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-[3px] border-indigo-600 border-t-transparent shadow-glow-sm"></div>
-        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest animate-pulse">Loading...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-[3px] border-t-transparent shadow-glow-sm" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
+        <p className="font-bold text-xs uppercase tracking-widest animate-pulse" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
       </div>
     );
   }
@@ -118,7 +118,7 @@ const ReportsDashboard = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={exportToPDF}
-            className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold shadow-soft hover:shadow-card hover:bg-slate-50 transition-all flex items-center gap-2.5 active:scale-[0.98]"
+            className="form-cancel-btn px-6 py-3 rounded-2xl font-bold shadow-soft hover:shadow-card transition-all flex items-center gap-2.5 active:scale-[0.98]"
           >
             <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l-4-4h3V4h2v8h3l-4 4zm9-4v10H3V12h2v8h14v-8h2z" /></svg>
             Export PDF
@@ -151,27 +151,27 @@ const ReportsDashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Start date</label>
+            <label className="form-label block text-[10px] font-bold uppercase tracking-widest mb-2 px-1">Start date</label>
             <input
               type="date"
               value={dateRange.startDate}
               onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-bold text-slate-700"
+              className="form-input w-full px-5 py-4 rounded-2xl focus:ring-4 transition-all font-bold"
             />
           </div>
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">End date</label>
+            <label className="form-label block text-[10px] font-bold uppercase tracking-widest mb-2 px-1">End date</label>
             <input
               type="date"
               value={dateRange.endDate}
               onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-bold text-slate-700"
+              className="form-input w-full px-5 py-4 rounded-2xl focus:ring-4 transition-all font-bold"
             />
           </div>
           <div className="md:col-span-4 flex items-end">
             <button
               onClick={fetchReportData}
-              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black shadow-card transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
+              className="btn-primary w-full py-4 text-white rounded-2xl font-bold shadow-card transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
               Refresh
@@ -185,7 +185,7 @@ const ReportsDashboard = () => {
         {user?.role === 'pharmacist' && (
           <>
             <div className="lg:col-span-12 glass-card rounded-[2rem] border border-white/50 shadow-premium overflow-hidden">
-              <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="px-8 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -198,7 +198,7 @@ const ReportsDashboard = () => {
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-100">
-                  <thead className="bg-slate-50/30">
+                  <thead className="" style={{ background: 'var(--bg-field)' }}>
                     <tr>
                       <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</th>
                       <th className="px-8 py-5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Approved</th>
@@ -229,7 +229,7 @@ const ReportsDashboard = () => {
               <p className="text-xs text-slate-400 mb-8 pl-4">Medicines you dispensed in the selected period and their total sales value.</p>
               <div className="space-y-4">
                 {reportData.medicinesDispensed.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 group hover:border-indigo-200 hover:bg-white hover:shadow-card transition-all">
+                  <div key={index} className="flex items-center justify-between p-5 rounded-2xl data-cell group hover:border-indigo-200 hover:bg-white hover:shadow-card transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">💊</div>
                       <div>
@@ -288,7 +288,7 @@ const ReportsDashboard = () => {
                     <p className="text-xs text-slate-400 mt-1">This shows stock added vs. stock used in the last 30 days.</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-6 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-6 p-2.5 rounded-2xl border" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
                   <div className="flex items-center gap-2 px-3 py-1.5 glass-card  border border-emerald-50">
                     <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Restock</span>
@@ -406,7 +406,7 @@ const ReportsDashboard = () => {
               {reportData.lowStockAlerts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {reportData.lowStockAlerts.map((item) => (
-                    <div key={item.id} className="p-6 bg-white/50 border border-slate-100 rounded-2xl hover:bg-white hover:shadow-card group transition-all">
+                    <div className="p-6 data-cell rounded-2xl hover:shadow-card group transition-all">
                       <h3 className="font-bold text-slate-900 mb-4 truncate group-hover:text-rose-600 transition-colors uppercase text-xs tracking-tight">{item.name}</h3>
                       <div className="flex items-end justify-between mb-4">
                         <div className="text-3xl font-display font-bold text-rose-600">{item.stock_quantity}</div>
@@ -423,7 +423,7 @@ const ReportsDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="py-24 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center opacity-60">
+                <div className="glass-card py-24 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center opacity-60" style={{ borderColor: 'var(--border-primary)' }}>
                   <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-soft mb-4">
                     <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                   </div>

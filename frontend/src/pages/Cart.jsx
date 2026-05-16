@@ -16,18 +16,18 @@ const Cart = () => {
 
   if ((cartItems || []).length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="page-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
               Your Cart is Empty
             </h1>
-            <p className="text-gray-600 mb-8">
+            <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
               Add some products to get started.
             </p>
             <Link
               to="/products"
-              className="btn-primary  text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="btn-primary text-white font-bold py-2 px-4 rounded-lg transition duration-200"
             >
               Continue Shopping
             </Link>
@@ -38,17 +38,17 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="page-bg py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="glass-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
+          <div className="px-6 py-4 table-header-row">
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Shopping Cart</h1>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div>
             {cartItems.map((item) => (
-              <div key={item.id} className="flex py-6 px-6">
-                <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+              <div key={item.id} className="flex py-6 px-6" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border" style={{ borderColor: 'var(--border-primary)' }}>
                   <img
                     src={item.image || "/placeholder-product.jpg"}
                     alt={item.name}
@@ -58,15 +58,17 @@ const Cart = () => {
 
                 <div className="ml-4 flex flex-1 flex-col">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900">
+                    <h3 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       <Link
                         to={`/products/${item.id}`}
-                        className="hover:text-primary"
+                        style={{ color: 'inherit' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-highlight)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'inherit')}
                       >
                         {item.name}
                       </Link>
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
                       {item.pharmacy}
                     </p>
                   </div>
@@ -74,7 +76,8 @@ const Cart = () => {
                     <div className="flex items-center">
                       <label
                         htmlFor={`quantity-${item.id}`}
-                        className="text-sm font-medium text-gray-700 mr-2"
+                        className="text-sm font-medium mr-2"
+                        style={{ color: 'var(--text-secondary)' }}
                       >
                         Qty:
                       </label>
@@ -84,7 +87,7 @@ const Cart = () => {
                         onChange={(e) =>
                           updateQuantity(item.id, parseInt(e.target.value))
                         }
-                        className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 "
+                        className="form-input !py-1 !px-2 !w-auto text-sm"
                       >
                         {[1, 2, 3, 4, 5].map((num) => (
                           <option key={num} value={num}>
@@ -93,14 +96,14 @@ const Cart = () => {
                         ))}
                       </select>
                     </div>
-                    <p className="text-sm font-medium text-gray-900 mt-2 sm:mt-0">
+                    <p className="text-sm font-medium mt-2 sm:mt-0" style={{ color: 'var(--text-primary)' }}>
                       KES {item.price * item.quantity}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => removeFromCart(item.id)}
-                  className="font-medium text-red-600 hover:text-red-500 ml-4"
+                  className="font-medium ml-4 text-rose-600 hover:text-rose-500 transition-colors"
                 >
                   Remove
                 </button>
@@ -108,25 +111,26 @@ const Cart = () => {
             ))}
           </div>
 
-          <div className="border-t border-gray-200 px-6 py-6 bg-gray-50">
-            <div className="flex justify-between text-base font-medium text-gray-900">
-              <p>Total</p>
-              <p>KES {total.toLocaleString()}</p>
+          <div className="px-6 py-6" style={{ borderTop: '1px solid var(--border-primary)', background: 'var(--bg-field)' }}>
+            <div className="flex justify-between text-base font-medium">
+              <p style={{ color: 'var(--text-primary)' }}>Total</p>
+              <p style={{ color: 'var(--text-primary)' }}>KES {total.toLocaleString()}</p>
             </div>
-            <p className="mt-0.5 text-sm text-gray-500">
+            <p className="mt-0.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
               Shipping and taxes calculated at checkout.
             </p>
             <div className="mt-6 flex justify-center space-x-4">
               <Link
                 to="/products"
-                className="text-center text-sm text-primary hover:text-primary font-medium"
+                className="text-center text-sm font-medium transition-colors"
+                style={{ color: 'var(--color-primary)' }}
               >
                 Continue Shopping
                 <span aria-hidden="true"> &rarr;</span>
               </Link>
               <Link
                 to="/checkout"
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 text-center"
+                className="btn-primary text-white font-bold py-3 px-6 rounded-lg text-center"
               >
                 Proceed to Checkout
               </Link>

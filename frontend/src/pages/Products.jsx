@@ -136,8 +136,8 @@ const Products = () => {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-        <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 animate-shake">
-          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
+        <div className="alert-error mb-8 p-4 rounded-2xl flex items-center gap-4 animate-shake">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb,239,68,68),0.15)', color: '#ef4444' }}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
           <p className="text-rose-900 font-bold text-sm tracking-tight">{error}</p>
@@ -164,14 +164,15 @@ const Products = () => {
 
         <div className="flex items-center gap-3">
           {/* View toggle */}
-          <div className="flex p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/50">
+          <div className="flex p-1.5 rounded-2xl border" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2.5 rounded-xl transition-all ${
                 viewMode === 'grid'
                   ? 'bg-white text-primary shadow-premium'
-                  : 'text-slate-400 hover:text-slate-600'
+                  : 'hover:text-slate-600'
               }`}
+              style={viewMode !== 'grid' ? { color: 'var(--text-muted)' } : {}}
               aria-label="Grid view"
               aria-pressed={viewMode === 'grid'}
             >
@@ -200,7 +201,7 @@ const Products = () => {
             <select
               value={sortBy}
               onChange={(e) => handleSort(e.target.value)}
-              className="px-5 py-3 bg-white border border-slate-200/60 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 /10 focus:border-indigo-500 shadow-sm appearance-none pr-10 transition-all"
+              className="form-input px-5 py-3 text-sm font-bold focus:outline-none focus:ring-4 appearance-none pr-10 transition-all"
             >
               {sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -244,9 +245,9 @@ const Products = () => {
       {/* Active Filters */}
       {hasActiveFilters && (
         <div className="mb-8 flex flex-wrap items-center gap-3">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active filters:</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Active filters:</span>
           {selectedCategory && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-primary rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
+            <span className="brand-mist inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">
               {categories.find(c => c.value === selectedCategory)?.label}
               <button onClick={() => setSelectedCategory('')} className="hover:text-indigo-900 transition-colors">
                 <XMarkIcon className="h-3.5 w-3.5" />
@@ -254,7 +255,7 @@ const Products = () => {
             </span>
           )}
           {inStockOnly && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border" style={{ background: 'rgba(16,185,129,0.08)', color: '#059669', borderColor: 'rgba(16,185,129,0.2)' }}>
               In Stock Only
               <button onClick={() => setInStockOnly(false)} className="hover:text-emerald-900 transition-colors">
                 <XMarkIcon className="h-3.5 w-3.5" />
@@ -262,7 +263,7 @@ const Products = () => {
             </span>
           )}
           {searchTerm && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-slate-200 shadow-sm">
+            <span className="data-cell inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm">
               "{searchTerm}"
               <button
                 onClick={() => { setSearchTerm(''); setSearchParams({}); }}
@@ -290,13 +291,13 @@ const Products = () => {
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium py-24 flex flex-col items-center justify-center text-center px-10">
-          <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-6">
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6" style={{ background: 'var(--bg-field)' }}>
             <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
-          <h3 className="text-2xl font-display font-bold text-slate-900 tracking-tight">No products found</h3>
-          <p className="text-slate-500 mt-2 max-w-sm">
+          <h3 className="text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>No products found</h3>
+          <p className="mt-2 max-w-sm" style={{ color: 'var(--text-secondary)' }}>
             Try adjusting your filters or search terms.
           </p>
           <button
@@ -312,8 +313,8 @@ const Products = () => {
           <div className="mb-6 flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                Showing <span className="text-slate-900">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</span>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+              Showing <span style={{ color: 'var(--text-primary)' }}>{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</span>
               </p>
             </div>
           </div>

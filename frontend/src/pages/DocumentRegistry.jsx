@@ -81,26 +81,26 @@ const DocumentRegistry = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Upload Form */}
-        <div className="lg:col-span-1 glass-card rounded-[2rem] p-6 border border-white/60 dark:border-gray-800 shadow-premium h-fit">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Upload New Document</h3>
+        <div className="lg:col-span-1 glass-card rounded-[2rem] p-6 border border-white/60 shadow-premium h-fit">
+          <h3 className="text-lg font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Upload New Document</h3>
           <form onSubmit={handleUpload} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Document Title</label>
+              <label className="form-label block text-sm mb-1">Document Title</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300  rounded-xl bg-white  text-gray-900 dark:text-white"
+                className="form-input w-full px-4 py-2 rounded-xl"
                 placeholder="e.g. May 2025 Meds Invoice"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Document Type</label>
+              <label className="form-label block text-sm mb-1">Document Type</label>
               <select
                 value={formData.document_type}
                 onChange={(e) => setFormData({ ...formData, document_type: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300  rounded-xl bg-white  text-gray-900 dark:text-white"
+                className="form-input w-full px-4 py-2 rounded-xl"
               >
                 <option value="invoice">Invoice</option>
                 <option value="receipt">Receipt</option>
@@ -109,21 +109,21 @@ const DocumentRegistry = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
+              <label className="form-label block text-sm mb-1">File</label>
               <input
                 id="file-upload"
                 type="file"
                 onChange={handleFileChange}
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-primary hover:file:bg-indigo-100 dark:file:bg-indigo-900/40 dark:file:text-indigo-300"
+                className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-primary hover:file:bg-indigo-100 dark:file:bg-indigo-900/40 dark:file:text-indigo-300"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (Optional)</label>
+              <label className="form-label block text-sm mb-1">Notes (Optional)</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300  rounded-xl bg-white  text-gray-900 dark:text-white"
+                className="form-input w-full px-4 py-2 rounded-xl"
                 rows="3"
               />
             </div>
@@ -138,13 +138,13 @@ const DocumentRegistry = () => {
         </div>
 
         {/* Document Registry List */}
-        <div className="lg:col-span-2 glass-card rounded-[2rem] p-6 border border-white/60 dark:border-gray-800 shadow-premium">
+        <div className="lg:col-span-2 glass-card rounded-[2rem] p-6 border border-white/60 shadow-premium">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Document Archive</h3>
+            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Document Archive</h3>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-200  rounded-lg text-sm bg-white  text-gray-900 dark:text-white"
+              className="form-input px-3 py-1.5 rounded-lg text-sm"
             >
               <option value="">All Types</option>
               <option value="invoice">Invoices</option>
@@ -156,31 +156,31 @@ const DocumentRegistry = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-800">
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold text-gray-500 uppercase">Title & Type</th>
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold text-gray-500 uppercase">Uploaded By</th>
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold text-gray-500 uppercase">Date</th>
-                  <th className="pb-4 pt-2 px-4 text-right text-xs font-bold text-gray-500 uppercase">Action</th>
+                <tr className="table-header-row">
+                  <th className="pb-4 pt-2 px-4 text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Title & Type</th>
+                  <th className="pb-4 pt-2 px-4 text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Uploaded By</th>
+                  <th className="pb-4 pt-2 px-4 text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Date</th>
+                  <th className="pb-4 pt-2 px-4 text-right text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
+              <tbody className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
                 {loading ? (
                   <tr><td colSpan="4" className="py-8 text-center text-gray-400">Loading documents...</td></tr>
                 ) : documents.length === 0 ? (
                   <tr><td colSpan="4" className="py-8 text-center text-gray-400">No documents found.</td></tr>
                 ) : (
                   documents.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <tr key={doc.id} className="hover:bg-indigo-50/20 dark:hover:bg-indigo-900/10 transition-colors">
                       <td className="py-4 px-4">
-                        <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{doc.title}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-bold uppercase rounded-md">
+                        <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{doc.title}</p>
+                        <span className="data-cell inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-md">
                           {doc.document_type}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
                         {doc.uploaded_by_name || "Unknown"}
                       </td>
-                      <td className="py-4 px-4 text-xs text-gray-500 dark:text-gray-400">
+                      <td className="py-4 px-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
                         {format(new Date(doc.uploaded_at), "MMM dd, yyyy HH:mm")}
                       </td>
                       <td className="py-4 px-4 text-right">
@@ -188,7 +188,7 @@ const DocumentRegistry = () => {
                           href={doc.file}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3 py-1.5 bg-indigo-50 text-primary hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60 rounded-lg text-xs font-bold uppercase"
+                          className="brand-mist px-3 py-1.5 rounded-lg text-xs font-bold uppercase"
                         >
                           View / DL
                         </a>

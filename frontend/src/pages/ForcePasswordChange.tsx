@@ -42,7 +42,6 @@ const ForcePasswordChange: React.FC = () => {
                 new_password: passwords.newPassword,
             });
 
-            // Update local user state if necessary (must_change_password is now false)
             if (user) {
                 await updateProfile({ ...user, must_change_password: false });
             }
@@ -68,21 +67,21 @@ const ForcePasswordChange: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-slate-50"
-            style={{ background: "linear-gradient(135deg, #eef2ff 0%, #faf5ff 50%, #ecfdf5 100%)" }}>
+        <div className="page-bg flex items-center justify-center px-6 py-12">
             <div className="w-full max-w-md">
-                <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-premium border border-white/70 p-8">
+                <div className="glass-card p-8">
                     <div className="mb-8 text-center">
-                        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                            style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)' }}>
                             <ShieldCheckIcon className="w-10 h-10" />
                         </div>
-                        <h2 className="text-3xl font-display font-bold text-slate-900 mb-1">Security Update</h2>
-                        <p className="text-slate-500 text-sm">For your security, you must change your password before continuing.</p>
+                        <h2 className="text-3xl font-display font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Security Update</h2>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>For your security, you must change your password before continuing.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Current Password</label>
+                            <label className="form-label">Current Password</label>
                             <div className="relative">
                                 <input
                                     name="oldPassword"
@@ -90,16 +89,19 @@ const ForcePasswordChange: React.FC = () => {
                                     required
                                     value={passwords.oldPassword}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 /40 focus:border-indigo-400 transition-all"
+                                    className="form-input pr-11"
+                                    placeholder="Enter current password"
                                 />
-                                <button type="button" onClick={() => setShowPasswords(p => ({ ...p, old: !p.old }))} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400">
+                                <button type="button" onClick={() => setShowPasswords(p => ({ ...p, old: !p.old }))}
+                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center transition-colors"
+                                    style={{ color: 'var(--text-secondary)' }}>
                                     {showPasswords.old ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Password</label>
+                            <label className="form-label">New Password</label>
                             <div className="relative">
                                 <input
                                     name="newPassword"
@@ -107,16 +109,19 @@ const ForcePasswordChange: React.FC = () => {
                                     required
                                     value={passwords.newPassword}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 /40 focus:border-indigo-400 transition-all"
+                                    className="form-input pr-11"
+                                    placeholder="Enter new password"
                                 />
-                                <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400">
+                                <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))}
+                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center transition-colors"
+                                    style={{ color: 'var(--text-secondary)' }}>
                                     {showPasswords.new ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+                            <label className="form-label">Confirm New Password</label>
                             <div className="relative">
                                 <input
                                     name="confirmPassword"
@@ -124,16 +129,19 @@ const ForcePasswordChange: React.FC = () => {
                                     required
                                     value={passwords.confirmPassword}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 /40 focus:border-indigo-400 transition-all"
+                                    className="form-input pr-11"
+                                    placeholder="Confirm new password"
                                 />
-                                <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400">
+                                <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))}
+                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center transition-colors"
+                                    style={{ color: 'var(--text-secondary)' }}>
                                     {showPasswords.confirm ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
                                 </button>
                             </div>
                         </div>
 
                         {error && (
-                            <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
+                            <div className="alert-error">
                                 <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
                                 <p>{error}</p>
                             </div>
@@ -143,15 +151,14 @@ const ForcePasswordChange: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm shadow-glow hover:shadow-premium transition-all"
-                                style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}
+                                className="btn-primary w-full py-3 px-4 rounded-xl text-white font-semibold text-sm transition-all"
                             >
                                 {loading ? "Updating..." : "Update Password & Continue"}
                             </button>
                             <button
                                 type="button"
                                 onClick={logout}
-                                className="w-full py-3 px-4 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-100 transition-all"
+                                className="form-cancel-btn w-full py-3 px-4 text-center"
                             >
                                 Sign Out
                             </button>

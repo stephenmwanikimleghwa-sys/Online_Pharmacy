@@ -79,24 +79,24 @@ const ExportModal = ({
         onClose={() => !loading && onClose()}
       >
         <div className="min-h-screen px-4 text-center">
-          <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+          <Dialog.Overlay className="fixed inset-0 modal-overlay" />
           <span className="inline-block h-screen align-middle" aria-hidden>
             &#8203;
           </span>
-          <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform glass-card -2xl">
-            <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+          <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform modal-card">
+            <Dialog.Title as="h3" className="text-lg font-display font-bold leading-6 mb-4" style={{color:'var(--text-primary)'}}>
               {title}
             </Dialog.Title>
 
             <div className="mt-4">
               {error && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
+                <div className="mb-4 alert-error rounded-xl">{error}</div>
               )}
 
               <div className="space-y-4">
                 {filters.map(filter => (
                   <div key={filter.name}>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="form-label">
                       {filter.label}
                     </label>
                     {filter.type === 'select' ? (
@@ -105,7 +105,7 @@ const ExportModal = ({
                         onChange={(e) =>
                           setFormData({ ...formData, [filter.name]: e.target.value })
                         }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="form-input mt-1"
                         disabled={loading}
                       >
                         <option value="">{filter.placeholder || 'All'}</option>
@@ -122,7 +122,7 @@ const ExportModal = ({
                         onChange={(e) =>
                           setFormData({ ...formData, [filter.name]: e.target.value })
                         }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="form-input mt-1"
                         placeholder={filter.placeholder}
                         disabled={loading}
                       />
@@ -133,30 +133,26 @@ const ExportModal = ({
                 {dateRange && (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Start Date
-                      </label>
+                      <label className="form-label">Start Date</label>
                       <input
                         type="date"
                         value={dateFilters.start_date}
                         onChange={(e) =>
                           setDateFilters({ ...dateFilters, start_date: e.target.value })
                         }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="form-input mt-1"
                         disabled={loading}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        End Date
-                      </label>
+                      <label className="form-label">End Date</label>
                       <input
                         type="date"
                         value={dateFilters.end_date}
                         onChange={(e) =>
                           setDateFilters({ ...dateFilters, end_date: e.target.value })
                         }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="form-input mt-1"
                         disabled={loading}
                       />
                     </div>
@@ -169,7 +165,7 @@ const ExportModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="form-cancel-btn px-4 py-2 rounded-xl"
                 disabled={loading}
               >
                 Cancel
@@ -177,7 +173,7 @@ const ExportModal = ({
               <button
                 type="button"
                 onClick={handleExport}
-                className="px-4 py-2 text-sm font-medium text-white btn-primary border border-transparent rounded-md  disabled:opacity-50"
+                className="btn-primary px-6 py-2 rounded-xl text-sm font-bold disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? 'Exporting...' : 'Export'}

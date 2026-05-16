@@ -1,27 +1,34 @@
 import React from 'react';
 
-const LoadingSpinner = ({ size = 'md', color = 'primary' }) => {
-  const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-8 w-8',
-    lg: 'h-12 w-12'
-  };
+const sizeMap = {
+  sm: { outer: 20, inner: 12 },
+  md: { outer: 36, inner: 22 },
+  lg: { outer: 56, inner: 36 },
+};
 
-  const colorClasses = {
-    primary: 'border-primary',
-    white: 'border-white',
-    gray: 'border-gray-600'
-  };
+const LoadingSpinner = ({ size = 'md', label = 'Loading...' }) => {
+  const { outer, inner } = sizeMap[size] ?? sizeMap.md;
 
   return (
-    <div className="loading-spinner">
-      <div
-        className={`${sizeClasses[size]} border-2 ${colorClasses[color]} border-t-transparent rounded-full spinner`}
-        role="status"
-        aria-label="Loading"
-      >
-        <span className="sr-only">Loading...</span>
-      </div>
+    <div
+      className="spinner-premium"
+      style={{ width: outer, height: outer }}
+      role="status"
+      aria-label={label}
+    >
+      {/* Outer ring — primary colour */}
+      <span
+        className="ring-a"
+        style={{ width: outer, height: outer }}
+        aria-hidden="true"
+      />
+      {/* Inner ring — accent colour */}
+      <span
+        className="ring-b"
+        style={{ width: inner, height: inner }}
+        aria-hidden="true"
+      />
+      <span className="sr-only">{label}</span>
     </div>
   );
 };

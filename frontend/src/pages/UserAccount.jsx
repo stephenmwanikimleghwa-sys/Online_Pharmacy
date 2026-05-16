@@ -88,9 +88,9 @@ const UserAccount = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Profile Card */}
           <div className="lg:col-span-8 glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
-            <div className="px-10 py-8 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Profile Information</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Personal Details</p>
+            <div className="px-10 py-8 border-b" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
+              <h2 className="text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Profile Information</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>Personal Details</p>
             </div>
 
             <div className="p-10">
@@ -125,15 +125,15 @@ const UserAccount = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Role</p>
-                  <span className="px-3 py-1 bg-indigo-50 text-primary rounded-xl text-[10px] font-bold uppercase tracking-widest border border-indigo-100 capitalize">
+                <div className="data-cell p-6 rounded-2xl">
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Role</p>
+                  <span className="brand-mist px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest capitalize">
                     {profile.role}
                   </span>
                 </div>
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Address</p>
-                  <p className="text-sm font-bold text-slate-700">{profile.address || "No address provided"}</p>
+                <div className="data-cell p-6 rounded-2xl">
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Address</p>
+                  <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{profile.address || "No address provided"}</p>
                 </div>
               </div>
 

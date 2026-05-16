@@ -98,20 +98,20 @@ const InventoryManagement = () => {
       <div className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div>
           <div className="flex flex-wrap items-center gap-4 mb-3">
-            <h1 className="text-5xl font-display font-bold text-slate-900 tracking-tight">
+            <h1 className="text-5xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               Stock <span className="text-primary">management</span>
             </h1>
             {user?.pharmacy_name && (
-              <span className="text-[10px] font-bold text-primary bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 uppercase tracking-[0.2em] shadow-sm">
+              <span className="brand-mist text-[10px] font-bold px-4 py-2 rounded-2xl uppercase tracking-[0.2em] shadow-sm">
                 {user.pharmacy_name}
               </span>
             )}
           </div>
-          <p className="text-lg text-slate-500 font-medium">Manage your medicines, suppliers, and stock levels in one place.</p>
+          <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Manage your medicines, suppliers, and stock levels in one place.</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex p-1.5 bg-slate-100/80 rounded-[2rem] w-full lg:w-auto shadow-inner border border-slate-200/50 backdrop-blur-md">
+        <div className="flex p-1.5 rounded-[2rem] w-full lg:w-auto shadow-inner border backdrop-blur-md" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
           {[
             { id: 'inventory', label: 'Stock list' },
             { id: 'suppliers', label: 'Suppliers' },
@@ -123,7 +123,7 @@ const InventoryManagement = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 lg:flex-none px-8 py-3.5 rounded-[1.5rem] text-[11px] font-bold transition-all duration-500 uppercase tracking-widest ${activeTab === tab.id
                 ? 'bg-white text-primary shadow-premium transform scale-[1.02] border border-indigo-50/50'
-                : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                : 'text-muted hover:text-primary hover:bg-white/50'
                 }`}
             >
               {tab.label}
@@ -146,9 +146,9 @@ const InventoryManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Search */}
                 <div className="relative group">
-                  <label className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
+                  <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-1" style={{ color: 'var(--text-muted)' }}>
                     <span>Search</span>
-                    <span className="hidden md:inline-block bg-slate-800 border border-slate-700 text-slate-400 px-2 py-0.5 rounded text-[9px]">Cmd K</span>
+                    <span className="hidden md:inline-block bg-field border border-border text-muted px-2 py-0.5 rounded text-[9px]">Cmd K</span>
                   </label>
                   <div className="relative">
                     <input
@@ -157,29 +157,29 @@ const InventoryManagement = () => {
                       placeholder="Search by medicine name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-6 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 focus:bg-white dark:bg-slate-900/50 dark:border-slate-800 dark:focus:ring-primary-500/20 dark:focus:border-primary-500 dark:focus:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500 transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
+                      className="form-input w-full pl-12 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 transition-all font-medium placeholder:text-muted shadow-sm"
                     />
-                    <svg className="w-5 h-5 text-slate-300 absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="w-5 h-5 text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </div>
                 </div>
 
                 {/* Filter */}
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
+                  <label className="block text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-3 px-1">
                     Filter by stock
                   </label>
                   <div className="relative">
                     <select
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      className="w-full pl-6 pr-12 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 focus:bg-white transition-all font-bold text-slate-700 appearance-none shadow-sm cursor-pointer"
+                      className="form-input w-full pl-6 pr-12 py-4 rounded-2xl focus:outline-none focus:ring-4 transition-all font-bold appearance-none shadow-sm cursor-pointer"
                     >
                       <option value="all">All items</option>
                       <option value="low">Low stock</option>
                       <option value="out">Out of stock</option>
                       <option value="expiring">Expiring soon</option>
                     </select>
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-muted">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
                     </div>
                   </div>
@@ -187,18 +187,18 @@ const InventoryManagement = () => {
               </div>
             </div>
 
-            {/* Quick Stats Cell */}
-            <div className="lg:col-span-4 bg-slate-900 rounded-[2.5rem] p-8 shadow-glow-indigo text-white flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 btn-primary/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:btn-primary/20 transition-colors duration-700"></div>
-              <h3 className="text-[10px] font-bold text-indigo-300 dark:text-primary-400 uppercase tracking-[0.2em] mb-6 relative z-10">Summary</h3>
+            {/* Stats Card */}
+            <div className="lg:col-span-4 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/20 transition-colors duration-700"></div>
+              <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-6 relative z-10">Summary</h3>
               <div className="space-y-4 relative z-10">
                 {/* Visual health bar */}
                 <div className="mb-2">
-                  <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+                  <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-muted mb-1">
                     <span>Stock Health</span>
                     <span>{inventory.length > 0 ? Math.round(((inventory.length - inventory.filter(i => i.is_low_stock && i.stock_quantity > 0).length) / inventory.length) * 100) : 0}%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000" 
                       style={{ width: `${inventory.length > 0 ? Math.round(((inventory.length - inventory.filter(i => i.is_low_stock && i.stock_quantity > 0).length) / inventory.length) * 100) : 0}%` }}
@@ -206,13 +206,13 @@ const InventoryManagement = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group/stat">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Total items</span>
-                  <span className="font-display font-bold text-2xl group-hover:scale-110 transition-transform">{inventory.length}</span>
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-field border border-border hover:bg-white/50 transition-all group/stat">
+                  <span className="text-muted text-xs font-bold uppercase tracking-widest">Total items</span>
+                  <span className="font-display font-bold text-2xl group-hover:scale-110 transition-transform" style={{ color: 'var(--text-primary)' }}>{inventory.length}</span>
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all group/stat">
-                  <span className="text-rose-300 text-xs font-bold uppercase tracking-widest">Need restock</span>
-                  <span className="font-display font-bold text-2xl text-rose-400 group-hover:scale-110 transition-transform">
+                  <span className="text-rose-600 text-xs font-bold uppercase tracking-widest">Need restock</span>
+                  <span className="font-display font-bold text-2xl text-rose-600 group-hover:scale-110 transition-transform">
                     {inventory.filter(item => item.is_low_stock && item.stock_quantity > 0).length}
                   </span>
                 </div>
@@ -242,7 +242,7 @@ const InventoryManagement = () => {
             return (
               <div className="mb-10 space-y-4">
                 {expired.length > 0 && (
-                  <div className="p-6 rounded-2xl border-2 border-rose-300 bg-rose-50">
+                  <div className="p-6 rounded-2xl alert-error border-2 border-rose-300">
                     <h3 className="text-lg font-display font-bold text-rose-800 mb-1 flex items-center gap-2">
                       <svg className="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       ⚠ Expired Medicines ({expired.length} {expired.length === 1 ? 'item' : 'items'})
@@ -259,7 +259,7 @@ const InventoryManagement = () => {
                   </div>
                 )}
                 {expiringSoon.length > 0 && (
-                  <div className="p-6 rounded-2xl border-2 border-amber-200 bg-amber-50">
+                  <div className="p-6 rounded-2xl border-2" style={{ background: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.3)' }}>
                     <h3 className="text-lg font-display font-bold text-amber-900 mb-1 flex items-center gap-2">
                       <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       Expiring Soon ({expiringSoon.length} {expiringSoon.length === 1 ? 'item' : 'items'})
@@ -284,7 +284,7 @@ const InventoryManagement = () => {
 
           {/* Inventory Grid Layout */}
           <div className="flex items-center justify-between mb-8 px-4">
-            <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Your stock</h2>
+            <h2 className="text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Your stock</h2>
             <div className="flex items-center gap-3">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
@@ -309,7 +309,7 @@ const InventoryManagement = () => {
                 <div className="flex gap-4 mt-8 relative z-10">
                   <button
                     onClick={() => { setSearchTerm(''); setFilter('all'); }}
-                    className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl border border-slate-200 dark:border-slate-700 uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                    className="form-cancel-btn px-6 py-3 font-bold text-xs rounded-xl uppercase tracking-widest transition-all"
                   >
                     Clear Filters
                   </button>
@@ -346,14 +346,14 @@ const InventoryManagement = () => {
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="form-cancel-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="form-cancel-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                 </button>

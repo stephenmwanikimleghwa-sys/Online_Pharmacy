@@ -80,7 +80,7 @@ const PharmacistDashboard = () => {
     return (
       <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-4">
         <LoadingSpinner size="lg" />
-        <p className="text-gray-600 animate-pulse">Loading your dashboard...</p>
+        <p className="animate-pulse" style={{color:'var(--text-secondary)'}}>Loading your dashboard...</p>
       </div>
     );
   }
@@ -105,28 +105,28 @@ const PharmacistDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
 
         {/* Pending Prescriptions - Large Bento Card */}
-        <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 flex flex-col border border-white/50 shadow-premium">
+        <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 flex flex-col border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-50 rounded-xl">
-                <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              <div className="p-2 rounded-xl" style={{background:'var(--brand-mist)'}}>
+                <svg className="w-6 h-6" style={{color:'var(--brand-color)'}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
-              <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>
                 Pending Prescriptions
               </h2>
             </div>
-            <span className="px-4 py-1.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-full border border-amber-100 uppercase tracking-widest">
+            <span className="px-4 py-1.5 text-primary text-[10px] font-bold rounded-full border uppercase tracking-widest" style={{background:'var(--brand-mist)', borderColor:'var(--brand-border-soft)'}}>
               {pendingPrescriptions.length} Active Scripts
             </span>
           </div>
 
           {pendingPrescriptions.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-6 opacity-60">
+            <div className="flex-1 flex flex-col items-center justify-center py-20 rounded-3xl border border-dashed" style={{background:'var(--bg-field)', borderColor:'var(--border-primary)', color:'var(--text-secondary)'}}>
+              <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-soft mb-6 opacity-60" style={{background:'var(--bg-card)'}}>
                 <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
-              <p className="text-lg font-display font-bold text-slate-800">Queue is Clear</p>
-              <p className="text-sm mt-1">No pending prescriptions require your attention.</p>
+              <p className="text-lg font-display font-bold" style={{color:'var(--text-primary)'}}>Queue is Clear</p>
+              <p className="text-sm mt-1" style={{color:'var(--text-secondary)'}}>No pending prescriptions require your attention.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -143,7 +143,7 @@ const PharmacistDashboard = () => {
               {pendingPrescriptions.length > 4 && (
                 <button
                   onClick={() => navigate("/prescriptions/pending")}
-                  className="w-full py-4 bg-slate-50 hover:bg-white text-slate-600 hover:text-primary font-bold text-sm rounded-2xl border border-slate-100 hover:border-indigo-100 hover:shadow-soft transition-all active:scale-[0.99]"
+                  className="w-full py-4 font-bold text-sm rounded-2xl border transition-all active:scale-[0.99] form-cancel-btn"
                 >
                   View full queue ({pendingPrescriptions.length} items) →
                 </button>
@@ -154,18 +154,18 @@ const PharmacistDashboard = () => {
 
         {/* Recently Dispensed - Side Bento Card */}
         <div className="lg:col-span-4 flex flex-col gap-8">
-          <div className="glass-card rounded-[2rem] p-8 border border-white/50 shadow-premium">
+          <div className="glass-card rounded-[2rem] p-8 border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-emerald-50 rounded-xl">
+              <div className="p-2 rounded-xl" style={{background:'rgba(16,185,129,0.12)'}}>
                 <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
               </div>
-              <h2 className="text-xl font-display font-bold text-slate-900 tracking-tight">
+              <h2 className="text-xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>
                 Recently Dispensed
               </h2>
             </div>
 
             {dispensedPrescriptions.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-slate-400 opacity-60">
+              <div className="py-12 flex flex-col items-center justify-center opacity-60" style={{color:'var(--text-secondary)'}}>
                 <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <p className="text-xs font-bold uppercase tracking-widest italic text-center">No history for this session</p>
               </div>
@@ -181,7 +181,7 @@ const PharmacistDashboard = () => {
                 {dispensedPrescriptions.length > 3 && (
                   <button
                     onClick={() => navigate("/prescriptions/dispensed")}
-                    className="w-full py-3 text-primary hover:text-primary text-sm font-bold bg-indigo-50 rounded-xl transition-all active:scale-[0.98]"
+                    className="w-full py-3 text-primary text-sm font-bold rounded-xl transition-all active:scale-[0.98]" style={{background:'var(--brand-mist)'}}
                   >
                     Open Dispensing Ledger
                   </button>
@@ -191,7 +191,7 @@ const PharmacistDashboard = () => {
           </div>
 
           {/* Quick Sale Module - Featured Callout */}
-          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
+          <div className="btn-primary rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
             {/* Decorative blobs */}
             <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
             <div className="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
@@ -201,10 +201,11 @@ const PharmacistDashboard = () => {
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               </div>
               <h3 className="text-2xl font-display font-bold mb-3 tracking-tight">Direct OTC Sale</h3>
-              <p className="text-indigo-100 text-sm mb-8 font-medium leading-relaxed opacity-90">Handle non-prescription over-the-counter sales instantly and update inventory.</p>
+              <p className="text-sm mb-8 font-medium leading-relaxed" style={{color:'rgba(255,255,255,0.8)'}}>Handle non-prescription over-the-counter sales instantly and update inventory.</p>
               <button
                 onClick={() => setIsQuickSaleOpen(true)}
-                className="w-full py-4 bg-white text-primary text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-white text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
+                style={{color:'var(--color-primary)'}}
               >
                 Quick Sale (OTC)
               </button>

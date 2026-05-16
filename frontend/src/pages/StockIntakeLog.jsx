@@ -138,10 +138,10 @@ const StockIntakeLog = () => {
 
   if (!user || (user.role !== 'admin' && user.role !== 'pharmacist')) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-base)' }}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600">Only admins and pharmacists can access this page.</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Access Denied</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Only admins and pharmacists can access this page.</p>
         </div>
       </div>
     );
@@ -319,7 +319,7 @@ const StockIntakeLog = () => {
                   <select
                     value={formData.product}
                     onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                    className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
                   >
                     <option value="">Select a product...</option>
                     {products.map((product) => (
@@ -336,7 +336,7 @@ const StockIntakeLog = () => {
                     value={formData.distributor_name}
                     onChange={(e) => setFormData({ ...formData, distributor_name: e.target.value })}
                     placeholder="Search or enter distributor..."
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.distributor_name ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                    className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm ${formErrors.distributor_name ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
                   />
                   <datalist id="distributors-list">
                     {suppliers.map(supplier => <option key={supplier.id} value={supplier.name} />)}
@@ -392,7 +392,7 @@ const StockIntakeLog = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
+                  className="form-cancel-btn flex-1 px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all"
                 >
                   Cancel
                 </button>
@@ -412,7 +412,7 @@ const StockIntakeLog = () => {
       {selectedRecord && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-[2.5rem] shadow-premium max-w-lg w-full overflow-hidden animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
-            <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div className="px-10 py-8 border-b flex justify-between items-center" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
               <div>
                 <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Protocol Details</h2>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Transaction ID: {selectedRecord.id?.toString().padStart(6, '0')}</p>
@@ -438,11 +438,11 @@ const StockIntakeLog = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-8">
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="data-cell p-5 rounded-2xl">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Quantity Received</p>
                   <p className="text-3xl font-display font-bold text-slate-900">{selectedRecord.quantity_received} <span className="text-sm text-slate-400 font-bold">UNITS</span></p>
                 </div>
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="data-cell p-5 rounded-2xl">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Cost</p>
                   <p className="text-xl font-display font-bold text-primary">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
                   <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">Unit Cost: {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
@@ -485,7 +485,7 @@ const StockIntakeLog = () => {
 
               <button
                 onClick={() => setSelectedRecord(null)}
-                className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
+                className="form-cancel-btn w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all"
               >
                 Close
               </button>

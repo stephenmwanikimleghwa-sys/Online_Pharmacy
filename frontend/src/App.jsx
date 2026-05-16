@@ -8,7 +8,7 @@
 
 import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import { Toaster } from "react-hot-toast";
@@ -42,144 +42,165 @@ import Footer from "./components/Footer";
 import ManageUsers from "./pages/ManageUsers";
 import BottomNav from "./components/BottomNav";
 import Sidebar from "./components/navbar/Sidebar";
+import ScrollToTop from "./components/ScrollToTop";
 import "./App.css";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
-function App() {
+/**
+ * AppLayout — consumes context hooks (must be rendered *inside* the providers).
+ * Decides whether to show the sidebar/navbar chrome based on route + auth state.
+ */
+function AppLayout() {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
+
   const isAuthPage = ["/login", "/force-password-change"].includes(location.pathname);
+  // Hide full sidebar/navbar chrome on the public home page when not logged in
+  const isUnauthHome = location.pathname === "/" && !isAuthenticated;
+  const showChrome = !isAuthPage && !isUnauthHome;
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: '#171717',
-                color: '#ffffff',
-                border: '1px solid #e20074',
-                borderRadius: '12px'
-              },
-              success: {
-                iconTheme: { primary: '#00b3ff', secondary: '#000000' }
-              },
-              error: {
-                iconTheme: { primary: '#e20074', secondary: '#ffffff' }
-              }
-            }}
-          />
-          <div className="flex h-[100dvh] w-full bg-slate-50 dark:bg-[#051624] overflow-hidden">
-            {!isAuthPage && <Sidebar />}
-            
-            <div className="flex-1 flex flex-col w-full min-w-0 h-full overflow-y-auto overflow-x-hidden relative pb-16 md:pb-0">
-              {!isAuthPage && <Navbar />}
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: 'toast-glass',
+          style: {
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-primary)',
+            borderRadius: '16px',
+            backdropFilter: 'blur(18px)',
+          },
+          success: {
+            iconTheme: { primary: '#10b981', secondary: 'transparent' }
+          },
+          error: {
+            iconTheme: { primary: '#dc2626', secondary: 'transparent' }
+          }
+        }}
+      />
+      <ScrollToTop />
+      <div className="flex h-[100dvh] w-full overflow-hidden" style={{ background: 'var(--bg-gradient)', backgroundAttachment: 'fixed' }}>
+        {showChrome && <Sidebar />}
 
-              <main className="main-content flex-auto flex-shrink-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                <ErrorBoundary>
-                  <Routes>
-                    {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/password-reset" element={<PasswordResetRequest />} />
-              <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
-              <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />
+        <div data-scroll-root className="flex-1 flex flex-col w-full min-w-0 h-full overflow-y-auto overflow-x-hidden relative pb-16 md:pb-0">
+          {showChrome && <Navbar />}
 
-              {/* Protected Routes */}
-              <Route path="/products" element={<ProtectedRoute element={Products} />} />
-              <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
+          <main key={location.pathname} className="main-content page-enter flex-auto flex-shrink-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <ErrorBoundary>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/password-reset" element={<PasswordResetRequest />} />
+                <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
+                <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />
 
-              {/* Protected Customer Routes */}
-              <Route
-                path="/admin/stock"
-                element={<ProtectedRoute element={AdminStock} allowedRoles={["admin"]} />}
-              />
-              <Route
-                path="/customer/dashboard"
-                element={<ProtectedRoute element={UserAccount} allowedRoles={['customer']} />}
-              />
-              <Route
-                path="/account"
-                element={<ProtectedRoute element={UserAccount} />}
-              />
+                {/* Protected Routes */}
+                <Route path="/products" element={<ProtectedRoute element={Products} />} />
+                <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
 
-              {/* Protected Pharmacist Routes */}
-              <Route
-                path="/pharmacist/dashboard"
-                element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
-              />
-              <Route
-                path="/prescriptions/add"
-                element={<ProtectedRoute element={AddPrescription} allowedRoles={['pharmacist']} />}
-              />
-              <Route
-                path="/prescriptions/:id/validate"
-                element={<ProtectedRoute element={ValidatePrescription} allowedRoles={['pharmacist']} />}
-              />
-              <Route
-                path="/prescriptions/:id/dispense"
-                element={<ProtectedRoute element={DispensePrescription} allowedRoles={['pharmacist']} />}
-              />
-              <Route
-                path="/inventory"
-                element={<ProtectedRoute element={InventoryManagement} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
-              />
-              <Route
-                path="/stock-intake"
-                element={<ProtectedRoute element={StockIntakeLog} allowedRoles={['pharmacist', 'admin']} />}
-              />
+                {/* Protected Customer Routes */}
+                <Route
+                  path="/admin/stock"
+                  element={<ProtectedRoute element={AdminStock} allowedRoles={["admin"]} />}
+                />
+                <Route
+                  path="/customer/dashboard"
+                  element={<ProtectedRoute element={UserAccount} allowedRoles={['customer']} />}
+                />
+                <Route
+                  path="/account"
+                  element={<ProtectedRoute element={UserAccount} />}
+                />
 
-              {/* Protected Admin Routes */}
-              <Route
-                path="/admin/dashboard"
-                element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
-              />
-              <Route
-                path="/admin/users"
-                element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />}
-              />
-              <Route
-                path="/admin/restock-requests"
-                element={<ProtectedRoute element={RestockRequests} allowedRoles={['admin', 'pharmacist']} />}
-              />
-              <Route
-                path="/reports"
-                element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
-              />
-              <Route
-                path="/documents"
-                element={<ProtectedRoute element={DocumentRegistry} allowedRoles={['admin', 'pharmacist']} />}
-              />
-              <Route
-                path="/otc-sales"
-                element={<ProtectedRoute element={OTCSales} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
-              />
-              <Route
-                path="/dispensing-logs"
-                element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
-              />
-              <Route
-                path="/licensing"
-                element={<ProtectedRoute element={PharmacyLicensing} allowedRoles={['admin', 'pharmacist']} />}
-              />
-              <Route
-                path="/cashier/dashboard"
-                element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
-              />
+                {/* Protected Pharmacist Routes */}
+                <Route
+                  path="/pharmacist/dashboard"
+                  element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
+                />
+                <Route
+                  path="/prescriptions/add"
+                  element={<ProtectedRoute element={AddPrescription} allowedRoles={['pharmacist']} />}
+                />
+                <Route
+                  path="/prescriptions/:id/validate"
+                  element={<ProtectedRoute element={ValidatePrescription} allowedRoles={['pharmacist']} />}
+                />
+                <Route
+                  path="/prescriptions/:id/dispense"
+                  element={<ProtectedRoute element={DispensePrescription} allowedRoles={['pharmacist']} />}
+                />
+                <Route
+                  path="/inventory"
+                  element={<ProtectedRoute element={InventoryManagement} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
+                />
+                <Route
+                  path="/stock-intake"
+                  element={<ProtectedRoute element={StockIntakeLog} allowedRoles={['pharmacist', 'admin']} />}
+                />
+
+                {/* Protected Admin Routes */}
+                <Route
+                  path="/admin/dashboard"
+                  element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
+                />
+                <Route
+                  path="/admin/users"
+                  element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />}
+                />
+                <Route
+                  path="/admin/restock-requests"
+                  element={<ProtectedRoute element={RestockRequests} allowedRoles={['admin', 'pharmacist']} />}
+                />
+                <Route
+                  path="/reports"
+                  element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
+                />
+                <Route
+                  path="/documents"
+                  element={<ProtectedRoute element={DocumentRegistry} allowedRoles={['admin', 'pharmacist']} />}
+                />
+                <Route
+                  path="/otc-sales"
+                  element={<ProtectedRoute element={OTCSales} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
+                />
+                <Route
+                  path="/dispensing-logs"
+                  element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
+                />
+                <Route
+                  path="/licensing"
+                  element={<ProtectedRoute element={PharmacyLicensing} allowedRoles={['admin', 'pharmacist']} />}
+                />
+                <Route
+                  path="/cashier/dashboard"
+                  element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
+                />
 
                 {/* Catch-all redirect */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </ErrorBoundary>
           </main>
-          {!isAuthPage && <Footer />}
+          {showChrome && <Footer />}
         </div>
-        {!isAuthPage && <BottomNav />}
+        {showChrome && <BottomNav />}
       </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          <AppLayout />
         </CartProvider>
-    </AuthProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

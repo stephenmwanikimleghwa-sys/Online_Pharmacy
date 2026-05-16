@@ -292,22 +292,22 @@ const RestockRequests = () => {
         </div>
 
         {/* Pagination Section */}
-        <div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            Protocol Page <span className="text-slate-900">{currentPage}</span> of <span className="text-slate-900">{totalPages}</span>
+        <div className="px-10 py-6 border-t flex items-center justify-between" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+            Protocol Page <span style={{ color: 'var(--text-primary)' }}>{currentPage}</span> of <span style={{ color: 'var(--text-primary)' }}>{totalPages}</span>
           </p>
           <div className="flex gap-4">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-40"
+              className="form-cancel-btn px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 disabled:opacity-40"
             >
               Previous Sequence
             </button>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-40"
+              className="form-cancel-btn px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 disabled:opacity-40"
             >
               Next Sequence
             </button>
@@ -352,7 +352,7 @@ const RestockRequests = () => {
                     <select
                       value={formData.product}
                       onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                      className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                      className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
                     >
                       <option value="">Identify Asset...</option>
                       {products.map((product) => (
@@ -370,7 +370,7 @@ const RestockRequests = () => {
                         min="1"
                         value={formData.requested_quantity}
                         onChange={(e) => setFormData({ ...formData, requested_quantity: e.target.value })}
-                        className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.requested_quantity ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
+                        className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm ${formErrors.requested_quantity ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
                         placeholder="Quantity..."
                       />
                       {formErrors.requested_quantity && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.requested_quantity}</p>}
@@ -384,7 +384,7 @@ const RestockRequests = () => {
                         min="0"
                         value={formData.estimated_cost}
                         onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
-                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                        className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                         placeholder="KES Value..."
                       />
                     </div>
@@ -396,7 +396,7 @@ const RestockRequests = () => {
                       type="text"
                       value={formData.supplier}
                       onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
+                      className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
                       placeholder="Supplier identity..."
                     />
                   </div>
@@ -407,7 +407,7 @@ const RestockRequests = () => {
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={3}
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-medium text-slate-700 shadow-sm"
+                      className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-medium shadow-sm"
                       placeholder="Contextual details for procurement review..."
                     />
                   </div>
@@ -417,7 +417,7 @@ const RestockRequests = () => {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
+                    className="form-cancel-btn flex-1 px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all"
                   >
                     Abort
                   </button>
