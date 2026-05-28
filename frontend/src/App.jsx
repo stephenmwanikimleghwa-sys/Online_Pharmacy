@@ -34,6 +34,7 @@ import PasswordResetRequest from "./pages/PasswordResetRequest";
 import PasswordResetConfirm from "./pages/PasswordResetConfirm";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStock from "./pages/AdminStock";
+import BranchesOverview from "./pages/BranchesOverview";
 import StockIntakeLog from "./pages/StockIntakeLog";
 import OTCSales from "./pages/OTCSales";
 import DocumentRegistry from "./pages/DocumentRegistry";
@@ -146,6 +147,10 @@ function AppLayout() {
                 <Route
                   path="/admin/dashboard"
                   element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
+                />
+                <Route
+                  path="/admin/branches"
+                  element={<ProtectedRoute element={BranchesOverview} allowedRoles={['admin']} />}
                 />
                 <Route
                   path="/admin/users"

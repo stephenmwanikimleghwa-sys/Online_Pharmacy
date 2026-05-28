@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useBranchParam } from '../hooks/useBranchParam';
 import { Dialog, Transition as HeadlessTransition } from '@headlessui/react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
@@ -12,6 +14,8 @@ const STATUS_COLORS = {
 };
 
 const RestockRequests = () => {
+  const { activeBranch } = useAuth();
+  const { branchParams } = useBranchParam();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,6 +42,7 @@ const RestockRequests = () => {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage,
+        ...branchParams,
         ...(filters.status && { status: filters.status }),
         ...(filters.product && { product_id: filters.product }),
       });
@@ -65,7 +70,7 @@ const RestockRequests = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [currentPage, filters]);
+  }, [currentPage, filters, activeBranch]);
 
   useEffect(() => {
     fetchProducts();

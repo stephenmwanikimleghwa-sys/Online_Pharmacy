@@ -17,6 +17,15 @@ class StockIntake(models.Model):
         related_name='stock_intakes',
         help_text='The product/medicine received'
     )
+    branch = models.ForeignKey(
+        'users.Branch',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='stock_intakes',
+        verbose_name='Branch',
+        help_text='The branch that received this stock.'
+    )
     distributor_name = models.CharField(
         max_length=255,
         help_text='Name of the distributor or supplier'

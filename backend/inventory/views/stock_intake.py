@@ -25,11 +25,19 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter queryset based on user role and query params."""
         user = self.request.user
-        queryset = StockIntake.objects.select_related('product', 'received_by').all()
+        queryset = StockIntake.objects.select_related('product', 'received_by', 'branch').all()
 
-        # Customers can only see their own received stock (if applicable)
+        # Customers see nothing
         if user.role == 'customer':
-            queryset = queryset.none()
+            return queryset.none()
+
+        # ---- Branch scoping ----
+        is_admin = user.is_superuser or user.role == 'admin'
+        branch_param = self.request.query_params.get('branch')
+        if is_admin and branch_param and branch_param != 'all':
+            queryset = queryset.filter(branch_id=branch_param)
+        elif not is_admin and user.branch:
+            queryset = queryset.filter(branch=user.branch)
 
         # Filter by product if provided
         product_id = self.request.query_params.get('product_id')
@@ -53,16 +61,16 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new stock intake record."""
-        # Only admins and pharmacists can record intake
         if request.user.role not in ['admin', 'pharmacist']:
             return Response(
                 {'detail': 'Only admins and pharmacists can record stock intake.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(received_by=request.user)
+            # Stamp the branch from the user's assigned branch if not provided
+            branch = request.user.branch
+            serializer.save(received_by=request.user, branch=branch)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBranchParam } from '../hooks/useBranchParam';
 import { PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
 
 const StockIntakeLog = () => {
-  const { user } = useAuth();
+  const { user, activeBranch } = useAuth();
+  const { branchParams } = useBranchParam();
   const [intakeRecords, setIntakeRecords] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +36,14 @@ const StockIntakeLog = () => {
     fetchProducts();
     fetchSuppliers();
     fetchSummary();
-  }, [filterDistributor]);
+  }, [filterDistributor, activeBranch]);
 
   const fetchIntakeRecords = async () => {
     try {
       setLoading(true);
-      const params = filterDistributor ? `?distributor=${filterDistributor}` : '';
-      const response = await api.get(`/inventory/stock-intake/${params}`);
+      const params = { ...branchParams };
+      if (filterDistributor) params.distributor = filterDistributor;
+      const response = await api.get('/inventory/stock-intake/', { params });
       setIntakeRecords(Array.isArray(response.data) ? response.data : response.data.results || []);
       setError(null);
     } catch (err) {
@@ -71,7 +74,7 @@ const StockIntakeLog = () => {
 
   const fetchSummary = async () => {
     try {
-      const response = await api.get('/inventory/stock-intake/summary/');
+      const response = await api.get('/inventory/stock-intake/summary/', { params: branchParams });
       setSummary(response.data);
     } catch (err) {
       console.error('Error fetching summary:', err);

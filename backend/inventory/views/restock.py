@@ -27,14 +27,21 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
         if product_id:
             queryset = queryset.filter(product_id=product_id)
 
-        # Regular users can only see their own requests
-        if not (user.role == RoleChoices.PHARMACIST or user.is_superuser):
+        # Branch scoping
+        is_admin = user.is_superuser or user.role == 'admin'
+        branch_param = self.request.query_params.get('branch')
+        if is_admin and branch_param and branch_param != 'all':
+            queryset = queryset.filter(branch_id=branch_param)
+        elif not is_admin and user.branch:
+            queryset = queryset.filter(branch=user.branch)
+        elif not is_admin:
+            # Non-branch-assigned staff: only their own requests
             queryset = queryset.filter(requested_by=user)
-            
-        return queryset.select_related('product', 'requested_by', 'approved_by')
+
+        return queryset.select_related('product', 'requested_by', 'approved_by', 'branch')
 
     def perform_create(self, serializer):
-        serializer.save(requested_by=self.request.user)
+        serializer.save(requested_by=self.request.user, branch=self.request.user.branch)
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):

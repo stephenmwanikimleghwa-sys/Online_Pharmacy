@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { Bars3Icon, SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import MobileNav from "./navbar/MobileNav";
+import BranchSelector from "./BranchSelector";
 
 const Navbar = () => {
   const { user, logout, loading } = useAuth();
@@ -56,6 +57,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <BranchSelector />
             <button
               onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
               className="p-2 nav-secondary-btn"

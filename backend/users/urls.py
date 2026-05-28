@@ -21,6 +21,12 @@ from .views.admin_views import (
     delete_user,
     update_user,
 )
+from .views.branches import (
+    BranchListCreateView,
+    BranchDetailView,
+    branch_summary,
+    all_branches_summary,
+)
 
 app_name = "users"
 
@@ -82,4 +88,9 @@ urlpatterns = [
         update_user,
         name="admin_update_user",
     ),
+    # Branch management
+    path('branches/', BranchListCreateView.as_view(), name='branch_list_create'),
+    path('branches/summary/', all_branches_summary, name='all_branches_summary'),
+    path('branches/<int:pk>/', BranchDetailView.as_view(), name='branch_detail'),
+    path('branches/<int:pk>/summary/', branch_summary, name='branch_summary'),
 ]

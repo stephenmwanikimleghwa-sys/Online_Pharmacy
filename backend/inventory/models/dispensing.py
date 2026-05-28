@@ -18,6 +18,15 @@ class Prescription(models.Model):
     prescription_date = models.DateField()
     notes = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    branch = models.ForeignKey(
+        'users.Branch',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='prescriptions',
+        verbose_name='Branch',
+        help_text='The branch where this prescription was created/verified.'
+    )
     
     verified_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -68,6 +77,15 @@ class Dispensation(models.Model):
         null=True,
         blank=True,
         related_name='dispensations'
+    )
+    branch = models.ForeignKey(
+        'users.Branch',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='dispensations',
+        verbose_name='Branch',
+        help_text='The branch where this sale/dispensation occurred.'
     )
     patient_name = models.CharField(max_length=255, blank=True)  # For OTC sales
     dispensed_by = models.ForeignKey(

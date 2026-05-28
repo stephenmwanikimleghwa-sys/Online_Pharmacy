@@ -5,8 +5,9 @@ import { useAuth } from "../../context/AuthContext";
 import {
   SunIcon, MoonIcon, ArrowRightOnRectangleIcon, ChevronLeftIcon, ChevronRightIcon,
   HomeIcon, ShoppingBagIcon, ChartBarIcon, ClipboardDocumentListIcon, Squares2X2Icon,
-  ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon
+  ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon, BuildingOffice2Icon
 } from "@heroicons/react/24/outline";
+import BranchSelector from "../BranchSelector";
 
 const getDashboardHref = (role) => {
   switch (role) {
@@ -26,7 +27,17 @@ const getNavLinks = (user) => {
   if (user) {
     base.splice(1, 0, { to: getDashboardHref(user.role), label: "Dashboard", icon: Squares2X2Icon });
   }
-  if (user?.role === "admin" || user?.role === "pharmacist") {
+  if (user?.role === "admin") {
+    base.push(
+      { to: "/admin/branches",  label: "Branches",  icon: BuildingOffice2Icon },
+      { to: "/inventory",       label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/otc-sales",       label: "OTC Sales", icon: ShoppingBagIcon },
+      { to: "/reports",         label: "Reports",   icon: ChartBarIcon },
+      { to: "/documents",       label: "Documents", icon: DocumentTextIcon },
+      { to: "/licensing",       label: "Licensing", icon: ShieldCheckIcon },
+      { to: "/dispensing-logs", label: "Logs",      icon: DocumentDuplicateIcon }
+    );
+  } else if (user?.role === "pharmacist") {
     base.push(
       { to: "/inventory",       label: "Inventory", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales",       label: "OTC Sales", icon: ShoppingBagIcon },
@@ -106,6 +117,12 @@ const Sidebar = () => {
             </span>
           )}
         </Link>
+        {/* Branch Selector — only for admin, only when expanded */}
+        {!isCollapsed && (
+          <div style={{ paddingTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <BranchSelector />
+          </div>
+        )}
       </div>
 
       {/* Navigation Links */}

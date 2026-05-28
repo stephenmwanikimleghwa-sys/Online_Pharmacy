@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useBranchParam } from '../hooks/useBranchParam';
 import api from '../services/api';
-import { UserIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { UserIcon, ChartBarIcon, BuildingOffice2Icon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
 const AdminDashboard = () => {
-  const { user, token } = useAuth();
+  const { user, token, activeBranch } = useAuth();
+  const { branchParams, isAllBranches } = useBranchParam();
   const navigate = useNavigate();
   const location = useLocation();
   const [stats, setStats] = useState({ totalUsers: 0, totalPharmacies: 0 });
+  const [branchSummary, setBranchSummary] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,6 +25,8 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Fetch users list
         const usersRes = await api.get('/auth/admin/users/').catch((err) => {
           console.warn('Failed to load users for dashboard', err);
           return { data: [] };
@@ -29,6 +34,19 @@ const AdminDashboard = () => {
         const usersData = Array.isArray(usersRes.data) ? usersRes.data : (usersRes.data?.results ?? []);
         setUsers(usersData);
         setStats({ totalUsers: usersData.length, totalPharmacies: 0 });
+
+        // Fetch branch summary
+        try {
+          if (isAllBranches || activeBranch === null) {
+            const summaryRes = await api.get('/auth/branches/summary/');
+            setBranchSummary(summaryRes.data?.totals || summaryRes.data);
+          } else if (activeBranch?.id) {
+            const summaryRes = await api.get(`/auth/branches/${activeBranch.id}/summary/`);
+            setBranchSummary(summaryRes.data);
+          }
+        } catch (summaryErr) {
+          console.warn('Branch summary unavailable', summaryErr);
+        }
       } catch (err) {
         setError('Failed to load dashboard data');
         console.error(err);
@@ -38,7 +56,7 @@ const AdminDashboard = () => {
     };
 
     fetchData();
-  }, [user, token, navigate, location]);
+  }, [user, token, navigate, location, activeBranch]);
 
   if (loading) {
     return (
@@ -93,6 +111,40 @@ const AdminDashboard = () => {
             </div>
           </div>
 
+          {/* Branch stats card */}
+          {branchSummary && (
+            <>
+              <div className="glass-card rounded-2xl p-6" style={{borderLeft:'4px solid #10b981'}}>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl" style={{background:'rgba(16,185,129,0.1)'}}>
+                    <CurrencyDollarIcon className="h-7 w-7" style={{color:'#10b981'}} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold uppercase tracking-wider" style={{color:'var(--text-secondary)'}}>Sales Today</p>
+                    <p className="text-3xl font-display font-bold" style={{color:'var(--text-primary)'}}>KSh {(branchSummary.sales_today || 0).toLocaleString()}</p>
+                    <p className="text-xs mt-1" style={{color:'var(--text-secondary)'}}>{branchSummary.transactions_today || 0} transactions</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-card rounded-2xl p-6" style={{borderLeft:'4px solid var(--color-accent)'}}>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl" style={{background:'var(--brand-soft)'}}>
+                    <BuildingOffice2Icon className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold uppercase tracking-wider" style={{color:'var(--text-secondary)'}}>Active Staff</p>
+                    <p className="text-3xl font-display font-bold" style={{color:'var(--text-primary)'}}>{branchSummary.active_staff || 0}</p>
+                    <p className="text-xs mt-1" style={{color:'var(--text-secondary)'}}>
+                      {activeBranch ? activeBranch.name : 'All Branches'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {!branchSummary && (
           <div className="glass-card rounded-2xl p-6" style={{borderLeft:'4px solid var(--color-accent)'}}>
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl" style={{background:'var(--brand-soft)'}}>
@@ -107,6 +159,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+          )}
 
           {/* Featured Action Cell */}
           <div className="btn-primary rounded-2xl p-6 shadow-glow text-white overflow-hidden relative group">
@@ -174,8 +227,8 @@ const AdminDashboard = () => {
       {/* Footer Navigation Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
+          { label: 'Branches Overview', path: '/admin/branches' },
           { label: 'User Management', path: '/admin/users' },
-          { label: 'Inventory Control', path: '/admin/stock' },
           { label: 'Audit Logs', path: '/dispensing-logs' },
           { label: 'Reports Panel', path: '/reports' },
         ].map(({ label, path }) => (

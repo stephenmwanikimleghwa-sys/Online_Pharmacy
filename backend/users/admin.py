@@ -1,6 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, Branch, Pharmacy
+
+
+@admin.register(Branch)
+class BranchAdmin(admin.ModelAdmin):
+    list_display = ('name', 'pharmacy', 'contact_phone', 'is_active', 'is_headquarters', 'created_at')
+    list_filter = ('is_active', 'is_headquarters', 'pharmacy')
+    search_fields = ('name', 'address', 'contact_phone', 'license_number')
+    ordering = ('pharmacy', 'name')
 
 
 @admin.register(User)
@@ -26,6 +34,8 @@ class UserAdmin(BaseUserAdmin):
             {
                 "fields": (
                     "role",
+                    "pharmacy",
+                    "branch",
                     "phone_number",
                     "profile_picture",
                     "date_of_birth",

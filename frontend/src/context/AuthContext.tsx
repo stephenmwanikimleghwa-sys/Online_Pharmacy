@@ -10,6 +10,8 @@ export interface User {
   role: "admin" | "pharmacist" | "customer" | "cashier" | "auditor";
   pharmacy?: number;
   pharmacy_name?: string;
+  branch?: number | null;
+  branch_info?: { id: number; name: string; is_headquarters: boolean } | null;
   is_active?: boolean;
   must_change_password?: boolean;
   is_admin?: boolean;
@@ -17,6 +19,14 @@ export interface User {
   is_customer?: boolean;
   user_type?: string;
   [key: string]: any;
+}
+
+// Branch type used for the active branch selector
+export interface BranchInfo {
+  id: number | 'all';
+  name: string;
+  is_headquarters?: boolean;
+  is_active?: boolean;
 }
 
 // Define Login Credentials interface
@@ -32,6 +42,9 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
+  /** The currently selected branch context. null = 'All Branches' (admin only). */
+  activeBranch: BranchInfo | null;
+  setActiveBranch: (branch: BranchInfo | null) => void;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; user?: User | null; error?: any }>;
   logout: () => void;
   updateProfile: (profileData: Partial<User>) => Promise<{ success: boolean; user?: User; error?: any }>;
@@ -56,7 +69,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("access_token"));
   const [loading, setLoading] = useState<boolean>(true);
+  // activeBranch: the currently selected branch context for all data views.
+  // null = 'All Branches' (aggregated, admin only).
+  // For non-admin users this is always set to their assigned branch and cannot be changed.
+  const [activeBranch, setActiveBranchState] = useState<BranchInfo | null>(null);
   const navigate = useNavigate();
+
+  const setActiveBranch = (branch: BranchInfo | null) => {
+    setActiveBranchState(branch);
+  };
 
   // NOTE: We reuse the shared `api` instance (from services/api.js)
   // which already reads the token from localStorage in a request interceptor.
@@ -147,6 +168,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         setUser(finalUser);
         if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
+
+        // Set default activeBranch on login:
+        // - Admin users default to 'All Branches' (null) so they see the aggregated view
+        // - All other staff default to their assigned branch
+        const isAdmin = finalUser.role === 'admin' || finalUser.is_admin;
+        if (isAdmin) {
+          setActiveBranchState(null); // admin → start with "All Branches"
+        } else if (finalUser.branch_info) {
+          setActiveBranchState(finalUser.branch_info as BranchInfo);
+        } else if (finalUser.branch) {
+          setActiveBranchState({ id: finalUser.branch, name: 'My Branch' });
+        }
       }
 
       return { success: true, user: finalUser || null };
@@ -265,6 +298,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     getDashboardPath,
     isAuthenticated: !!token && !!user,
     loading,
+    activeBranch,
+    setActiveBranch,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

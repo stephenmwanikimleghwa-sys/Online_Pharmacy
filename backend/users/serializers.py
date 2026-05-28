@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User, Pharmacy, PharmacyDocument
+from .models import User, Pharmacy, PharmacyDocument, Branch
 
 class PharmacyDocumentSerializer(serializers.ModelSerializer):
     """Serializer for pharmacy legal documents."""
@@ -17,28 +17,56 @@ class PharmacyDocumentSerializer(serializers.ModelSerializer):
         # Pharmacy is set by the backend for pharmacists; clients should not send it.
         read_only_fields = ['pharmacy', 'is_verified', 'uploaded_at', 'updated_at']
 
+class BranchSerializer(serializers.ModelSerializer):
+    """Full serializer for Branch — used for CRUD and admin views."""
+    pharmacy_name = serializers.CharField(source='pharmacy.name', read_only=True)
+    staff_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Branch
+        fields = [
+            'id', 'pharmacy', 'pharmacy_name', 'name', 'address',
+            'contact_phone', 'license_number', 'is_active',
+            'is_headquarters', 'staff_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'pharmacy_name', 'staff_count']
+
+    def get_staff_count(self, obj):
+        return obj.users.filter(is_active=True).count()
+
+
+class BranchMiniSerializer(serializers.ModelSerializer):
+    """Compact branch representation embedded inside user profiles."""
+    class Meta:
+        model = Branch
+        fields = ['id', 'name', 'is_headquarters']
+
+
 class PharmacySerializer(serializers.ModelSerializer):
     """Serializer for the Pharmacy model."""
     documents = PharmacyDocumentSerializer(many=True, read_only=True)
+    branches = BranchSerializer(many=True, read_only=True)
 
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'address', 'contact_phone', 'license_number', 'is_active', 'documents']
+        fields = ['id', 'name', 'address', 'contact_phone', 'license_number', 'is_active', 'documents', 'branches']
         read_only_fields = ['created_at', 'updated_at']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile information."""
     pharmacy_name = serializers.SerializerMethodField()
+    branch_info = BranchMiniSerializer(source='branch', read_only=True)
 
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'role', 'pharmacy', 
-            'pharmacy_name', 'phone_number', 'profile_picture',
+            'id', 'username', 'email', 'role', 'pharmacy',
+            'pharmacy_name', 'branch', 'branch_info',
+            'phone_number', 'profile_picture',
             'first_name', 'last_name', 'full_name', 'is_active', 'is_verified',
             'must_change_password'
         ]
-        read_only_fields = ['id', 'role', 'is_verified', 'full_name']
+        read_only_fields = ['id', 'role', 'is_verified', 'full_name', 'branch_info']
 
     def get_pharmacy_name(self, obj):
         """Handle null pharmacy gracefully."""
