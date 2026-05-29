@@ -2,8 +2,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.password_validation import validate_password
 from django.shortcuts import get_object_or_404
-from users.models import User, RoleChoices
+from users.models import User, RoleChoices, Branch
 from users.permissions import IsAdminUser
 
 
@@ -12,7 +13,7 @@ from users.permissions import IsAdminUser
 def admin_create_user(request):
     """
     Admin endpoint to create a user (admin or pharmacist).
-    Expects: username, password, email, full_name, role ("admin" or "pharmacist"), optional pharmacy_license
+    Expects: username, password, email, full_name, role ("admin" or "pharmacist"), optional branch_id, optional permission_flags.
     """
     data = request.data
     username = data.get('username')
@@ -27,6 +28,15 @@ def admin_create_user(request):
     if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
         return Response({'error': 'User with this username or email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    branch = None
+    branch_id = data.get('branch_id') or data.get('branch')
+    if branch_id:
+        branch = get_object_or_404(Branch, id=branch_id)
+
+    permission_flags = data.get('permission_flags') or {}
+    if not isinstance(permission_flags, dict):
+        return Response({'error': 'permission_flags must be an object.'}, status=status.HTTP_400_BAD_REQUEST)
+
     first_name = ''
     last_name = ''
     if full_name:
@@ -38,6 +48,8 @@ def admin_create_user(request):
     user.first_name = first_name
     user.last_name = last_name
     user.role = RoleChoices.ADMIN if role == 'admin' else RoleChoices.PHARMACIST
+    user.branch = branch
+    user.permission_flags = permission_flags
     user.is_active = True
     user.is_verified = True
     user.save()
@@ -95,6 +107,36 @@ def delete_user(request, user_id):
         return Response({"error": "User not found."}, status=404)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def deactivate_user(request, user_id):
+    """Toggle a user's active status."""
+    user = get_object_or_404(User, id=user_id)
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+    return Response({'message': 'User status updated successfully.', 'is_active': user.is_active})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_reset_password(request, user_id):
+    """Force reset a user's password from the admin panel."""
+    user = get_object_or_404(User, id=user_id)
+    new_password = request.data.get('new_password')
+    if not new_password:
+        return Response({'error': 'new_password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(new_password, user=user)
+    except Exception as exc:
+        return Response({'error': exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.must_change_password = True
+    user.save()
+    return Response({'message': 'Password reset successfully.'})
+
+
 @api_view(['PATCH', 'PUT'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def update_user(request, user_id):
@@ -113,7 +155,20 @@ def update_user(request, user_id):
         role = data.get('role').lower()
         if role in ('admin', 'pharmacist', 'customer'):
             user.role = role
+    if 'branch_id' in data or 'branch' in data:
+        branch_id = data.get('branch_id', data.get('branch'))
+        if branch_id:
+            user.branch = get_object_or_404(Branch, id=branch_id)
+        else:
+            user.branch = None
+    if 'permission_flags' in data:
+        permission_flags = data.get('permission_flags')
+        if not isinstance(permission_flags, dict):
+            return Response({'error': 'permission_flags must be an object.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.permission_flags = permission_flags
     if 'is_verified' in data:
         user.is_verified = bool(data.get('is_verified'))
+    if 'is_active' in data:
+        user.is_active = bool(data.get('is_active'))
     user.save()
     return Response({'message': 'User updated successfully.'})

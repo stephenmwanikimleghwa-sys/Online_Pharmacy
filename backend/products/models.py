@@ -329,10 +329,10 @@ class PricingTier(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Automatically calculate wholesale and retail prices."""
-        # Wholesale: Buying Price × 1.15
-        self.wholesale_price = self.buying_price * Decimal('1.15')
-        # Retail: Buying Price × 1.33
-        self.retail_price = self.buying_price * Decimal('1.33')
+        # Wholesale: Buying Price × 1.10
+        self.wholesale_price = self.buying_price * Decimal('1.10')
+        # Retail: Buying Price × 1.50
+        self.retail_price = self.buying_price * Decimal('1.50')
 
         # Update the product's main price to retail price
         if self.product:

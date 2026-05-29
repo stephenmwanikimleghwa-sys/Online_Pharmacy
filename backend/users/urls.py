@@ -21,6 +21,8 @@ from .views.admin_views import (
     delete_pharmacist,
     admin_create_user,
     delete_user,
+    deactivate_user,
+    admin_reset_password,
     update_user,
 )
 from .views.branches import (
@@ -86,6 +88,16 @@ urlpatterns = [
         "admin/users/<int:user_id>/delete/",
         delete_user,
         name="admin_delete_user",
+    ),
+    path(
+        "admin/users/<int:user_id>/deactivate/",
+        deactivate_user,
+        name="admin_deactivate_user",
+    ),
+    path(
+        "admin/users/<int:user_id>/reset-password/",
+        admin_reset_password,
+        name="admin_reset_password",
     ),
     path(
         "admin/users/<int:user_id>/",

@@ -3,6 +3,8 @@ from .admin_views import (
     list_pharmacists,
     delete_pharmacist,
     delete_user,
+    deactivate_user,
+    admin_reset_password,
     update_user,
 )
 from .core_views import (
@@ -19,6 +21,8 @@ __all__ = [
     'list_pharmacists',
     'delete_pharmacist',
     'delete_user',
+    'deactivate_user',
+    'admin_reset_password',
     'update_user',
     'UserLoginView',
     'UserProfileView',

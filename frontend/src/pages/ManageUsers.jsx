@@ -11,6 +11,7 @@ const getRoleStyle = (role) => {
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,22 +19,41 @@ const ManageUsers = () => {
   const [editingUserId, setEditingUserId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
-    username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist'
+    username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist', branch_id: ''
+  });
+  const [permissionFlags, setPermissionFlags] = useState({
+    can_manage_users: false,
+    can_manage_inventory: false,
+    can_view_reports: false,
+    can_edit_prices: false,
   });
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const response = await api.get('/auth/admin/users/');
       setUsers(response.data);
     } catch (err) {
       setError('Failed to load users');
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  const fetchBranches = async () => {
+    try {
+      const response = await api.get('/auth/branches/');
+      setBranches(response.data?.results || response.data || []);
+    } catch (err) {
+      console.error('Failed to load branches', err);
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsers(), fetchBranches()]);
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   if (loading) {
     return (
@@ -50,20 +70,29 @@ const ManageUsers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        permission_flags: permissionFlags,
+      };
       if (isEditMode && editingUserId) {
         await api.patch(`/auth/admin/users/${editingUserId}/`, {
           first_name: formData.full_name.split(' ')[0] || '',
           last_name: formData.full_name.split(' ').slice(1).join(' ') || '',
-          email: formData.email, role: formData.role, is_verified: true
+          email: formData.email,
+          role: formData.role,
+          branch_id: formData.branch_id || null,
+          permission_flags: permissionFlags,
+          is_verified: true,
         });
         setSuccessMessage('User updated successfully');
       } else {
-        await api.post('/auth/admin/users/create/', formData);
+        await api.post('/auth/admin/users/create/', payload);
         setSuccessMessage(`${formData.role === 'admin' ? 'Admin' : 'Pharmacist'} created successfully`);
       }
       setIsModalOpen(false); setIsEditMode(false); setEditingUserId(null);
       await fetchUsers();
-      setFormData({ username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist' });
+      setFormData({ username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist', branch_id: '' });
+      setPermissionFlags({ can_manage_users: false, can_manage_inventory: false, can_view_reports: false, can_edit_prices: false });
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
@@ -72,10 +101,18 @@ const ManageUsers = () => {
   };
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handlePermissionToggle = (name) => setPermissionFlags(prev => ({ ...prev, [name]: !prev[name] }));
 
   const handleEdit = (user) => {
     setIsEditMode(true); setEditingUserId(user.id);
-    setFormData({ username: user.username, password: '', email: user.email || '', full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim(), pharmacy_license: '', role: user.role || 'customer' });
+    setFormData({ username: user.username, password: '', email: user.email || '', full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim(), pharmacy_license: '', role: user.role || 'customer', branch_id: user.branch || '' });
+    setPermissionFlags({
+      can_manage_users: Boolean(user.permission_flags?.can_manage_users),
+      can_manage_inventory: Boolean(user.permission_flags?.can_manage_inventory),
+      can_view_reports: Boolean(user.permission_flags?.can_view_reports),
+      can_edit_prices: Boolean(user.permission_flags?.can_edit_prices),
+      ...user.permission_flags,
+    });
     setIsModalOpen(true);
   };
 
@@ -89,6 +126,31 @@ const ManageUsers = () => {
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
       setError('Failed to delete user: ' + (serverMsg || err.message));
+    }
+  };
+
+  const handleDeactivate = async (user) => {
+    try {
+      await api.post(`/auth/admin/users/${user.id}/deactivate/`);
+      setSuccessMessage('User status updated successfully');
+      await fetchUsers();
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (err) {
+      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      setError('Failed to update user status: ' + (serverMsg || err.message));
+    }
+  };
+
+  const handleResetPassword = async (user) => {
+    const newPassword = window.prompt(`Set a new password for ${user.username}:`);
+    if (!newPassword) return;
+    try {
+      await api.post(`/auth/admin/users/${user.id}/reset-password/`, { new_password: newPassword });
+      setSuccessMessage('Password reset successfully');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (err) {
+      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      setError('Failed to reset password: ' + (serverMsg || err.message));
     }
   };
 
@@ -191,6 +253,16 @@ const ManageUsers = () => {
                         style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)', borderColor: 'var(--brand-border-soft)' }}>
                         <PencilSquareIcon className="h-3.5 w-3.5" /> Edit
                       </button>
+                      <button onClick={() => handleDeactivate(user)}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
+                        style={{ background: 'rgba(251,146,60,0.08)', color: '#ea580c', borderColor: 'rgba(251,146,60,0.18)' }}>
+                        {user.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button onClick={() => handleResetPassword(user)}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
+                        style={{ background: 'rgba(59,130,246,0.08)', color: '#2563eb', borderColor: 'rgba(59,130,246,0.18)' }}>
+                        Reset Password
+                      </button>
                       <button onClick={() => handleDelete(user)}
                         className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100 shadow-sm flex items-center gap-1">
                         <TrashIcon className="h-3.5 w-3.5" /> Delete
@@ -258,6 +330,24 @@ const ManageUsers = () => {
                       <option value="pharmacist">Pharmacist</option>
                       <option value="admin">Admin</option>
                     </select>
+                  </div>
+                  <div>
+                    <label htmlFor="branch_id" className="form-label">Branch</label>
+                    <select id="branch_id" name="branch_id" value={formData.branch_id} onChange={handleChange} className="form-input appearance-none">
+                      <option value="">No branch assigned</option>
+                      {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: 'var(--text-secondary)' }}>Permission Flags</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(permissionFlags).map(([name, enabled]) => (
+                        <label key={name} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}>
+                          <span className="capitalize">{name.replace(/_/g, ' ')}</span>
+                          <input type="checkbox" checked={enabled} onChange={() => handlePermissionToggle(name)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
