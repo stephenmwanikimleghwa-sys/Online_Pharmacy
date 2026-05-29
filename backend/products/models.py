@@ -32,7 +32,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name="Product Name")
     description = models.TextField(blank=True, null=True, verbose_name="Description")
     category = models.CharField(
-        max_length=20, choices=CategoryChoices.choices, verbose_name="Category"
+        max_length=100, blank=True, null=True, verbose_name="Category"
     )
     price = models.DecimalField(
         max_digits=10,
@@ -89,6 +89,12 @@ class Product(models.Model):
         blank=True,
         null=True,
         verbose_name="Expiry Date"
+    )
+    vat_obligation = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="VAT Obligation"
+    )
+    shelf_location = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="Shelf Location"
     )
     image = models.ImageField(
         upload_to="product_images/", blank=True, null=True, verbose_name="Product Image"

@@ -100,6 +100,8 @@ class User(AbstractUser):
     address = models.TextField(blank=True, null=True)
     is_verified = models.BooleanField(default=False)
     must_change_password = models.BooleanField(default=False, help_text="Designates whether the user must change their password upon login.")
+    credit_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name='Credit Balance', help_text='Outstanding debt or credit balance for customers')
+    is_credit_customer = models.BooleanField(default=False, verbose_name='Is Credit Customer')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -179,3 +181,61 @@ class PharmacyDocument(models.Model):
             return False
         from django.utils import timezone
         return self.expiry_date < timezone.now().date()
+
+
+class CustomerDebtTransaction(models.Model):
+    """
+    Model representing historical and ongoing customer debt transactions.
+    """
+    TRANSACTION_TYPES = [
+        ('SALE_ON_CREDIT', 'Sale on Credit'),
+        ('PAYMENT', 'Payment Received'),
+        ('ADJUSTMENT', 'Balance Adjustment'),
+    ]
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='debt_transactions',
+        verbose_name='Customer'
+    )
+    transaction_type = models.CharField(
+        max_length=20,
+        choices=TRANSACTION_TYPES,
+        verbose_name='Transaction Type'
+    )
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Amount')
+    balance_after = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Balance After')
+    description = models.TextField(blank=True, null=True, verbose_name='Description')
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customer_debt_transactions',
+        verbose_name='Branch'
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_customer_debt_transactions',
+        verbose_name='Created By'
+    )
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Timestamp')
+    legacy_tid = models.CharField(max_length=100, blank=True, null=True, verbose_name='Legacy Transaction ID')
+
+    class Meta:
+        db_table = "customer_debt_transactions"
+        verbose_name = "Customer Debt Transaction"
+        verbose_name_plural = "Customer Debt Transactions"
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["customer", "timestamp"]),
+            models.Index(fields=["legacy_tid"]),
+        ]
+
+    def __str__(self):
+        return f"{self.customer.username} - {self.get_transaction_type_display()} ({self.amount})"
+

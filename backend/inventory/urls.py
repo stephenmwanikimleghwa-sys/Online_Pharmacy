@@ -20,9 +20,9 @@ from .views import dispensing
 
 # Create a router for viewsets
 router = DefaultRouter()
-router.register(r'restock-requests', RestockRequestViewSet)
-router.register(r'dispensations', DispensationViewSet)
-router.register(r'stock-intake', StockIntakeViewSet)
+router.register(r'restock-requests', RestockRequestViewSet, basename='restockrequest')
+router.register(r'dispensations', DispensationViewSet, basename='dispensation')
+router.register(r'stock-intake', StockIntakeViewSet, basename='stockintake')
 router.register(r'prescriptions', PrescriptionViewSet)
 router.register(r'suppliers', SupplierViewSet)
 router.register(r'batches', BatchViewSet)

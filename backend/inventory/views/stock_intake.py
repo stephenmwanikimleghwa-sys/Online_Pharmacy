@@ -24,15 +24,19 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter queryset based on user role and query params."""
+        if getattr(self, 'swagger_fake_view', False):
+            return StockIntake.objects.none()
+            
         user = self.request.user
         queryset = StockIntake.objects.select_related('product', 'received_by', 'branch').all()
 
         # Customers see nothing
-        if user.role == 'customer':
+        user_role = getattr(user, 'role', None)
+        if user_role == 'customer':
             return queryset.none()
 
         # ---- Branch scoping ----
-        is_admin = user.is_superuser or user.role == 'admin'
+        is_admin = user.is_superuser or user_role == 'admin'
         branch_param = self.request.query_params.get('branch')
         if is_admin and branch_param and branch_param != 'all':
             queryset = queryset.filter(branch_id=branch_param)

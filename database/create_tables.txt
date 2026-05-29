@@ -1,0 +1,1198 @@
+CREATE TABLE `accesspasswords` (
+  `priviledge` varchar(20) NOT NULL,
+  `password` varchar(32) DEFAULT NULL,
+  PRIMARY KEY (`priviledge`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `accesspasswords`
+--
+
+LOCK TABLES `accesspasswords` WRITE;
+/*!40000 ALTER TABLE `accesspasswords` DISABLE KEYS */;
+/*!40000 ALTER TABLE `accesspasswords` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `accountbalances`
+--
+
+DROP TABLE IF EXISTS `accountbalances`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `accountbalances` (
+  `company` varchar(255) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `mode` varchar(200) DEFAULT NULL,
+  `balance` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `accountbalances`
+--
+
+LOCK TABLES `accountbalances` WRITE;
+/*!40000 ALTER TABLE `accountbalances` DISABLE KEYS */;
+/*!40000 ALTER TABLE `accountbalances` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `activehours`
+--
+
+DROP TABLE IF EXISTS `activehours`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `activehours` (
+  `logtime` varchar(20) DEFAULT NULL,
+  `lastseen` varchar(20) DEFAULT NULL,
+  `user` varchar(25) DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(13) DEFAULT NULL,
+  `year` varchar(6) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `activehours`
+--
+
+LOCK TABLES `activehours` WRITE;
+/*!40000 ALTER TABLE `activehours` DISABLE KEYS */;
+/*!40000 ALTER TABLE `activehours` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `activeusers`
+--
+
+DROP TABLE IF EXISTS `activeusers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `activeusers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user` varchar(254) DEFAULT NULL,
+  `priviledges` varchar(25) DEFAULT NULL,
+  `ip` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=689 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `activeusers`
+--
+
+LOCK TABLES `activeusers` WRITE;
+/*!40000 ALTER TABLE `activeusers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `activeusers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `branches`
+--
+
+DROP TABLE IF EXISTS `branches`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `branches` (
+  `id` int(4) NOT NULL AUTO_INCREMENT,
+  `company` varchar(100) DEFAULT NULL,
+  `branchname` varchar(100) DEFAULT NULL,
+  `department` varchar(50) DEFAULT NULL,
+  `departmenttype` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `branches`
+--
+
+LOCK TABLES `branches` WRITE;
+/*!40000 ALTER TABLE `branches` DISABLE KEYS */;
+/*!40000 ALTER TABLE `branches` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cashflow`
+--
+
+DROP TABLE IF EXISTS `cashflow`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cashflow` (
+  `company` varchar(255) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `netflow` float DEFAULT NULL,
+  `systemtime` varchar(25) DEFAULT NULL,
+  `systemdate` varchar(25) DEFAULT NULL,
+  `user` varchar(50) DEFAULT NULL,
+  `explanation` varchar(250) DEFAULT NULL,
+  `paymentmode` varchar(254) DEFAULT NULL,
+  `buyerid` varchar(50) DEFAULT NULL,
+  `refno` varchar(200) NOT NULL,
+  `branchname` varchar(255) NOT NULL,
+  `department` varchar(100) NOT NULL,
+  `partnerid` varchar(255) NOT NULL,
+  `classification` varchar(255) NOT NULL,
+  `MAIN_BRANCH` float DEFAULT NULL,
+  `ANNEX` float DEFAULT NULL,
+  `SMARTCOM` float NOT NULL,
+  `KITALE_BRANCH` float NOT NULL,
+  `KIPSONGO_BRANCH` float NOT NULL,
+  `MainShop` float DEFAULT NULL,
+  `KIPKORGOT` float DEFAULT NULL,
+  `Teleview` float DEFAULT NULL,
+  `Solasa` float NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `ROMA` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15825 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+CREATE TABLE `cashreceipts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cashin` float DEFAULT NULL,
+  `billedamount` float DEFAULT NULL,
+  `changegiven` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cashreceipts`
+--
+
+LOCK TABLES `cashreceipts` WRITE;
+/*!40000 ALTER TABLE `cashreceipts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `cashreceipts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `categories`
+--
+
+DROP TABLE IF EXISTS `categories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `categories` (
+  `company` varchar(255) DEFAULT NULL,
+  `category` varchar(20) NOT NULL,
+  `department` varchar(255) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company` (`company`,`category`,`department`)
+) ENGINE=InnoDB AUTO_INCREMENT=427 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `categories`
+--
+
+LOCK TABLES `categories` WRITE;
+/*!40000 ALTER TABLE `categories` DISABLE KEYS */;
+/*!40000 ALTER TABLE `categories` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `consumables`
+--
+
+DROP TABLE IF EXISTS `consumables`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `consumables` (
+  `test` varchar(100) NOT NULL DEFAULT '',
+  `reagent` varchar(100) NOT NULL DEFAULT '',
+  `qtyused` float DEFAULT NULL,
+  PRIMARY KEY (`test`,`reagent`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `consumables`
+--
+
+LOCK TABLES `consumables` WRITE;
+/*!40000 ALTER TABLE `consumables` DISABLE KEYS */;
+/*!40000 ALTER TABLE `consumables` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `creditors`
+--
+
+DROP TABLE IF EXISTS `creditors`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `creditors` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(20) DEFAULT NULL,
+  `name` varchar(200) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  `unitofmeasure` varchar(50) DEFAULT NULL,
+  `expirydate` varchar(25) DEFAULT NULL,
+  `numofunitsbought` float DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `systemdate` varchar(20) DEFAULT NULL,
+  `supplier` varchar(100) DEFAULT NULL,
+  `tid` varchar(100) DEFAULT NULL,
+  `receiptno` varchar(10) DEFAULT NULL,
+  `costperunit` float DEFAULT NULL,
+  `paid` float DEFAULT NULL,
+  `bal` float DEFAULT NULL,
+  `buyingprice` float DEFAULT NULL,
+  `balance` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=517 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `creditors`
+--
+
+LOCK TABLES `creditors` WRITE;
+/*!40000 ALTER TABLE `creditors` DISABLE KEYS */;
+--
+CREATE TABLE `creditpayments` (
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `accrueddebt` float DEFAULT NULL,
+  `amtpaid` float DEFAULT NULL,
+  `balance` float DEFAULT NULL,
+  `supplier` varchar(254) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `creditpayments`
+--
+
+LOCK TABLES `creditpayments` WRITE;
+/*!40000 ALTER TABLE `creditpayments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `creditpayments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `creditsettlements`
+--
+
+DROP TABLE IF EXISTS `creditsettlements`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `creditsettlements` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company` varchar(255) DEFAULT NULL,
+  `balbf` float DEFAULT NULL,
+  `netflow` float DEFAULT NULL,
+  `closingbal` float DEFAULT NULL,
+  `supplier` varchar(254) DEFAULT NULL,
+  `explanation` varchar(254) DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `receivedby` varchar(254) DEFAULT NULL,
+  `systemdate` varchar(25) DEFAULT NULL,
+  `systemtime` varchar(25) DEFAULT NULL,
+  `invoice` varchar(30) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `creditsettlements`
+--
+
+LOCK TABLES `creditsettlements` WRITE;
+/*!40000 ALTER TABLE `creditsettlements` DISABLE KEYS */;
+/*!40000 ALTER TABLE `creditsettlements` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customer_template`
+--
+CREATE TABLE `customer_template` (
+  `id` int(5) NOT NULL AUTO_INCREMENT,
+  `company` varchar(100) DEFAULT NULL,
+  `customer` varchar(250) DEFAULT NULL,
+  `productname` varchar(250) DEFAULT NULL,
+  `qty` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customer_template`
+--
+
+LOCK TABLES `customer_template` WRITE;
+/*!40000 ALTER TABLE `customer_template` DISABLE KEYS */;
+/*!40000 ALTER TABLE `customer_template` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customers`
+--
+
+DROP TABLE IF EXISTS `customers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `customers` (
+  `company` varchar(255) DEFAULT NULL,
+  `customerid` varchar(254) NOT NULL,
+  `address` varchar(25) DEFAULT NULL,
+  `location` varchar(125) DEFAULT NULL,
+  `phone` varchar(125) DEFAULT NULL,
+  `balance` varchar(125) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `customerid` (`customerid`)
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customers`
+--
+
+LOCK TABLES `customers` WRITE;
+/*!40000 ALTER TABLE `customers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `customers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `debtors`
+--
+
+DROP TABLE IF EXISTS `debtors`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `debtors` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company` varchar(255) DEFAULT NULL,
+  `name` varchar(200) DEFAULT NULL,
+  `expirydate` varchar(20) DEFAULT NULL,
+  `sellingprice` float DEFAULT NULL,
+  `numofunitsold` float DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `systemdate` varchar(35) DEFAULT NULL,
+  `tid` varchar(10) DEFAULT NULL,
+  `buyerid` varchar(254) DEFAULT NULL,
+  `paid` float DEFAULT NULL,
+  `bal` varchar(10) DEFAULT NULL,
+  `description` varchar(254) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `debtors`
+--
+
+LOCK TABLES `debtors` WRITE;
+/*!40000 ALTER TABLE `debtors` DISABLE KEYS */;
+/*!40000 ALTER TABLE `debtors` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+--
+CREATE TABLE `debtorsfiles` (
+  `name` varchar(100) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `debtorsfiles`
+--
+
+LOCK TABLES `debtorsfiles` WRITE;
+/*!40000 ALTER TABLE `debtorsfiles` DISABLE KEYS */;
+/*!40000 ALTER TABLE `debtorsfiles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `debtpayments`
+--
+
+DROP TABLE IF EXISTS `debtpayments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `debtpayments` (
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `accrueddebt` float DEFAULT NULL,
+  `amtpaid` float DEFAULT NULL,
+  `balance` float DEFAULT NULL,
+  `debtorid` varchar(254) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `debtpayments`
+--
+
+LOCK TABLES `debtpayments` WRITE;
+/*!40000 ALTER TABLE `debtpayments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `debtpayments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `debtsettlements`
+--
+
+DROP TABLE IF EXISTS `debtsettlements`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `debtsettlements` (
+  `company` varchar(255) DEFAULT NULL,
+  `branchname` int(11) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `balbf` float DEFAULT NULL,
+  `netflow` float DEFAULT NULL,
+  `closingbal` float DEFAULT NULL,
+  `debtorid` varchar(254) DEFAULT NULL,
+  `refno` varchar(25) DEFAULT NULL,
+  `explanation` varchar(254) DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `receivedby` varchar(254) DEFAULT NULL,
+  `systemdate` varchar(254) DEFAULT NULL,
+  `systemtime` varchar(254) DEFAULT NULL,
+  `invoice` varchar(20) DEFAULT NULL,
+  `mode` varchar(20) DEFAULT NULL,
+  `transactioncode` varchar(30) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=662 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `debtsettlements`
+--
+
+LOCK TABLES `debtsettlements` WRITE;
+/*!40000 ALTER TABLE `debtsettlements` DISABLE KEYS */;
+/*!40000 ALTER TABLE `debtsettlements` ENABLE KEYS */;
+--
+CREATE TABLE `debtsubtotals` (
+  `debtor` varchar(50) NOT NULL DEFAULT '',
+  `trno` varchar(12) NOT NULL DEFAULT '',
+  `balance` float DEFAULT NULL,
+  PRIMARY KEY (`debtor`,`trno`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `debtsubtotals`
+--
+
+LOCK TABLES `debtsubtotals` WRITE;
+/*!40000 ALTER TABLE `debtsubtotals` DISABLE KEYS */;
+/*!40000 ALTER TABLE `debtsubtotals` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `departments`
+--
+
+DROP TABLE IF EXISTS `departments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `departments` (
+  `id` int(4) NOT NULL AUTO_INCREMENT,
+  `company` varchar(100) DEFAULT NULL,
+  `branchname` varchar(100) DEFAULT NULL,
+  `department` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `departments`
+--
+
+LOCK TABLES `departments` WRITE;
+/*!40000 ALTER TABLE `departments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `departments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `expirydates`
+--
+
+DROP TABLE IF EXISTS `expirydates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `expirydates` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(254) DEFAULT NULL,
+  `expirydate` date DEFAULT NULL,
+  `nis` float DEFAULT NULL,
+  `qtydispensed` float DEFAULT NULL,
+  `serialnumber` varchar(12) DEFAULT NULL,
+  `tid` varchar(12) DEFAULT NULL,
+  `invoiceno` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2995 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `expirydates`
+--
+
+LOCK TABLES `expirydates` WRITE;
+/*!40000 ALTER TABLE `expirydates` DISABLE KEYS */;
+/*!40000 ALTER TABLE `expirydates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `headers`
+--
+
+DROP TABLE IF EXISTS `headers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `headers` (
+  `company` varchar(255) DEFAULT NULL,
+  `bsname` varchar(254) NOT NULL,
+  `address` varchar(254) DEFAULT NULL,
+  `phone` varchar(254) DEFAULT NULL,
+  `slogan` varchar(254) DEFAULT NULL,
+  `slogan2` varchar(250) DEFAULT NULL,
+  `address2` varchar(250) DEFAULT NULL,
+  `otherdetails` varchar(50) DEFAULT NULL,
+  `location` varchar(50) DEFAULT NULL,
+  `specialization1` varchar(255) DEFAULT NULL,
+  `specialization2` varchar(50) DEFAULT NULL,
+  `pinno` varchar(254) DEFAULT NULL,
+  `bsregno` varchar(254) DEFAULT NULL,
+  `email` varchar(254) DEFAULT NULL,
+  `invoiceslogan` varchar(200) DEFAULT NULL,
+  `branchname` varchar(255) NOT NULL,
+  PRIMARY KEY (`bsname`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `headers`
+--
+
+LOCK TABLES `headers` WRITE;
+/*!40000 ALTER TABLE `headers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `headers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+CREATE TABLE `ledger` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company` varchar(255) DEFAULT NULL,
+  `branchname` varchar(255) DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `debitparticulars` varchar(254) DEFAULT NULL,
+  `debitamount` float DEFAULT NULL,
+  `creditamount` float DEFAULT NULL,
+  `creditparticulars` varchar(254) DEFAULT NULL,
+  `systemdate` varchar(25) DEFAULT NULL,
+  `debitaccount` varchar(254) DEFAULT NULL,
+  `creditaccount` varchar(254) DEFAULT NULL,
+  `DFolio` varchar(100) NOT NULL,
+  `CFolio` varchar(100) NOT NULL,
+  `remarks` varchar(255) NOT NULL,
+  `transactiondate` date NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20841 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ledger`
+--
+
+LOCK TABLES `ledger` WRITE;
+/*!40000 ALTER TABLE `ledger` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ledger` ENABLE KEYS */;
+--
+CREATE TABLE `ledgeraccounts` (
+  `ledger` varchar(254) DEFAULT NULL,
+  `natureofledger` varchar(20) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ledgeraccounts`
+--
+
+LOCK TABLES `ledgeraccounts` WRITE;
+/*!40000 ALTER TABLE `ledgeraccounts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ledgeraccounts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `otherservices`
+--
+
+DROP TABLE IF EXISTS `otherservices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `otherservices` (
+  `id` int(5) NOT NULL AUTO_INCREMENT,
+  `company` varchar(100) DEFAULT NULL,
+  `branchname` varchar(100) DEFAULT NULL,
+  `service` varchar(200) DEFAULT NULL,
+  `price` float DEFAULT NULL,
+  `customer` varchar(250) DEFAULT NULL,
+  `systemdate` date DEFAULT NULL,
+  `systemtime` varchar(20) DEFAULT NULL,
+  `user` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `otherservices`
+--
+
+LOCK TABLES `otherservices` WRITE;
+/*!40000 ALTER TABLE `otherservices` DISABLE KEYS */;
+/*!40000 ALTER TABLE `otherservices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `paymentdetails`
+--
+
+DROP TABLE IF EXISTS `paymentdetails`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `paymentdetails` (
+  `bankname` varchar(200) DEFAULT NULL,
+  `accountname` varchar(200) DEFAULT NULL,
+  `accountnumber` varchar(200) DEFAULT NULL,
+  `lipaampesatillno` varchar(200) DEFAULT NULL,
+  `mpesapaybillno` varchar(200) DEFAULT NULL,
+  `lipanampesatillno` varchar(200) DEFAULT NULL,
+  `invoiceslogan` varchar(200) DEFAULT NULL,
+  `payeeslocation` varchar(200) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `paymentdetails`
+--
+
+LOCK TABLES `paymentdetails` WRITE;
+/*!40000 ALTER TABLE `paymentdetails` DISABLE KEYS */;
+/*!40000 ALTER TABLE `paymentdetails` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pendingservices`
+--
+
+DROP TABLE IF EXISTS `pendingservices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `pendingservices` (
+  `service` varchar(150) DEFAULT NULL,
+  `price` varchar(8) DEFAULT NULL,
+  `clientid` varchar(150) DEFAULT NULL,
+  `commitstatus` varchar(10) DEFAULT NULL,
+  `rctno` int(11) DEFAULT NULL,
+  `day` varchar(6) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `pmode` varchar(150) DEFAULT NULL,
+  `category` varchar(150) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=250 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pendingservices`
+--
+
+LOCK TABLES `pendingservices` WRITE;
+/*!40000 ALTER TABLE `pendingservices` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pendingservices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pricingmodes`
+--
+
+DROP TABLE IF EXISTS `pricingmodes`;
+--
+CREATE TABLE `pricingmodes` (
+  `id` int(4) NOT NULL AUTO_INCREMENT,
+  `company` varchar(100) DEFAULT NULL,
+  `pricing` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pricingmodes`
+--
+
+LOCK TABLES `pricingmodes` WRITE;
+/*!40000 ALTER TABLE `pricingmodes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pricingmodes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchases`
+--
+
+DROP TABLE IF EXISTS `purchases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `purchases` (
+  `company` varchar(255) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  `expirydate` date DEFAULT NULL,
+  `numofunitsbought` float DEFAULT NULL,
+  `costperunit` float DEFAULT NULL,
+  `sellingprice` float DEFAULT NULL,
+  `systemdate` varchar(50) DEFAULT NULL,
+  `addedby` varchar(50) DEFAULT NULL,
+  `receiptno` varchar(20) DEFAULT NULL,
+  `systemtime` varchar(50) DEFAULT NULL,
+  `supplier` varchar(254) DEFAULT NULL,
+  `paymentmode` varchar(20) DEFAULT NULL,
+  `wholesaleprice` float DEFAULT NULL,
+  `paymentstatus` varchar(30) DEFAULT NULL,
+  `commitstatus` varchar(20) DEFAULT NULL,
+  `purchase_qty` float DEFAULT NULL,
+  `department` varchar(255) NOT NULL,
+  `TRANSCOUNTY_MAIN` float NOT NULL,
+  `TRANSCOUNTY_ANNEX` float NOT NULL,
+  `PEAKFARM` float NOT NULL,
+  `MAIN_BRANCH` float DEFAULT NULL,
+  `ANNEX` float DEFAULT NULL,
+  `TOGETHER_MAIN` float DEFAULT NULL,
+  `HIGHWAY_BRANCH` float DEFAULT NULL,
+  `KITALE_BRANCH` float DEFAULT NULL,
+  `KIPKORGOT` float DEFAULT NULL,
+  `Teleview` float DEFAULT NULL,
+  `MainBranch` float DEFAULT NULL,
+--
+CREATE TABLE `quotations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company` varchar(255) NOT NULL,
+  `qid` int(11) NOT NULL,
+  `name` varchar(254) DEFAULT NULL,
+  `sellingprice` float NOT NULL,
+  `numofunitsold` float NOT NULL,
+  `commitstatus` varchar(20) NOT NULL,
+  `systemdate` varchar(15) NOT NULL,
+  `seller` varchar(100) NOT NULL,
+  `systemtime` varchar(20) NOT NULL,
+  `status` varchar(20) DEFAULT NULL,
+  `buyerid` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quotations`
+--
+
+LOCK TABLES `quotations` WRITE;
+/*!40000 ALTER TABLE `quotations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quotations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `rctnos`
+--
+
+--
+CREATE TABLE `rctnos` (
+  `rctno` varchar(12) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `rctnos`
+--
+
+LOCK TABLES `rctnos` WRITE;
+/*!40000 ALTER TABLE `rctnos` DISABLE KEYS */;
+/*!40000 ALTER TABLE `rctnos` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `rinwards`
+--
+
+DROP TABLE IF EXISTS `rinwards`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `rinwards` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company` varchar(255) DEFAULT NULL,
+  `branchname` varchar(255) NOT NULL,
+  `name` varchar(200) DEFAULT NULL,
+  `receiptno` int(11) DEFAULT NULL,
+  `numofunitstoreturn` float DEFAULT NULL,
+  `costofreturns` float DEFAULT NULL,
+  `systemtime` varchar(200) DEFAULT NULL,
+  `systemdate` varchar(200) DEFAULT NULL,
+  `receivedby` varchar(200) DEFAULT NULL,
+  `price` float DEFAULT NULL,
+  `status` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `rinwards`
+--
+
+LOCK TABLES `rinwards` WRITE;
+/*!40000 ALTER TABLE `rinwards` DISABLE KEYS */;
+/*!40000 ALTER TABLE `rinwards` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `routwards`
+--
+
+--
+CREATE TABLE `routwards` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(32) DEFAULT NULL,
+  `name` varchar(200) DEFAULT NULL,
+  `descr` varchar(100) DEFAULT NULL,
+  `dateofpurchase` varchar(25) DEFAULT NULL,
+  `receiptno` int(11) DEFAULT NULL,
+  `unitofmeasure` varchar(50) DEFAULT NULL,
+  `numofunitstoreturn` float DEFAULT NULL,
+  `costofreturns` float DEFAULT NULL,
+  `reasonsforreturning` varchar(254) DEFAULT NULL,
+  `systemdate` varchar(100) DEFAULT NULL,
+  `systemtime` varchar(100) DEFAULT NULL,
+  `receivedby` varchar(100) DEFAULT NULL,
+  `day` varchar(2) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` varchar(4) DEFAULT NULL,
+  `price` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `routwards`
+--
+
+LOCK TABLES `routwards` WRITE;
+/*!40000 ALTER TABLE `routwards` DISABLE KEYS */;
+/*!40000 ALTER TABLE `routwards` ENABLE KEYS */;
+UNLOCK TABLES;
+--
+CREATE TABLE `sales` (
+  `company` varchar(255) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(100) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  `expirydate` varchar(50) DEFAULT NULL,
+  `numofunitsold` float DEFAULT NULL,
+  `costperunit` float DEFAULT NULL,
+  `sellingprice` float DEFAULT NULL,
+  `systemdate` date DEFAULT NULL,
+  `seller` varchar(50) DEFAULT NULL,
+  `systemtime` varchar(50) DEFAULT NULL,
+  `bid` varchar(200) DEFAULT NULL,
+  `receiptno` int(11) DEFAULT NULL,
+  `salecategory` varchar(28) DEFAULT NULL,
+  `discount` float DEFAULT NULL,
+  `commitstatus` varchar(10) DEFAULT NULL,
+  `holdno` int(11) DEFAULT NULL,
+  `invoiceno` int(11) DEFAULT NULL,
+  `vat_obligation` varchar(12) DEFAULT NULL,
+  `qbs` float DEFAULT NULL,
+  `qas` float DEFAULT NULL,
+  `branchname` varchar(255) NOT NULL,
+  `department` varchar(100) NOT NULL,
+  `CASH` float DEFAULT NULL,
+  `MPESA_TILL` float DEFAULT NULL,
+  `EQUITY_TILL` float DEFAULT NULL,
+  `NATIONAL_BANK` float DEFAULT NULL,
+  `CREDIT` float DEFAULT NULL,
+  `TWIN_TRANSACTION` varchar(255) DEFAULT NULL,
+--
+CREATE TABLE `services` (
+  `company` varchar(255) DEFAULT NULL,
+  `servicename` varchar(150) NOT NULL,
+  `expenditure` varchar(20) DEFAULT NULL,
+  `price` varchar(20) DEFAULT NULL,
+  `category` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `services`
+--
+
+LOCK TABLES `services` WRITE;
+/*!40000 ALTER TABLE `services` DISABLE KEYS */;
+/*!40000 ALTER TABLE `services` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `settings`
+--
+
+DROP TABLE IF EXISTS `settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `settings` (
+  `auto_print_sale_receipt` varchar(12) DEFAULT NULL,
+  `auto_update_retail_prices` varchar(12) DEFAULT NULL,
+  `version` varchar(20) DEFAULT NULL,
+  `dateofrenewal` varchar(50) DEFAULT NULL,
+  `npm` float DEFAULT NULL,
+  `discountlimit` float DEFAULT NULL,
+  `show_bsname_in_receipt` varchar(12) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `settings`
+--
+
+LOCK TABLES `settings` WRITE;
+/*!40000 ALTER TABLE `settings` DISABLE KEYS */;
+/*!40000 ALTER TABLE `settings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `soldservices`
+--
+
+DROP TABLE IF EXISTS `soldservices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `soldservices` (
+  `servicename` varchar(254) DEFAULT NULL,
+  `totalexpenditure` float DEFAULT NULL,
+  `totalincome` float DEFAULT NULL,
+  `day` int(11) DEFAULT NULL,
+  `month` varchar(12) DEFAULT NULL,
+  `year` int(11) DEFAULT NULL,
+  `systemtime` varchar(100) DEFAULT NULL,
+  `systemdate` varchar(100) DEFAULT NULL,
+  `user` varchar(50) DEFAULT NULL,
+  `explanation` varchar(200) DEFAULT NULL,
+  `paymentmode` varchar(50) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `soldservices`
+--
+
+LOCK TABLES `soldservices` WRITE;
+/*!40000 ALTER TABLE `soldservices` DISABLE KEYS */;
+/*!40000 ALTER TABLE `soldservices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stmt`
+--
+
+DROP TABLE IF EXISTS `stmt`;
+--
+CREATE TABLE `stmt` (
+  `customer` varchar(250) DEFAULT NULL,
+  `startyear` varchar(4) DEFAULT NULL,
+  `startmonth` varchar(15) DEFAULT NULL,
+  `endyear` varchar(4) DEFAULT NULL,
+  `endmonth` varchar(15) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stmt`
+--
+
+LOCK TABLES `stmt` WRITE;
+/*!40000 ALTER TABLE `stmt` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stmt` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stockflow`
+--
+
+DROP TABLE IF EXISTS `stockflow`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `stockflow` (
+  `company` varchar(255) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(200) DEFAULT NULL,
+  `name` varchar(250) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  `netflow` float DEFAULT NULL,
+  `systemdate` date DEFAULT NULL,
+  `user` varchar(50) DEFAULT NULL,
+  `systemtime` varchar(50) DEFAULT NULL,
+  `explanation` varchar(50) DEFAULT NULL,
+  `paymentmode` varchar(10) DEFAULT NULL,
+  `branchname` varchar(255) DEFAULT NULL,
+  `department` varchar(255) DEFAULT NULL,
+  `refno` varchar(200) NOT NULL,
+  `TRANSCOUNTY_MAIN` varchar(255) NOT NULL,
+  `TRANSCOUNTY_ANNEX` varchar(255) NOT NULL,
+  `PEAKFARM` varchar(55) NOT NULL,
+  `MAIN_BRANCH` float DEFAULT NULL,
+  `ANNEX` float DEFAULT NULL,
+  `MainShop` float DEFAULT NULL,
+  `KIPKORGOT` float DEFAULT NULL,
+  `Teleview` float DEFAULT NULL,
+  `MainBranch` float DEFAULT NULL,
+  `MAIN` float NOT NULL,
+  `Solasa` float NOT NULL,
+  `TOGETHER_MAIN` float NOT NULL,
+  `HIGHWAY_BRANCH` float NOT NULL,
+  `KITALE_BRANCH` float NOT NULL,
+  `KIPSONGO_BRANCH` float DEFAULT NULL,
+  `RoadBlock` float DEFAULT NULL,
+--
+CREATE TABLE `superadminlogs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=237 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `superadminlogs`
+--
+
+LOCK TABLES `superadminlogs` WRITE;
+/*!40000 ALTER TABLE `superadminlogs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `superadminlogs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `suppliers`
+--
+
+DROP TABLE IF EXISTS `suppliers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `suppliers` (
+  `company` varchar(255) DEFAULT NULL,
+  `supplier` varchar(200) NOT NULL,
+  `contacts` varchar(100) DEFAULT NULL,
+  `location` varchar(100) DEFAULT NULL,
+  `abbreviation` varchar(5) DEFAULT NULL,
+  `balance` float NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company` (`company`,`supplier`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `suppliers`
+--
+
+LOCK TABLES `suppliers` WRITE;
+/*!40000 ALTER TABLE `suppliers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `suppliers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `unitsofmeasure`
+--
+
+DROP TABLE IF EXISTS `unitsofmeasure`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `unitsofmeasure` (
+  `serialnumber` int(11) NOT NULL AUTO_INCREMENT,
+  `company` varchar(255) DEFAULT NULL,
+  `code` varchar(100) NOT NULL DEFAULT '',
+  `name` varchar(254) NOT NULL DEFAULT '',
+  `formulation` varchar(255) DEFAULT NULL,
+  `minimumlevel` float DEFAULT NULL,
+  `normalbp` float DEFAULT NULL,
+  `sellingprice` float DEFAULT NULL,
+  `wholesaleprice` float DEFAULT NULL,
+  `msp` float DEFAULT NULL,
+  `description` varchar(150) DEFAULT NULL,
+  `expirydate` varchar(30) DEFAULT NULL,
+  `location` varchar(100) DEFAULT NULL,
+  `department` varchar(20) DEFAULT NULL,
+  `shelfno` varchar(100) DEFAULT NULL,
+  `TRANSCOUNTY_MAIN` float DEFAULT NULL,
+  `TRANSCOUNTY_ANNEX` float DEFAULT NULL,
+  `PEAKFARM` float DEFAULT NULL,
+  `vat_obligation` varchar(100) DEFAULT NULL,
+  `online_synch` varchar(12) DEFAULT NULL,
+  PRIMARY KEY (`serialnumber`)
+) ENGINE=InnoDB AUTO_INCREMENT=113206 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `unitsofmeasure`
+--
+
+LOCK TABLES `unitsofmeasure` WRITE;
+/*!40000 ALTER TABLE `unitsofmeasure` DISABLE KEYS */;
+--
+CREATE TABLE `users` (
+  `bstype` varchar(100) DEFAULT NULL,
+  `company` varchar(255) DEFAULT NULL,
+  `user` varchar(32) NOT NULL,
+  `password` varchar(32) DEFAULT NULL,
+  `priviledges` varchar(15) DEFAULT NULL,
+  `createdby` varchar(254) DEFAULT NULL,
+  `status` varchar(15) DEFAULT NULL,
+  `systemdate` varchar(30) DEFAULT NULL,
+  `systemtime` varchar(30) DEFAULT NULL,
+  `R_Addstock` varchar(20) DEFAULT NULL,
+  `addexpenses` varchar(12) DEFAULT NULL,
+  `viewexpenses` varchar(12) DEFAULT NULL,
+  `accessadminpricingmodes` varchar(12) DEFAULT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `branchname` varchar(255) NOT NULL,
+  `movefromstoretoshop` varchar(12) DEFAULT NULL,
+  `accessitemlist` varchar(12) NOT NULL,
+  `effectreturnsinwards` varchar(12) NOT NULL,
+  `addfoods` varchar(12) DEFAULT NULL,
+  `consumption` varchar(12) DEFAULT NULL,
+  `returnsin` varchar(12) DEFAULT NULL,
+  `returnsout` varchar(12) DEFAULT NULL,
+  `spoilages` varchar(12) DEFAULT NULL,
+  `onlineorders` varchar(12) DEFAULT NULL,
+  `receivecash` varchar(12) DEFAULT NULL,
+  `buystock` varchar(12) DEFAULT NULL,
+  `viewsalesreports` varchar(12) NOT NULL,
+  PRIMARY KEY (`user`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;

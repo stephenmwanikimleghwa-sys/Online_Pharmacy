@@ -99,6 +99,8 @@ class Dispensation(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
+    payment_mode = models.CharField(max_length=50, blank=True, null=True, verbose_name='Payment Mode')
+    discount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Discount')
     notes = models.TextField(blank=True)
     shift_info = models.JSONField(default=dict)  # For tracking pharmacist shifts
     

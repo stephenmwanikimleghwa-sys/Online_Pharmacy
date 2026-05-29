@@ -57,9 +57,12 @@ class DispensationViewSet(viewsets.ModelViewSet):
     serializer_class = DispensationSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Dispensation.objects.none()
+            
         user = self.request.user
         qs = Dispensation.objects.all().order_by('-dispensed_at')
-        is_admin = user.is_superuser or user.role == 'admin'
+        is_admin = user.is_superuser or getattr(user, 'role', None) == 'admin'
         branch_param = self.request.query_params.get('branch')
         if is_admin and branch_param and branch_param != 'all':
             qs = qs.filter(branch_id=branch_param)

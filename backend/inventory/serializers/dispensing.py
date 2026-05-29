@@ -24,6 +24,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Prescription
+        ref_name = 'InventoryPrescription'
         fields = [
             'id', 'patient_name', 'patient_age', 'prescriber_name',
             'prescription_date', 'notes', 'status', 'verified_by',
