@@ -11,7 +11,7 @@ import axios, {
 // In development, if VITE_API_BASE_URL isn't set, use localhost
 const isDevelopment = import.meta.env.MODE === 'development';
 const defaultDevUrl = 'http://localhost:8000/api';
-const userProvidedApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const userProvidedApiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 const API_BASE_URL = userProvidedApiBaseUrl || (isDevelopment ? defaultDevUrl : `${window.location.origin}/api`);
 
 if (!userProvidedApiBaseUrl && !isDevelopment) {

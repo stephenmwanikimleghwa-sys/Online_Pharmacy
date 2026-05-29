@@ -9,7 +9,6 @@ const StockIntakeLog = () => {
   const { user, activeBranch } = useAuth();
   const { branchParams } = useBranchParam();
   const [intakeRecords, setIntakeRecords] = useState([]);
-  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -224,117 +223,17 @@ const StockIntakeLog = () => {
         </div>
       </div>
 
-      {/* Record Stock Modal - Premium Split Layout Pattern */}
+      {/* Stock intake modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-[2.5rem] shadow-premium max-w-2xl w-full overflow-hidden flex flex-col md:flex-row animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
-            {/* Visual Panel */}
-            <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-              <div>
-                <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                </div>
-                <h2 className="text-3xl font-display font-bold leading-tight">Record a New Delivery</h2>
-                <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">Fill in the details of the medicines you received from your supplier.</p>
-              </div>
-
-            </div>
-
-            <form onSubmit={handleSubmit} className="md:w-2/3 p-10 bg-slate-50/30 overflow-y-auto max-h-[85vh]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Medicine / Product</label>
-                  <select
-                    value={formData.product}
-                    onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                    className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
-                  >
-                    <option value="">Select a product...</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>{product.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Supplier Name</label>
-                  <input
-                    type="text"
-                    list="distributors-list"
-                    value={formData.distributor_name}
-                    onChange={(e) => setFormData({ ...formData, distributor_name: e.target.value })}
-                    placeholder="Search or enter distributor..."
-                    className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm ${formErrors.distributor_name ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
-                  />
-                  <datalist id="distributors-list">
-                    {suppliers.map(supplier => <option key={supplier.id} value={supplier.name} />)}
-                  </datalist>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Quantity Received</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.quantity_received}
-                    onChange={(e) => setFormData({ ...formData, quantity_received: e.target.value })}
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.quantity_received ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Price per Unit (KES)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.unit_cost}
-                    onChange={(e) => setFormData({ ...formData, unit_cost: e.target.value })}
-                    className={`w-full px-5 py-4 bg-white border rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm ${formErrors.unit_cost ? 'border-rose-300 ring-4 ring-rose-500/5' : 'border-slate-200'}`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Expiry Date</label>
-                  <input
-                    type="date"
-                    value={formData.expiry_date}
-                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Batch Number</label>
-                  <input
-                    type="text"
-                    value={formData.batch_number}
-                    onChange={(e) => setFormData({ ...formData, batch_number: e.target.value })}
-                    placeholder="LOT-ID-000"
-                    className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="form-cancel-btn flex-1 px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
-                >
-                  Save Record
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <StockIntakeBulkModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          branches={branches}
+          onSuccess={() => {
+            fetchIntakeRecords();
+            fetchSummary();
+          }}
+        />
       )}
 
       {/* Record Detail Modal - Premium Design */}
@@ -404,16 +303,6 @@ const StockIntakeLog = () => {
         </div>
       )}
 
-      {/* Bulk Stock Intake Modal */}
-      <StockIntakeBulkModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        branches={branches}
-        onSuccess={() => {
-          fetchIntakeRecords();
-          fetchSummary();
-        }}
-      />
     </div>
   );
 };
