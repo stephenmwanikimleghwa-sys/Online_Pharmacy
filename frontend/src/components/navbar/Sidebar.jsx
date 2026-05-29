@@ -35,6 +35,7 @@ const getNavGroups = (user) => {
   if (user?.role === "admin") {
     operationsLinks.push(
       { to: "/inventory", label: "Inventory Management", icon: ClipboardDocumentListIcon },
+      { to: "/admin/stock", label: "Inventory Control", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
