@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     "reviews",
     "patients",
     "reports",
+    "clinical",
     "inventory",
     "finance",
     "dispensing_logs",

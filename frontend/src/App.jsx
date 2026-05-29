@@ -37,10 +37,16 @@ import AdminStock from "./pages/AdminStock";
 import BranchesOverview from "./pages/BranchesOverview";
 import StockIntakeLog from "./pages/StockIntakeLog";
 import OTCSales from "./pages/OTCSales";
+import Customers from "./pages/Customers";
 import DocumentRegistry from "./pages/DocumentRegistry";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ManageUsers from "./pages/ManageUsers";
+import FinancialDashboard from "./pages/finance/FinancialDashboard";
+import QuotationsDashboard from "./pages/finance/QuotationsDashboard";
+import ClinicalDashboard from './pages/clinical/ClinicalDashboard';
+import ConsultationWorkflow from './pages/clinical/ConsultationWorkflow';
+import ReturnsDashboard from './pages/inventory/ReturnsDashboard';
 import BottomNav from "./components/BottomNav";
 import Sidebar from "./components/navbar/Sidebar";
 import ScrollToTop from "./components/ScrollToTop";
@@ -103,6 +109,12 @@ function AppLayout() {
                 {/* Protected Routes */}
                 <Route path="/products" element={<ProtectedRoute element={Products} />} />
                 <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
+                <Route path="/financials" element={<ProtectedRoute allowFinancials><FinancialDashboard /></ProtectedRoute>} />
+                <Route path="/quotations" element={<ProtectedRoute><QuotationsDashboard /></ProtectedRoute>} />
+                <Route path="/clinical" element={<ProtectedRoute allowedRoles={['admin', 'pharmacist']}><ClinicalDashboard /></ProtectedRoute>} />
+                <Route path="/clinical/:id" element={<ProtectedRoute allowedRoles={['admin', 'pharmacist']}><ConsultationWorkflow /></ProtectedRoute>} />
+                <Route path="/returns" element={<ProtectedRoute allowedRoles={['admin', 'pharmacist']}><ReturnsDashboard /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}><ManageUsers /></ProtectedRoute>} />
 
                 {/* Protected Customer Routes */}
                 <Route
@@ -174,8 +186,16 @@ function AppLayout() {
                   element={<ProtectedRoute element={OTCSales} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
                 />
                 <Route
+                  path="/customers"
+                  element={<ProtectedRoute element={Customers} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
+                />
+                <Route
                   path="/dispensing-logs"
                   element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
+                />
+                <Route
+                  path="/financials"
+                  element={<ProtectedRoute element={FinancialDashboard} allowedRoles={['admin', 'auditor']} allowFinancials={true} />}
                 />
                 <Route
                   path="/licensing"

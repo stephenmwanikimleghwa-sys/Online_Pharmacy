@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext'; // Assuming AuthContext provid
 interface ProtectedRouteProps {
   element: React.ElementType;
   allowedRoles?: string[];
+  allowFinancials?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allowedRoles = [] }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allowedRoles = [], allowFinancials = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -32,6 +33,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allow
   // Safely check role against allowed roles
   const userRole = user.role?.toString?.().toLowerCase?.() || '';
   const allowedRolesLower = allowedRoles.map(role => role?.toString?.().toLowerCase?.());
+
+  // Additional permission checks
+  if (allowFinancials && user.can_view_financials) {
+    return <Element />;
+  }
 
   if (!userRole || !allowedRolesLower.includes(userRole)) {
     return <Navigate to="/" replace />;

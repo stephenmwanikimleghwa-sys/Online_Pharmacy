@@ -12,21 +12,32 @@ const navLinks = (user) => {
     base.push(
       { to: "/inventory", label: "Inventory" },
       { to: "/otc-sales", label: "OTC Sales" },
+      { to: "/customers", label: "Customers" },
       { to: "/reports", label: "Reports" },
+      { to: "/quotations", label: "Quotations" },
+      { to: "/returns", label: "Returns" },
+      { to: "/clinical", label: "Clinical Services" },
       { to: "/documents", label: "Documents" },
       { to: "/licensing", label: "Licensing" },
       { to: "/dispensing-logs", label: "Logs" }
     );
   } else if (user?.role === "cashier") {
     base.push(
-      { to: "/otc-sales", label: "OTC Sales" }
+      { to: "/otc-sales", label: "OTC Sales" },
+      { to: "/customers", label: "Customers" }
     );
   } else if (user?.role === "auditor") {
     base.push(
       { to: "/inventory", label: "Inventory" },
-      { to: "/reports", label: "Reports" }
+      { to: "/reports", label: "Reports" },
+      { to: "/quotations", label: "Quotations" }
     );
   }
+  
+  if (user?.can_view_financials || user?.role === "admin" || user?.role === "auditor") {
+    base.push({ to: "/financials", label: "Financials" });
+  }
+  
   return base;
 };
 

@@ -108,6 +108,7 @@ class User(AbstractUser):
     can_manage_inventory = models.BooleanField(default=False, verbose_name="Can Manage Inventory")
     can_edit_prices = models.BooleanField(default=False, verbose_name="Can Edit Prices")
     can_view_reports = models.BooleanField(default=False, verbose_name="Can View Reports")
+    can_view_financials = models.BooleanField(default=False, verbose_name="Can View Financials")
     can_manage_users = models.BooleanField(default=False, verbose_name="Can Manage Users")
     can_delete_records = models.BooleanField(default=False, verbose_name="Can Delete Records")
     can_view_audit_logs = models.BooleanField(default=False, verbose_name="Can View Audit Logs")

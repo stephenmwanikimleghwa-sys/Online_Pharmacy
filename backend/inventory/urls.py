@@ -12,6 +12,7 @@ from .views.exports import export_inventory, export_stock_logs, export_restock_r
 from .views.transfer import InterBranchTransferViewSet
 from .views.services import ClinicalServiceViewSet, SoldServiceViewSet
 from .views.returns import ProductReturnViewSet
+from .views.sales_returns import SaleReturnViewSet
 
 router = DefaultRouter()
 router.register(r'restock-requests', RestockRequestViewSet, basename='restockrequest')
@@ -20,6 +21,7 @@ router.register(r'transfers', InterBranchTransferViewSet, basename='interbrancht
 router.register(r'clinical-services', ClinicalServiceViewSet, basename='clinical-service')
 router.register(r'sold-services', SoldServiceViewSet, basename='sold-service')
 router.register(r'product-returns', ProductReturnViewSet, basename='product-return')
+router.register(r'sales-returns', SaleReturnViewSet, basename='sales-return')
 router.register(r'prescriptions', PrescriptionViewSet, basename='prescription')
 router.register(r'dispensations', DispensationViewSet, basename='dispensation')
 

@@ -88,3 +88,42 @@ class QuotationViewSet(viewsets.ModelViewSet):
             "message": "Quotation successfully converted to sale.",
             "dispensation_id": dispensation.id
         })
+
+    @action(detail=True, methods=['get'])
+    def export_pdf(self, request, pk=None):
+        quotation = self.get_object()
+        from utils.pdf_generator import PDFGenerator
+        from django.http import FileResponse
+        from django.utils import timezone
+        
+        # Prepare data for PDF generator
+        data = {
+            "Quotation ID": str(quotation.id),
+            "Customer Name": quotation.customer_name,
+            "Customer Phone": quotation.customer_phone,
+            "Branch": quotation.branch.name if quotation.branch else "N/A",
+            "Created By": quotation.created_by.get_full_name() or quotation.created_by.username,
+            "Valid Until": quotation.valid_until.strftime('%Y-%m-%d'),
+            "Total Amount (KES)": float(quotation.total_amount),
+            "Status": quotation.status.upper(),
+            "Notes": quotation.notes,
+            "Items": [
+                {
+                    "Product": item.product.name,
+                    "Quantity": item.quantity,
+                    "Unit Price": float(item.unit_price),
+                    "Subtotal": float(item.subtotal)
+                } for item in quotation.items.all()
+            ]
+        }
+
+        generator = PDFGenerator()
+        pdf_buffer = generator.generate_quotation_pdf(data, title=f"Quotation #{quotation.id}")
+        
+        filename = f"quotation_{quotation.id}_{timezone.now().strftime('%Y%m%d')}.pdf"
+        return FileResponse(
+            pdf_buffer,
+            as_attachment=True,
+            filename=filename,
+            content_type='application/pdf'
+        )

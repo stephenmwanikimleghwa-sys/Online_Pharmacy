@@ -172,3 +172,135 @@ class AnalyticsViewSet(viewsets.ViewSet):
             filename=filename,
             content_type='application/pdf'
         )
+
+class ReportsHubViewSet(viewsets.ViewSet):
+    """
+    ViewSet for generating detailed tabular reports for the Reports Hub.
+    """
+    permission_classes = [IsAuditorOrAdmin]
+
+    @action(detail=False, methods=['get'])
+    def sales_report(self, request):
+        from inventory.models.dispensing import Dispensation, DispensedItem
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        branch_id = request.query_params.get('branch_id')
+        staff_id = request.query_params.get('staff_id')
+        product_id = request.query_params.get('product_id')
+
+        qs = DispensedItem.objects.select_related('dispensation', 'dispensation__branch', 'dispensation__dispensed_by', 'product')
+        
+        if start_date:
+            qs = qs.filter(dispensation__dispensed_at__date__gte=start_date)
+        if end_date:
+            qs = qs.filter(dispensation__dispensed_at__date__lte=end_date)
+        if branch_id and branch_id != 'all':
+            qs = qs.filter(dispensation__branch_id=branch_id)
+        if staff_id and staff_id != 'all':
+            qs = qs.filter(dispensation__dispensed_by_id=staff_id)
+        if product_id and product_id != 'all':
+            qs = qs.filter(product_id=product_id)
+            
+        data = []
+        for item in qs:
+            data.append({
+                'id': item.id,
+                'date': item.dispensation.dispensed_at.strftime('%Y-%m-%d %H:%M'),
+                'branch': item.dispensation.branch.name if item.dispensation.branch else 'Unknown',
+                'staff': item.dispensation.dispensed_by.get_full_name() or item.dispensation.dispensed_by.username,
+                'product': item.product.name,
+                'quantity': item.quantity,
+                'unit_price': item.unit_price,
+                'subtotal': item.subtotal,
+                'sale_type': item.dispensation.sale_type
+            })
+            
+        return Response({'sales': data})
+
+    @action(detail=False, methods=['get'])
+    def stock_valuation(self, request):
+        from products.models import BranchStock
+        
+        branch_id = request.query_params.get('branch_id')
+        qs = BranchStock.objects.select_related('product', 'product__pricing_tier', 'branch').filter(quantity__gt=0)
+        
+        if branch_id and branch_id != 'all':
+            qs = qs.filter(branch_id=branch_id)
+            
+        data = []
+        for stock in qs:
+            # We get pricing from the Product's pricing_tier or fallback
+            buying_price = 0
+            retail_price = stock.product.price
+            
+            # Using hasattr since pricing_tier is a related object if it exists (but actually it's OneToOne on product?)
+            # Wait, PricingTier has product ForeignKey.
+            pricing_tier = stock.product.pricingtier_set.first() if hasattr(stock.product, 'pricingtier_set') else None
+            
+            if pricing_tier:
+                buying_price = pricing_tier.buying_price
+                retail_price = pricing_tier.retail_price
+                
+            qty = stock.quantity
+            cost_value = qty * buying_price
+            retail_value = qty * retail_price
+            
+            data.append({
+                'product': stock.product.name,
+                'branch': stock.branch.name,
+                'quantity': qty,
+                'buying_price': buying_price,
+                'retail_price': retail_price,
+                'cost_value': cost_value,
+                'retail_value': retail_value,
+            })
+            
+        return Response({'valuation': data})
+
+    @action(detail=False, methods=['get'])
+    def expiry_report(self, request):
+        from products.models import Product
+        
+        days = int(request.query_params.get('days', 90))
+        target_date = timezone.now().date() + timedelta(days=days)
+        
+        qs = Product.objects.filter(expiry_date__isnull=False, expiry_date__lte=target_date).order_by('expiry_date')
+        
+        data = []
+        for product in qs:
+            days_until = (product.expiry_date - timezone.now().date()).days
+            status = 'Expired' if days_until < 0 else f'Expires in {days_until} days'
+            data.append({
+                'product': product.name,
+                'category': product.category,
+                'expiry_date': product.expiry_date.strftime('%Y-%m-%d'),
+                'days_until': days_until,
+                'status': status
+            })
+            
+        return Response({'expiry': data})
+        
+    @action(detail=False, methods=['get'])
+    def staff_activity(self, request):
+        from inventory.models.dispensing import Dispensation
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        qs = Dispensation.objects.all()
+        if start_date:
+            qs = qs.filter(dispensed_at__date__gte=start_date)
+        if end_date:
+            qs = qs.filter(dispensed_at__date__lte=end_date)
+            
+        activity = (
+            qs.values('dispensed_by__username')
+            .annotate(
+                total_sales=Count('id'),
+                total_revenue=Sum('total_amount')
+            )
+            .order_by('-total_sales')
+        )
+        
+        return Response({'activity': list(activity)})

@@ -45,17 +45,26 @@ const MobileNav = ({ isOpen, user, handleLogout }) => {
             {(user.role === "admin" || user.role === "pharmacist" || user.role === "auditor" || user.role === "cashier") && (
               <>
                 {(user.role !== "auditor") && (
-                  <Link to="/otc-sales" className={`${linkBase} mobile-nav-link`}>OTC Sales</Link>
+                  <>
+                    <Link to="/otc-sales" className={`${linkBase} mobile-nav-link`}>OTC Sales</Link>
+                    <Link to="/customers" className={`${linkBase} mobile-nav-link`}>Customers</Link>
+                  </>
                 )}
                 {(user.role !== "cashier") && (
                   <Link to="/inventory" className={`${linkBase} mobile-nav-link`}>Inventory</Link>
                 )}
                 <Link to="/reports" className={`${linkBase} mobile-nav-link`}>Reports</Link>
+                <Link to="/quotations" className={`${linkBase} mobile-nav-link`}>Quotations</Link>
+                <Link to="/returns" className={`${linkBase} mobile-nav-link`}>Returns</Link>
+                <Link to="/clinical" className={`${linkBase} mobile-nav-link`}>Clinical Services</Link>
                 {(user.role === "admin" || user.role === "pharmacist") && (
                   <>
                     <Link to="/licensing" className={`${linkBase} mobile-nav-link`}>Licensing</Link>
                     <Link to="/dispensing-logs" className={`${linkBase} mobile-nav-link`}>Dispensing Logs</Link>
                   </>
+                )}
+                {(user.can_view_financials || user.role === "admin" || user.role === "auditor") && (
+                  <Link to="/financials" className={`${linkBase} mobile-nav-link`}>Financials</Link>
                 )}
               </>
             )}

@@ -64,15 +64,19 @@ const AdminDashboard = () => {
         
         // Fetch branch summary
         let fetchedBranchSummary = null;
+        let branchesCount = 0;
         try {
           if (isAllBranches || activeBranch === null) {
             const summaryRes = await api.get('/auth/branches/summary/');
             fetchedBranchSummary = summaryRes.data?.totals || summaryRes.data;
-            setAllBranches(summaryRes.data?.branches || []);
+            const branches = summaryRes.data?.branches || [];
+            setAllBranches(branches);
+            branchesCount = branches.length;
           } else if (activeBranch?.id) {
             const summaryRes = await api.get(`/auth/branches/${activeBranch.id}/summary/`);
             fetchedBranchSummary = summaryRes.data;
             setAllBranches([summaryRes.data]);
+            branchesCount = 1;
           }
         } catch (summaryErr) {
           console.warn('Branch summary unavailable', summaryErr);
@@ -82,7 +86,7 @@ const AdminDashboard = () => {
         setBranchSummary(fetchedBranchSummary);
         setStats({ 
           totalUsers: usersData.length, 
-          activeBranches: summaryRes?.data?.branches?.length || allBranches.length || 0
+          activeBranches: branchesCount || allBranches.length || 0
         });
 
       } catch (err) {

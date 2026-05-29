@@ -5,7 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import {
   SunIcon, MoonIcon, ArrowRightOnRectangleIcon, ChevronLeftIcon, ChevronRightIcon,
   HomeIcon, ShoppingBagIcon, ChartBarIcon, ClipboardDocumentListIcon, Squares2X2Icon,
-  ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon, BuildingOffice2Icon
+  ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon, BuildingOffice2Icon,
+  BanknotesIcon, DocumentPlusIcon, UserGroupIcon, ArrowUturnLeftIcon
 } from "@heroicons/react/24/outline";
 import BranchSelector from "../BranchSelector";
 
@@ -38,6 +39,9 @@ const getNavGroups = (user) => {
       { to: "/admin/stock", label: "Inventory Control", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
+      { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
+      { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
+      { to: "/clinical", label: "Clinical Services", icon: UserGroupIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
       { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
     );
@@ -51,6 +55,9 @@ const getNavGroups = (user) => {
       { to: "/inventory", label: "Inventory", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
+      { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
+      { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
+      { to: "/clinical", label: "Clinical Services", icon: UserGroupIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
       { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
       { to: "/dispensing-logs", label: "Logs", icon: DocumentDuplicateIcon },
@@ -61,7 +68,12 @@ const getNavGroups = (user) => {
     operationsLinks.push(
       { to: "/inventory", label: "Inventory", icon: ClipboardDocumentListIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
+      { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
     );
+  }
+
+  if (user?.can_view_financials || user?.role === "admin" || user?.role === "auditor") {
+    operationsLinks.push({ to: "/financials", label: "Financials", icon: BanknotesIcon });
   }
 
   return { mainLinks, operationsLinks, adminLinks };

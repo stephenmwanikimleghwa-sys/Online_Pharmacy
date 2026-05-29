@@ -150,7 +150,7 @@ class StockIntake(models.Model):
                 )
                 
                 # Update supplier credit balance if on credit
-                if self.payment_status == 'CREDIT':
+                if self.payment_status == 'CREDIT' and not getattr(self, '_skip_credit', False):
                     from inventory.models.supplier import SupplierCreditTransaction
                     
                     self.supplier.balance += self.total_cost

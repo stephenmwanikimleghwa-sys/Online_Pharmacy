@@ -145,3 +145,64 @@ class PDFGenerator:
         doc.build(elements)
         self.buffer.seek(0)
         return self.buffer
+
+    def generate_quotation_pdf(self, data, title="Quotation"):
+        doc = SimpleDocTemplate(self.buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=36)
+        elements = []
+
+        elements.append(Paragraph("TRANSCOUNTY PHARMACY AGGREGATOR", self.styles['CenterHeader']))
+        elements.append(Paragraph(title, self.styles['CenterSubHeader']))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        # Meta Data
+        meta_data = [
+            [Paragraph(f"<b>Customer:</b> {data.get('Customer Name')}", self.styles['Normal']), 
+             Paragraph(f"<b>Date:</b> {datetime.now().strftime('%Y-%m-%d')}", self.styles['RightText'])],
+            [Paragraph(f"<b>Phone:</b> {data.get('Customer Phone', 'N/A')}", self.styles['Normal']), 
+             Paragraph(f"<b>Valid Until:</b> {data.get('Valid Until')}", self.styles['RightText'])],
+            [Paragraph(f"<b>Branch:</b> {data.get('Branch')}", self.styles['Normal']), 
+             Paragraph(f"<b>Status:</b> {data.get('Status')}", self.styles['RightText'])]
+        ]
+        meta_table = Table(meta_data, colWidths=[3 * inch, 3.5 * inch])
+        elements.append(meta_table)
+        elements.append(Spacer(1, 0.3 * inch))
+
+        # Items
+        items_data = [['Product', 'Quantity', 'Unit Price', 'Subtotal']]
+        for item in data.get("Items", []):
+            items_data.append([
+                item['Product'],
+                str(item['Quantity']),
+                f"KES {item['Unit Price']:,.2f}",
+                f"KES {item['Subtotal']:,.2f}"
+            ])
+            
+        items_data.append(['', '', 'TOTAL', f"KES {data.get('Total Amount (KES)', 0):,.2f}"])
+
+        table = Table(items_data, colWidths=[3 * inch, 1 * inch, 1.25 * inch, 1.25 * inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0ea5e9')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.beige),
+            ('FONTNAME', (2, -1), (3, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -2), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(table)
+        
+        elements.append(Spacer(1, 0.5 * inch))
+        if data.get("Notes"):
+            elements.append(Paragraph("<b>Notes:</b>", self.styles['Normal']))
+            elements.append(Paragraph(data.get("Notes"), self.styles['Normal']))
+            elements.append(Spacer(1, 0.3 * inch))
+
+        elements.append(Paragraph("Thank you for choosing Transcounty Pharmacy!", self.styles['CenterSubHeader']))
+        elements.append(Paragraph(f"This quotation is valid until {data.get('Valid Until')}.", self.styles['CenterSubHeader']))
+
+        doc.build(elements)
+        self.buffer.seek(0)
+        return self.buffer

@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views.pharmacy import PharmacyViewSet
 from .views.document_views import PharmacyDocumentViewSet
 from .views.activity import StaffActivityLogViewSet
+from .views.customers import CustomerViewSet
 
 # Import views from the views package submodules to avoid name collision
 from .views.core_views import (
@@ -35,6 +36,7 @@ router = DefaultRouter()
 router.register(r'pharmacies', PharmacyViewSet, basename='pharmacy')
 router.register(r'documents', PharmacyDocumentViewSet, basename='document')
 router.register(r'activity-logs', StaffActivityLogViewSet, basename='activity-log')
+router.register(r'customers', CustomerViewSet, basename='customer')
 
 urlpatterns = [
     path('', include(router.urls)),

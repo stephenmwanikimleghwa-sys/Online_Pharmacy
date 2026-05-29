@@ -201,3 +201,67 @@ class DispensationItem(models.Model):
     
     def __str__(self):
         return f"{self.product.name} x {self.quantity} @ {self.price_per_unit} each"
+
+
+class SaleReturn(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    dispensation = models.ForeignKey(
+        Dispensation, 
+        on_delete=models.CASCADE, 
+        related_name='returns',
+        help_text="The original sale being returned."
+    )
+    branch = models.ForeignKey(
+        'users.Branch',
+        on_delete=models.PROTECT,
+        related_name='sale_returns'
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    reason = models.TextField()
+    total_refund = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    initiated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='initiated_returns'
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='approved_returns'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Return #{self.id} for Dispensation #{self.dispensation_id}"
+
+class SaleReturnItem(models.Model):
+    CONDITION_CHOICES = [
+        ('sellable', 'Sellable (Restock)'),
+        ('damaged', 'Damaged/Expired (Do Not Restock)'),
+    ]
+
+    return_record = models.ForeignKey(
+        SaleReturn,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    dispensation_item = models.ForeignKey(
+        DispensationItem,
+        on_delete=models.CASCADE,
+        related_name='returns'
+    )
+    quantity = models.PositiveIntegerField()
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='sellable')
+
+    def __str__(self):
+        return f"Return {self.quantity} of {self.dispensation_item.product.name}"

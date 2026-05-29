@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranchParam } from '../hooks/useBranchParam';
 import { PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
+import StockIntakeBulkModal from '../components/StockIntakeBulkModal';
 
 const StockIntakeLog = () => {
   const { user, activeBranch } = useAuth();
@@ -16,27 +17,24 @@ const StockIntakeLog = () => {
   const [filterDistributor, setFilterDistributor] = useState('');
   const [summary, setSummary] = useState(null);
 
-  const [formData, setFormData] = useState({
-    product: '',
-    distributor_name: '',
-    quantity_received: '',
-    unit_cost: '',
-    expiry_date: '',
-    batch_number: '',
-    notes: '',
-  });
-
-  const [formErrors, setFormErrors] = useState({});
-
-  const [suppliers, setSuppliers] = useState([]);
+  // We fetch branches to pass to the modal
+  const [branches, setBranches] = useState([]);
 
   // Fetch stock intake records
   useEffect(() => {
     fetchIntakeRecords();
-    fetchProducts();
-    fetchSuppliers();
     fetchSummary();
+    fetchBranches();
   }, [filterDistributor, activeBranch]);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await api.get('/auth/branches/');
+      setBranches(Array.isArray(response.data) ? response.data : response.data.results || []);
+    } catch (err) {
+      console.error('Error fetching branches:', err);
+    }
+  };
 
   const fetchIntakeRecords = async () => {
     try {
@@ -54,23 +52,7 @@ const StockIntakeLog = () => {
     }
   };
 
-  const fetchProducts = async () => {
-    try {
-      const response = await api.get('/products/');
-      setProducts(Array.isArray(response.data) ? response.data : response.data.results || []);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-    }
-  };
 
-  const fetchSuppliers = async () => {
-    try {
-      const response = await api.get('/inventory/suppliers/');
-      setSuppliers(Array.isArray(response.data) ? response.data : response.data.results || []);
-    } catch (err) {
-      console.error('Error fetching suppliers:', err);
-    }
-  };
 
   const fetchSummary = async () => {
     try {
@@ -81,63 +63,7 @@ const StockIntakeLog = () => {
     }
   };
 
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.product) errors.product = 'Product is required';
-    if (!formData.distributor_name) errors.distributor_name = 'Distributor name is required';
-    if (!formData.quantity_received || formData.quantity_received <= 0) {
-      errors.quantity_received = 'Quantity must be greater than 0';
-    }
-    if (!formData.unit_cost || formData.unit_cost <= 0) {
-      errors.unit_cost = 'Unit cost must be greater than 0';
-    }
-    return errors;
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validateForm();
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    try {
-      await api.post('/inventory/stock-intake/', {
-        product: formData.product,
-        distributor_name: formData.distributor_name,
-        quantity_received: parseInt(formData.quantity_received),
-        unit_cost: parseFloat(formData.unit_cost),
-        expiry_date: formData.expiry_date || null,
-        batch_number: formData.batch_number,
-        notes: formData.notes,
-      });
-
-      // Reset form and refresh records
-      setFormData({
-        product: '',
-        distributor_name: '',
-        quantity_received: '',
-        unit_cost: '',
-        expiry_date: '',
-        batch_number: '',
-        notes: '',
-      });
-      setFormErrors({});
-      setIsModalOpen(false);
-      fetchIntakeRecords();
-      fetchSummary();
-    } catch (err) {
-      console.error('Error creating intake record:', err);
-      setError(err.response?.data?.detail || 'Failed to create record');
-    }
-  };
-
-  const getProductName = (productId) => {
-    const product = products.find(p => p.id === productId);
-    return product?.name || 'Unknown Product';
-  };
 
   if (!user || (user.role !== 'admin' && user.role !== 'pharmacist')) {
     return (
@@ -413,89 +339,81 @@ const StockIntakeLog = () => {
 
       {/* Record Detail Modal - Premium Design */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-[2.5rem] shadow-premium max-w-lg w-full overflow-hidden animate-scale-up border-[8px] border-white ring-1 ring-slate-200">
-            <div className="px-10 py-8 border-b flex justify-between items-center" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedRecord(null)}></div>
+          <div className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-premium overflow-hidden">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Protocol Details</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Transaction ID: {selectedRecord.id?.toString().padStart(6, '0')}</p>
+                <h2 className="text-xl font-display font-bold text-slate-900">Intake Details</h2>
+                <p className="text-sm text-slate-500 font-medium">Recorded on {new Date(selectedRecord.received_date).toLocaleString()}</p>
               </div>
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className="w-10 h-10 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-all shadow-sm"
-              >
-                ✕
+              <button onClick={() => setSelectedRecord(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
-            <div className="p-10 space-y-8 bg-white">
-              <div className="flex items-start gap-4 p-5 bg-indigo-50/50 rounded-3xl border border-indigo-100/50">
-                <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center text-white shadow-glow-indigo flex-shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Product</label>
+                  <p className="font-semibold text-slate-800">{selectedRecord.product_name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Product</p>
-                  <p className="text-xl font-display font-bold text-indigo-900">{selectedRecord.product_name}</p>
-                  <p className="text-xs font-bold text-primary/60 mt-0.5">Supplier: {selectedRecord.distributor_name}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
-                <div className="data-cell p-5 rounded-2xl">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Quantity Received</p>
-                  <p className="text-3xl font-display font-bold text-slate-900">{selectedRecord.quantity_received} <span className="text-sm text-slate-400 font-bold">UNITS</span></p>
-                </div>
-                <div className="data-cell p-5 rounded-2xl">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Cost</p>
-                  <p className="text-xl font-display font-bold text-primary">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
-                  <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">Unit Cost: {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Expiry Date</p>
-                  <p className="font-bold text-slate-700 px-4 py-2 bg-slate-100/50 rounded-xl text-xs">{selectedRecord.expiry_date ? new Date(selectedRecord.expiry_date).toLocaleDateString() : 'Secure/Infinite'}</p>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Supplier</label>
+                  <p className="font-semibold text-slate-800">{selectedRecord.supplier_name || selectedRecord.distributor_name}</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">Batch Number</p>
-                  <p className="font-bold text-slate-700 px-4 py-2 bg-slate-100/50 rounded-xl text-xs">{selectedRecord.batch_number || 'ST-DEFAULT-ALPHA'}</p>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Quantity</label>
+                  <p className="font-semibold text-slate-800">{selectedRecord.quantity_received}</p>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Unit Cost</label>
+                  <p className="font-semibold text-slate-800">KES {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Cost</label>
+                  <p className="font-semibold text-slate-800">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Batch / Expiry</label>
+                  <p className="font-semibold text-slate-800">
+                    {selectedRecord.batch_number || 'N/A'} <br/>
+                    <span className="text-slate-500 text-sm">Exp: {selectedRecord.expiry_date || 'N/A'}</span>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice Number</label>
+                  <p className="font-semibold text-slate-800">{selectedRecord.invoice_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Payment Status</label>
+                  <p className="font-semibold text-slate-800">{selectedRecord.payment_status}</p>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Received By</label>
+                  <p className="font-semibold text-slate-800">{selectedRecord.received_by_username || 'System'}</p>
                 </div>
               </div>
-
-              <div className="p-5 bg-indigo-900 rounded-3xl text-white flex items-center justify-between shadow-premium">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-800 flex items-center justify-center text-indigo-300 font-display font-bold text-sm">
-                    {selectedRecord.received_by_username?.[0]?.toUpperCase() || 'S'}
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Recorded By</p>
-                    <p className="text-xs font-bold text-white uppercase tracking-tight">{selectedRecord.received_by_username}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Timestamp</p>
-                  <p className="text-[10px] font-bold text-indigo-100">{new Date(selectedRecord.received_date).toLocaleString()}</p>
-                </div>
-              </div>
-
               {selectedRecord.notes && (
-                <div className="p-5 bg-amber-50 rounded-3xl border border-amber-100 text-amber-900 italic text-xs leading-relaxed">
-                  <span className="font-bold uppercase tracking-widest text-[9px] block mb-1 not-italic text-amber-500">Notes:</span>
-                  "{selectedRecord.notes}"
+                <div className="pt-6 border-t border-slate-100">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</label>
+                  <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl">{selectedRecord.notes}</p>
                 </div>
               )}
-
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className="form-cancel-btn w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Bulk Stock Intake Modal */}
+      <StockIntakeBulkModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        branches={branches}
+        onSuccess={() => {
+          fetchIntakeRecords();
+          fetchSummary();
+        }}
+      />
     </div>
   );
 };

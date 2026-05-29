@@ -45,7 +45,7 @@ class Quotation(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.valid_until:
-            self.valid_until = timezone.now().date() + timedelta(days=7)
+            self.valid_until = timezone.now().date() + timedelta(days=30)
         super().save(*args, **kwargs)
 
 class QuotationItem(models.Model):

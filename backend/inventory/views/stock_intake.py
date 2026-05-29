@@ -92,6 +92,106 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
         
         return Response(summary_data)
 
+    @action(detail=False, methods=['post'])
+    def bulk(self, request):
+        """
+        Create multiple stock intake records under a single invoice.
+        Updates product pricing, branch stock, and supplier credit exactly once if CREDIT.
+        """
+        from django.db import transaction
+        from users.models import Branch
+        from products.models import Product, PricingTier, BranchStock, StockLog
+        from inventory.models.supplier import Supplier, SupplierCreditTransaction
+        
+        data = request.data
+        supplier_id = data.get('supplier_id')
+        branch_id = data.get('branch_id')
+        invoice_number = data.get('invoice_number', '')
+        payment_status = data.get('payment_status', 'PAID')
+        products_data = data.get('products', [])
+        notes = data.get('notes', '')
+
+        if not all([supplier_id, branch_id, products_data]):
+            return Response({'detail': 'Supplier, Branch, and products are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            supplier = Supplier.objects.get(id=supplier_id)
+            branch = Branch.objects.get(id=branch_id)
+        except (Supplier.DoesNotExist, Branch.DoesNotExist):
+            return Response({'detail': 'Invalid Supplier or Branch.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_invoice_cost = 0
+        intake_records = []
+
+        try:
+            with transaction.atomic():
+                for p_data in products_data:
+                    product_id = p_data.get('product_id')
+                    quantity_received = int(p_data.get('quantity_received', 0))
+                    cost_price = float(p_data.get('cost_price', 0))
+                    selling_price = float(p_data.get('selling_price', 0))
+                    wholesale_price = float(p_data.get('wholesale_price', 0))
+                    expiry_date = p_data.get('expiry_date') or None
+                    batch_number = p_data.get('batch_number', '')
+
+                    if not product_id or quantity_received <= 0:
+                        continue
+
+                    try:
+                        product = Product.objects.get(id=product_id)
+                    except Product.DoesNotExist:
+                        continue
+
+                    # Update pricing
+                    tier, _ = PricingTier.objects.get_or_create(product=product, defaults={'buying_price': cost_price, 'retail_price': selling_price, 'wholesale_price': wholesale_price})
+                    if cost_price: tier.buying_price = cost_price
+                    if selling_price: tier.retail_price = selling_price
+                    if wholesale_price: tier.wholesale_price = wholesale_price
+                    tier.save()
+                    if selling_price:
+                        product.price = selling_price
+                        product.save(update_fields=['price'])
+
+                    total_cost = cost_price * quantity_received
+                    total_invoice_cost += total_cost
+
+                    # Create intake
+                    intake = StockIntake(
+                        product=product,
+                        branch=branch,
+                        supplier=supplier,
+                        payment_status=payment_status,
+                        invoice_number=invoice_number,
+                        quantity_received=quantity_received,
+                        unit_cost=cost_price,
+                        expiry_date=expiry_date,
+                        batch_number=batch_number,
+                        received_by=request.user,
+                        notes=notes
+                    )
+                    intake._skip_credit = True
+                    intake.save()
+                    intake_records.append(intake.id)
+
+                # Single credit update
+                if payment_status in ['CREDIT', 'PARTIAL'] and total_invoice_cost > 0:
+                    supplier.balance += total_invoice_cost
+                    supplier.save(update_fields=['balance'])
+                    
+                    SupplierCreditTransaction.objects.create(
+                        supplier=supplier,
+                        transaction_type='PURCHASE_ON_CREDIT',
+                        amount=total_invoice_cost,
+                        balance_after=supplier.balance,
+                        description=f"Bulk Stock Intake Invoice #{invoice_number} ({len(intake_records)} products)",
+                        invoice_number=invoice_number,
+                        created_by=request.user
+                    )
+            
+            return Response({'detail': 'Bulk intake successful', 'intakes': intake_records}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['get'])
     def by_supplier(self, request):
         """Get stock intake records grouped by supplier."""
