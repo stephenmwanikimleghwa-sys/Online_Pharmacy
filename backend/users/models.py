@@ -251,28 +251,23 @@ class CustomerDebtTransaction(models.Model):
 
 class StaffActivityLog(models.Model):
     """
-    Model for recording staff activities such as login, logout, sales, etc.
-    Replaces the legacy tblactivehours and extends it for full audit trails.
+    Records staff login events with timestamp, IP address, and branch.
     """
-    ACTION_CHOICES = [
-        ('login', 'Login'),
-        ('logout', 'Logout'),
-        ('sale', 'Sale Processed'),
-        ('edit_price', 'Price Edited'),
-        ('restock', 'Stock Intake'),
-        ('delete_record', 'Record Deleted'),
-        ('other', 'Other Action'),
-    ]
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='activity_logs'
     )
-    action_type = models.CharField(max_length=20, choices=ACTION_CHOICES, default='other')
-    description = models.TextField()
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    event_type = models.CharField(max_length=20, default='LOGIN')
     timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activity_logs'
+    )
 
     class Meta:
         db_table = "staff_activity_logs"
@@ -281,8 +276,7 @@ class StaffActivityLog(models.Model):
         ordering = ["-timestamp"]
         indexes = [
             models.Index(fields=["user", "timestamp"]),
-            models.Index(fields=["action_type"]),
         ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.get_action_type_display()} at {self.timestamp}"
+        return f"{self.user.username} - {self.event_type} at {self.timestamp}"

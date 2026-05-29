@@ -181,7 +181,7 @@ const AdminDashboard = () => {
         {/* Users Table */}
         <div className="lg:col-span-8 glass-card rounded-2xl overflow-hidden">
           <div className="px-6 py-5 border-b flex items-center justify-between" style={{borderColor:'var(--border-primary)', background:'var(--bg-field)'}}>
-            <h2 className="text-xl font-display font-bold" style={{color:'var(--text-primary)'}}>Recent Accounts</h2>
+            <h2 className="text-xl font-display font-bold" style={{color:'var(--text-primary)'}}>Recent Users</h2>
             <button
               onClick={() => navigate('/admin/users')}
               className="text-primary hover:text-primary text-sm font-bold"
@@ -199,7 +199,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y" style={{borderColor:'var(--border-primary)'}}>
-                {users.slice(0, 6).map((userItem) => (
+                {users.slice(0, 3).map((userItem) => (
                   <tr key={userItem.id} className="transition-colors" style={{}} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-field)'} onMouseLeave={e=>e.currentTarget.style.background=''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold" style={{color:'var(--text-primary)'}}>{userItem.username}</div>
@@ -224,24 +224,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Footer Navigation Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Branches Overview', path: '/admin/branches' },
-          { label: 'User Management', path: '/admin/users' },
-          { label: 'Audit Logs', path: '/dispensing-logs' },
-          { label: 'Reports Panel', path: '/reports' },
-        ].map(({ label, path }) => (
-          <button
-            key={path}
-            onClick={() => navigate(path)}
-            className="flex items-center justify-between p-5 data-cell rounded-2xl transition-all group hover:shadow-premium"
-          >
-            <span className="font-bold text-sm group-hover:text-primary transition-colors" style={{color:'var(--text-primary)'}}>{label}</span>
-            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
-        ))}
-      </div>
     </div>
   );
 };

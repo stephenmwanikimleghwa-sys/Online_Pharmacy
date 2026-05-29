@@ -60,6 +60,7 @@ function AppLayout() {
   // Hide full sidebar/navbar chrome on the public home page when not logged in
   const isUnauthHome = location.pathname === "/" && !isAuthenticated;
   const showChrome = !isAuthPage && !isUnauthHome;
+  const showFooter = location.pathname === "/";
 
   return (
     <>
@@ -190,7 +191,7 @@ function AppLayout() {
               </Routes>
             </ErrorBoundary>
           </main>
-          {showChrome && <Footer />}
+          {showChrome && showFooter && <Footer />}
         </div>
         {showChrome && <BottomNav />}
       </div>

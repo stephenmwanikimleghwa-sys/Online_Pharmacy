@@ -19,42 +19,51 @@ const getDashboardHref = (role) => {
   }
 };
 
-const getNavLinks = (user) => {
-  const base = [
-    { to: "/",        label: "Home",    icon: HomeIcon },
-    { to: "/products",label: "Store",   icon: ShoppingBagIcon },
+const getNavGroups = (user) => {
+  const mainLinks = [
+    { to: "/", label: "Home", icon: HomeIcon },
+    { to: "/products", label: "Store", icon: ShoppingBagIcon },
   ];
+
   if (user) {
-    base.splice(1, 0, { to: getDashboardHref(user.role), label: "Dashboard", icon: Squares2X2Icon });
+    mainLinks.splice(1, 0, { to: getDashboardHref(user.role), label: "Dashboard", icon: Squares2X2Icon });
   }
+
+  const operationsLinks = [];
+  const adminLinks = [];
+
   if (user?.role === "admin") {
-    base.push(
-      { to: "/admin/branches",  label: "Branches",  icon: BuildingOffice2Icon },
-      { to: "/inventory",       label: "Inventory", icon: ClipboardDocumentListIcon },
-      { to: "/otc-sales",       label: "OTC Sales", icon: ShoppingBagIcon },
-      { to: "/reports",         label: "Reports",   icon: ChartBarIcon },
-      { to: "/documents",       label: "Documents", icon: DocumentTextIcon },
-      { to: "/licensing",       label: "Licensing", icon: ShieldCheckIcon },
-      { to: "/dispensing-logs", label: "Logs",      icon: DocumentDuplicateIcon }
+    operationsLinks.push(
+      { to: "/inventory", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
+      { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
+      { to: "/documents", label: "Documents", icon: DocumentTextIcon },
+      { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
+    );
+    adminLinks.push(
+      { to: "/admin/branches", label: "Branches Overview", icon: BuildingOffice2Icon },
+      { to: "/admin/users", label: "User Management", icon: ShieldCheckIcon },
+      { to: "/dispensing-logs", label: "Audit Logs", icon: DocumentDuplicateIcon },
     );
   } else if (user?.role === "pharmacist") {
-    base.push(
-      { to: "/inventory",       label: "Inventory", icon: ClipboardDocumentListIcon },
-      { to: "/otc-sales",       label: "OTC Sales", icon: ShoppingBagIcon },
-      { to: "/reports",         label: "Reports",   icon: ChartBarIcon },
-      { to: "/documents",       label: "Documents", icon: DocumentTextIcon },
-      { to: "/licensing",       label: "Licensing", icon: ShieldCheckIcon },
-      { to: "/dispensing-logs", label: "Logs",      icon: DocumentDuplicateIcon }
+    operationsLinks.push(
+      { to: "/inventory", label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
+      { to: "/reports", label: "Reports", icon: ChartBarIcon },
+      { to: "/documents", label: "Documents", icon: DocumentTextIcon },
+      { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
+      { to: "/dispensing-logs", label: "Logs", icon: DocumentDuplicateIcon },
     );
   } else if (user?.role === "cashier") {
-    base.push({ to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon });
+    operationsLinks.push({ to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon });
   } else if (user?.role === "auditor") {
-    base.push(
+    operationsLinks.push(
       { to: "/inventory", label: "Inventory", icon: ClipboardDocumentListIcon },
-      { to: "/reports",   label: "Reports",   icon: ChartBarIcon }
+      { to: "/reports", label: "Reports", icon: ChartBarIcon },
     );
   }
-  return base;
+
+  return { mainLinks, operationsLinks, adminLinks };
 };
 
 const Sidebar = () => {
@@ -63,7 +72,12 @@ const Sidebar = () => {
   const { effectiveTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const links = getNavLinks(user ?? null);
+  const { mainLinks, operationsLinks, adminLinks } = getNavGroups(user ?? null);
+  const sections = [
+    { title: "Main", links: mainLinks },
+    { title: "Operations", links: operationsLinks },
+    { title: "Admin", links: adminLinks },
+  ].filter(section => section.links.length > 0);
 
   const onLogoutClick = () => {
     if (logout) logout();
@@ -126,50 +140,59 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-1.5">
-        {links.map(({ to, label, icon: Icon }) => {
-          const active = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
-          return (
-            <Link
-              key={to}
-              to={to}
-              title={isCollapsed ? label : ""}
-              className={`flex items-center ${isCollapsed ? 'justify-center p-3' : 'px-4 py-3'} rounded-xl text-sm font-semibold transition-all duration-200 group`}
-              style={
-                active
-                  ? {
-                      color: '#ffffff',
-                      background: 'var(--btn-gradient)',
-                      boxShadow: '0 4px 14px rgba(124,58,237,0.25)',
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-4">
+        {sections.map((section) => (
+          <div key={section.title} className="space-y-1.5">
+            {!isCollapsed && (
+              <p className="px-3 text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--text-secondary)' }}>
+                {section.title}
+              </p>
+            )}
+            {section.links.map(({ to, label, icon: Icon }) => {
+              const active = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  title={isCollapsed ? label : ""}
+                  className={`flex items-center ${isCollapsed ? 'justify-center p-3' : 'px-4 py-3'} rounded-xl text-sm font-semibold transition-all duration-200 group`}
+                  style={
+                    active
+                      ? {
+                          color: '#ffffff',
+                          background: 'var(--btn-gradient)',
+                          boxShadow: '0 4px 14px rgba(124,58,237,0.25)',
+                        }
+                      : {
+                          color: 'var(--text-primary)',
+                          background: 'transparent',
+                          border: '1px solid transparent',
+                        }
+                  }
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'var(--bg-field)';
+                      e.currentTarget.style.borderColor = 'var(--border-primary)';
+                      e.currentTarget.style.color = 'var(--color-highlight)';
                     }
-                  : {
-                      color: 'var(--text-primary)',
-                      background: 'transparent',
-                      border: '1px solid transparent',
+                  }}
+                  onMouseLeave={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderColor = 'transparent';
+                      e.currentTarget.style.color = 'var(--text-primary)';
                     }
-              }
-              onMouseEnter={e => {
-                if (!active) {
-                  e.currentTarget.style.background = 'var(--bg-field)';
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  e.currentTarget.style.color = 'var(--color-highlight)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!active) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-            >
-              <Icon
-                className={`w-5 h-5 flex-shrink-0 transition-transform ${active ? 'scale-110' : 'group-hover:scale-110'} ${!isCollapsed ? 'mr-3' : ''}`}
-              />
-              {!isCollapsed && <span className="truncate whitespace-nowrap">{label}</span>}
-            </Link>
-          );
-        })}
+                  }}
+                >
+                  <Icon
+                    className={`w-5 h-5 flex-shrink-0 transition-transform ${active ? 'scale-110' : 'group-hover:scale-110'} ${!isCollapsed ? 'mr-3' : ''}`}
+                  />
+                  {!isCollapsed && <span className="truncate whitespace-nowrap">{label}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* Footer — user actions */}

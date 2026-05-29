@@ -16,10 +16,10 @@ class Migration(migrations.Migration):
             name='StaffActivityLog',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('action_type', models.CharField(choices=[('login', 'Login'), ('logout', 'Logout'), ('sale', 'Sale Processed'), ('edit_price', 'Price Edited'), ('restock', 'Stock Intake'), ('delete_record', 'Record Deleted'), ('other', 'Other Action')], default='other', max_length=20)),
-                ('description', models.TextField()),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
+                ('event_type', models.CharField(default='LOGIN', max_length=20)),
                 ('timestamp', models.DateTimeField(auto_now_add=True)),
+                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
+                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='activity_logs', to='users.branch')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activity_logs', to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Staff Activity Logs',
                 'db_table': 'staff_activity_logs',
                 'ordering': ['-timestamp'],
-                'indexes': [models.Index(fields=['user', 'timestamp'], name='staff_activ_user_id_f4153c_idx'), models.Index(fields=['action_type'], name='staff_activ_action__6c2ef3_idx')],
-            },
+            }
         ),
     ]
+

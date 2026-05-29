@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Branch, Pharmacy
+from .models import User, Branch, Pharmacy, StaffActivityLog
 
 
 @admin.register(Branch)
@@ -9,6 +9,14 @@ class BranchAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'is_headquarters', 'pharmacy')
     search_fields = ('name', 'address', 'contact_phone', 'license_number')
     ordering = ('pharmacy', 'name')
+
+
+@admin.register(StaffActivityLog)
+class StaffActivityLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'event_type', 'timestamp', 'ip_address', 'branch')
+    list_filter = ('event_type', 'timestamp', 'branch')
+    search_fields = ('user__username', 'ip_address', 'branch__name')
+    ordering = ('-timestamp',)
 
 
 @admin.register(User)
