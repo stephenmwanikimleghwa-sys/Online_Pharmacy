@@ -1,4 +1,3 @@
-# Import serializers to make them available at package level
 from .dispensing import (
     PrescriptionSerializer,
     PrescriptionItemSerializer,
@@ -8,6 +7,7 @@ from .dispensing import (
 from .restock import RestockRequestSerializer
 from .stock import StockLogSerializer
 from .stock_intake import StockIntakeSerializer, StockIntakeDetailSerializer
+from .transfer import InterBranchTransferSerializer
 
 __all__ = [
     'PrescriptionSerializer',
@@ -15,6 +15,7 @@ __all__ = [
     'DispensationSerializer',
     'DispensationItemSerializer',
     'RestockRequestSerializer',
+    'InterBranchTransferSerializer',
     'StockLogSerializer',
     'StockIntakeSerializer',
     'StockIntakeDetailSerializer',

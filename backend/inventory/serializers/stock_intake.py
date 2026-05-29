@@ -6,6 +6,7 @@ from products.serializers import ProductSerializer
 class StockIntakeSerializer(serializers.ModelSerializer):
     """Serializer for StockIntake records."""
     product_name = serializers.CharField(source='product.name', read_only=True)
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     received_by_username = serializers.CharField(source='received_by.username', read_only=True)
     
     class Meta:
@@ -14,7 +15,10 @@ class StockIntakeSerializer(serializers.ModelSerializer):
             'id',
             'product',
             'product_name',
-            'distributor_name',
+            'supplier',
+            'supplier_name',
+            'payment_status',
+            'invoice_number',
             'quantity_received',
             'unit_cost',
             'total_cost',

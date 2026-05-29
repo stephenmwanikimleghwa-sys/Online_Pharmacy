@@ -89,43 +89,123 @@ class DispensationViewSet(viewsets.ModelViewSet):
 @permission_classes([IsPharmacistOrAdmin])
 def dispense_otc(request):
     """
-    Dispense over-the-counter medicines — stamps the user's branch on the sale.
+    Dispense medicines — stamps the user's branch on the sale.
+    Handles payment modes, credit limits, and branch stock.
     """
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
     with transaction.atomic():
         items_data = request.data.get('items', [])
+        payment_mode = request.data.get('payment_mode', 'CASH')
+        pricing_tier = request.data.get('pricing_tier', 'RETAIL')
+        customer_id = request.data.get('customer_id')
+        discount = request.data.get('discount', 0)
+        
+        customer = None
+        if customer_id:
+            customer = get_object_or_404(User, pk=customer_id)
+            
+        from products.models import BranchStock, StockLog
+        from inventory.models.finance import CashFlow
+        
+        total_amount = 0
+        products_to_dispense = []
+        
+        # Pre-check stock and calculate total
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
-            if product.stock_quantity < item['quantity']:
+            branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                product=product, branch=request.user.branch, defaults={'quantity': 0, 'reorder_level': 0}
+            )
+            available = branch_stock.quantity
+            if available < item['quantity']:
                 return Response(
-                    {'error': f'Insufficient stock for {product.name}. Available: {product.stock_quantity}'},
+                    {'error': f'Insufficient stock for {product.name}. Available: {available}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            price = product.wholesale_price if pricing_tier == 'WHOLESALE' and product.wholesale_price else product.price
+            item_total = float(price) * item['quantity']
+            total_amount += item_total
+            products_to_dispense.append({
+                'product': product,
+                'branch_stock': branch_stock,
+                'quantity': item['quantity'],
+                'price': price,
+                'item_total': item_total
+            })
+
+        total_amount -= float(discount)
+        
+        if payment_mode == 'CREDIT':
+            if not customer:
+                return Response({'error': 'Customer is required for credit sales.'}, status=status.HTTP_400_BAD_REQUEST)
+            if float(customer.credit_balance) + total_amount > float(customer.credit_limit):
+                return Response({'error': 'Credit limit exceeded.'}, status=status.HTTP_400_BAD_REQUEST)
 
         dispensation = Dispensation.objects.create(
             sale_type='otc',
             patient_name=request.data.get('patient_name', ''),
+            customer=customer,
+            payment_mode=payment_mode,
+            pricing_tier=pricing_tier,
+            discount=discount,
             dispensed_by=request.user,
-            branch=request.user.branch,   # ← stamp branch
+            branch=request.user.branch,
             notes=request.data.get('notes', ''),
-            total_amount=0
+            total_amount=total_amount
         )
 
-        total_amount = 0
-        for item in items_data:
-            product = Product.objects.get(pk=item['product_id'])
-            quantity = item['quantity']
+        for p_data in products_to_dispense:
+            product = p_data['product']
+            quantity = p_data['quantity']
+            branch_stock = p_data['branch_stock']
+            
             DispensationItem.objects.create(
                 dispensation=dispensation,
                 product=product,
                 quantity=quantity,
-                price_per_unit=product.price,
-                total_price=product.price * quantity,
+                price_per_unit=p_data['price'],
+                total_price=p_data['item_total'],
                 expiry_date=product.expiry_date
             )
-            total_amount += product.price * quantity
+            
+            prev_qty = branch_stock.quantity
+            branch_stock.quantity -= quantity
+            branch_stock.save(update_fields=['quantity'])
+            
+            StockLog.objects.create(
+                product=product,
+                branch=request.user.branch,
+                logged_by=request.user,
+                change_type='sale',
+                change_amount=-quantity,
+                previous_quantity=prev_qty,
+                new_quantity=branch_stock.quantity,
+                reason=f"Dispensation #{dispensation.id}"
+            )
 
-        dispensation.total_amount = total_amount
-        dispensation.save()
+        if payment_mode == 'CREDIT':
+            from users.models import CustomerDebtTransaction
+            customer.credit_balance = float(customer.credit_balance) + total_amount
+            customer.save(update_fields=['credit_balance'])
+            CustomerDebtTransaction.objects.create(
+                customer=customer,
+                transaction_type='CREDIT_SALE',
+                amount=total_amount,
+                balance_after=customer.credit_balance,
+                description=f"Dispensation #{dispensation.id}",
+                processed_by=request.user
+            )
+        else:
+            CashFlow.objects.create(
+                netflow=total_amount,
+                paymentmode=payment_mode,
+                explanation=f"Dispensation #{dispensation.id}",
+                branch=request.user.branch,
+                timestamp=timezone.now()
+            )
 
         return Response(DispensationSerializer(dispensation).data)
 
@@ -169,12 +249,19 @@ def dispensing_stats(request):
         total_revenue=Sum('total_price')
     ).order_by('-total_quantity')[:10]
 
-    expired_stock = Product.objects.filter(
-        expiry_date__lt=today,
-        stock_quantity__gt=0
-    ).aggregate(
-        total_items=Count('id'),
-        total_value=Sum(F('stock_quantity') * F('price'))
+    from products.models import BranchStock
+    expired_qs = BranchStock.objects.filter(
+        product__expiry_date__lt=today,
+        quantity__gt=0
+    )
+    if is_admin and branch_param and branch_param != 'all':
+        expired_qs = expired_qs.filter(branch_id=branch_param)
+    elif not is_admin and user.branch:
+        expired_qs = expired_qs.filter(branch=user.branch)
+        
+    expired_stock = expired_qs.aggregate(
+        total_items=Count('product', distinct=True),
+        total_value=Sum(F('quantity') * F('product__price'))
     )
 
     return Response({

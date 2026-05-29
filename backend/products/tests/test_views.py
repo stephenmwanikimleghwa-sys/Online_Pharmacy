@@ -13,7 +13,7 @@ class ProductTests(APITestCase):
             username='admin', email='admin@test.com', password='password123', role='admin'
         )
         self.pharmacist = User.objects.create_user(
-            username='pharmacist', email='pharm@test.com', password='password123', role='pharmacist'
+            username='pharmacist', email='pharm@test.com', password='password123', role='pharmacist', can_process_sales=True, can_manage_inventory=True
         )
         self.customer = User.objects.create_user(
             username='customer', email='cust@test.com', password='password123', role='customer'

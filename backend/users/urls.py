@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.pharmacy import PharmacyViewSet
 from .views.document_views import PharmacyDocumentViewSet
+from .views.activity import StaffActivityLogViewSet
 
 # Import views from the views package submodules to avoid name collision
 from .views.core_views import (
@@ -33,6 +34,7 @@ app_name = "users"
 router = DefaultRouter()
 router.register(r'pharmacies', PharmacyViewSet, basename='pharmacy')
 router.register(r'documents', PharmacyDocumentViewSet, basename='document')
+router.register(r'activity-logs', StaffActivityLogViewSet, basename='activity-log')
 
 urlpatterns = [
     path('', include(router.urls)),

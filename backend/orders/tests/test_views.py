@@ -16,8 +16,10 @@ class OrderViewTest(TestCase):
         # Create users
         self.pharmacist = User.objects.create_user(
             username="pharmacist",
-            password="password",
-            role="pharmacist"
+            password="testpassword",
+            role="pharmacist",
+            can_process_sales=True,
+            can_manage_inventory=True
         )
         self.customer = User.objects.create_user(
             username="customer",

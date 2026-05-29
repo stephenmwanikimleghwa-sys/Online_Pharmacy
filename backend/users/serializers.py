@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User, Pharmacy, PharmacyDocument, Branch
+from .models import User, Pharmacy, PharmacyDocument, Branch, StaffActivityLog
 
 class PharmacyDocumentSerializer(serializers.ModelSerializer):
     """Serializer for pharmacy legal documents."""
@@ -64,7 +64,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'pharmacy_name', 'branch', 'branch_info',
             'phone_number', 'profile_picture',
             'first_name', 'last_name', 'full_name', 'is_active', 'is_verified',
-            'must_change_password'
+            'must_change_password', 'can_process_sales', 'can_manage_inventory',
+            'can_edit_prices', 'can_view_reports', 'can_manage_users',
+            'can_delete_records', 'can_view_audit_logs'
         ]
         read_only_fields = ['id', 'role', 'is_verified', 'full_name', 'branch_info']
 
@@ -128,3 +130,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         validate_password(value)
         return value
+
+class StaffActivityLogSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    full_name = serializers.CharField(source='user.full_name', read_only=True)
+
+    class Meta:
+        model = StaffActivityLog
+        fields = ['id', 'user', 'username', 'full_name', 'action_type', 'description', 'ip_address', 'timestamp']
+        read_only_fields = ['timestamp']

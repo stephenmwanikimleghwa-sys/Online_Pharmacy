@@ -25,7 +25,7 @@ import logging
 from datetime import datetime
 from django.core.cache import cache
 from products.models import Product
-from .models import Order, OrderItem, OrderStatusChoices
+from .models import Order, OrderItem, OrderStatusChoices, OrderTemplate, OrderTemplateItem
 
 logger = logging.getLogger(__name__)
 
@@ -622,3 +622,28 @@ def get_receipt_pdf(request, pk):
         filename=filename,
         content_type='application/pdf'
     )
+
+from rest_framework import viewsets
+from .serializers import OrderTemplateSerializer
+
+class OrderTemplateViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing Order Templates.
+    """
+    serializer_class = OrderTemplateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return OrderTemplate.objects.none()
+            
+        qs = OrderTemplate.objects.all()
+        
+        # Customers can only see their templates (where customer_name matches or if linked directly)
+        if self.request.user.role == 'customer':
+            qs = qs.filter(created_by=self.request.user)
+            
+        return qs
+        
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)

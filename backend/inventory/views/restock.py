@@ -109,18 +109,30 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
         restock_request.status = 'completed'
         restock_request.save()
 
-        # Update product stock quantity
-        product = restock_request.product
-        previous_quantity = product.stock_quantity
-        product.stock_quantity += restock_request.requested_quantity
-        product.save()
+        # Update branch stock quantity
+        from products.models import BranchStock, StockLog
+        branch = restock_request.branch or request.user.branch
+        if not branch:
+            return Response(
+                {"detail": "Cannot complete restock request without a branch."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        branch_stock, _ = BranchStock.objects.get_or_create(
+            product=restock_request.product,
+            branch=branch,
+            defaults={'quantity': 0}
+        )
+        previous_quantity = branch_stock.quantity
+        branch_stock.quantity += restock_request.requested_quantity
+        branch_stock.save(update_fields=['quantity'])
 
         # Create stock log
-        from products.models import StockLog
         StockLog.objects.create(
-            product=product,
+            product=restock_request.product,
+            branch=branch,
             previous_quantity=previous_quantity,
-            new_quantity=product.stock_quantity,
+            new_quantity=branch_stock.quantity,
             change_amount=restock_request.requested_quantity,
             change_type='restock',
             reason=f'Restock request #{restock_request.id} fulfilled',

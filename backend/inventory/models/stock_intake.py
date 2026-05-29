@@ -26,9 +26,28 @@ class StockIntake(models.Model):
         verbose_name='Branch',
         help_text='The branch that received this stock.'
     )
-    distributor_name = models.CharField(
-        max_length=255,
-        help_text='Name of the distributor or supplier'
+    supplier = models.ForeignKey(
+        'inventory.Supplier',
+        on_delete=models.PROTECT,
+        related_name='stock_intakes',
+        help_text='Supplier of the stock'
+    )
+    PAYMENT_STATUS_CHOICES = [
+        ('PAID', 'Paid'),
+        ('CREDIT', 'Credit'),
+        ('PARTIAL', 'Partial'),
+    ]
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default='PAID',
+        help_text='Payment status for this intake'
+    )
+    invoice_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text='Invoice or reference number from the supplier'
     )
     quantity_received = models.PositiveIntegerField(
         help_text='Number of units received'
@@ -80,7 +99,7 @@ class StockIntake(models.Model):
         ordering = ['-received_date']
         indexes = [
             models.Index(fields=['product', '-received_date']),
-            models.Index(fields=['distributor_name', '-received_date']),
+            models.Index(fields=['supplier', '-received_date']),
             models.Index(fields=['received_date']),
         ]
 
@@ -89,48 +108,81 @@ class StockIntake(models.Model):
         is_new = self.pk is None
         self.total_cost = self.quantity_received * self.unit_cost
         
-        super().save(*args, **kwargs)
+        from django.db import transaction
+        from products.models import StockLog, BranchStock
         
-        if is_new:
-            # Create Batch if batch_number and expiry_date are provided
-            if self.batch_number and self.expiry_date:
-                from inventory.models.batch import Batch
-                from inventory.models.supplier import Supplier
-                
-                # Try to find or create supplier
-                supplier, _ = Supplier.objects.get_or_create(
-                    name=self.distributor_name
-                )
-                
-                Batch.objects.create(
-                    product=self.product,
-                    batch_number=self.batch_number,
-                    supplier=supplier,
-                    quantity=self.quantity_received,
-                    expiry_date=self.expiry_date
-                )
-
-            # Keep a simple "next expiry" on the Product for quick UI display.
-            # If multiple batches exist, we store the earliest expiry date.
-            if self.expiry_date:
-                if not self.product.expiry_date or self.expiry_date < self.product.expiry_date:
-                    self.product.expiry_date = self.expiry_date
-
-            # Update product stock (Legacy support + Total stock)
-            self.product.stock_quantity += self.quantity_received
-            self.product.save()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
             
-            # Create stock log
-            from products.models import StockLog
-            StockLog.objects.create(
-                product=self.product,
-                previous_quantity=self.product.stock_quantity - self.quantity_received,
-                new_quantity=self.product.stock_quantity,
-                change_amount=self.quantity_received,
-                change_type='restock',
-                reason=f'Stock intake from {self.distributor_name} (Ref: {self.id})',
-                logged_by=self.received_by
-            )
+            if is_new:
+                # Create Batch if batch_number and expiry_date are provided
+                if self.batch_number and self.expiry_date:
+                    from inventory.models.batch import Batch
+                    from inventory.models.supplier import Supplier
+                    
+                    # Try to find or create supplier
+                    supplier, _ = Supplier.objects.get_or_create(
+                        name=self.distributor_name
+                    )
+                    
+                    Batch.objects.create(
+                        product=self.product,
+                        batch_number=self.batch_number,
+                        supplier=supplier,
+                        quantity=self.quantity_received,
+                        expiry_date=self.expiry_date
+                    )
+
+                # Keep a simple "next expiry" on the Product for quick UI display.
+                if self.expiry_date:
+                    if not self.product.expiry_date or self.expiry_date < self.product.expiry_date:
+                        self.product.expiry_date = self.expiry_date
+                        self.product.save(update_fields=['expiry_date'])
+
+                branch = self.branch
+                if not branch:
+                    raise ValueError("StockIntake must have a branch to update stock.")
+                    
+                branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                    product=self.product,
+                    branch=branch,
+                    defaults={'quantity': 0}
+                )
+                
+                # Update supplier credit balance if on credit
+                if self.payment_status == 'CREDIT':
+                    from inventory.models.supplier import SupplierCreditTransaction
+                    
+                    self.supplier.balance += self.total_cost
+                    self.supplier.save(update_fields=['balance'])
+                    
+                    SupplierCreditTransaction.objects.create(
+                        supplier=self.supplier,
+                        transaction_type='PURCHASE_ON_CREDIT',
+                        amount=self.total_cost,
+                        balance_after=self.supplier.balance,
+                        description=f"Stock Intake #{self.pk} - {self.quantity_received} units of {self.product.name}",
+                        invoice_number=self.invoice_number,
+                        created_by=self.received_by
+                    )
+                
+                previous_qty = branch_stock.quantity
+                new_qty = previous_qty + self.quantity_received
+                
+                # Create stock log
+                StockLog.objects.create(
+                    product=self.product,
+                    branch=branch,
+                    previous_quantity=previous_qty,
+                    new_quantity=new_qty,
+                    change_amount=self.quantity_received,
+                    change_type='restock',
+                    reason=f'Stock intake from {self.supplier.name} (Ref: {self.id})',
+                    logged_by=self.received_by
+                )
+                
+                branch_stock.quantity = new_qty
+                branch_stock.save()
 
     def __str__(self):
-        return f"{self.product.name} - {self.quantity_received} units from {self.distributor_name} ({self.received_date.date()})"
+        return f"{self.product.name} - {self.quantity_received} units from {self.supplier.name} ({self.received_date.date()})"

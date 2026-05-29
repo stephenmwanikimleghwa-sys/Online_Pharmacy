@@ -110,18 +110,29 @@ class AnalyticsViewSet(viewsets.ViewSet):
         """
         Get products that are low on stock.
         """
-        products = Product.objects.filter(
-            is_active=True,
-            stock_quantity__lte=F('reorder_threshold'),
-            stock_quantity__gt=0
+        from products.models import BranchStock
+        
+        qs = BranchStock.objects.filter(
+            product__is_active=True,
+            quantity__lte=F('reorder_level'),
+            quantity__gt=0
         )
         
-        if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
-            products = products.filter(pharmacy=request.user.pharmacy)
+        user = request.user
+        is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
+        branch_param = request.query_params.get('branch')
+        
+        if is_admin and branch_param and branch_param != 'all':
+            qs = qs.filter(branch_id=branch_param)
+        elif not is_admin and user.branch:
+            qs = qs.filter(branch=user.branch)
             
-        alerts = products.values(
-            'id', 'name', 'stock_quantity', 'reorder_threshold'
-        ).order_by('stock_quantity')[:10]
+        alerts = qs.values(
+            id=F('product__id'), 
+            name=F('product__name'), 
+            stock_quantity=F('quantity'), 
+            reorder_threshold=F('reorder_level')
+        ).order_by('quantity')[:10]
         
         return Response(list(alerts))
 

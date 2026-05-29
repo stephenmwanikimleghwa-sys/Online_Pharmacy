@@ -74,7 +74,9 @@ class Product(models.Model):
     )
     
     stock_quantity = models.PositiveIntegerField(
-        default=0, verbose_name="Stock Quantity"
+        default=0, 
+        verbose_name="Global Stock (DEPRECATED)",
+        help_text="Deprecated: Use BranchStock instead."
     )
     reorder_threshold = models.PositiveIntegerField(
         default=10, verbose_name="Reorder Threshold"
@@ -216,6 +218,15 @@ class StockLog(models.Model):
         max_length=20, choices=CHANGE_TYPES, verbose_name="Change Type"
     )
     reason = models.CharField(max_length=255, blank=True, verbose_name="Reason")
+    branch = models.ForeignKey(
+        "users.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_logs",
+        verbose_name="Branch",
+        help_text="The branch where this stock change occurred"
+    )
     logged_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -340,3 +351,55 @@ class PricingTier(models.Model):
         elif tier == 'retail':
             return self.retail_price
         return self.retail_price  # Default to retail
+
+
+class BranchStock(models.Model):
+    """
+    Model representing stock levels for a product at a specific branch.
+    Replaces the global Product.stock_quantity.
+    """
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='branch_stocks',
+        help_text='The product being stocked'
+    )
+    branch = models.ForeignKey(
+        "users.Branch",
+        on_delete=models.CASCADE,
+        related_name='branch_stocks',
+        help_text='The branch holding this stock'
+    )
+    quantity = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Stock Quantity",
+        help_text="Current stock level at this branch"
+    )
+    reorder_level = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Reorder Level",
+        help_text="Minimum acceptable stock level before reordering"
+    )
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'branch_stock'
+        verbose_name = 'Branch Stock'
+        verbose_name_plural = 'Branch Stocks'
+        unique_together = ('product', 'branch')
+        indexes = [
+            models.Index(fields=['product', 'branch']),
+            models.Index(fields=['quantity']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} @ {self.branch.name}: {self.quantity}"
+
+    @property
+    def is_low_stock(self) -> bool:
+        """Check if stock at this branch is below the reorder level."""
+        return self.quantity <= self.reorder_level

@@ -99,7 +99,31 @@ class Dispensation(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
-    payment_mode = models.CharField(max_length=50, blank=True, null=True, verbose_name='Payment Mode')
+    
+    PAYMENT_MODES = [
+        ('CASH', 'Cash'),
+        ('MPESA_TILL', 'M-Pesa Till'),
+        ('EQUITY_TILL', 'Equity Till'),
+        ('NATIONAL_BANK', 'National Bank'),
+        ('CREDIT', 'Credit'),
+    ]
+    payment_mode = models.CharField(max_length=50, choices=PAYMENT_MODES, default='CASH', verbose_name='Payment Mode')
+    
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customer_dispensations',
+        help_text='Registered customer for credit tracking'
+    )
+    
+    PRICING_TIERS = [
+        ('RETAIL', 'Retail'),
+        ('WHOLESALE', 'Wholesale'),
+    ]
+    pricing_tier = models.CharField(max_length=20, choices=PRICING_TIERS, default='RETAIL')
+    
     discount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Discount')
     notes = models.TextField(blank=True)
     shift_info = models.JSONField(default=dict)  # For tracking pharmacist shifts
@@ -142,22 +166,37 @@ class DispensationItem(models.Model):
         if not self.total_price:
             self.total_price = self.quantity * self.price_per_unit
             
-        # Create stock log entry
-        from products.models import StockLog
-        StockLog.objects.create(
-            product=self.product,
-            previous_quantity=self.product.stock_quantity,
-            new_quantity=self.product.stock_quantity - self.quantity,
-            change_amount=-self.quantity,
-            change_type='sale',
-            reason=f'Dispensed in {self.dispensation.sale_type} sale #{self.dispensation.id}',
-            logged_by=self.dispensation.dispensed_by
-        )
+        from django.db import transaction
+        from products.models import StockLog, BranchStock
         
-        # Update product stock
-        self.product.stock_quantity -= self.quantity
-        self.product.save()
-        
+        with transaction.atomic():
+            branch = self.dispensation.branch
+            if not branch:
+                raise ValueError("Dispensation must have a branch to update stock.")
+                
+            branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                product=self.product,
+                branch=branch,
+                defaults={'quantity': 0}
+            )
+            
+            previous_qty = branch_stock.quantity
+            new_qty = previous_qty - self.quantity
+            
+            StockLog.objects.create(
+                product=self.product,
+                branch=branch,
+                previous_quantity=previous_qty,
+                new_quantity=new_qty,
+                change_amount=-self.quantity,
+                change_type='sale',
+                reason=f'Dispensed in {self.dispensation.sale_type} sale #{self.dispensation.id}',
+                logged_by=self.dispensation.dispensed_by
+            )
+            
+            branch_stock.quantity = new_qty
+            branch_stock.save()
+            
         super().save(*args, **kwargs)
     
     def __str__(self):

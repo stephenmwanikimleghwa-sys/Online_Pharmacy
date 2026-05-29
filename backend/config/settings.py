@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     "patients",
     "reports",
     "inventory",
+    "finance",
     "dispensing_logs",
 ]
 

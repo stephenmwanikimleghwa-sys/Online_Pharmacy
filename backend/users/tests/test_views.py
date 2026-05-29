@@ -11,7 +11,7 @@ class UserAuthTests(APITestCase):
             username='testuser', 
             email='test@example.com', 
             password='password123',
-            role='pharmacist'
+            role='pharmacist', can_process_sales=True, can_manage_inventory=True
         )
         self.login_url = reverse('login') # Assuming URL name is 'login' - need to verify
         self.profile_url = reverse('profile') # Assuming URL name is 'profile'

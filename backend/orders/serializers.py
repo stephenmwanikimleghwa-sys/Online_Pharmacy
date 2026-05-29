@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Order, OrderItem, OrderStatusChoices
+from .models import Order, OrderItem, OrderStatusChoices, OrderTemplate, OrderTemplateItem
 from products.models import Product
 from users.models import User
 from django.core.exceptions import ValidationError
@@ -135,3 +135,24 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
                     "Only admins and pharmacists can update order status."
                 )
         return value
+
+class OrderTemplateItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    
+    class Meta:
+        model = OrderTemplateItem
+        fields = ['id', 'product', 'product_name', 'default_quantity']
+
+class OrderTemplateSerializer(serializers.ModelSerializer):
+    items = OrderTemplateItemSerializer(many=True, read_only=True)
+    branch_name = serializers.CharField(source="branch.name", read_only=True)
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True)
+
+    class Meta:
+        model = OrderTemplate
+        fields = [
+            'id', 'branch', 'branch_name', 'created_by', 'created_by_name',
+            'customer_name', 'company_name', 'is_active', 'created_at', 'updated_at',
+            'items'
+        ]
+        read_only_fields = ['created_by', 'created_at', 'updated_at']

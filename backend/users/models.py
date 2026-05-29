@@ -102,6 +102,15 @@ class User(AbstractUser):
     must_change_password = models.BooleanField(default=False, help_text="Designates whether the user must change their password upon login.")
     credit_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name='Credit Balance', help_text='Outstanding debt or credit balance for customers')
     is_credit_customer = models.BooleanField(default=False, verbose_name='Is Credit Customer')
+    
+    # Granular Permissions
+    can_process_sales = models.BooleanField(default=False, verbose_name="Can Process Sales")
+    can_manage_inventory = models.BooleanField(default=False, verbose_name="Can Manage Inventory")
+    can_edit_prices = models.BooleanField(default=False, verbose_name="Can Edit Prices")
+    can_view_reports = models.BooleanField(default=False, verbose_name="Can View Reports")
+    can_manage_users = models.BooleanField(default=False, verbose_name="Can Manage Users")
+    can_delete_records = models.BooleanField(default=False, verbose_name="Can Delete Records")
+    can_view_audit_logs = models.BooleanField(default=False, verbose_name="Can View Audit Logs")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -239,3 +248,41 @@ class CustomerDebtTransaction(models.Model):
     def __str__(self):
         return f"{self.customer.username} - {self.get_transaction_type_display()} ({self.amount})"
 
+
+class StaffActivityLog(models.Model):
+    """
+    Model for recording staff activities such as login, logout, sales, etc.
+    Replaces the legacy tblactivehours and extends it for full audit trails.
+    """
+    ACTION_CHOICES = [
+        ('login', 'Login'),
+        ('logout', 'Logout'),
+        ('sale', 'Sale Processed'),
+        ('edit_price', 'Price Edited'),
+        ('restock', 'Stock Intake'),
+        ('delete_record', 'Record Deleted'),
+        ('other', 'Other Action'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='activity_logs'
+    )
+    action_type = models.CharField(max_length=20, choices=ACTION_CHOICES, default='other')
+    description = models.TextField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "staff_activity_logs"
+        verbose_name = "Staff Activity Log"
+        verbose_name_plural = "Staff Activity Logs"
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["user", "timestamp"]),
+            models.Index(fields=["action_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_action_type_display()} at {self.timestamp}"

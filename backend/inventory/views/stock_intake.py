@@ -48,10 +48,10 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
         if product_id:
             queryset = queryset.filter(product_id=product_id)
 
-        # Filter by distributor
-        distributor = self.request.query_params.get('distributor')
-        if distributor:
-            queryset = queryset.filter(distributor_name__icontains=distributor)
+        # Filter by supplier
+        supplier_id = self.request.query_params.get('supplier_id')
+        if supplier_id:
+            queryset = queryset.filter(supplier_id=supplier_id)
 
         # Filter by date range
         start_date = self.request.query_params.get('start_date')
@@ -87,36 +87,37 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
             'total_records': queryset.count(),
             'total_quantity_received': queryset.aggregate(Sum('quantity_received'))['quantity_received__sum'] or 0,
             'total_cost': queryset.aggregate(Sum('total_cost'))['total_cost__sum'] or 0,
-            'distributors': queryset.values_list('distributor_name', flat=True).distinct().count(),
+            'suppliers': queryset.values_list('supplier_id', flat=True).distinct().count(),
         }
         
         return Response(summary_data)
 
     @action(detail=False, methods=['get'])
-    def by_distributor(self, request):
-        """Get stock intake records grouped by distributor."""
+    def by_supplier(self, request):
+        """Get stock intake records grouped by supplier."""
         queryset = self.get_queryset()
         
-        distributors = {}
+        suppliers = {}
         for record in queryset:
-            if record.distributor_name not in distributors:
-                distributors[record.distributor_name] = {
-                    'name': record.distributor_name,
+            supplier_name = record.supplier.name if record.supplier else "Unknown"
+            if supplier_name not in suppliers:
+                suppliers[supplier_name] = {
+                    'name': supplier_name,
                     'total_quantity': 0,
                     'total_cost': 0,
                     'records_count': 0,
                     'latest_date': None,
                 }
             
-            distributors[record.distributor_name]['total_quantity'] += record.quantity_received
-            distributors[record.distributor_name]['total_cost'] += float(record.total_cost)
-            distributors[record.distributor_name]['records_count'] += 1
+            suppliers[supplier_name]['total_quantity'] += record.quantity_received
+            suppliers[supplier_name]['total_cost'] += float(record.total_cost)
+            suppliers[supplier_name]['records_count'] += 1
             
-            if not distributors[record.distributor_name]['latest_date'] or \
-               record.received_date > distributors[record.distributor_name]['latest_date']:
-                distributors[record.distributor_name]['latest_date'] = record.received_date
+            if not suppliers[supplier_name]['latest_date'] or \
+               record.received_date > suppliers[supplier_name]['latest_date']:
+                suppliers[supplier_name]['latest_date'] = record.received_date
 
-        return Response(list(distributors.values()))
+        return Response(list(suppliers.values()))
 
     @action(detail=False, methods=['get'])
     def expiring_soon(self, request):

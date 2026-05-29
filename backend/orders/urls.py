@@ -1,7 +1,11 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 
 app_name = "orders"
+
+router = DefaultRouter()
+router.register(r'templates', views.OrderTemplateViewSet, basename='template')
 
 urlpatterns = [
     # List and create orders
@@ -14,4 +18,6 @@ urlpatterns = [
     path("quick/", views.quick_sale, name="quick_sale"),
     # Receipt PDF
     path("<int:pk>/receipt/", views.get_receipt_pdf, name="receipt_pdf"),
+    
+    path('', include(router.urls)),
 ]

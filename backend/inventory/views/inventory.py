@@ -1,15 +1,14 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Q, Count
-from django.db import models
-from django.db.models import Min
+from django.db.models import Q, Count, F, Min, Sum
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
-from products.models import Product, StockLog
+from products.models import Product, StockLog, BranchStock
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
 
@@ -17,19 +16,19 @@ from ..serializers import StockLogSerializer
 @permission_classes([IsAuditorOrAdmin])
 def inventory_summary(request):
     """Get inventory summary for pharmacist dashboard."""
-    # Filter by pharmacy
-    products = Product.objects.filter(is_active=True)
-    if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
-        products = products.filter(pharmacy=request.user.pharmacy)
-
-    total_products = products.count()
-    low_stock_items = products.filter(
-        stock_quantity__lte=models.F("reorder_threshold"),
-        stock_quantity__gt=0,
-    ).count()
-    out_of_stock_items = products.filter(
-        stock_quantity=0
-    ).count()
+    user = request.user
+    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
+    branch_param = request.query_params.get('branch')
+    
+    qs = BranchStock.objects.filter(product__is_active=True)
+    if is_admin and branch_param and branch_param != 'all':
+        qs = qs.filter(branch_id=branch_param)
+    elif not is_admin and user.branch:
+        qs = qs.filter(branch=user.branch)
+        
+    total_products = qs.values('product_id').distinct().count()
+    low_stock_items = qs.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count()
+    out_of_stock_items = qs.filter(quantity__lte=0).count()
 
     return Response({
         "totalProducts": total_products,
@@ -38,14 +37,18 @@ def inventory_summary(request):
     })
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])  # Allow all authenticated users to view inventory
+@permission_classes([IsAuthenticated])
 def inventory_list(request):
     """List all inventory items with search, filtering and pagination."""
     try:
+        user = request.user
+        is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
+        branch_param = request.query_params.get('branch')
+        
         products = (
             Product.objects.filter(is_active=True)
             .select_related("pharmacy", "pricing_tier")
-            .prefetch_related("pricing_tier")
+            .prefetch_related("pricing_tier", "branch_stocks")
             .annotate(next_batch_expiry=Min("batches__expiry_date"))
             .order_by("name")
         )
@@ -65,17 +68,6 @@ def inventory_list(request):
         if category:
             products = products.filter(category=category)
 
-        low_stock = request.GET.get("low_stock")
-        if low_stock == "true":
-            products = products.filter(
-                stock_quantity__lte=models.F("reorder_threshold"),
-                stock_quantity__gt=0,
-            )
-
-        out_of_stock = request.GET.get("out_of_stock")
-        if out_of_stock == "true":
-            products = products.filter(stock_quantity=0)
-
         # Pagination
         page = request.GET.get("page", 1)
         per_page = int(request.GET.get("per_page", 20))
@@ -88,17 +80,42 @@ def inventory_list(request):
         except EmptyPage:
             products_page = paginator.page(paginator.num_pages)
 
-        # Serialize and prepare response
+        # Serialize
         serialized_products = ProductSerializer(products_page, many=True).data
         
-        # Add computed fields that we use in the frontend
-        for product in serialized_products:
-            product['is_low_stock'] = product['stock_quantity'] <= product.get('reorder_threshold', 10)
-            product['in_stock'] = product['stock_quantity'] > 0
+        target_branch_id = None
+        if is_admin and branch_param and branch_param != 'all':
+            target_branch_id = int(branch_param)
+        elif not is_admin and user.branch:
+            target_branch_id = user.branch.id
 
-        # If Product.expiry_date is missing, use the earliest Batch expiry date.
-        # Also back-fill expiry_status + days_until_expiry for the UI.
-        # Note: serializer properties use Product.expiry_date, so we compute here.
+        # Determine branch quantity
+        # Since we use ProductSerializer, we'll override 'stock_quantity' dynamically
+        for p_data in serialized_products:
+            # Reconstruct the stock for the target branch
+            p_obj = [p for p in products_page if p.id == p_data['id']][0]
+            if target_branch_id:
+                bs = p_obj.branch_stocks.filter(branch_id=target_branch_id).first()
+                qty = bs.quantity if bs else 0
+                r_lvl = bs.reorder_level if bs else p_obj.reorder_threshold
+            else:
+                qty = sum(bs.quantity for bs in p_obj.branch_stocks.all())
+                r_lvl = p_obj.reorder_threshold
+                
+            p_data['stock_quantity'] = float(qty)
+            p_data['is_low_stock'] = float(qty) <= float(r_lvl)
+            p_data['in_stock'] = float(qty) > 0
+
+        # Filter post-serialization for low/out-of-stock if requested
+        low_stock = request.GET.get("low_stock")
+        if low_stock == "true":
+            serialized_products = [p for p in serialized_products if p['is_low_stock'] and p['in_stock']]
+
+        out_of_stock = request.GET.get("out_of_stock")
+        if out_of_stock == "true":
+            serialized_products = [p for p in serialized_products if not p['in_stock']]
+
+        # Next expiry logic
         today = timezone.now().date()
         next_expiry_by_id = {
             p.id: getattr(p, "next_batch_expiry", None) for p in products_page
@@ -143,36 +160,56 @@ def inventory_list(request):
 @permission_classes([IsAuditorOrAdmin])
 def low_stock_items(request):
     """Get list of low stock items."""
-    products = Product.objects.filter(
-        is_active=True,
-        stock_quantity__lte=models.F("reorder_threshold"),
-        stock_quantity__gt=0,
-    )
-    
-    if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
-        products = products.filter(pharmacy=request.user.pharmacy)
-        
-    products = products.order_by("stock_quantity")
+    user = request.user
+    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
+    branch_param = request.query_params.get('branch')
 
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+    qs = BranchStock.objects.filter(
+        product__is_active=True,
+        quantity__lte=F("reorder_level"),
+        quantity__gt=0
+    )
+    if is_admin and branch_param and branch_param != 'all':
+        qs = qs.filter(branch_id=branch_param)
+    elif not is_admin and user.branch:
+        qs = qs.filter(branch=user.branch)
+        
+    qs = qs.order_by("quantity")
+    # For compatibility, we return the Product but with stock overridden
+    data = []
+    for bs in qs:
+        prod_data = ProductSerializer(bs.product).data
+        prod_data['stock_quantity'] = float(bs.quantity)
+        data.append(prod_data)
+        
+    return Response(data)
 
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
 def out_of_stock_items(request):
     """Get list of out of stock items."""
-    products = Product.objects.filter(
-        is_active=True,
-        stock_quantity=0
-    )
-    
-    if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
-        products = products.filter(pharmacy=request.user.pharmacy)
-        
-    products = products.order_by("name")
+    user = request.user
+    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
+    branch_param = request.query_params.get('branch')
 
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+    qs = BranchStock.objects.filter(
+        product__is_active=True,
+        quantity__lte=0
+    )
+    if is_admin and branch_param and branch_param != 'all':
+        qs = qs.filter(branch_id=branch_param)
+    elif not is_admin and user.branch:
+        qs = qs.filter(branch=user.branch)
+        
+    qs = qs.order_by("product__name")
+    
+    data = []
+    for bs in qs:
+        prod_data = ProductSerializer(bs.product).data
+        prod_data['stock_quantity'] = float(bs.quantity)
+        data.append(prod_data)
+        
+    return Response(data)
 
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
@@ -180,94 +217,139 @@ def inventory_detail(request, pk):
     """Get detailed information about a specific inventory item."""
     product = get_object_or_404(Product, pk=pk, is_active=True)
     serializer = ProductSerializer(product)
-    return Response(serializer.data)
+    data = serializer.data
+    
+    # Append branch stock info
+    branch_stocks = BranchStock.objects.filter(product=product).values('branch__name', 'quantity', 'reorder_level')
+    data['branch_stocks'] = list(branch_stocks)
+    
+    return Response(data)
 
 @api_view(["POST"])
 @permission_classes([IsPharmacistOrAdmin])
 def restock_inventory(request, pk):
-    """Restock an inventory item."""
-    product = get_object_or_404(Product, pk=pk)
-    quantity = request.data.get("quantity")
-    reason = request.data.get("reason", "Restock")
+    """Restock an inventory item (manual adjustment)."""
+    with transaction.atomic():
+        product = get_object_or_404(Product, pk=pk)
+        quantity = request.data.get("quantity")
+        reason = request.data.get("reason", "Restock")
+        branch_id = request.data.get("branch_id")
+        
+        branch = None
+        if branch_id:
+            from users.models import Branch
+            branch = get_object_or_404(Branch, pk=branch_id)
+        else:
+            branch = request.user.branch
+            
+        if not branch:
+            return Response({"error": "Branch must be specified for stock adjustment."}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not quantity or quantity <= 0:
-        return Response(
-            {"error": "Quantity must be a positive number."},
-            status=status.HTTP_400_BAD_REQUEST,
+        if not quantity or int(quantity) <= 0:
+            return Response(
+                {"error": "Quantity must be a positive number."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+            product=product,
+            branch=branch,
+            defaults={'quantity': 0}
+        )
+        previous_quantity = branch_stock.quantity
+        branch_stock.quantity += int(quantity)
+        branch_stock.save()
+
+        StockLog.objects.create(
+            product=product,
+            branch=branch,
+            previous_quantity=previous_quantity,
+            new_quantity=branch_stock.quantity,
+            change_amount=int(quantity),
+            change_type="restock",
+            reason=reason,
+            logged_by=request.user,
         )
 
-    # Update stock quantity
-    previous_quantity = product.stock_quantity
-    product.stock_quantity += quantity
-    product.save()
-
-    # Create stock log
-    StockLog.objects.create(
-        product=product,
-        previous_quantity=previous_quantity,
-        new_quantity=product.stock_quantity,
-        change_amount=quantity,
-        change_type="restock",
-        reason=reason,
-        logged_by=request.user,
-    )
-
-    serializer = ProductSerializer(product)
-    return Response(serializer.data)
+    return Response(ProductSerializer(product).data)
 
 @api_view(["POST"])
 @permission_classes([IsPharmacistOrAdmin])
 def adjust_inventory(request, pk):
     """Adjust an inventory item's stock by positive or negative amount."""
-    product = get_object_or_404(Product, pk=pk)
-    quantity = request.data.get("quantity")
-    reason = request.data.get("reason", "Adjustment")
-    change_type = request.data.get("change_type", "adjustment")
+    with transaction.atomic():
+        product = get_object_or_404(Product, pk=pk)
+        quantity = request.data.get("quantity")
+        reason = request.data.get("reason", "Adjustment")
+        change_type = request.data.get("change_type", "adjustment")
+        branch_id = request.data.get("branch_id")
 
-    try:
-        quantity = int(quantity)
-    except Exception:
-        return Response(
-            {"error": "Quantity must be an integer."},
-            status=status.HTTP_400_BAD_REQUEST
+        branch = None
+        if branch_id:
+            from users.models import Branch
+            branch = get_object_or_404(Branch, pk=branch_id)
+        else:
+            branch = request.user.branch
+            
+        if not branch:
+            return Response({"error": "Branch must be specified for stock adjustment."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            quantity = int(quantity)
+        except Exception:
+            return Response(
+                {"error": "Quantity must be an integer."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if quantity == 0:
+            return Response(
+                {"error": "Quantity must be non-zero for adjustment."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+            product=product,
+            branch=branch,
+            defaults={'quantity': 0}
         )
 
-    if quantity == 0:
-        return Response(
-            {"error": "Quantity must be non-zero for adjustment."},
-            status=status.HTTP_400_BAD_REQUEST
+        previous_quantity = branch_stock.quantity
+        new_quantity = previous_quantity + quantity
+        if new_quantity < 0:
+            return Response(
+                {"error": "Quantity adjustment would result in negative stock."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        branch_stock.quantity = new_quantity
+        branch_stock.save()
+
+        StockLog.objects.create(
+            product=product,
+            branch=branch,
+            previous_quantity=previous_quantity,
+            new_quantity=new_quantity,
+            change_amount=quantity,
+            change_type=change_type,
+            reason=reason,
+            logged_by=request.user,
         )
 
-    previous_quantity = product.stock_quantity
-    new_quantity = previous_quantity + quantity
-    if new_quantity < 0:
-        return Response(
-            {"error": "Quantity adjustment would result in negative stock."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    product.stock_quantity = new_quantity
-    product.save()
-
-    # Log the change
-    StockLog.objects.create(
-        product=product,
-        previous_quantity=previous_quantity,
-        new_quantity=new_quantity,
-        change_amount=quantity,
-        change_type=change_type if change_type in dict(StockLog.CHANGE_TYPES) else "adjustment",
-        reason=reason,
-        logged_by=request.user,
-    )
-
-    serializer = ProductSerializer(product)
-    return Response(serializer.data)
+    return Response(ProductSerializer(product).data)
 
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
-def stock_logs(request, pk):
-    """Get stock logs for a specific product."""
-    product = get_object_or_404(Product, pk=pk)
-    logs = StockLog.objects.filter(product=product).order_by("-timestamp")
+def stock_logs(request):
+    """View recent stock logs."""
+    logs = StockLog.objects.select_related("product", "logged_by", "branch").all()
+    
+    # Filter by user branch unless admin
+    user = request.user
+    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
+    if not is_admin and user.branch:
+        logs = logs.filter(branch=user.branch)
+        
+    logs = logs.order_by("-timestamp")[:100]
     serializer = StockLogSerializer(logs, many=True)
     return Response(serializer.data)

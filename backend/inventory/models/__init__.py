@@ -7,6 +7,7 @@ from .supplier import Supplier
 from .finance import CashFlow, LegacyLedgerEntry
 from .services import ClinicalService, SoldService
 from .returns import ProductReturn
+from .transfer import InterBranchTransfer
 
 __all__ = [
     'Prescription',
@@ -23,4 +24,7 @@ __all__ = [
     'ClinicalService',
     'SoldService',
     'ProductReturn',
+    'InterBranchTransfer',
 ]
+from .services import ClinicalService, SoldService
+from .returns import ProductReturn

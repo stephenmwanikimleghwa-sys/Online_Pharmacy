@@ -140,3 +140,63 @@ class OrderItem(models.Model):
         if not self.unit_price:
             self.unit_price = self.product.price
         super().save(*args, **kwargs)
+
+class OrderTemplate(models.Model):
+    """
+    Model for recurring customer order templates.
+    """
+    branch = models.ForeignKey(
+        'users.Branch',
+        on_delete=models.CASCADE,
+        related_name='order_templates',
+        verbose_name='Branch'
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_order_templates'
+    )
+    customer_name = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "order_templates"
+        verbose_name = "Order Template"
+        verbose_name_plural = "Order Templates"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        name = self.company_name if self.company_name else self.customer_name
+        return f"Template for {name}"
+
+
+class OrderTemplateItem(models.Model):
+    """
+    Model for items inside an order template.
+    """
+    template = models.ForeignKey(
+        OrderTemplate,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.PROTECT,
+        related_name="template_items"
+    )
+    default_quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=1.00
+    )
+
+    class Meta:
+        db_table = "order_template_items"
+        verbose_name = "Order Template Item"
+        verbose_name_plural = "Order Template Items"
+
+    def __str__(self):
+        return f"{self.product.name} ({self.default_quantity})"
