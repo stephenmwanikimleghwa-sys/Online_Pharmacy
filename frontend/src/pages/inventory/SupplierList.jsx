@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import inventoryService from '../../services/inventoryService';
 import SupplierProfileModal from '../../components/SupplierProfileModal';
-import { MagnifyingGlassIcon, TruckIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, TruckIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const SupplierList = () => {
   const [suppliers, setSuppliers] = useState([]);
