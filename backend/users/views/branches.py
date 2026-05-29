@@ -6,11 +6,13 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, F
 from django.utils import timezone
 
 from users.models import Branch
 from users.serializers import BranchSerializer
+from products.models import Product
+from inventory.models import InterBranchTransfer
 
 
 class BranchListCreateView(generics.ListCreateAPIView):
@@ -156,7 +158,17 @@ def all_branches_summary(request):
             'sales_this_month': float(sales_month),
             'transactions_today': dispensations.filter(dispensed_at__date=today).count(),
             'pending_restock': branch.restock_requests.filter(status='pending').count(),
+            'total_products': branch.branchstock_set.count(),
+            'low_stock_items': branch.branchstock_set.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count(),
+            'pending_transfers': branch.transfers_to.filter(status='PENDING').count() + branch.transfers_from.filter(status='PENDING').count(),
         })
+
+    # Global Dashboard Metrics
+    sixty_days_from_now = today + timezone.timedelta(days=60)
+    expiring_products = Product.objects.filter(expiry_date__lte=sixty_days_from_now, expiry_date__gte=today).count()
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    pending_credit_customers = User.objects.filter(is_credit_customer=True, credit_balance__gt=0).count()
 
     # Totals row
     totals = {
@@ -169,6 +181,11 @@ def all_branches_summary(request):
         'sales_this_month': sum(b['sales_this_month'] for b in result),
         'transactions_today': sum(b['transactions_today'] for b in result),
         'pending_restock': sum(b['pending_restock'] for b in result),
+        'total_products': sum(b['total_products'] for b in result),
+        'low_stock_items': sum(b['low_stock_items'] for b in result),
+        'pending_transfers': sum(b['pending_transfers'] for b in result),
+        'expiring_products': expiring_products,
+        'pending_credit_customers': pending_credit_customers,
     }
 
     return Response({'branches': result, 'totals': totals})

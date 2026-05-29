@@ -14,7 +14,8 @@ import {
   TruckIcon,
   UsersIcon,
   ShieldCheckIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
 
 const AdminDashboard = () => {
@@ -27,19 +28,22 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Mocked stats for new modules requested
-  const mockLowStockAlerts = 14;
-  const mockExpiringProducts = 8;
-  const mockPendingTransfers = 5;
-  const mockPendingCreditCustomers = 12;
-  const mockActiveStaff = 6;
-  const mockSalesToday = 245000;
+  const [allBranches, setAllBranches] = useState([]);
+
+  // Variables for dynamic data
+  const lowStockAlerts = branchSummary?.low_stock_items || 0;
+  const expiringProducts = branchSummary?.expiring_products || 0;
+  const pendingTransfers = branchSummary?.pending_transfers || 0;
+  const pendingCreditCustomers = branchSummary?.pending_credit_customers || 0;
+  const activeStaff = branchSummary?.active_staff || 0;
+  const salesToday = branchSummary?.sales_today || 0;
   
-  const mockBranchStockOverview = [
-    { id: 1, name: 'Main Branch', products: 1240, lowStock: 5 },
-    { id: 2, name: 'Downtown Agrovet', products: 850, lowStock: 6 },
-    { id: 3, name: 'Westside Chemist', products: 620, lowStock: 3 }
-  ];
+  const branchStockOverview = allBranches.map(b => ({
+    id: b.id,
+    name: b.name,
+    products: b.total_products || 0,
+    lowStock: b.low_stock_items || 0
+  }));
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -64,9 +68,11 @@ const AdminDashboard = () => {
           if (isAllBranches || activeBranch === null) {
             const summaryRes = await api.get('/auth/branches/summary/');
             fetchedBranchSummary = summaryRes.data?.totals || summaryRes.data;
+            setAllBranches(summaryRes.data?.branches || []);
           } else if (activeBranch?.id) {
             const summaryRes = await api.get(`/auth/branches/${activeBranch.id}/summary/`);
             fetchedBranchSummary = summaryRes.data;
+            setAllBranches([summaryRes.data]);
           }
         } catch (summaryErr) {
           console.warn('Branch summary unavailable', summaryErr);
@@ -76,7 +82,7 @@ const AdminDashboard = () => {
         setBranchSummary(fetchedBranchSummary);
         setStats({ 
           totalUsers: usersData.length, 
-          activeBranches: 3 // Fallback mock or could fetch from api
+          activeBranches: summaryRes?.data?.branches?.length || allBranches.length || 0
         });
 
       } catch (err) {
@@ -123,16 +129,15 @@ const AdminDashboard = () => {
           </p>
         </div>
         
-        {/* Important KPI: Total Sales & Staff */}
         <div className="flex items-center gap-6 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex flex-col">
             <span className="text-xs font-bold text-gray-500 uppercase">Sales Today</span>
-            <span className="text-xl font-bold text-emerald-600">KSh {mockSalesToday.toLocaleString()}</span>
+            <span className="text-xl font-bold text-emerald-600">KSh {salesToday.toLocaleString()}</span>
           </div>
           <div className="w-px h-10 bg-gray-200 dark:bg-gray-700"></div>
           <div className="flex flex-col">
             <span className="text-xs font-bold text-gray-500 uppercase">Active Staff</span>
-            <span className="text-xl font-bold text-indigo-600">{mockActiveStaff} Online</span>
+            <span className="text-xl font-bold text-indigo-600">{activeStaff} Online</span>
           </div>
         </div>
       </div>
@@ -173,7 +178,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Low Stock Alerts</p>
-          <p className="text-3xl font-display font-bold text-gray-900 dark:text-white">{mockLowStockAlerts}</p>
+          <p className="text-3xl font-display font-bold text-gray-900 dark:text-white">{lowStockAlerts}</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
@@ -183,7 +188,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Expiring Products</p>
-          <p className="text-3xl font-display font-bold text-gray-900 dark:text-white">{mockExpiringProducts}</p>
+          <p className="text-3xl font-display font-bold text-gray-900 dark:text-white">{expiringProducts}</p>
         </div>
       </div>
 
@@ -205,7 +210,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Products at or below reorder level across branches</p>
                 </div>
               </div>
-              <span className="font-bold text-rose-600">{mockLowStockAlerts} items</span>
+              <span className="font-bold text-rose-600">{lowStockAlerts} items</span>
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
@@ -218,7 +223,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Inter-branch transfers awaiting approval</p>
                 </div>
               </div>
-              <span className="font-bold text-blue-600">{mockPendingTransfers} requests</span>
+              <span className="font-bold text-blue-600">{pendingTransfers} requests</span>
             </div>
 
             <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
@@ -231,7 +236,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Customers with outstanding balances</p>
                 </div>
               </div>
-              <span className="font-bold text-amber-600">{mockPendingCreditCustomers} pending</span>
+              <span className="font-bold text-amber-600">{pendingCreditCustomers} pending</span>
             </div>
           </div>
         </div>
@@ -283,7 +288,7 @@ const AdminDashboard = () => {
           <button onClick={() => navigate('/inventory')} className="text-sm text-indigo-600 font-bold hover:text-indigo-700">View Detailed Inventory &rarr;</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {mockBranchStockOverview.map(branch => (
+          {branchStockOverview.map(branch => (
             <div key={branch.id} className="p-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30">
               <h3 className="font-bold text-gray-900 dark:text-white mb-4">{branch.name}</h3>
               <div className="space-y-3">
@@ -297,7 +302,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${Math.min(100, (branch.products / 1500) * 100)}%` }}></div>
+                <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${Math.min(100, branch.products > 0 ? (branch.products / 1500) * 100 : 0)}%` }}></div>
               </div>
             </div>
           ))}
