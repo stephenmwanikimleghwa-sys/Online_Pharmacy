@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Count, Sum, Q, F
 from django.utils import timezone
+from datetime import timedelta
 
 from users.models import Branch
 from users.serializers import BranchSerializer
@@ -164,7 +165,7 @@ def all_branches_summary(request):
         })
 
     # Global Dashboard Metrics
-    sixty_days_from_now = today + timezone.timedelta(days=60)
+    sixty_days_from_now = today + timedelta(days=60)
     expiring_products = Product.objects.filter(expiry_date__lte=sixty_days_from_now, expiry_date__gte=today).count()
     from django.contrib.auth import get_user_model
     User = get_user_model()

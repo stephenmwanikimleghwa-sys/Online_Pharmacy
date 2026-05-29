@@ -11,17 +11,24 @@ interface BranchSummary {
   transactions_today?: number;
 }
 
-const BranchSelector: React.FC = () => {
+interface BranchSelectorProps {
+  /** Called with the selected BranchInfo (or null for "All Branches") */
+  onChange?: (branch: BranchInfo | null) => void;
+}
+
+const BranchSelector: React.FC<BranchSelectorProps> = ({ onChange }) => {
   const { user, activeBranch, setActiveBranch } = useAuth();
   const [branches, setBranches] = useState<BranchSummary[]>([]);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Only render for admin users
-  const isAdmin = user?.role === 'admin' || user?.is_admin;
-  if (!isAdmin) return null;
+  // Only admin users should see / fetch branches — but ALL hooks must be
+  // called unconditionally (Rules of Hooks). We conditionally SKIP the
+  // fetch effect, but the effect itself is always registered.
+  const isAdmin = user?.role === 'admin' || (user as any)?.is_admin;
 
   useEffect(() => {
+    if (!isAdmin) return;          // safe: effect body guards the fetch
     const fetchBranches = async () => {
       try {
         const res = await api.get('/auth/branches/');
@@ -32,7 +39,7 @@ const BranchSelector: React.FC = () => {
       }
     };
     fetchBranches();
-  }, []);
+  }, [isAdmin]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -45,8 +52,12 @@ const BranchSelector: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Non-admin: render nothing (after all hooks have been called)
+  if (!isAdmin) return null;
+
   const handleSelect = (branch: BranchInfo | null) => {
     setActiveBranch(branch);
+    onChange?.(branch);           // notify parent if provided
     setOpen(false);
   };
 
@@ -158,7 +169,7 @@ const BranchSelector: React.FC = () => {
             return (
               <button
                 key={branch.id}
-                onClick={() => handleSelect({ id: branch.id, name: branch.name, is_headquarters: branch.is_headquarters })}
+                onClick={() => handleSelect({ id: branch.id as number, name: branch.name, is_headquarters: branch.is_headquarters })}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
