@@ -198,7 +198,7 @@ const SupplierList = () => {
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : error ? (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center font-semibold">{error}</div>
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center font-semibold">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredSuppliers.map(supplier => {

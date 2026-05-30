@@ -30,7 +30,7 @@ const ProductListings = () => {
   );
 
   if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
-  if (error) return <div className="text-red-500 text-center">{error}</div>;
+  if (error) return <div className="text-red-500 text-center">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

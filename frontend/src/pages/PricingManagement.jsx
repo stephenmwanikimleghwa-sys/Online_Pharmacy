@@ -276,7 +276,7 @@ const PricingManagement = () => {
         <div className="mb-6 p-4 rounded-2xl flex items-center gap-4 animate-shake"
           style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
           <ExclamationTriangleIcon style={{ width: 20, height: 20, color: '#f43f5e', flexShrink: 0 }} />
-          <p className="font-bold text-sm" style={{ color: '#be123c' }}>{error}</p>
+          <p className="font-bold text-sm" style={{ color: '#be123c' }}>{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
         </div>
       )}
 

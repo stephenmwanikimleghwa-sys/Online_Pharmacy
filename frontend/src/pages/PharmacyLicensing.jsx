@@ -181,7 +181,7 @@ const PharmacyLicensing = () => {
                                 <WarningIcon className="w-6 h-6 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1">
                                     <p className="font-bold text-sm mb-1">Could not load documents</p>
-                                    <p className="text-sm text-rose-600">{error}</p>
+                                    <p className="text-sm text-rose-600">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
                                 </div>
                             </div>
                             <button

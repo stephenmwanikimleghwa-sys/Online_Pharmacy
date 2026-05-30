@@ -24,7 +24,7 @@ const BatchList = () => {
     };
 
     if (loading) return <div className="p-4 text-gray-500">Loading batches...</div>;
-    if (error) return <div className="p-4 text-red-600">{error}</div>;
+    if (error) return <div className="p-4 text-red-600">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>;
 
     return (
         <div className="glass-card  overflow-hidden">
