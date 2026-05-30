@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { formatDate } from "../utils/displayHelpers";
 
 const PrescriptionCard = ({ prescription, onAction, showActions = true }) => {
   const getStatusColor = (status) => {
@@ -82,7 +82,7 @@ const PrescriptionCard = ({ prescription, onAction, showActions = true }) => {
           <div className="p-1.5 rounded-lg transition-colors" style={{background:'var(--brand-mist)'}}>
             <svg className="w-4 h-4 text-slate-400 group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
-          <span className="font-medium">{format(new Date(prescription.uploaded_at), "MMM dd, yyyy • HH:mm")}</span>
+          <span className="font-medium">{formatDate(prescription.uploaded_at, "MMM dd, yyyy • HH:mm", 'Unknown date')}</span>
         </div>
 
         {prescription.verified_by && (

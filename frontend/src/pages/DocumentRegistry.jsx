@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
-import { format } from "date-fns";
+import { formatDate } from "../utils/displayHelpers";
 import toast from "react-hot-toast";
 
 const DocumentRegistry = () => {
@@ -181,7 +181,7 @@ const DocumentRegistry = () => {
                         {doc.uploaded_by_name || "Unknown"}
                       </td>
                       <td className="py-4 px-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {format(new Date(doc.uploaded_at), "MMM dd, yyyy HH:mm")}
+                        {formatDate(doc.uploaded_at, "MMM dd, yyyy HH:mm", 'N/A')}
                       </td>
                       <td className="py-4 px-4 text-right">
                         <a

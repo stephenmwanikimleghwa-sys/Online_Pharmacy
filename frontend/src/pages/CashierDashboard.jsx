@@ -4,7 +4,7 @@ import api from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import WelcomeBanner from "../components/WelcomeBanner";
 import QuickSale from "../components/QuickSale";
-import { format } from "date-fns";
+import { formatDate } from "../utils/displayHelpers";
 
 const CashierDashboard = () => {
     const [isQuickSaleOpen, setIsQuickSaleOpen] = useState(false);
@@ -20,9 +20,9 @@ const CashierDashboard = () => {
         try {
             setLoading(true);
             const response = await api.get("/orders/my-orders/");
-            const today = format(new Date(), "yyyy-MM-dd");
+            const today = formatDate(new Date(), "yyyy-MM-dd", "");
             const filtered = (response.data || []).filter(order =>
-                format(new Date(order.created_at), "yyyy-MM-dd") === today
+                formatDate(order.created_at, "yyyy-MM-dd", "") === today
             );
             setRecentSales(filtered);
         } catch (error) {
@@ -79,7 +79,7 @@ const CashierDashboard = () => {
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>Today's Transactions</h2>
-                                    <p className="text-xs font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-secondary)'}}>Registry Log: {format(new Date(), "MMMM dd, yyyy")}</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-secondary)'}}>Registry Log: {formatDate(new Date(), "MMMM dd, yyyy", "")}</p>
                                 </div>
                             </div>
                             <div className="text-right">
@@ -110,7 +110,7 @@ const CashierDashboard = () => {
                                         {recentSales.map((sale) => (
                                             <tr key={sale.id} className="group transition-colors" style={{}} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-field)'} onMouseLeave={e=>e.currentTarget.style.background=''}>
                                                 <td className="py-5 font-bold font-mono text-sm" style={{color:'var(--text-primary)'}}>#ORD-{sale.id}</td>
-                                                <td className="py-5 text-sm font-medium" style={{color:'var(--text-secondary)'}}>{format(new Date(sale.created_at), "HH:mm a")}</td>
+                                                <td className="py-5 text-sm font-medium" style={{color:'var(--text-secondary)'}}>{formatDate(sale.created_at, "HH:mm a", '—')}</td>
                                                 <td className="py-5">
                                                     <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-100 uppercase tracking-widest">
                                                         {sale.status}

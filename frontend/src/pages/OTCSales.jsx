@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { format } from "date-fns";
+import { formatDate } from "../utils/displayHelpers";
 import toast from "react-hot-toast";
 
 const OTCSales = () => {
@@ -116,7 +116,7 @@ const OTCSales = () => {
                           <p className="text-[10px] uppercase" style={{color:'var(--text-secondary)'}}>{p.category}</p>
                         </td>
                         <td className="py-4 px-4 text-xs font-medium" style={{color:'var(--text-secondary)'}}>
-                          {p.expiry_date ? format(new Date(p.expiry_date), "MMM dd, yyyy") : "N/A"}
+                          {formatDate(p.expiry_date, "MMM dd, yyyy", "N/A")}
                         </td>
                         <td className="py-4 px-4 font-bold text-primary text-sm">{renderPrice(bp)}</td>
                         <td className="py-4 px-4 font-bold text-emerald-600 text-sm">{renderPrice(wsp)}</td>

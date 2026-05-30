@@ -7,7 +7,7 @@ import {
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import pharmacyService from '../services/pharmacyService';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/displayHelpers';
 
 const PharmacyLicensing = () => {
     const [documents, setDocuments] = useState([]);
@@ -247,7 +247,7 @@ const PharmacyLicensing = () => {
                                             <div className="text-right">
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Expires</p>
                                                 <p className={`text-xs font-bold ${doc.is_expired ? 'text-rose-600' : 'text-slate-700'}`}>
-                                                    {format(new Date(doc.expiry_date), 'MMM dd, yyyy')}
+                                                    {formatDate(doc.expiry_date, 'MMM dd, yyyy', 'N/A')}
                                                 </p>
                                             </div>
                                         )}
