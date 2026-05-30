@@ -161,7 +161,7 @@ def all_branches_summary(request):
             'pending_restock': branch.restock_requests.filter(status='pending').count(),
             'total_products': branch.branch_stocks.count(),
             'low_stock_items': branch.branch_stocks.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count(),
-            'pending_transfers': branch.transfers_to.filter(status='PENDING').count() + branch.transfers_from.filter(status='PENDING').count(),
+            'pending_transfers': branch.transfers_out.filter(status='PENDING').count() + branch.transfers_in.filter(status='PENDING').count(),
         })
 
     # Global Dashboard Metrics
