@@ -79,7 +79,6 @@ RUN chmod +x /app/start.sh
 # Expose port (Render sets $PORT at runtime)
 EXPOSE 8000
 
-# Run migrations, collect static, then start gunicorn.
-# Using a script (not inline sh -c) makes logs readable and failure-handling explicit.
-CMD ["/app/start.sh"]
+# Run migrations, then start gunicorn.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
 
