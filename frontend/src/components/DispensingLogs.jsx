@@ -19,12 +19,15 @@ const DispensingLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      let url = `${API_BASE_URL}/dispensing-logs/?page=${currentPage}`;
-      if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
-      if (dateFilter) url += `&created_at=${encodeURIComponent(dateFilter)}`;
+      // Use inventory stock logs endpoint (returns latest stock logs)
+      let url = `${API_BASE_URL}/inventory/logs/`;
+      if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
+      if (dateFilter) url += `${searchTerm ? '&' : '?'}created_at=${encodeURIComponent(dateFilter)}`;
       const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-      setLogs(response.data.results);
-      setTotalPages(Math.ceil(response.data.count / 20));
+      // The backend returns an array of logs (no pagination)
+      const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
+      setLogs(data);
+      setTotalPages(Math.max(1, Math.ceil(data.length / 20)));
     } catch (error) {
       console.error('Error fetching dispensing logs:', error);
     } finally {
