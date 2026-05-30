@@ -73,7 +73,9 @@ const AdminDashboard = () => {
             setAllBranches(branches);
             branchesCount = branches.length;
           } else if (activeBranch?.id) {
-            const summaryRes = await api.get(`/auth/branches/${activeBranch.id}/summary/`);
+            const branchId = parseInt(String(activeBranch.id), 10);
+            if (isNaN(branchId)) throw new Error(`Invalid branch id: ${activeBranch.id}`);
+            const summaryRes = await api.get(`/auth/branches/${branchId}/summary/`);
             fetchedBranchSummary = summaryRes.data;
             setAllBranches([summaryRes.data]);
             branchesCount = 1;
