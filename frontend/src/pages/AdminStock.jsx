@@ -21,6 +21,31 @@ const AdminStock = () => {
 	const [isEditMode, setIsEditMode] = useState(false);
 	const [editingItem, setEditingItem] = useState(null);
 
+	const getCategoryLabel = (category) => {
+		if (!category && category !== 0) return '';
+		if (typeof category === 'string') return category;
+		if (typeof category === 'number' || typeof category === 'boolean') return String(category);
+		if (category?.name) return category.name;
+		if (category?.label) return category.label;
+		return normalizeDisplayValue(category, '');
+	};
+
+	const sanitizeItem = (item) => {
+		if (!item || typeof item !== 'object') return item;
+		return {
+			...item,
+			id: item.id ?? item.pk ?? item.product_id ?? item.product?.id ?? item.name ?? String(Date.now()),
+			name: normalizeDisplayValue(item.name, ''),
+			category: getCategoryLabel(item.category),
+			price: Number(item.price ?? item?.pricing_tier?.price ?? 0) || 0,
+			stock_quantity: Number(item.stock_quantity ?? item.quantity ?? 0) || 0,
+			expiry_date: item.expiry_date ?? item.expiryDate ?? '',
+			supplier: normalizeDisplayValue(item.supplier, ''),
+			description: normalizeDisplayValue(item.description, ''),
+			reorder_threshold: Number(item.reorder_threshold ?? 10) || 10,
+		};
+	};
+
 	// Pagination state
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
@@ -149,12 +174,12 @@ const AdminStock = () => {
 				console.log('[Fetch Debug] Inventory endpoint response:', { totalItemsCount, totalPagesCount });
 			}
 
-			setItems(products);
+			setItems(products.map(sanitizeItem));
 			setTotalPages(totalPagesCount);
 			setTotalItems(totalItemsCount);
 
 			// Extract unique categories
-			const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+			const uniqueCategories = [...new Set(products.map(p => getCategoryLabel(p.category)).filter(Boolean))];
 			setCategories(uniqueCategories.sort());
 
 		} catch (err) {
@@ -468,9 +493,12 @@ const AdminStock = () => {
 							className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 focus:outline-none focus:ring-2 /30 focus:border-indigo-400 transition-all"
 						>
 							<option value="">All Categories</option>
-							{categories.map(cat => (
-								<option key={cat} value={cat}>{cat}</option>
-							))}
+										{categories.map(cat => {
+											const label = normalizeDisplayValue(cat, '');
+											return (
+												<option key={label} value={label}>{label}</option>
+											);
+										})}
 						</select>
 					</div>
 					<div className="flex items-end gap-4">

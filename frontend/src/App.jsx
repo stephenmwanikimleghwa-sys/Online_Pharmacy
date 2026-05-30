@@ -199,10 +199,6 @@ function AppLayout() {
                   element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
                 />
                 <Route
-                  path="/financials"
-                  element={<ProtectedRoute element={FinancialDashboard} allowedRoles={['admin', 'auditor']} allowFinancials={true} />}
-                />
-                <Route
                   path="/licensing"
                   element={<ProtectedRoute element={PharmacyLicensing} allowedRoles={['admin', 'pharmacist']} />}
                 />
