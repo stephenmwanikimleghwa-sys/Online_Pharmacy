@@ -110,12 +110,12 @@ function AppLayout() {
                 {/* Protected Routes */}
                 <Route path="/products" element={<ProtectedRoute element={Products} />} />
                 <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
-                <Route path="/financials" element={<ProtectedRoute allowFinancials><FinancialDashboard /></ProtectedRoute>} />
-                <Route path="/quotations" element={<ProtectedRoute><QuotationsDashboard /></ProtectedRoute>} />
-                <Route path="/clinical" element={<ProtectedRoute allowedRoles={['admin', 'pharmacist']}><ClinicalDashboard /></ProtectedRoute>} />
-                <Route path="/clinical/:id" element={<ProtectedRoute allowedRoles={['admin', 'pharmacist']}><ConsultationWorkflow /></ProtectedRoute>} />
-                <Route path="/returns" element={<ProtectedRoute allowedRoles={['admin', 'pharmacist']}><ReturnsDashboard /></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}><ManageUsers /></ProtectedRoute>} />
+                <Route path="/financials" element={<ProtectedRoute element={FinancialDashboard} allowFinancials={true} />} />
+                <Route path="/quotations" element={<ProtectedRoute element={QuotationsDashboard} />} />
+                <Route path="/clinical" element={<ProtectedRoute element={ClinicalDashboard} allowedRoles={['admin', 'pharmacist']} />} />
+                <Route path="/clinical/:id" element={<ProtectedRoute element={ConsultationWorkflow} allowedRoles={['admin', 'pharmacist']} />} />
+                <Route path="/returns" element={<ProtectedRoute element={ReturnsDashboard} allowedRoles={['admin', 'pharmacist']} />} />
+                <Route path="/users" element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />} />
 
                 {/* Protected Customer Routes */}
                 <Route

@@ -3,12 +3,13 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Assuming AuthContext provides auth state
 
 interface ProtectedRouteProps {
-  element: React.ElementType;
+  element?: React.ElementType;
+  children?: React.ReactNode;
   allowedRoles?: string[];
   allowFinancials?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allowedRoles = [], allowFinancials = false }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, children, allowedRoles = [], allowFinancials = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -25,9 +26,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allow
     return <Navigate to="/login" replace />;
   }
 
+  const renderProtected = () => {
+    if (Element) {
+      return <Element />;
+    }
+    return <>{children}</>;
+  };
+
   // If no roles specified, just check for authentication
   if (!allowedRoles || allowedRoles.length === 0) {
-    return <Element />;
+    return renderProtected();
   }
 
   // Safely check role against allowed roles
@@ -36,14 +44,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, allow
 
   // Additional permission checks
   if (allowFinancials && user.can_view_financials) {
-    return <Element />;
+    return renderProtected();
   }
 
   if (!userRole || !allowedRolesLower.includes(userRole)) {
     return <Navigate to="/" replace />;
   }
 
-  return <Element />;
+  return renderProtected();
 };
 
 export default ProtectedRoute;
