@@ -6,10 +6,12 @@ services:
     region: ohio
     plan: free
     dockerfilePath: Dockerfile.render
-    # Run migrations and collectstatic before starting the app so DB tables exist
-    # Use verbose output so we can see migration activity in Render logs
-    startCommand: >
-      sh -c "set -e; echo '=== START: running migrate ==='; python manage.py migrate --noinput --verbosity 2; echo '=== MIGRATE COMPLETE ==='; echo '=== START: collectstatic ==='; python manage.py collectstatic --noinput --verbosity 1; echo '=== COLLECTSTATIC COMPLETE ==='; exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"
+    # preDeployCommand: runs BEFORE the new instance receives traffic.
+    # This keeps the old healthy instance alive while DB migrations are applied,
+    # ensuring zero-downtime deploys even when schema changes are involved.
+    preDeployCommand: "python manage.py migrate --noinput --verbosity 2"
+    # startCommand overrides Dockerfile CMD — just run the startup script
+    startCommand: "/app/start.sh"
     healthCheckPath: /api/health/
     envVars:
       - key: DEBUG

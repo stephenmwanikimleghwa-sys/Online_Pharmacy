@@ -72,10 +72,14 @@ COPY --from=backend /app /app
 # Copy frontend build
 COPY --from=frontend /app/frontend/dist /app/staticfiles/frontend
 
+# Copy and configure the startup script
+COPY backend/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port (Render sets $PORT at runtime)
 EXPOSE 8000
 
-# Startup command: run migrations with verbose output, then start gunicorn
-# Use set -e to fail fast on migration errors (prevents app from starting broken)
-CMD ["sh", "-c", "set -e; echo '=== START: running migrate ==='; python manage.py migrate --noinput --verbosity 2; echo '=== MIGRATE COMPLETE ==='; echo '=== START: collectstatic ==='; python manage.py collectstatic --noinput --verbosity 1; echo '=== COLLECTSTATIC COMPLETE ==='; exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
+# Run migrations, collect static, then start gunicorn.
+# Using a script (not inline sh -c) makes logs readable and failure-handling explicit.
+CMD ["/app/start.sh"]
 

@@ -3,7 +3,12 @@
 import os
 import re
 from decimal import Decimal
+from pathlib import Path
 from django.db import migrations
+
+# Resolve the SQL file path relative to the Django project root (BASE_DIR = /app in Docker)
+_MIGRATIONS_DIR = Path(__file__).resolve().parent.parent.parent
+_SQL_FILE = _MIGRATIONS_DIR / "database" / "transcount.sql"
 
 def parse_inserts(filepath, table_name):
     rows = []
@@ -136,7 +141,7 @@ def populate_branch_stocks(apps, schema_editor):
         # If no branches exist, this is likely a test db. Just skip.
         return
 
-    sql_file = "/home/steve/pharmacy-aggregator/database/transcount.sql"
+    sql_file = str(_SQL_FILE)
     rows = parse_inserts(sql_file, "unitsofmeasure")
     
     # Store parsed legacy quantities by product name
