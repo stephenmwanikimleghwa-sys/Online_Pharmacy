@@ -83,7 +83,7 @@ urlpatterns += [
     # API endpoints
     path("api/auth/", include("users.urls")),
     path("api/products/", include("products.urls")),
-    # path("api/orders/", include("orders.urls")), # Deprecated in favor of inventory.Dispensation
+    path("api/orders/", include("orders.urls")),  # kept for backwards compat & tests
     # path("api/payments/", include("payments.urls")), # Deprecated in favor of Dispensation payment_mode
     path("api/prescriptions/", include("prescriptions.urls")),
     path("api/reviews/", include("reviews.urls")),
