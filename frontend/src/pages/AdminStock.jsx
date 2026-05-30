@@ -68,6 +68,17 @@ const AdminStock = () => {
 		setTimeout(() => setToast(null), timeout);
 	};
 
+	const normalizeDisplayValue = (value, fallback = '-') => {
+		if (value === null || value === undefined || value === '') return fallback;
+		if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+		if (Array.isArray(value)) return value.map((item) => normalizeDisplayValue(item, '')).join(', ');
+		try {
+			return JSON.stringify(value);
+		} catch (e) {
+			return String(value);
+		}
+	};
+
 	// Categories list (derived from items)
 	const [categories, setCategories] = useState([]);
 
@@ -503,12 +514,12 @@ const AdminStock = () => {
 							</thead>
 							<tbody className="divide-y divide-slate-100">
 								{items.map((item, idx) => (
-									<tr key={item.id ?? `row-${(currentPage - 1) * perPage + idx}`} className="hover:bg-slate-50/50 transition-colors">
+									<tr key={String(item.id ?? `row-${(currentPage - 1) * perPage + idx}`)} className="hover:bg-slate-50/50 transition-colors">
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{(currentPage - 1) * perPage + idx + 1}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{item.name} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.category}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KES {item.price}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-700">{item.stock_quantity}</td>
+										<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
+										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{normalizeDisplayValue(item.category)}</td>
+										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KES {normalizeDisplayValue(item.price, '0')}</td>
+										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-700">{normalizeDisplayValue(item.stock_quantity, 0)}</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm">
 											{(() => {
 												if (!item.expiry_date) return <span className="text-gray-500">-</span>;
@@ -543,7 +554,7 @@ const AdminStock = () => {
 														</span>
 													);
 												} catch (e) {
-													return <span className="text-gray-500">{item.expiry_date ?? '-'}</span>;
+													return <span className="text-gray-500">{normalizeDisplayValue(item.expiry_date, '-')}</span>;
 												}
 											})()}
 										</td>
@@ -589,7 +600,7 @@ const AdminStock = () => {
 			{/* Adjust Section */}
 			{selectedItemForLogs && (
 				<div className="mt-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
-					<h3 className="font-display font-bold text-slate-800 mb-4">Adjust Stock — {selectedItemForLogs.name}</h3>
+					<h3 className="font-display font-bold text-slate-800 mb-4">Adjust Stock — {normalizeDisplayValue(selectedItemForLogs.name)}</h3>
 					<div className="flex gap-3">
 						<input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm w-40 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="+10 or -5" />
 						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="Reason for adjustment" />
@@ -604,7 +615,7 @@ const AdminStock = () => {
 										<span className="font-semibold text-slate-700">{log.change_type}</span>
 										<span className={log.change_amount > 0 ? 'text-secondary-600 font-bold' : 'text-red-500 font-bold'}>{log.change_amount > 0 ? `+${log.change_amount}` : log.change_amount}</span>
 										<span className="text-slate-400">by {log.logged_by?.username || 'system'} · {new Date(log.timestamp).toLocaleString()}</span>
-										{log.reason && <span className="text-slate-500 ml-auto">{log.reason}</span>}
+										{log.reason && <span className="text-slate-500 ml-auto">{normalizeDisplayValue(log.reason, '')}</span>}
 									</li>
 								))}
 							</ul>
