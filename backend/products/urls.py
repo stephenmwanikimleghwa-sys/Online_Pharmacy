@@ -6,8 +6,8 @@ app_name = "products"
 
 # Create a router and register our viewsets
 router = DefaultRouter()
-router.register(r'', views.ProductViewSet, basename='product')
 router.register(r'pricing-tiers', views.PricingTierViewSet, basename='pricing-tier')
+router.register(r'', views.ProductViewSet, basename='product')
 
 urlpatterns = [
     # ViewSet URLs (includes list, create, retrieve, update, delete)
