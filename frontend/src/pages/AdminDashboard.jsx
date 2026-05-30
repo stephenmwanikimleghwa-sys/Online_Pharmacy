@@ -272,6 +272,13 @@ const AdminDashboard = () => {
               </div>
               <ArrowRightIcon className="w-4 h-4 text-gray-400" />
             </button>
+            <button onClick={() => navigate('/admin/pricing')} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-600 text-left">
+              <div className="flex items-center gap-3">
+                <CurrencyDollarIcon className="w-5 h-5 text-violet-500" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Pricing Management</span>
+              </div>
+              <ArrowRightIcon className="w-4 h-4 text-gray-400" />
+            </button>
             
             {/* Prominent Reports Button */}
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
