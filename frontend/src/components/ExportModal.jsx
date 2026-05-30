@@ -90,7 +90,7 @@ const ExportModal = ({
 
             <div className="mt-4">
               {error && (
-                <div className="mb-4 alert-error rounded-xl">{error}</div>
+                <div className="mb-4 alert-error rounded-xl">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>
               )}
 
               <div className="space-y-4">

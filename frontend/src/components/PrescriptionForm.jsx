@@ -70,7 +70,7 @@ const PrescriptionForm = ({ onUploadSuccess }) => {
           />
           {file && <p className="mt-1 text-sm text-green-600">Selected: {file.name}</p>}
         </div>
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && <p className="text-red-600 text-sm">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>}
         {success && <p className="text-green-600 text-sm">{success}</p>}
         <button
           type="submit"

@@ -64,7 +64,7 @@ const PasswordResetRequest: React.FC = () => {
                         {error && (
                             <div className="alert-error">
                                 <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                                <p>{error}</p>
+                                <p>{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
                             </div>
                         )}
 
