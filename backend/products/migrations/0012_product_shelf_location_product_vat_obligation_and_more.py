@@ -3,6 +3,23 @@
 from django.db import migrations, models
 
 
+def add_shelf_location_and_vat_obligation_if_missing(apps, schema_editor):
+    Product = apps.get_model('products', 'Product')
+    table_name = Product._meta.db_table
+    with schema_editor.connection.cursor() as cursor:
+        existing_columns = [col.name for col in schema_editor.connection.introspection.get_table_description(cursor, table_name)]
+
+    if 'shelf_location' not in existing_columns:
+        shelf_location_field = models.CharField(blank=True, max_length=100, null=True, verbose_name='Shelf Location')
+        shelf_location_field.set_attributes_from_name('shelf_location')
+        schema_editor.add_field(Product, shelf_location_field)
+
+    if 'vat_obligation' not in existing_columns:
+        vat_obligation_field = models.CharField(blank=True, max_length=50, null=True, verbose_name='VAT Obligation')
+        vat_obligation_field.set_attributes_from_name('vat_obligation')
+        schema_editor.add_field(Product, vat_obligation_field)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,16 +27,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='product',
-            name='shelf_location',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Shelf Location'),
-        ),
-        migrations.AddField(
-            model_name='product',
-            name='vat_obligation',
-            field=models.CharField(blank=True, max_length=50, null=True, verbose_name='VAT Obligation'),
-        ),
+        migrations.RunPython(add_shelf_location_and_vat_obligation_if_missing, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
             model_name='product',
             name='category',
