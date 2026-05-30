@@ -26,9 +26,9 @@ export const inventoryService = {
         throw err;
       }
 
-      // Make the request to the products endpoint using the shared api client
-      console.log('[Inventory Service] Fetching inventory from products endpoint');
-      const response = await api.get('/inventory/products/', { params });
+      // Make the request to the inventory list endpoint using the shared api client
+      console.log('[Inventory Service] Fetching inventory from list endpoint');
+      const response = await api.get('/inventory/list/', { params });
 
       // Log successful response
       console.log('[Inventory Service] Inventory fetched successfully:', {
