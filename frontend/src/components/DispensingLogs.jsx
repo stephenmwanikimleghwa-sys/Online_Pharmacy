@@ -118,7 +118,15 @@ const DispensingLogs = () => {
                       </div>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-400">
-                      {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
+                      {
+                        (() => {
+                          const dateStr = log.created_at || log.timestamp || log.dispensed_at || log.logged_at;
+                          if (!dateStr) return '—';
+                          const d = new Date(dateStr);
+                          if (isNaN(d)) return String(dateStr);
+                          try { return format(d, 'MMM d, yyyy HH:mm'); } catch (e) { return String(dateStr); }
+                        })()
+                      }
                     </td>
                   </tr>
                 ))
