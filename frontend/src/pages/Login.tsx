@@ -383,7 +383,7 @@ const Login: React.FC = () => {
             {error && (
               <div style={styles.errorBox(isDark)}>
                 <ExclamationCircleIcon style={{ width: 18, height: 18, flexShrink: 0, marginTop: 1 }} />
-                <span>{error}</span>
+                <span>{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</span>
               </div>
             )}
 
