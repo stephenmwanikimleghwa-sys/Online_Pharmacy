@@ -159,8 +159,8 @@ def all_branches_summary(request):
             'sales_this_month': float(sales_month),
             'transactions_today': dispensations.filter(dispensed_at__date=today).count(),
             'pending_restock': branch.restock_requests.filter(status='pending').count(),
-            'total_products': branch.branchstock_set.count(),
-            'low_stock_items': branch.branchstock_set.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count(),
+            'total_products': branch.branch_stocks.count(),
+            'low_stock_items': branch.branch_stocks.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count(),
             'pending_transfers': branch.transfers_to.filter(status='PENDING').count() + branch.transfers_from.filter(status='PENDING').count(),
         })
 
