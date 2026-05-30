@@ -181,7 +181,7 @@ class ReportsHubViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def sales_report(self, request):
-        from inventory.models.dispensing import Dispensation, DispensedItem
+        from inventory.models.dispensing import Dispensation, DispensationItem
         
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -189,7 +189,7 @@ class ReportsHubViewSet(viewsets.ViewSet):
         staff_id = request.query_params.get('staff_id')
         product_id = request.query_params.get('product_id')
 
-        qs = DispensedItem.objects.select_related('dispensation', 'dispensation__branch', 'dispensation__dispensed_by', 'product')
+        qs = DispensationItem.objects.select_related('dispensation', 'dispensation__branch', 'dispensation__dispensed_by', 'product')
         
         if start_date:
             qs = qs.filter(dispensation__dispensed_at__date__gte=start_date)
@@ -211,8 +211,8 @@ class ReportsHubViewSet(viewsets.ViewSet):
                 'staff': item.dispensation.dispensed_by.get_full_name() or item.dispensation.dispensed_by.username,
                 'product': item.product.name,
                 'quantity': item.quantity,
-                'unit_price': item.unit_price,
-                'subtotal': item.subtotal,
+                'unit_price': item.price_per_unit,
+                'subtotal': item.total_price,
                 'sale_type': item.dispensation.sale_type
             })
             
