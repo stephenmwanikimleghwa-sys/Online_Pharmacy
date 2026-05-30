@@ -263,7 +263,7 @@ const Checkout = () => {
 
             {error && (
               <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-                {error}
+                {typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}
               </div>
             )}
 

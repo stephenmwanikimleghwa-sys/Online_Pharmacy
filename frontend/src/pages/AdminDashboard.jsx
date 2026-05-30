@@ -151,7 +151,7 @@ const AdminDashboard = () => {
       {error && (
         <div className="mb-8 bg-red-50 text-red-700 rounded-xl p-4 flex items-center gap-4 animate-shake border border-red-200">
           <ExclamationTriangleIcon className="w-5 h-5" />
-          <p className="font-bold text-sm tracking-tight">{error}</p>
+          <p className="font-bold text-sm tracking-tight">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
         </div>
       )}
 

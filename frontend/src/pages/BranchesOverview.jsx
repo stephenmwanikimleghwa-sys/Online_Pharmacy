@@ -228,7 +228,7 @@ const BranchesOverview = () => {
 
       {error && (
         <div style={{ marginBottom: 24, padding: '14px 18px', borderRadius: 14, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontWeight: 600, fontSize: '0.85rem' }}>
-          {error}
+          {typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}
         </div>
       )}
 

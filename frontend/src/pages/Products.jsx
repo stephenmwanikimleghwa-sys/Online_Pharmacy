@@ -140,7 +140,7 @@ const Products = () => {
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(var(--color-danger-rgb,239,68,68),0.15)', color: '#ef4444' }}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
-          <p className="text-rose-900 font-bold text-sm tracking-tight">{error}</p>
+          <p className="text-rose-900 font-bold text-sm tracking-tight">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
         </div>
       </div>
     );
