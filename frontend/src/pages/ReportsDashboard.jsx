@@ -19,7 +19,7 @@ const ReportsDashboard = () => {
     days: 90
   });
 
-  const { data: salesData, isLoading: loadingSales, refetch: refetchSales } = useQuery({
+  const { data: salesData, isLoading: loadingSales, error: salesError, refetch: refetchSales } = useQuery({
     queryKey: ['salesReport', filters],
     queryFn: () => reportsHubService.getSalesReport({
       start_date: filters.startDate,
@@ -31,19 +31,19 @@ const ReportsDashboard = () => {
     enabled: activeReport === 'sales'
   });
 
-  const { data: valuationData, isLoading: loadingValuation, refetch: refetchValuation } = useQuery({
+  const { data: valuationData, isLoading: loadingValuation, error: valuationError, refetch: refetchValuation } = useQuery({
     queryKey: ['stockValuation', filters.branchId],
     queryFn: () => reportsHubService.getStockValuation({ branch_id: filters.branchId }),
     enabled: activeReport === 'valuation'
   });
 
-  const { data: expiryData, isLoading: loadingExpiry, refetch: refetchExpiry } = useQuery({
+  const { data: expiryData, isLoading: loadingExpiry, error: expiryError, refetch: refetchExpiry } = useQuery({
     queryKey: ['expiryReport', filters.days],
     queryFn: () => reportsHubService.getExpiryReport({ days: filters.days }),
     enabled: activeReport === 'expiry'
   });
 
-  const { data: staffData, isLoading: loadingStaff, refetch: refetchStaff } = useQuery({
+  const { data: staffData, isLoading: loadingStaff, error: staffError, refetch: refetchStaff } = useQuery({
     queryKey: ['staffActivity', filters],
     queryFn: () => reportsHubService.getStaffActivity({
       start_date: filters.startDate,
@@ -159,7 +159,13 @@ const ReportsDashboard = () => {
         {/* Content */}
         <div className="overflow-x-auto">
           {activeReport === 'sales' && (
-            loadingSales ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+            salesError ? (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-6 text-center">
+                <p className="text-rose-700 font-semibold">Failed to load sales report</p>
+                <p className="text-rose-600 text-sm mt-1">{salesError?.message || 'Please try again later or contact support.'}</p>
+                <button onClick={() => refetchSales()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
+              </div>
+            ) : loadingSales ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50">
@@ -191,7 +197,13 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'valuation' && (
-            loadingValuation ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+            valuationError ? (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-6 text-center">
+                <p className="text-rose-700 font-semibold">Failed to load stock valuation</p>
+                <p className="text-rose-600 text-sm mt-1">{valuationError?.message || 'Please try again later or contact support.'}</p>
+                <button onClick={() => refetchValuation()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
+              </div>
+            ) : loadingValuation ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50">
@@ -223,7 +235,13 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'expiry' && (
-            loadingExpiry ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+            expiryError ? (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-6 text-center">
+                <p className="text-rose-700 font-semibold">Failed to load expiry report</p>
+                <p className="text-rose-600 text-sm mt-1">{expiryError?.message || 'Please try again later or contact support.'}</p>
+                <button onClick={() => refetchExpiry()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
+              </div>
+            ) : loadingExpiry ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50">
@@ -255,7 +273,13 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'staff' && (
-            loadingStaff ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+            staffError ? (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-6 text-center">
+                <p className="text-rose-700 font-semibold">Failed to load staff activity</p>
+                <p className="text-rose-600 text-sm mt-1">{staffError?.message || 'Please try again later or contact support.'}</p>
+                <button onClick={() => refetchStaff()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
+              </div>
+            ) : loadingStaff ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50">
