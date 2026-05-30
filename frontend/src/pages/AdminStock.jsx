@@ -4,6 +4,7 @@ import api from '../services/api';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { AddMedicineModal } from '../components/AddMedicineModal';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { normalizeDisplayValue } from '../utils/displayHelpers';
 
 const AdminStock = () => {
 	const navigate = useNavigate();
@@ -66,17 +67,6 @@ const AdminStock = () => {
 	const showToast = (message, type = 'success', timeout = 4000) => {
 		setToast({ message, type });
 		setTimeout(() => setToast(null), timeout);
-	};
-
-	const normalizeDisplayValue = (value, fallback = '-') => {
-		if (value === null || value === undefined || value === '') return fallback;
-		if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
-		if (Array.isArray(value)) return value.map((item) => normalizeDisplayValue(item, '')).join(', ');
-		try {
-			return JSON.stringify(value);
-		} catch (e) {
-			return String(value);
-		}
 	};
 
 	// Categories list (derived from items)
