@@ -14,14 +14,22 @@ class IsAdminUser(permissions.BasePermission):
 
 class IsPharmacistOrAdmin(permissions.BasePermission):
     """
-    Allows access to users who can process sales or manage inventory.
+    Pharmacists, cashiers, and admins may access operational endpoints.
+    Granular flags (can_process_sales, etc.) further restrict sensitive actions.
     """
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or 
-            request.user.role == RoleChoices.ADMIN or 
-            request.user.can_process_sales or 
-            request.user.can_manage_inventory
+        if not request.user.is_authenticated:
+            return False
+        if request.user.is_superuser:
+            return True
+        if request.user.role in (
+            RoleChoices.ADMIN,
+            RoleChoices.PHARMACIST,
+            RoleChoices.CASHIER,
+        ):
+            return True
+        return bool(
+            request.user.can_process_sales or request.user.can_manage_inventory
         )
 
 class IsOwnerOrAdmin(permissions.BasePermission):

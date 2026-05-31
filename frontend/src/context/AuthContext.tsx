@@ -88,10 +88,10 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
-/** True when profile/login failed due to auth, not network or server errors. */
+/** True when the session/token is invalid (not a permission-denied 403). */
 const isAuthRejection = (error: unknown): boolean => {
   const status = (error as { response?: { status?: number } })?.response?.status;
-  return status === 401 || status === 403;
+  return status === 401;
 };
 
 const logAuthError = (stage: string, error: unknown) => {
@@ -153,8 +153,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [allowedBranches, setAllowedBranches] = useState<BranchInfo[]>([]);
   const [requiresBranchSelection, setRequiresBranchSelection] = useState(false);
   const navigate = useNavigate();
-  /** Skip duplicate profile fetch when login() just set the token and user. */
-  const skipVerifyAfterLoginRef = useRef(false);
+  /** Skip duplicate profile fetch when login() just set the token (React StrictMode runs effects twice). */
+  const skipVerifyAfterLoginRef = useRef(0);
 
   const applyBranchSession = useCallback((session: BranchSessionPayload) => {
     setAllowedBranches(session.allowed_branches || []);
@@ -211,7 +211,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return merged;
     },
-    [applyBranchSession],
+    [applyBranchSessionForRole],
   );
 
   useEffect(() => {
@@ -221,8 +221,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      if (skipVerifyAfterLoginRef.current) {
-        skipVerifyAfterLoginRef.current = false;
+      if (skipVerifyAfterLoginRef.current > 0) {
+        skipVerifyAfterLoginRef.current -= 1;
         setLoading(false);
         return;
       }
@@ -343,7 +343,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (access) {
         localStorage.setItem("access_token", access);
-        skipVerifyAfterLoginRef.current = true;
+        skipVerifyAfterLoginRef.current = 2;
         setToken(access);
       }
       if (refresh) {

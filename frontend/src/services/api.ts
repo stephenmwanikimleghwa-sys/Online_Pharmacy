@@ -60,14 +60,14 @@ api.interceptors.response.use(
       console.error('[API] Request failed without config', { message: error.message, stack: error.stack });
     }
 
+    // Only 401 means the session is invalid. 403 is permission denied — do not log out.
     const status = error.response?.status;
-    if (status === 401 || status === 403) {
+    if (status === 401) {
       const path = window.location.pathname;
       const onAuthFlow =
         path.includes("/login") ||
         path.includes("/branch/select") ||
         path.includes("/force-password-change");
-      // AuthContext owns token lifecycle; avoid clearing session during login/branch pick.
       if (!onAuthFlow) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
