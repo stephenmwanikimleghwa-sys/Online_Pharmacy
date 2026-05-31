@@ -28,16 +28,8 @@ const PharmacistDashboard = () => {
       navigate("/admin/dashboard", { replace: true });
       return;
     }
-    if (requiresBranchSelection) {
-      navigate("/branch/select", { replace: true });
-      return;
-    }
-    if (!activeBranch?.id && user.role === "pharmacist") {
-      navigate("/branch/select", { replace: true });
-      return;
-    }
     fetchDashboardData();
-  }, [user, authLoading, activeBranch?.id, requiresBranchSelection, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchDashboardData = async () => {
     try {

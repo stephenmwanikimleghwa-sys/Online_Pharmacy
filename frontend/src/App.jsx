@@ -139,7 +139,7 @@ function AppLayout() {
                 {/* Protected Pharmacist Routes */}
                 <Route
                   path="/pharmacist/dashboard"
-                  element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
+                  element={<Navigate to="/branch/dashboard" replace />}
                 />
                 <Route
                   path="/branch/dashboard"

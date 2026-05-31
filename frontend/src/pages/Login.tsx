@@ -297,7 +297,7 @@ const Login: React.FC = () => {
         if (role === "admin") {
           target = "/admin/dashboard";
         } else if (role === "pharmacist") {
-          target = "/pharmacist/dashboard";
+          target = "/branch/dashboard";
         } else if (role === "cashier") {
           target = "/cashier/dashboard";
         } else if (role === "auditor") {

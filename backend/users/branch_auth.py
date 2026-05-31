@@ -93,6 +93,16 @@ def resolve_branch_session(user: User, active_branch_id: int | None = None) -> d
             requires_branch_selection = True
             active_branch = None
 
+    # Pharmacists and other single-branch staff never use the admin branch picker
+    if user.role in (RoleChoices.PHARMACIST, RoleChoices.CASHIER, RoleChoices.AUDITOR):
+        requires_branch_selection = False
+        if count >= 1 and not active_branch:
+            active_branch = allowed_branches[0]
+        elif count >= 1 and active_branch_id:
+            match = next((b for b in allowed_branches if b["id"] == active_branch_id), None)
+            if match:
+                active_branch = match
+
     return {
         "allowed_branches": allowed_branches,
         "requires_branch_selection": requires_branch_selection,

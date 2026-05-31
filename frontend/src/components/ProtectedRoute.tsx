@@ -62,11 +62,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  if (requiresBranchSelection && !onBranchSelectPage) {
+  const isAdmin = userRole === "admin" || Boolean(user.is_admin);
+  const isPharmacist = userRole === "pharmacist" || Boolean(user.is_pharmacist);
+
+  if (isAdmin && requiresBranchSelection && !onBranchSelectPage) {
     return <Navigate to="/branch/select" replace />;
   }
 
-  const isAdmin = userRole === "admin" || Boolean(user.is_admin);
   const adminNeedsBranchPick =
     isAdmin && !activeBranch?.id && allowedBranches.length > 1;
   if (adminNeedsBranchPick && !onBranchSelectPage) {
@@ -74,7 +76,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (requiresActiveBranch && !activeBranch?.id) {
-    return <Navigate to={isAdmin ? "/branch/select" : "/login"} replace />;
+    if (isAdmin) {
+      return <Navigate to="/branch/select" replace />;
+    }
+    if (isPharmacist) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 px-6 text-center">
+          <p className="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
+            No branch assigned
+          </p>
+          <p className="text-sm text-neutral-500 max-w-md">
+            Your pharmacist account is not linked to an active branch. Ask an administrator to
+            assign you to a branch, then log in again.
+          </p>
+        </div>
+      );
+    }
+    return <Navigate to="/login" replace />;
   }
 
   return renderProtected();

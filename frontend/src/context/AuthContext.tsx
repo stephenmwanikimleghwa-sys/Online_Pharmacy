@@ -53,6 +53,7 @@ interface BranchSessionPayload {
   allowed_branches?: BranchInfo[];
   requires_branch_selection?: boolean;
   active_branch?: BranchInfo | null;
+  home_branch?: BranchInfo | null;
 }
 
 interface AuthContextType {
@@ -163,6 +164,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     persistActiveBranch(branch);
   }, []);
 
+  /** Pharmacists/cashiers always get their branch auto-assigned — never the admin picker. */
+  const applyStaffBranchSession = useCallback((session: BranchSessionPayload) => {
+    const branches = session.allowed_branches || [];
+    const home = session.home_branch;
+    const active =
+      session.active_branch ??
+      (branches.length >= 1 ? branches[0] : null) ??
+      (home?.id ? home : null);
+    setAllowedBranches(branches);
+    setActiveBranchState(active);
+    persistActiveBranch(active);
+    setRequiresBranchSelection(false);
+  }, []);
+
+  const applyBranchSessionForRole = useCallback(
+    (session: BranchSessionPayload, role: string | null | undefined) => {
+      const normalized = role?.toString?.().toLowerCase?.();
+      if (normalized === "pharmacist" || normalized === "cashier" || normalized === "auditor") {
+        applyStaffBranchSession(session);
+      } else {
+        applyBranchSession(session);
+      }
+    },
+    [applyBranchSession, applyStaffBranchSession],
+  );
+
   const setActiveBranch = useCallback((branch: BranchInfo | null) => {
     setActiveBranchState(branch);
     persistActiveBranch(branch);
@@ -180,16 +207,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("user_role", merged.role);
       }
       if (session) {
-        if (merged.role === "pharmacist") {
-          const branches = session.allowed_branches || [];
-          const active = session.active_branch ?? (branches.length === 1 ? branches[0] : null);
-          setAllowedBranches(branches);
-          setActiveBranchState(active);
-          persistActiveBranch(active);
-          setRequiresBranchSelection(false);
-        } else {
-          applyBranchSession(session);
-        }
+        applyBranchSessionForRole(session, merged.role);
       }
       return merged;
     },
@@ -296,18 +314,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       let needsBranchSelection = Boolean(resp.requires_branch_selection);
 
-      applyBranchSession({
-        allowed_branches: resp.allowed_branches,
-        requires_branch_selection: resp.requires_branch_selection,
-        active_branch: resp.active_branch ?? null,
-      });
-
       let finalUser: User | null = null;
+      let resolvedRole: User["role"] | null = null;
       const loginUser = resp.user;
       if (loginUser && typeof loginUser === "object") {
         const role = normalizeUserRole(loginUser as Record<string, unknown>);
         const loginRecord = loginUser as Record<string, unknown>;
-        let resolvedRole = role || ((loginUser as User).role as User["role"] | undefined);
+        resolvedRole = role || ((loginUser as User).role as User["role"] | undefined) || null;
         if (!resolvedRole && loginRecord.is_admin) resolvedRole = "admin";
         if (!resolvedRole && loginRecord.is_pharmacist) resolvedRole = "pharmacist";
         finalUser = { ...(loginUser as User), role: resolvedRole as User["role"] };
@@ -316,6 +329,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.setItem("user_role", finalUser.role);
         }
       }
+
+      const loginHome = (loginUser as { home_branch?: BranchInfo } | undefined)?.home_branch;
+      applyBranchSessionForRole(
+        {
+          allowed_branches: resp.allowed_branches,
+          requires_branch_selection: resp.requires_branch_selection,
+          active_branch: resp.active_branch ?? null,
+          home_branch: loginHome ?? null,
+        },
+        resolvedRole || finalUser?.role,
+      );
 
       if (access) {
         localStorage.setItem("access_token", access);
@@ -340,9 +364,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           allowed_branches: profileData.allowed_branches,
           requires_branch_selection: profileData.requires_branch_selection,
           active_branch: profileData.active_branch,
+          home_branch: profileData.home_branch as BranchInfo | null | undefined,
         });
-        if (profileData.requires_branch_selection !== undefined) {
+        const profileRole = finalUser?.role?.toString?.().toLowerCase?.();
+        if (
+          profileData.requires_branch_selection !== undefined &&
+          profileRole !== "pharmacist" &&
+          profileRole !== "cashier" &&
+          profileRole !== "auditor"
+        ) {
           needsBranchSelection = Boolean(profileData.requires_branch_selection);
+        }
+        if (profileRole === "pharmacist" || profileRole === "cashier" || profileRole === "auditor") {
+          needsBranchSelection = false;
+          setRequiresBranchSelection(false);
         }
       } catch (err) {
         logAuthError("Profile fetch after login", err);
@@ -429,7 +464,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return "/branch/select";
     }
     if (role === "admin") return "/admin/dashboard";
-    if (role === "pharmacist") return "/pharmacist/dashboard";
+    if (role === "pharmacist") return "/branch/dashboard";
     if (role === "cashier") return "/cashier/dashboard";
     if (role === "auditor") return "/reports";
     if (role === "customer") return "/customer/dashboard";
