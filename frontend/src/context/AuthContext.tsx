@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import toast from 'react-hot-toast';
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -158,7 +159,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
       try {
-        const response = await api.get("/auth/profile/");
+        // Fail-fast profile fetch to avoid long UI hang when backend is unreachable
+        const response = await api.get("/auth/profile/", { timeout: 5000 });
         const profileData = (response.data?.user || response.data?.profile || response.data) as Record<
           string,
           unknown
@@ -262,7 +264,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       try {
-        const profileRes = await api.get("/auth/profile/");
+        // Short timeout here as well to avoid blocking login flow
+        const profileRes = await api.get("/auth/profile/", { timeout: 5000 });
         const profileData = profileRes.data?.user || profileRes.data?.profile || profileRes.data;
         finalUser = mergeUserFromProfile(profileData, {
           allowed_branches: profileData.allowed_branches,
@@ -272,7 +275,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (profileData.requires_branch_selection !== undefined) {
           needsBranchSelection = Boolean(profileData.requires_branch_selection);
         }
-      } catch {
+      } catch (err) {
+        // If profile fetch fails after login, notify and proceed with whatever user info we have
+        console.warn('Profile fetch after login failed or timed out:', err);
+        toast.error('Unable to fetch profile from backend — continuing with partial data');
         if (finalUser) {
           setUser(finalUser);
           if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
