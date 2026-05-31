@@ -79,6 +79,25 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
+const logAuthError = (stage: string, error: unknown) => {
+  const err = error as {
+    response?: { status?: number; data?: unknown; headers?: unknown };
+    config?: unknown;
+    message?: string;
+    stack?: string;
+  };
+
+  console.error(`[Auth Debug] ${stage} failed`, {
+    message: err.message,
+    stack: err.stack,
+    status: err.response?.status,
+    data: err.response?.data,
+    headers: err.response?.headers,
+    config: err.config,
+    rawError: error,
+  });
+};
+
 const normalizeUserRole = (
   data: Record<string, unknown> | null | undefined,
 ): User["role"] | null => {
@@ -182,7 +201,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           persistActiveBranch(null);
         }
       } catch (error) {
-        console.error("Token verification failed:", error);
+        logAuthError('Token verification', error);
+        toast.error('Your session could not be validated. Please log in again.');
         setToken(null);
         setUser(null);
         setActiveBranchState(null);
@@ -216,7 +236,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRequiresBranchSelection(false);
       return { success: true };
     } catch (error: unknown) {
-      console.error("Switch branch failed:", error);
+      logAuthError('Switch branch', error);
       const err = error as { response?: { data?: unknown } };
       return { success: false, error: err.response?.data || "Failed to switch branch" };
     }
@@ -277,7 +297,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (err) {
         // If profile fetch fails after login, notify and proceed with whatever user info we have
-        console.warn('Profile fetch after login failed or timed out:', err);
+        logAuthError('Profile fetch after login', err);
         toast.error('Unable to fetch profile from backend — continuing with partial data');
         if (finalUser) {
           setUser(finalUser);

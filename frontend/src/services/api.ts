@@ -55,12 +55,17 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.config) {
       console.error('[API] Request failed', {
+        message: error.message,
         method: error.config.method,
         url: error.config.url,
         baseURL: error.config.baseURL,
         status: error.response?.status,
+        statusText: error.response?.statusText,
         data: error.response?.data,
+        headers: error.response?.headers,
       });
+    } else {
+      console.error('[API] Request failed without config', { message: error.message, stack: error.stack });
     }
 
     if (error.response?.status === 401) {

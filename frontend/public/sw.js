@@ -1,92 +1,100 @@
-const CACHE_NAME = 'pharmacy-aggregator-v1';
+const CACHE_NAME = 'pharmacy-aggregator-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/vite.svg'
+  '/vite.svg',
 ];
 
 // Helper function to check if a URL scheme is cacheable
 const isCacheableRequest = (request) => {
   try {
     const url = new URL(request.url);
-    // Only cache http and https schemes
     return url.protocol === 'http:' || url.protocol === 'https:';
   } catch (e) {
     return false;
   }
 };
 
-self.addEventListener('install', event => {
+const isNavigationRequest = (request) => {
+  return (
+    request.mode === 'navigate' ||
+    (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'))
+  );
+};
+
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(URLS_TO_CACHE);
-      })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        }),
+      );
+    }).then(() => self.clients.claim()),
   );
 });
 
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
 
-  // Exclude non-GET requests from caching
-  if (event.request.method !== 'GET') return;
+  if (request.method !== 'GET') {
+    return;
+  }
 
-  // Network-First for API requests
-  if (url.pathname.startsWith('/api/')) {
+  const url = new URL(request.url);
+
+  if (isNavigationRequest(request)) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Only cache if request is cacheable
-          if (isCacheableRequest(event.request)) {
-            const resClone = response.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => cache.put(event.request, resClone))
-              .catch(err => {
-                // Silently ignore caching errors (e.g., unsupported schemes)
-                console.debug('Cache put error:', err);
-              });
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok && isCacheableRequest(request)) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
-          return response;
+          return networkResponse;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match('/index.html')),
     );
     return;
   }
 
-  // Stale-While-Revalidate for UI assets (JS, CSS, HTML, Images)
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      const fetchPromise = fetch(event.request).then(networkResponse => {
-        // Only cache if request is cacheable
-        if (isCacheableRequest(event.request)) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(event.request, responseToCache))
-            .catch(err => {
-              // Silently ignore caching errors (e.g., unsupported schemes)
-              console.debug('Cache put error:', err);
-            });
-        }
-        return networkResponse;
-      }).catch(() => cachedResponse || new Response('Offline', { status: 504, statusText: 'Offline' }));
-      
-      return cachedResponse || fetchPromise;
-    })
-  );
-});
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok && isCacheableRequest(request)) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
+          return networkResponse;
         })
-      );
-    })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok && isCacheableRequest(request)) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse || new Response('Offline', { status: 504, statusText: 'Offline' }));
+      return cachedResponse || fetchPromise;
+    }),
   );
 });
