@@ -32,12 +32,9 @@ const BranchSelectionScreen: React.FC = () => {
     if (!user) {
       return;
     }
-    if (!isAdmin) {
-      navigate("/branch/dashboard", { replace: true });
-      return;
-    }
     if (!mustPickBranch) {
-      navigate("/admin/dashboard", { replace: true });
+      navigate(isAdmin ? "/admin/dashboard" : "/branch/dashboard", { replace: true });
+      return;
     }
   }, [user, token, loading, isAdmin, mustPickBranch, navigate]);
 
@@ -46,7 +43,7 @@ const BranchSelectionScreen: React.FC = () => {
     const result = await switchBranch(branch.id);
     setSelectingId(null);
     if (result.success) {
-      navigate("/admin/dashboard", { replace: true });
+      navigate(isAdmin ? "/admin/dashboard" : "/branch/dashboard", { replace: true });
     } else {
       toast.error("Could not switch to that branch. Please try again.");
     }

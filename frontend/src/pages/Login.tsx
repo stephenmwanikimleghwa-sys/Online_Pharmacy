@@ -288,16 +288,16 @@ const Login: React.FC = () => {
       };
 
       let target = "/";
-      if (result.requiresBranchSelection) {
+      const role = determineRole(returnedUser);
+      if (result.requiresBranchSelection && role === "admin") {
         target = "/branch/select";
       } else if (returnedUser?.must_change_password) {
         target = "/force-password-change";
       } else {
-        const role = determineRole(returnedUser);
         if (role === "admin") {
           target = "/admin/dashboard";
         } else if (role === "pharmacist") {
-          target = "/branch/dashboard";
+          target = "/pharmacist/dashboard";
         } else if (role === "cashier") {
           target = "/cashier/dashboard";
         } else if (role === "auditor") {

@@ -180,7 +180,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("user_role", merged.role);
       }
       if (session) {
-        applyBranchSession(session);
+        if (merged.role === "pharmacist") {
+          const branches = session.allowed_branches || [];
+          const active = session.active_branch ?? (branches.length === 1 ? branches[0] : null);
+          setAllowedBranches(branches);
+          setActiveBranchState(active);
+          persistActiveBranch(active);
+          setRequiresBranchSelection(false);
+        } else {
+          applyBranchSession(session);
+        }
       }
       return merged;
     },
@@ -317,6 +326,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("refresh_token", refresh);
       }
 
+      if (finalUser?.role?.toString?.().toLowerCase?.() === "pharmacist") {
+        needsBranchSelection = false;
+        setRequiresBranchSelection(false);
+      }
+
       setLoading(false);
 
       try {
@@ -415,7 +429,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return "/branch/select";
     }
     if (role === "admin") return "/admin/dashboard";
-    if (role === "pharmacist") return "/branch/dashboard";
+    if (role === "pharmacist") return "/pharmacist/dashboard";
     if (role === "cashier") return "/cashier/dashboard";
     if (role === "auditor") return "/reports";
     if (role === "customer") return "/customer/dashboard";

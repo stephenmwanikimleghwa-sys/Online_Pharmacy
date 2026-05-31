@@ -33,7 +33,7 @@ const PharmacistDashboard = () => {
       return;
     }
     if (!activeBranch?.id && user.role === "pharmacist") {
-      navigate("/login", { replace: true });
+      navigate("/branch/select", { replace: true });
       return;
     }
     fetchDashboardData();
