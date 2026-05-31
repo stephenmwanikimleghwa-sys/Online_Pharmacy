@@ -20,7 +20,7 @@ const formatBranchType = (type) => {
 };
 
 const AdminDashboard = () => {
-  const { user, activeBranch, requiresBranchSelection } = useAuth();
+  const { user, activeBranch, requiresBranchSelection, allowedBranches } = useAuth();
   const navigate = useNavigate();
   const [globalData, setGlobalData] = useState(null);
   const [branchOps, setBranchOps] = useState(null);
@@ -63,12 +63,12 @@ const AdminDashboard = () => {
       navigate('/login', { replace: true });
       return;
     }
-    if (requiresBranchSelection) {
+    if (requiresBranchSelection || (!activeBranch?.id && allowedBranches.length > 1)) {
       navigate('/branch/select', { replace: true });
       return;
     }
     fetchGlobal();
-  }, [user, requiresBranchSelection, navigate, fetchGlobal]);
+  }, [user, requiresBranchSelection, activeBranch, allowedBranches.length, navigate, fetchGlobal]);
 
   useEffect(() => {
     fetchBranchOps();

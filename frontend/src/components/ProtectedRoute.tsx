@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowFinancials = false,
   requiresActiveBranch = false,
 }) => {
-  const { user, loading, activeBranch, requiresBranchSelection } = useAuth();
+  const { user, loading, activeBranch, requiresBranchSelection, allowedBranches } = useAuth();
 
   if (loading) {
     return (
@@ -55,9 +55,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/branch/select" replace />;
   }
 
+  const isAdmin = userRole === "admin" || Boolean(user.is_admin);
+  const adminNeedsBranchPick =
+    isAdmin && !activeBranch?.id && allowedBranches.length > 1;
+  if (adminNeedsBranchPick) {
+    return <Navigate to="/branch/select" replace />;
+  }
+
   if (requiresActiveBranch && !activeBranch?.id) {
-    const isAdmin = userRole === 'admin';
-    return <Navigate to={isAdmin ? '/branch/select' : '/login'} replace />;
+    return <Navigate to={isAdmin ? "/branch/select" : "/login"} replace />;
   }
 
   return renderProtected();

@@ -163,11 +163,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           string,
           unknown
         >;
-        mergeUserFromProfile(profileData, {
+        const merged = mergeUserFromProfile(profileData, {
           allowed_branches: profileData.allowed_branches as BranchInfo[] | undefined,
           requires_branch_selection: profileData.requires_branch_selection as boolean | undefined,
           active_branch: profileData.active_branch as BranchInfo | null | undefined,
         });
+        const profileRole = merged.role?.toString?.().toLowerCase?.();
+        const branches = (profileData.allowed_branches as BranchInfo[] | undefined) || [];
+        if (
+          (profileRole === "admin" || merged.is_admin) &&
+          branches.length > 1 &&
+          !profileData.active_branch
+        ) {
+          setRequiresBranchSelection(true);
+          setActiveBranchState(null);
+          persistActiveBranch(null);
+        }
       } catch (error) {
         console.error("Token verification failed:", error);
         setToken(null);
@@ -211,6 +222,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (credentials: LoginCredentials) => {
     try {
+      // Clear stale branch from a previous session so it cannot skip selection
+      localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+
       const response = await api.post("/auth/login/", {
         username: credentials.username,
         password: credentials.password,
@@ -230,10 +244,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("refresh_token", refresh);
       }
 
+      let needsBranchSelection = Boolean(resp.requires_branch_selection);
+
       applyBranchSession({
         allowed_branches: resp.allowed_branches,
         requires_branch_selection: resp.requires_branch_selection,
-        active_branch: resp.active_branch,
+        active_branch: resp.active_branch ?? null,
       });
 
       let finalUser: User | null = null;
@@ -253,11 +269,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           requires_branch_selection: profileData.requires_branch_selection,
           active_branch: profileData.active_branch,
         });
+        if (profileData.requires_branch_selection !== undefined) {
+          needsBranchSelection = Boolean(profileData.requires_branch_selection);
+        }
       } catch {
         if (finalUser) {
           setUser(finalUser);
           if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
         }
+      }
+
+      // Admin with multiple branches must pick before dashboard (API is source of truth)
+      const role = finalUser?.role?.toString?.().toLowerCase?.();
+      const branchCount = (resp.allowed_branches || []).length;
+      if ((role === "admin" || finalUser?.is_admin) && branchCount > 1) {
+        needsBranchSelection = true;
+        setRequiresBranchSelection(true);
+        setActiveBranchState(null);
+        persistActiveBranch(null);
       }
 
       if (credentials.role && finalUser?.role && finalUser.role !== credentials.role) {
@@ -269,7 +298,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return {
         success: true,
         user: finalUser,
-        requiresBranchSelection: Boolean(resp.requires_branch_selection),
+        requiresBranchSelection: needsBranchSelection,
       };
     } catch (error: unknown) {
       console.error("Login failed:", error);
@@ -320,13 +349,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (requiresBranchSelection) return "/branch/select";
 
     const role = resolveRole();
+    if (
+      (role === "admin" || user.is_admin) &&
+      !activeBranch?.id &&
+      allowedBranches.length > 1
+    ) {
+      return "/branch/select";
+    }
     if (role === "admin") return "/admin/dashboard";
     if (role === "pharmacist") return "/branch/dashboard";
     if (role === "cashier") return "/cashier/dashboard";
     if (role === "auditor") return "/reports";
     if (role === "customer") return "/customer/dashboard";
     return "/";
-  }, [user, requiresBranchSelection, resolveRole]);
+  }, [user, requiresBranchSelection, resolveRole, activeBranch, allowedBranches.length]);
 
   const getDashboardPath = useCallback((): string => getPostLoginPath(), [getPostLoginPath]);
 

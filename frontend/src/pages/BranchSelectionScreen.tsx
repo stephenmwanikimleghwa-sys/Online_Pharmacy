@@ -13,9 +13,15 @@ const timeGreeting = (): string => {
 };
 
 const BranchSelectionScreen: React.FC = () => {
-  const { user, allowedBranches, requiresBranchSelection, switchBranch, loading } = useAuth();
+  const { user, allowedBranches, requiresBranchSelection, activeBranch, switchBranch, loading } =
+    useAuth();
   const navigate = useNavigate();
   const [selectingId, setSelectingId] = useState<number | null>(null);
+
+  const role = user?.role?.toString?.().toLowerCase?.() ?? "";
+  const isAdmin = role === "admin" || Boolean(user?.is_admin);
+  const mustPickBranch =
+    requiresBranchSelection || (isAdmin && !activeBranch?.id && allowedBranches.length > 1);
 
   useEffect(() => {
     if (loading) return;
@@ -23,14 +29,14 @@ const BranchSelectionScreen: React.FC = () => {
       navigate("/login", { replace: true });
       return;
     }
-    if (user.role !== "admin" && !user.is_admin) {
+    if (!isAdmin) {
       navigate("/branch/dashboard", { replace: true });
       return;
     }
-    if (!requiresBranchSelection) {
+    if (!mustPickBranch) {
       navigate("/admin/dashboard", { replace: true });
     }
-  }, [user, loading, requiresBranchSelection, navigate]);
+  }, [user, loading, isAdmin, mustPickBranch, navigate]);
 
   const handleSelect = async (branch: BranchInfo) => {
     setSelectingId(branch.id);

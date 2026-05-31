@@ -87,6 +87,12 @@ def resolve_branch_session(user: User, active_branch_id: int | None = None) -> d
                 active_branch = match
                 requires_branch_selection = False
 
+    # Admins with 2+ branches must always choose on login (ignore stale JWT branch)
+    if (user.is_superuser or user.role == RoleChoices.ADMIN) and count > 1:
+        if active_branch_id is None:
+            requires_branch_selection = True
+            active_branch = None
+
     return {
         "allowed_branches": allowed_branches,
         "requires_branch_selection": requires_branch_selection,

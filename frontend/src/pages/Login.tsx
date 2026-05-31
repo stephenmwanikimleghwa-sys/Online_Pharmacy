@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, LoginCredentials, User } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -245,16 +245,23 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredBtn, setHoveredBtn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isAuthenticated, getPostLoginPath } = useAuth();
+  const { login, isAuthenticated, getPostLoginPath, loading: authLoading } = useAuth();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const styles = getStyles(isDark);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Only auto-redirect when already signed in (e.g. bookmarked /login).
+  // Do not run after a fresh login — handleSubmit navigates explicitly.
+  const skipSessionRedirect = useRef(false);
+
   useEffect(() => {
-    if (isAuthenticated) navigate(getPostLoginPath());
-  }, [isAuthenticated, navigate, getPostLoginPath]);
+    if (skipSessionRedirect.current) return;
+    if (!authLoading && isAuthenticated) {
+      navigate(getPostLoginPath(), { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate, getPostLoginPath]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -303,7 +310,8 @@ const Login: React.FC = () => {
         }
       }
 
-      navigate(target);
+      skipSessionRedirect.current = true;
+      navigate(target, { replace: true });
     } else {
       const err = result.error;
       const formatError = (errObj: any): string => {
