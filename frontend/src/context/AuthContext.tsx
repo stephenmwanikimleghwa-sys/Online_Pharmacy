@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useRef,
+} from "react";
 import toast from 'react-hot-toast';
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
@@ -79,6 +87,12 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
+/** True when profile/login failed due to auth, not network or server errors. */
+const isAuthRejection = (error: unknown): boolean => {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  return status === 401 || status === 403;
+};
+
 const logAuthError = (stage: string, error: unknown) => {
   const err = error as {
     response?: { status?: number; data?: unknown; headers?: unknown };
@@ -138,6 +152,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [allowedBranches, setAllowedBranches] = useState<BranchInfo[]>([]);
   const [requiresBranchSelection, setRequiresBranchSelection] = useState(false);
   const navigate = useNavigate();
+  /** Skip duplicate profile fetch when login() just set the token and user. */
+  const skipVerifyAfterLoginRef = useRef(false);
 
   const applyBranchSession = useCallback((session: BranchSessionPayload) => {
     setAllowedBranches(session.allowed_branches || []);
@@ -177,9 +193,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
         return;
       }
+
+      if (skipVerifyAfterLoginRef.current) {
+        skipVerifyAfterLoginRef.current = false;
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
       try {
-        // Fail-fast profile fetch to avoid long UI hang when backend is unreachable
-        const response = await api.get("/auth/profile/", { timeout: 5000 });
+        const response = await api.get("/auth/profile/");
         const profileData = (response.data?.user || response.data?.profile || response.data) as Record<
           string,
           unknown
@@ -201,17 +224,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           persistActiveBranch(null);
         }
       } catch (error) {
-        logAuthError('Token verification', error);
-        toast.error('Your session could not be validated. Please log in again.');
-        setToken(null);
-        setUser(null);
-        setActiveBranchState(null);
-        setAllowedBranches([]);
-        setRequiresBranchSelection(false);
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user_role");
-        localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+        logAuthError("Token verification", error);
+        if (isAuthRejection(error)) {
+          toast.error("Your session expired. Please log in again.");
+          setToken(null);
+          setUser(null);
+          setActiveBranchState(null);
+          setAllowedBranches([]);
+          setRequiresBranchSelection(false);
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("user_role");
+          localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+        } else {
+          console.warn("[Auth] Profile fetch failed; keeping existing session state.");
+        }
       }
       setLoading(false);
     };
@@ -258,14 +285,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const access = tokens.access || resp.access || resp.token || resp.access_token;
       const refresh = tokens.refresh || resp.refresh;
 
-      if (access) {
-        setToken(access);
-        localStorage.setItem("access_token", access);
-      }
-      if (refresh) {
-        localStorage.setItem("refresh_token", refresh);
-      }
-
       let needsBranchSelection = Boolean(resp.requires_branch_selection);
 
       applyBranchSession({
@@ -277,15 +296,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       let finalUser: User | null = null;
       const loginUser = resp.user;
       if (loginUser && typeof loginUser === "object") {
-        const role = normalizeUserRole(loginUser);
-        if (role) {
-          finalUser = { ...loginUser, role } as User;
+        const role = normalizeUserRole(loginUser as Record<string, unknown>);
+        const loginRecord = loginUser as Record<string, unknown>;
+        let resolvedRole = role || ((loginUser as User).role as User["role"] | undefined);
+        if (!resolvedRole && loginRecord.is_admin) resolvedRole = "admin";
+        if (!resolvedRole && loginRecord.is_pharmacist) resolvedRole = "pharmacist";
+        finalUser = { ...(loginUser as User), role: resolvedRole as User["role"] };
+        setUser(finalUser);
+        if (finalUser.role) {
+          localStorage.setItem("user_role", finalUser.role);
         }
       }
 
+      if (access) {
+        localStorage.setItem("access_token", access);
+        skipVerifyAfterLoginRef.current = true;
+        setToken(access);
+      }
+      if (refresh) {
+        localStorage.setItem("refresh_token", refresh);
+      }
+
+      setLoading(false);
+
       try {
-        // Short timeout here as well to avoid blocking login flow
-        const profileRes = await api.get("/auth/profile/", { timeout: 5000 });
+        const profileRes = await api.get("/auth/profile/");
         const profileData = profileRes.data?.user || profileRes.data?.profile || profileRes.data;
         finalUser = mergeUserFromProfile(profileData, {
           allowed_branches: profileData.allowed_branches,
@@ -296,12 +331,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           needsBranchSelection = Boolean(profileData.requires_branch_selection);
         }
       } catch (err) {
-        // If profile fetch fails after login, notify and proceed with whatever user info we have
-        logAuthError('Profile fetch after login', err);
-        toast.error('Unable to fetch profile from backend — continuing with partial data');
-        if (finalUser) {
-          setUser(finalUser);
-          if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
+        logAuthError("Profile fetch after login", err);
+        if (!isAuthRejection(err)) {
+          console.warn("[Auth] Using login response; profile refresh failed.");
         }
       }
 
@@ -412,7 +444,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateProfile,
     getDashboardPath,
     getPostLoginPath,
-    isAuthenticated: !!token && !!user,
+    isAuthenticated: Boolean(token && user),
     loading,
     activeBranch,
     allowedBranches,

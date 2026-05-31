@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pharmacy-aggregator-v2';
+const CACHE_NAME = 'pharmacy-aggregator-v3';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -6,12 +6,11 @@ const URLS_TO_CACHE = [
   '/vite.svg',
 ];
 
-// Helper function to check if a URL scheme is cacheable
 const isCacheableRequest = (request) => {
   try {
     const url = new URL(request.url);
     return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -22,6 +21,9 @@ const isNavigationRequest = (request) => {
     (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'))
   );
 };
+
+const serveSpaShell = () =>
+  caches.match('/index.html').then((cached) => cached || fetch('/index.html'));
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -53,32 +55,25 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
+  // Never intercept API calls (backend is on another origin in production)
+  if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
   if (isNavigationRequest(request)) {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.ok && isCacheableRequest(request)) {
+          if (networkResponse?.status === 404) {
+            return serveSpaShell();
+          }
+          if (networkResponse?.ok && isCacheableRequest(request)) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
           return networkResponse;
         })
-        .catch(() => caches.match('/index.html')),
-    );
-    return;
-  }
-
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.ok && isCacheableRequest(request)) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          }
-          return networkResponse;
-        })
-        .catch(() => caches.match(request)),
+        .catch(() => serveSpaShell()),
     );
     return;
   }
@@ -87,7 +82,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(request).then((cachedResponse) => {
       const fetchPromise = fetch(request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.ok && isCacheableRequest(request)) {
+          if (networkResponse?.ok && isCacheableRequest(request)) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }

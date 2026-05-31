@@ -48,7 +48,7 @@ services:
           type: redis
           property: connectionString
 
-  # Frontend Service (Static Site)
+  # Frontend Service (Static Site) — must call the Django backend URL, not same-origin /api
   - type: web
     name: pharmacy-aggregator-frontend
     runtime: static
@@ -57,6 +57,7 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "18.0.0"
+      # Required at build time (also defaulted in frontend/vite.config.js if missing)
       - key: VITE_API_BASE_URL
         value: https://online-pharmacy-sn88.onrender.com/api
     headers:

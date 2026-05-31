@@ -13,7 +13,7 @@ const timeGreeting = (): string => {
 };
 
 const BranchSelectionScreen: React.FC = () => {
-  const { user, allowedBranches, requiresBranchSelection, activeBranch, switchBranch, loading } =
+  const { user, token, allowedBranches, requiresBranchSelection, activeBranch, switchBranch, loading } =
     useAuth();
   const navigate = useNavigate();
   const [selectingId, setSelectingId] = useState<number | null>(null);
@@ -25,8 +25,11 @@ const BranchSelectionScreen: React.FC = () => {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
+    if (!token) {
       navigate("/login", { replace: true });
+      return;
+    }
+    if (!user) {
       return;
     }
     if (!isAdmin) {
@@ -36,7 +39,7 @@ const BranchSelectionScreen: React.FC = () => {
     if (!mustPickBranch) {
       navigate("/admin/dashboard", { replace: true });
     }
-  }, [user, loading, isAdmin, mustPickBranch, navigate]);
+  }, [user, token, loading, isAdmin, mustPickBranch, navigate]);
 
   const handleSelect = async (branch: BranchInfo) => {
     setSelectingId(branch.id);
@@ -49,10 +52,13 @@ const BranchSelectionScreen: React.FC = () => {
     }
   };
 
-  if (loading || !user) {
+  if (loading || !token || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-gradient)" }}>
         <LoadingSpinner />
+        {!loading && token && !user && (
+          <p className="mt-4 text-sm text-gray-500">Connecting to server…</p>
+        )}
       </div>
     );
   }

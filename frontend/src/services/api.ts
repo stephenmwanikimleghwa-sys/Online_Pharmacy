@@ -5,20 +5,12 @@ import axios, {
   AxiosResponse,
   AxiosError
 } from "axios";
+import { resolveApiBaseUrl } from "../config/apiBaseUrl";
 
+const API_BASE_URL = resolveApiBaseUrl();
 
-
-// In development, if VITE_API_BASE_URL isn't set, use localhost
-const isDevelopment = import.meta.env.MODE === 'development';
-const defaultDevUrl = 'http://localhost:8000/api';
-const userProvidedApiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-const API_BASE_URL = userProvidedApiBaseUrl || (isDevelopment ? defaultDevUrl : `${window.location.origin}/api`);
-
-if (!userProvidedApiBaseUrl && !isDevelopment) {
-  console.warn(
-    '[API] VITE_API_BASE_URL is not set in production. Falling back to same-origin /api.\n' +
-    'If the frontend and backend are hosted separately, set VITE_API_BASE_URL to the backend API URL.'
-  );
+if (import.meta.env.PROD) {
+  console.info("[API] Base URL:", API_BASE_URL);
 }
 
 // Create Axios instance
@@ -68,13 +60,18 @@ api.interceptors.response.use(
       console.error('[API] Request failed without config', { message: error.message, stack: error.stack });
     }
 
-    if (error.response?.status === 401) {
-      // Token expired or invalid - cleanup and redirect
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-
-      // Don't redirect if we're already on the login page
-      if (!window.location.pathname.includes('/login')) {
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
+      const path = window.location.pathname;
+      const onAuthFlow =
+        path.includes("/login") ||
+        path.includes("/branch/select") ||
+        path.includes("/force-password-change");
+      // AuthContext owns token lifecycle; avoid clearing session during login/branch pick.
+      if (!onAuthFlow) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("active_branch");
         window.location.href = "/login";
       }
     }
