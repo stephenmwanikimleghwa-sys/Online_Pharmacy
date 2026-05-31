@@ -120,6 +120,15 @@ class InventoryViewTest(TestCase):
         self.branch_stock.refresh_from_db()
         self.assertEqual(self.branch_stock.quantity, 150)
 
+    def test_supplier_list_endpoint(self):
+        self.client.force_authenticate(user=self.pharmacist)
+        Supplier.objects.create(name="Test Supplier", email="supplier@test.com")
+        url = reverse('inventory:supplier-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['name'], 'Test Supplier')
+
     def test_prescription_verify(self):
         prescription = Prescription.objects.create(
             patient_name="Jane Doe",

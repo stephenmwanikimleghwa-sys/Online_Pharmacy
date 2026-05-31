@@ -14,8 +14,10 @@ from .views.services import ClinicalServiceViewSet, SoldServiceViewSet
 from .views.returns import ProductReturnViewSet
 from .views.sales_returns import SaleReturnViewSet
 from .views.document import DocumentViewSet
+from .views.supplier import SupplierViewSet
 
 router = DefaultRouter()
+router.register(r'suppliers', SupplierViewSet, basename='supplier')
 router.register(r'restock-requests', RestockRequestViewSet, basename='restockrequest')
 router.register(r'stock-intake', StockIntakeViewSet, basename='stockintake')
 router.register(r'transfers', InterBranchTransferViewSet, basename='interbranchtransfer')

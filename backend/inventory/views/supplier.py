@@ -2,7 +2,8 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
-from inventory.models import Supplier, SupplierCreditTransaction, StockIntake
+from inventory.models.supplier import Supplier, SupplierCreditTransaction
+from inventory.models.stock_intake import StockIntake
 from inventory.serializers.supplier import SupplierSerializer
 
 class SupplierViewSet(viewsets.ModelViewSet):

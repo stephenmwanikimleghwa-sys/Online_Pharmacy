@@ -58,7 +58,7 @@ services:
       - key: NODE_VERSION
         value: "18.0.0"
       - key: VITE_API_BASE_URL
-        value: https://online-pharmacy-1-np3y.onrender.com/api
+        value: https://online-pharmacy-sn88.onrender.com/api
     headers:
       - path: /*
         name: Cache-Control
