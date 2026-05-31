@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
+from users.active_branch import get_active_branch, require_active_branch
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, Q, F
@@ -76,10 +77,15 @@ class DispensationViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_create(self, serializer):
+        denied = require_active_branch(self.request)
+        if denied:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(denied.data.get("detail", "Active branch required."))
+        branch = get_active_branch(self.request)
         with transaction.atomic():
             dispensation = serializer.save(
                 dispensed_by=self.request.user,
-                branch=self.request.user.branch
+                branch=branch,
             )
             if dispensation.prescription:
                 dispensation.prescription.status = 'dispensed'
@@ -92,9 +98,14 @@ def dispense_otc(request):
     Dispense medicines — stamps the user's branch on the sale.
     Handles payment modes, credit limits, and branch stock.
     """
+    denied = require_active_branch(request)
+    if denied:
+        return denied
+
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    
+    active_branch = get_active_branch(request)
+
     with transaction.atomic():
         items_data = request.data.get('items', [])
         payment_mode = request.data.get('payment_mode', 'CASH')
@@ -116,7 +127,7 @@ def dispense_otc(request):
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
             branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
-                product=product, branch=request.user.branch, defaults={'quantity': 0, 'reorder_level': 0}
+                product=product, branch=active_branch, defaults={'quantity': 0, 'reorder_level': 0}
             )
             available = branch_stock.quantity
             if available < item['quantity']:
@@ -152,7 +163,7 @@ def dispense_otc(request):
             pricing_tier=pricing_tier,
             discount=discount,
             dispensed_by=request.user,
-            branch=request.user.branch,
+            branch=active_branch,
             notes=request.data.get('notes', ''),
             total_amount=total_amount
         )
@@ -177,7 +188,7 @@ def dispense_otc(request):
             
             StockLog.objects.create(
                 product=product,
-                branch=request.user.branch,
+                branch=active_branch,
                 logged_by=request.user,
                 change_type='sale',
                 change_amount=-quantity,
@@ -203,7 +214,7 @@ def dispense_otc(request):
                 netflow=total_amount,
                 paymentmode=payment_mode,
                 explanation=f"Dispensation #{dispensation.id}",
-                branch=request.user.branch,
+                branch=active_branch,
                 timestamp=timezone.now()
             )
 

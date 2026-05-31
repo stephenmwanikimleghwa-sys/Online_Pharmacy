@@ -1,53 +1,69 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
-// Define User interface
+export const ACTIVE_BRANCH_STORAGE_KEY = "active_branch";
+
 export interface User {
   id: number;
   username: string;
-  email: string;
+  email?: string;
   role: "admin" | "pharmacist" | "customer" | "cashier" | "auditor";
+  first_name?: string;
+  last_name?: string;
   pharmacy?: number;
   pharmacy_name?: string;
   branch?: number | null;
-  branch_info?: { id: number; name: string; is_headquarters: boolean } | null;
+  home_branch?: { id: number; name: string } | null;
+  branch_info?: { id: number; name: string; is_headquarters?: boolean; type?: string } | null;
   is_active?: boolean;
   must_change_password?: boolean;
   is_admin?: boolean;
   is_pharmacist?: boolean;
   is_customer?: boolean;
   user_type?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-// Branch type used for the active branch selector
 export interface BranchInfo {
-  id: number | 'all';
+  id: number;
   name: string;
+  type?: string;
   is_headquarters?: boolean;
   is_active?: boolean;
 }
 
-// Define Login Credentials interface
 export interface LoginCredentials {
   username: string;
   password: string;
   role?: string;
 }
 
-// Define AuthContext interface
+interface BranchSessionPayload {
+  allowed_branches?: BranchInfo[];
+  requires_branch_selection?: boolean;
+  active_branch?: BranchInfo | null;
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  /** The currently selected branch context. null = 'All Branches' (admin only). */
   activeBranch: BranchInfo | null;
+  allowedBranches: BranchInfo[];
+  requiresBranchSelection: boolean;
   setActiveBranch: (branch: BranchInfo | null) => void;
-  login: (credentials: LoginCredentials) => Promise<{ success: boolean; user?: User | null; error?: any }>;
+  switchBranch: (branchId: number) => Promise<{ success: boolean; error?: unknown }>;
+  login: (credentials: LoginCredentials) => Promise<{
+    success: boolean;
+    user?: User | null;
+    error?: unknown;
+    requiresBranchSelection?: boolean;
+  }>;
   logout: () => void;
-  updateProfile: (profileData: Partial<User>) => Promise<{ success: boolean; user?: User; error?: any }>;
+  updateProfile: (profileData: Partial<User>) => Promise<{ success: boolean; user?: User; error?: unknown }>;
+  getPostLoginPath: () => string;
   getDashboardPath: () => string;
 }
 
@@ -61,6 +77,34 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
+const normalizeUserRole = (
+  data: Record<string, unknown> | null | undefined,
+): User["role"] | null => {
+  if (!data) return null;
+  const role = data.role || data.user_type;
+  if (data.is_pharmacist) return "pharmacist";
+  if (data.is_admin) return "admin";
+  if (data.is_customer) return "customer";
+  return (role?.toString?.().toLowerCase?.() as User["role"]) || null;
+};
+
+const persistActiveBranch = (branch: BranchInfo | null) => {
+  if (branch) {
+    localStorage.setItem(ACTIVE_BRANCH_STORAGE_KEY, JSON.stringify(branch));
+  } else {
+    localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+  }
+};
+
+const readStoredActiveBranch = (): BranchInfo | null => {
+  try {
+    const raw = localStorage.getItem(ACTIVE_BRANCH_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as BranchInfo) : null;
+  } catch {
+    return null;
+  }
+};
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -69,43 +113,103 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("access_token"));
   const [loading, setLoading] = useState<boolean>(true);
-  // activeBranch: the currently selected branch context for all data views.
-  // null = 'All Branches' (aggregated, admin only).
-  // For non-admin users this is always set to their assigned branch and cannot be changed.
-  const [activeBranch, setActiveBranchState] = useState<BranchInfo | null>(null);
+  const [activeBranch, setActiveBranchState] = useState<BranchInfo | null>(readStoredActiveBranch());
+  const [allowedBranches, setAllowedBranches] = useState<BranchInfo[]>([]);
+  const [requiresBranchSelection, setRequiresBranchSelection] = useState(false);
   const navigate = useNavigate();
 
-  const setActiveBranch = (branch: BranchInfo | null) => {
+  const applyBranchSession = useCallback((session: BranchSessionPayload) => {
+    setAllowedBranches(session.allowed_branches || []);
+    setRequiresBranchSelection(Boolean(session.requires_branch_selection));
+    const branch = session.active_branch ?? null;
     setActiveBranchState(branch);
-  };
+    persistActiveBranch(branch);
+  }, []);
 
-  // NOTE: We reuse the shared `api` instance (from services/api.js)
-  // which already reads the token from localStorage in a request interceptor.
+  const setActiveBranch = useCallback((branch: BranchInfo | null) => {
+    setActiveBranchState(branch);
+    persistActiveBranch(branch);
+    if (branch) {
+      setRequiresBranchSelection(false);
+    }
+  }, []);
 
-  // Check if token is valid on app load
+  const mergeUserFromProfile = useCallback(
+    (profileData: Record<string, unknown>, session?: BranchSessionPayload) => {
+      const role = normalizeUserRole(profileData);
+      const merged: User = { ...profileData, role: role || (profileData.role as User["role"]) } as User;
+      setUser(merged);
+      if (merged.role) {
+        localStorage.setItem("user_role", merged.role);
+      }
+      if (session) {
+        applyBranchSession(session);
+      }
+      return merged;
+    },
+    [applyBranchSession],
+  );
+
   useEffect(() => {
     const verifyToken = async () => {
-      if (token) {
-        try {
-          const response = await api.get("/auth/profile");
-          // normalize response: some APIs return the user directly, others wrap it
-          const profile = response.data?.user || response.data?.profile || response.data;
-          setUser(profile);
-        } catch (error) {
-          console.error("Token verification failed:", error);
-          // clear token and user on failure
-          logout();
-        }
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await api.get("/auth/profile/");
+        const profileData = (response.data?.user || response.data?.profile || response.data) as Record<
+          string,
+          unknown
+        >;
+        mergeUserFromProfile(profileData, {
+          allowed_branches: profileData.allowed_branches as BranchInfo[] | undefined,
+          requires_branch_selection: profileData.requires_branch_selection as boolean | undefined,
+          active_branch: profileData.active_branch as BranchInfo | null | undefined,
+        });
+      } catch (error) {
+        console.error("Token verification failed:", error);
+        setToken(null);
+        setUser(null);
+        setActiveBranchState(null);
+        setAllowedBranches([]);
+        setRequiresBranchSelection(false);
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_role");
+        localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
       }
       setLoading(false);
     };
 
     verifyToken();
-  }, [token]);
+  }, [token, mergeUserFromProfile]);
+
+  const switchBranch = async (branchId: number) => {
+    try {
+      const response = await api.post("/auth/switch-branch/", { branch_id: branchId });
+      const { active_branch: branch, tokens } = response.data || {};
+      if (tokens?.access) {
+        setToken(tokens.access);
+        localStorage.setItem("access_token", tokens.access);
+      }
+      if (tokens?.refresh) {
+        localStorage.setItem("refresh_token", tokens.refresh);
+      }
+      if (branch) {
+        setActiveBranch(branch);
+      }
+      setRequiresBranchSelection(false);
+      return { success: true };
+    } catch (error: unknown) {
+      console.error("Switch branch failed:", error);
+      const err = error as { response?: { data?: unknown } };
+      return { success: false, error: err.response?.data || "Failed to switch branch" };
+    }
+  };
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      // Include role in login request (backend may ignore it)
       const response = await api.post("/auth/login/", {
         username: credentials.username,
         password: credentials.password,
@@ -113,179 +217,127 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       const resp = response.data || {};
-      const access = resp.access || resp.token || resp.access_token;
-      const userData = resp.user || resp.profile || resp.user_data || resp;
+      const tokens = resp.tokens || {};
+      const access = tokens.access || resp.access || resp.token || resp.access_token;
+      const refresh = tokens.refresh || resp.refresh;
 
-      // store token if present
       if (access) {
         setToken(access);
         localStorage.setItem("access_token", access);
       }
+      if (refresh) {
+        localStorage.setItem("refresh_token", refresh);
+      }
 
-      // Extract and normalize user role from response data
-      const normalizeUserRole = (data: any): "admin" | "pharmacist" | "customer" | "cashier" | "auditor" | null => {
-        // Check various possible role fields
-        const role = data?.role || data?.user_type || null;
+      applyBranchSession({
+        allowed_branches: resp.allowed_branches,
+        requires_branch_selection: resp.requires_branch_selection,
+        active_branch: resp.active_branch,
+      });
 
-        // Check for boolean flags
-        if (data?.is_pharmacist) return 'pharmacist';
-        if (data?.is_admin) return 'admin';
-        if (data?.is_customer) return 'customer';
-
-        return role?.toString?.().toLowerCase?.() || null;
-      };
-
-      // Always attempt to fetch the full profile after login
       let finalUser: User | null = null;
+      const loginUser = resp.user;
+      if (loginUser && typeof loginUser === "object") {
+        const role = normalizeUserRole(loginUser);
+        if (role) {
+          finalUser = { ...loginUser, role } as User;
+        }
+      }
+
       try {
-        // First try to use the user data from login response
-        if (userData && typeof userData === "object") {
-          const initialRole = normalizeUserRole(userData);
-          if (initialRole) {
-            finalUser = { ...userData, role: initialRole } as User;
-          }
-        }
-
-        // Then fetch the full profile to ensure we have complete data
-        const profileRes = await api.get("/auth/profile");
+        const profileRes = await api.get("/auth/profile/");
         const profileData = profileRes.data?.user || profileRes.data?.profile || profileRes.data;
-      } catch (profileErr: any) {
-        // If we have userData from login, use that as fallback
-        if (!finalUser && userData && typeof userData === "object") {
-          const fallbackRole = normalizeUserRole(userData);
-          if (fallbackRole) {
-            finalUser = { ...userData, role: fallbackRole } as User;
-          }
+        finalUser = mergeUserFromProfile(profileData, {
+          allowed_branches: profileData.allowed_branches,
+          requires_branch_selection: profileData.requires_branch_selection,
+          active_branch: profileData.active_branch,
+        });
+      } catch {
+        if (finalUser) {
+          setUser(finalUser);
+          if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
         }
       }
 
-      if (finalUser) {
-        // If requested role provided, only warn if mismatch; don't throw to avoid crashing
-        if (credentials.role && finalUser.role && finalUser.role !== credentials.role) {
-          console.warn(
-            `Logged-in user role mismatch: requested=${credentials.role} returned=${finalUser.role}`,
-          );
-        }
-        setUser(finalUser);
-        if (finalUser.role) localStorage.setItem("user_role", finalUser.role);
-
-        // Set default activeBranch on login:
-        // - Admin users default to 'All Branches' (null) so they see the aggregated view
-        // - All other staff default to their assigned branch
-        const isAdmin = finalUser.role === 'admin' || finalUser.is_admin;
-        if (isAdmin) {
-          setActiveBranchState(null); // admin → start with "All Branches"
-        } else if (finalUser.branch_info) {
-          setActiveBranchState(finalUser.branch_info as BranchInfo);
-        } else if (finalUser.branch) {
-          setActiveBranchState({ id: finalUser.branch, name: 'My Branch' });
-        }
+      if (credentials.role && finalUser?.role && finalUser.role !== credentials.role) {
+        console.warn(
+          `Logged-in user role mismatch: requested=${credentials.role} returned=${finalUser.role}`,
+        );
       }
 
-      return { success: true, user: finalUser || null };
-    } catch (error: any) {
+      return {
+        success: true,
+        user: finalUser,
+        requiresBranchSelection: Boolean(resp.requires_branch_selection),
+      };
+    } catch (error: unknown) {
       console.error("Login failed:", error);
-
-      // Prefer the server response body when available (it may contain
-      // field-level validation errors like { username: [...], password: [...] }
-      // or non_field_errors/details for auth failures). Return it as-is so
-      // the UI can render specific messages.
-      const serverData = error?.response?.data;
-
-      if (serverData) {
-        return { success: false, error: serverData };
+      const err = error as { response?: { data?: unknown }; message?: string };
+      if (err.response?.data) {
+        return { success: false, error: err.response.data };
       }
-
-      // Fallback to axios message
-      return { success: false, error: { detail: error?.message || "Login failed" } };
+      return { success: false, error: { detail: err.message || "Login failed" } };
     }
   };
 
-  // Registration endpoint removed — registration is disabled in the client.
-
   const logout = () => {
-    // Clear auth state
     setToken(null);
     setUser(null);
+    setActiveBranchState(null);
+    setAllowedBranches([]);
+    setRequiresBranchSelection(false);
 
-    // Clear all auth-related items from localStorage
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_role");
+    localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
 
-    // Clear any auth-related cookies if they exist
-    document.cookie.split(";").forEach(cookie => {
-      document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
     });
 
-    // Redirect to home page
     navigate("/");
   };
 
-  const getDashboardPath = (): string => {
-    if (!user) {
-      return "/";
+  const resolveRole = useCallback((): string | null => {
+    if (!user) return null;
+    let role = user.role?.toString?.().toLowerCase?.();
+    if (!role && user.user_type) role = user.user_type.toString().toLowerCase();
+    if (!role) {
+      if (user.is_pharmacist) role = "pharmacist";
+      else if (user.is_admin) role = "admin";
+      else if (user.is_customer) role = "customer";
     }
+    return role || null;
+  }, [user]);
 
-    try {
-      // First check explicit role field
-      let role = user.role?.toString?.().toLowerCase?.();
+  const getPostLoginPath = useCallback((): string => {
+    if (!user) return "/";
+    if (user.must_change_password) return "/force-password-change";
+    if (requiresBranchSelection) return "/branch/select";
 
-      // Then check user_type if role not found
-      if (!role && user.user_type) {
-        role = user.user_type.toString().toLowerCase();
-      }
+    const role = resolveRole();
+    if (role === "admin") return "/admin/dashboard";
+    if (role === "pharmacist") return "/branch/dashboard";
+    if (role === "cashier") return "/cashier/dashboard";
+    if (role === "auditor") return "/reports";
+    if (role === "customer") return "/customer/dashboard";
+    return "/";
+  }, [user, requiresBranchSelection, resolveRole]);
 
-      // Check boolean flags if still no role
-      if (!role) {
-        if (user.is_pharmacist) role = 'pharmacist';
-        else if (user.is_admin) role = 'admin';
-        else if (user.is_customer) role = 'customer';
-      }
-
-      let path = "/";
-      switch (role) {
-        case "pharmacist":
-          path = "/pharmacist/dashboard";
-          break;
-        case "admin":
-          path = "/admin/dashboard";
-          break;
-        case "cashier":
-          path = "/cashier/dashboard";
-          break;
-        case "auditor":
-          path = "/reports";
-          break;
-        case "customer":
-          path = "/customer/dashboard";
-          break;
-        default:
-          if (user.is_pharmacist) {
-            path = "/pharmacist/dashboard";
-          } else if (user.is_admin) {
-            path = "/admin/dashboard";
-          } else {
-            console.warn(`[Auth Debug] Unknown role "${role}", using fallback customer dashboard`);
-            path = "/customer/dashboard";
-          }
-      }
-
-      return path;
-    } catch (error) {
-      console.error("[Auth Debug] Error getting dashboard path:", error);
-      return "/";
-    }
-  };
+  const getDashboardPath = useCallback((): string => getPostLoginPath(), [getPostLoginPath]);
 
   const updateProfile = async (profileData: Partial<User>) => {
     try {
       const response = await api.patch("/auth/profile/", profileData);
       setUser(response.data);
       return { success: true, user: response.data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Profile update failed:", error);
-      return { success: false, error: error.response?.data || "Update failed" };
+      const err = error as { response?: { data?: unknown } };
+      return { success: false, error: err.response?.data || "Update failed" };
     }
   };
 
@@ -296,10 +348,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateProfile,
     getDashboardPath,
+    getPostLoginPath,
     isAuthenticated: !!token && !!user,
     loading,
     activeBranch,
+    allowedBranches,
+    requiresBranchSelection,
     setActiveBranch,
+    switchBranch,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

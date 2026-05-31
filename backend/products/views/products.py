@@ -198,6 +198,37 @@ def my_products(request: Request) -> Response:
     return api_response(data=serializer.data, message="Products retrieved successfully")
 
 
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def pricing_summary(request: Request) -> Response:
+    """
+    Return counts for pricing management UI:
+    - total_products
+    - priced_count
+    - unpriced_count
+
+    This helps the frontend show a global missing-pricing count.
+    """
+    try:
+        from products.models import Product, PricingTier
+
+        total_products = Product.objects.filter(is_active=True).count()
+        priced_count = PricingTier.objects.filter(is_active=True).count()
+        unpriced_count = total_products - priced_count
+
+        return api_response(
+            data={
+                "total_products": total_products,
+                "priced_count": priced_count,
+                "unpriced_count": unpriced_count,
+            },
+            message="Pricing summary retrieved",
+        )
+    except Exception as exc:
+        logger.exception("Error computing pricing summary: %s", exc)
+        return api_response(error="Failed to compute pricing summary", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False)
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Product model providing CRUD operations and custom actions.

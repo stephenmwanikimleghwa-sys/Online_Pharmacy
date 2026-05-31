@@ -245,7 +245,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredBtn, setHoveredBtn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isAuthenticated, getDashboardPath } = useAuth();
+  const { login, isAuthenticated, getPostLoginPath } = useAuth();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const styles = getStyles(isDark);
@@ -253,8 +253,8 @@ const Login: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (isAuthenticated) navigate(getDashboardPath());
-  }, [isAuthenticated, navigate, getDashboardPath]);
+    if (isAuthenticated) navigate(getPostLoginPath());
+  }, [isAuthenticated, navigate, getPostLoginPath]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -280,24 +280,27 @@ const Login: React.FC = () => {
         return null;
       };
 
-      const role = determineRole(returnedUser);
       let target = "/";
-
-      if (returnedUser?.must_change_password) {
+      if (result.requiresBranchSelection) {
+        target = "/branch/select";
+      } else if (returnedUser?.must_change_password) {
         target = "/force-password-change";
-      } else if (role === 'admin') {
-        target = '/admin/dashboard';
-      } else if (role === 'pharmacist') {
-        target = '/pharmacist/dashboard';
-      } else if (role === 'cashier') {
-        target = '/cashier/dashboard';
-      } else if (role === 'auditor') {
-        target = '/reports';
-      } else if (role === 'customer') {
-        target = '/customer/dashboard';
       } else {
-        const from = (location.state as any)?.from?.pathname;
-        target = from && from !== '/login' ? from : "/";
+        const role = determineRole(returnedUser);
+        if (role === "admin") {
+          target = "/admin/dashboard";
+        } else if (role === "pharmacist") {
+          target = "/branch/dashboard";
+        } else if (role === "cashier") {
+          target = "/cashier/dashboard";
+        } else if (role === "auditor") {
+          target = "/reports";
+        } else if (role === "customer") {
+          target = "/customer/dashboard";
+        } else {
+          const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+          target = from && from !== "/login" ? from : "/";
+        }
       }
 
       navigate(target);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getProductUnitLabel } from '../utils/displayHelpers';
 
 const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
   const getStockStatusStyle = () => {
@@ -96,7 +97,7 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
               style={item.stock_quantity > item.reorder_threshold ? { color: 'var(--text-primary)' } : {}}>
               {item.stock_quantity}
             </p>
-            <span className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>units</span>
+            <span className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>{getProductUnitLabel(item, item.stock_quantity)}</span>
           </div>
         </div>
         <div className="data-cell">
@@ -139,6 +140,23 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
             style={{ background: 'var(--brand-mist)', borderColor: 'var(--brand-border-soft)' }}>
             <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Pricing</span>
             <span className="font-display font-bold text-sm" style={{ color: 'var(--color-primary)' }}>KES {parseFloat(item.price).toLocaleString()}</span>
+          </div>
+        )}
+
+        {(item.vat_obligation || item.shelf_location) && (
+          <div className="grid grid-cols-2 gap-3">
+            {item.vat_obligation && (
+              <div className="p-3 rounded-xl border" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>VAT</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{item.vat_obligation}</p>
+              </div>
+            )}
+            {item.shelf_location && (
+              <div className="p-3 rounded-xl border" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Shelf</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{item.shelf_location}</p>
+              </div>
+            )}
           </div>
         )}
 

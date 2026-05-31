@@ -1,25 +1,14 @@
 /**
- * useBranchParam — returns a ready-to-use query string and param object
- * that passes the active branch to backend API calls.
- *
- * Usage:
- *   const { branchQuery } = useBranchParam();
- *   api.get(`/inventory/stats/${branchQuery}`)   // → "?branch=3" or "?branch=all" or ""
- *
- *   const { branchParams } = useBranchParam();
- *   api.get('/inventory/stock-intake/', { params: branchParams })
+ * useBranchParam — passes the active branch to backend API calls.
  */
 import { useAuth } from '../context/AuthContext';
 
 interface BranchParamResult {
-  /** URL query string, e.g. "?branch=3" or "" for non-admins (backend handles scoping) */
   branchQuery: string;
-  /** Axios params object, e.g. { branch: 3 } or {} */
   branchParams: Record<string, string | number>;
-  /** The active branch id, or 'all', or null */
-  branchId: number | 'all' | null;
-  /** True when admin has selected "All Branches" */
+  branchId: number | null;
   isAllBranches: boolean;
+  hasActiveBranch: boolean;
 }
 
 export function useBranchParam(): BranchParamResult {
@@ -27,17 +16,22 @@ export function useBranchParam(): BranchParamResult {
   const isAdmin = user?.role === 'admin' || user?.is_admin;
 
   if (!isAdmin) {
-    // Non-admin: backend scopes automatically via user.branch — no param needed
-    return { branchQuery: '', branchParams: {}, branchId: null, isAllBranches: false };
+    return {
+      branchQuery: '',
+      branchParams: {},
+      branchId: activeBranch?.id ?? null,
+      isAllBranches: false,
+      hasActiveBranch: Boolean(activeBranch?.id),
+    };
   }
 
-  if (activeBranch === null) {
-    // Admin — "All Branches" view
+  if (!activeBranch?.id) {
     return {
-      branchQuery: '?branch=all',
-      branchParams: { branch: 'all' },
-      branchId: 'all',
-      isAllBranches: true,
+      branchQuery: '',
+      branchParams: {},
+      branchId: null,
+      isAllBranches: false,
+      hasActiveBranch: false,
     };
   }
 
@@ -46,5 +40,6 @@ export function useBranchParam(): BranchParamResult {
     branchParams: { branch: activeBranch.id },
     branchId: activeBranch.id,
     isAllBranches: false,
+    hasActiveBranch: true,
   };
 }

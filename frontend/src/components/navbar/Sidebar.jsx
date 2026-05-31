@@ -13,7 +13,7 @@ import BranchSelector from "../BranchSelector";
 const getDashboardHref = (role) => {
   switch (role) {
     case 'admin':      return '/admin/dashboard';
-    case 'pharmacist': return '/pharmacist/dashboard';
+    case 'pharmacist': return '/branch/dashboard';
     case 'cashier':    return '/cashier/dashboard';
     case 'customer':   return '/customer/dashboard';
     default:           return '/account';

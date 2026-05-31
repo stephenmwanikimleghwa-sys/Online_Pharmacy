@@ -1,47 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, BranchInfo } from '../context/AuthContext';
-import api from '../services/api';
+import toast from 'react-hot-toast';
 
-interface BranchSummary {
-  id: number | 'all';
-  name: string;
-  is_headquarters?: boolean;
-  is_active?: boolean;
-  sales_today?: number;
-  transactions_today?: number;
-}
-
-interface BranchSelectorProps {
-  /** Called with the selected BranchInfo (or null for "All Branches") */
-  onChange?: (branch: BranchInfo | null) => void;
-}
-
-const BranchSelector: React.FC<BranchSelectorProps> = ({ onChange }) => {
-  const { user, activeBranch, setActiveBranch } = useAuth();
-  const [branches, setBranches] = useState<BranchSummary[]>([]);
+const BranchSelector: React.FC = () => {
+  const {
+    user,
+    activeBranch,
+    allowedBranches,
+    switchBranch,
+    requiresBranchSelection,
+  } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [pendingBranch, setPendingBranch] = useState<BranchInfo | null>(null);
+  const [switching, setSwitching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Only admin users should see / fetch branches — but ALL hooks must be
-  // called unconditionally (Rules of Hooks). We conditionally SKIP the
-  // fetch effect, but the effect itself is always registered.
-  const isAdmin = user?.role === 'admin' || (user as any)?.is_admin;
+  const isAdmin = user?.role === 'admin' || user?.is_admin;
+  const branches = allowedBranches.length > 0 ? allowedBranches : [];
 
-  useEffect(() => {
-    if (!isAdmin) return;          // safe: effect body guards the fetch
-    const fetchBranches = async () => {
-      try {
-        const res = await api.get('/auth/branches/');
-        const data: BranchSummary[] = res.data?.results || res.data || [];
-        setBranches(data);
-      } catch (err) {
-        console.error('Failed to fetch branches', err);
-      }
-    };
-    fetchBranches();
-  }, [isAdmin]);
-
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -52,164 +30,148 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ onChange }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Non-admin: render nothing (after all hooks have been called)
-  if (!isAdmin) return null;
+  const displayBranchName =
+    activeBranch?.name ||
+    user?.branch_info?.name ||
+    (user?.home_branch as { name?: string } | undefined)?.name ||
+    'Branch';
 
-  const handleSelect = (branch: BranchInfo | null) => {
-    setActiveBranch(branch);
-    onChange?.(branch);           // notify parent if provided
+  // Pharmacist / non-admin: plain label only
+  if (!isAdmin) {
+    return (
+      <span
+        className="text-sm font-semibold text-gray-700 dark:text-gray-200 px-3 py-1.5"
+        title="Your assigned branch"
+      >
+        {displayBranchName}
+      </span>
+    );
+  }
+
+  const handleConfirmSwitch = async () => {
+    if (!pendingBranch) return;
+    setSwitching(true);
+    const result = await switchBranch(pendingBranch.id);
+    setSwitching(false);
+    setPendingBranch(null);
+    setOpen(false);
+    if (result.success) {
+      toast.success(`Switched to ${pendingBranch.name}`);
+      window.location.reload();
+    } else {
+      toast.error('Failed to switch branch.');
+    }
+  };
+
+  const handlePickBranch = (branch: BranchInfo) => {
+    if (activeBranch?.id === branch.id) {
+      setOpen(false);
+      return;
+    }
+    setPendingBranch(branch);
     setOpen(false);
   };
 
-  const displayLabel = activeBranch ? activeBranch.name : '🏢 All Branches';
+  if (requiresBranchSelection && !activeBranch) {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate('/branch/select')}
+        className="text-sm font-bold text-indigo-600 underline"
+      >
+        Select branch
+      </button>
+    );
+  }
 
   return (
-    <div
-      ref={dropdownRef}
-      style={{ position: 'relative', display: 'inline-block' }}
-    >
-      {/* Trigger button */}
-      <button
-        onClick={() => setOpen(prev => !prev)}
-        title="Switch branch"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 14px',
-          borderRadius: '20px',
-          border: '1px solid var(--border)',
-          background: 'var(--glass-bg)',
-          backdropFilter: 'blur(12px)',
-          color: 'var(--text-primary)',
-          fontSize: '0.82rem',
-          fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          whiteSpace: 'nowrap',
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.background = 'var(--primary-alpha)';
-          (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)';
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLButtonElement).style.background = 'var(--glass-bg)';
-          (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)';
-        }}
-      >
-        <span style={{ fontSize: '1rem' }}>🏥</span>
-        <span>{displayLabel}</span>
-        <svg
-          width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    <>
+      <div ref={dropdownRef} className="relative inline-block">
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          title="Switch branch"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-semibold transition-colors"
           style={{
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease',
-            opacity: 0.7,
-          }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {/* Dropdown */}
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            minWidth: '220px',
+            borderColor: 'var(--border-primary)',
             background: 'var(--glass-bg)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid var(--border)',
-            borderRadius: '14px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            zIndex: 9999,
-            overflow: 'hidden',
-            animation: 'fadeSlideDown 0.15s ease',
+            color: 'var(--text-primary)',
           }}
         >
-          {/* "All Branches" option */}
-          <button
-            onClick={() => handleSelect(null)}
+          <span className="truncate max-w-[140px]">{displayBranchName}</span>
+          <span aria-hidden className="opacity-60">▼</span>
+        </button>
+
+        {open && (
+          <div
+            className="absolute right-0 mt-2 min-w-[220px] rounded-xl border shadow-lg z-[9999] overflow-hidden"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              width: '100%',
-              padding: '10px 14px',
-              background: activeBranch === null ? 'var(--primary-alpha)' : 'transparent',
-              border: 'none',
-              borderBottom: '1px solid var(--border)',
-              color: 'var(--text-primary)',
-              fontSize: '0.85rem',
-              fontWeight: activeBranch === null ? 700 : 500,
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => {
-              if (activeBranch !== null) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-hover)';
-            }}
-            onMouseLeave={e => {
-              if (activeBranch !== null) (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              background: 'var(--glass-bg)',
+              borderColor: 'var(--border-primary)',
+              backdropFilter: 'blur(20px)',
             }}
           >
-            <span>🏢</span>
-            <span>All Branches</span>
-            {activeBranch === null && (
-              <span style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '0.9rem' }}>✓</span>
+            {branches.map((branch) => {
+              const selected = activeBranch?.id === branch.id;
+              return (
+                <button
+                  key={branch.id}
+                  type="button"
+                  onClick={() => handlePickBranch(branch)}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{
+                    fontWeight: selected ? 700 : 400,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <span className="w-4 text-primary">{selected ? '✓' : ''}</span>
+                  <span>{branch.name}</span>
+                </button>
+              );
+            })}
+            {branches.length === 0 && (
+              <p className="px-4 py-3 text-sm text-gray-500">No branches available</p>
             )}
-          </button>
+          </div>
+        )}
+      </div>
 
-          {/* Individual branches */}
-          {branches.filter(b => b.is_active !== false).map(branch => {
-            const isSelected = activeBranch?.id === branch.id;
-            return (
-              <button
-                key={branch.id}
-                onClick={() => handleSelect({ id: branch.id as number, name: branch.name, is_headquarters: branch.is_headquarters })}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  width: '100%',
-                  padding: '10px 14px',
-                  background: isSelected ? 'var(--primary-alpha)' : 'transparent',
-                  border: 'none',
-                  borderBottom: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.85rem',
-                  fontWeight: isSelected ? 700 : 400,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => {
-                  if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-hover)';
-                }}
-                onMouseLeave={e => {
-                  if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                }}
-              >
-                <span>{branch.is_headquarters ? '⭐' : '📍'}</span>
-                <span style={{ flex: 1 }}>{branch.name}</span>
-                {isSelected && (
-                  <span style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>✓</span>
-                )}
-              </button>
-            );
-          })}
-
-          {branches.length === 0 && (
-            <p style={{ padding: '12px 14px', color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0 }}>
-              No branches found
+      {pendingBranch && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/40"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="branch-switch-title"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+            <h3 id="branch-switch-title" className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              Switch to {pendingBranch.name}?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+              All transactions will be recorded under this branch.
             </p>
-          )}
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                disabled={switching}
+                onClick={() => setPendingBranch(null)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={switching}
+                onClick={handleConfirmSwitch}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {switching ? 'Switching…' : 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -70,7 +70,7 @@ def inventory_list(request):
 
         # Pagination
         page = request.GET.get("page", 1)
-        per_page = int(request.GET.get("per_page", 20))
+        per_page = int(request.GET.get("per_page", 100))
         paginator = Paginator(products, per_page)
 
         try:

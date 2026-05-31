@@ -157,7 +157,24 @@ export const inventoryService = {
     // TODO: Implement backend endpoint for stock usage
     // For now returning empty array to prevent crash
     return { data: [] };
-  }
+  },
+
+  // --- Inter-branch transfers ---
+  getTransfers: (params = {}) => {
+    return api.get('/inventory/transfers/', { params });
+  },
+
+  createTransfer: (data) => {
+    return api.post('/inventory/transfers/', data);
+  },
+
+  approveTransfer: (id) => {
+    return api.post(`/inventory/transfers/${id}/approve/`);
+  },
+
+  completeTransfer: (id) => {
+    return api.post(`/inventory/transfers/${id}/complete/`);
+  },
 };
 
 export default inventoryService;

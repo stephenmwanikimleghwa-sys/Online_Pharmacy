@@ -11,6 +11,7 @@ class ProductSerializer(serializers.ModelSerializer):
     Serializer for listing and retrieving products.
     """
     pricing_tier = PricingTierSerializer(read_only=True)
+    branch_stocks = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -28,6 +29,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "pricing_tier",
             "stock_quantity",
             "reorder_threshold",
+            "vat_obligation",
+            "shelf_location",
+            "branch_stocks",
             "image",
             "is_active",
             "is_low_stock",
@@ -48,6 +52,17 @@ class ProductSerializer(serializers.ModelSerializer):
         except Exception:
             data['pricing_tier'] = None
         return data
+
+    def get_branch_stocks(self, instance):
+        return [
+            {
+                "branch_id": bs.branch_id,
+                "branch_name": getattr(bs.branch, "name", None),
+                "quantity": float(bs.quantity),
+                "reorder_level": float(bs.reorder_level),
+            }
+            for bs in getattr(instance, "branch_stocks", []).all()
+        ]
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
@@ -79,6 +94,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "stock_quantity",
             "supplier",
             "expiry_date",
+            "shelf_location",
+            "vat_obligation",
             "image",
         )
 
@@ -156,6 +173,8 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "price",
             "buying_price",
             "stock_quantity",
+            "shelf_location",
+            "vat_obligation",
             "image",
             "is_active",
         )

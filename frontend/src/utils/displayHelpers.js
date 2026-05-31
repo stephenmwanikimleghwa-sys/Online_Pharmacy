@@ -25,3 +25,14 @@ export const formatDate = (value, pattern = 'MMM dd, yyyy', fallback = 'N/A') =>
     return fallback;
   }
 };
+
+export const getProductUnitLabel = (product, count = 2) => {
+  if (!product) return count === 1 ? 'unit' : 'units';
+  const raw = product.unit || product.dosage_form || '';
+  const unit = String(raw).trim().toLowerCase();
+  if (!unit || unit === 'other') return count === 1 ? 'unit' : 'units';
+
+  const singular = unit.endsWith('s') ? unit.slice(0, -1) : unit;
+  const plural = unit.endsWith('s') ? unit : `${singular}s`;
+  return count === 1 ? singular : plural;
+};

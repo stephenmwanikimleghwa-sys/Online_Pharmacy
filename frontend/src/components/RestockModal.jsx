@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getProductUnitLabel } from '../utils/displayHelpers';
 
 const RestockModal = ({ item, onClose, onRestock }) => {
   const [quantity, setQuantity] = useState('');
@@ -44,7 +45,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
               onChange={(e) => setQuantity(e.target.value)}
               required
               className="form-input"
-              placeholder="Number of units..."
+              placeholder={`Number of ${getProductUnitLabel(item, 2)}...`}
             />
           </div>
 

@@ -35,6 +35,7 @@ import PasswordResetConfirm from "./pages/PasswordResetConfirm";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStock from "./pages/AdminStock";
 import BranchesOverview from "./pages/BranchesOverview";
+import BranchSelectionScreen from "./pages/BranchSelectionScreen";
 import PricingManagement from "./pages/PricingManagement";
 import StockIntakeLog from "./pages/StockIntakeLog";
 import OTCSales from "./pages/OTCSales";
@@ -63,7 +64,7 @@ function AppLayout() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
-  const isAuthPage = ["/login", "/force-password-change"].includes(location.pathname);
+  const isAuthPage = ["/login", "/force-password-change", "/branch/select"].includes(location.pathname);
   // Hide full sidebar/navbar chrome on the public home page when not logged in
   const isUnauthHome = location.pathname === "/" && !isAuthenticated;
   const showChrome = !isAuthPage && !isUnauthHome;
@@ -106,6 +107,10 @@ function AppLayout() {
                 <Route path="/password-reset" element={<PasswordResetRequest />} />
                 <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
                 <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />
+                <Route
+                  path="/branch/select"
+                  element={<ProtectedRoute element={BranchSelectionScreen} allowedRoles={["admin"]} />}
+                />
 
                 {/* Protected Routes */}
                 <Route path="/products" element={<ProtectedRoute element={Products} />} />
@@ -137,6 +142,10 @@ function AppLayout() {
                   element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
                 />
                 <Route
+                  path="/branch/dashboard"
+                  element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
+                />
+                <Route
                   path="/prescriptions/add"
                   element={<ProtectedRoute element={AddPrescription} allowedRoles={['pharmacist']} />}
                 />
@@ -146,7 +155,13 @@ function AppLayout() {
                 />
                 <Route
                   path="/prescriptions/:id/dispense"
-                  element={<ProtectedRoute element={DispensePrescription} allowedRoles={['pharmacist']} />}
+                  element={
+                    <ProtectedRoute
+                      element={DispensePrescription}
+                      allowedRoles={['pharmacist', 'admin']}
+                      requiresActiveBranch
+                    />
+                  }
                 />
                 <Route
                   path="/inventory"
@@ -154,7 +169,13 @@ function AppLayout() {
                 />
                 <Route
                   path="/stock-intake"
-                  element={<ProtectedRoute element={StockIntakeLog} allowedRoles={['pharmacist', 'admin']} />}
+                  element={
+                    <ProtectedRoute
+                      element={StockIntakeLog}
+                      allowedRoles={['pharmacist', 'admin']}
+                      requiresActiveBranch
+                    />
+                  }
                 />
 
                 {/* Protected Admin Routes */}
@@ -188,7 +209,13 @@ function AppLayout() {
                 />
                 <Route
                   path="/otc-sales"
-                  element={<ProtectedRoute element={OTCSales} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
+                  element={
+                    <ProtectedRoute
+                      element={OTCSales}
+                      allowedRoles={['admin', 'pharmacist', 'cashier']}
+                      requiresActiveBranch
+                    />
+                  }
                 />
                 <Route
                   path="/customers"

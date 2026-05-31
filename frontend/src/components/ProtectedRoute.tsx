@@ -1,16 +1,24 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Assuming AuthContext provides auth state
+import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
   element?: React.ElementType;
   children?: React.ReactNode;
   allowedRoles?: string[];
   allowFinancials?: boolean;
+  /** Redirect to branch selection if no active branch (staff operations). */
+  requiresActiveBranch?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, children, allowedRoles = [], allowFinancials = false }) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  element: Element,
+  children,
+  allowedRoles = [],
+  allowFinancials = false,
+  requiresActiveBranch = false,
+}) => {
+  const { user, loading, activeBranch, requiresBranchSelection } = useAuth();
 
   if (loading) {
     return (
@@ -21,7 +29,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, child
     );
   }
 
-  // Check for authenticated user first
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -33,22 +40,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element: Element, child
     return <>{children}</>;
   };
 
-  // If no roles specified, just check for authentication
-  if (!allowedRoles || allowedRoles.length === 0) {
-    return renderProtected();
-  }
-
-  // Safely check role against allowed roles
   const userRole = user.role?.toString?.().toLowerCase?.() || '';
-  const allowedRolesLower = allowedRoles.map(role => role?.toString?.().toLowerCase?.());
+  const allowedRolesLower = allowedRoles.map((role) => role?.toString?.().toLowerCase?.());
 
-  // Additional permission checks
-  if (allowFinancials && user.can_view_financials) {
-    return renderProtected();
+  if (allowedRoles.length > 0) {
+    if (allowFinancials && user.can_view_financials) {
+      // allowed via financials flag
+    } else if (!userRole || !allowedRolesLower.includes(userRole)) {
+      return <Navigate to="/" replace />;
+    }
   }
 
-  if (!userRole || !allowedRolesLower.includes(userRole)) {
-    return <Navigate to="/" replace />;
+  if (requiresBranchSelection) {
+    return <Navigate to="/branch/select" replace />;
+  }
+
+  if (requiresActiveBranch && !activeBranch?.id) {
+    const isAdmin = userRole === 'admin';
+    return <Navigate to={isAdmin ? '/branch/select' : '/login'} replace />;
   }
 
   return renderProtected();

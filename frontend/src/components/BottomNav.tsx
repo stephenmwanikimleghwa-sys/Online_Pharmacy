@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 const getDashboardHref = (role?: string): string => {
   switch (role) {
     case 'admin': return '/admin/dashboard';
-    case 'pharmacist': return '/pharmacist/dashboard';
+    case 'pharmacist': return '/branch/dashboard';
     case 'cashier': return '/cashier/dashboard';
     case 'customer': return '/customer/dashboard';
     default: return '/account';

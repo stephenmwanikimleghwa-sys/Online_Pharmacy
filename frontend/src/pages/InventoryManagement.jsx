@@ -9,11 +9,13 @@ import StockLogsModal from '../components/StockLogsModal';
 import SupplierList from './inventory/SupplierList';
 import BatchList from './inventory/BatchList';
 import StockIntakeLog from './StockIntakeLog';
+import BranchTransfers from './inventory/BranchTransfers';
 
 const InventoryManagement = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('inventory');
   const [inventory, setInventory] = useState([]);
+  const [totalInventoryItems, setTotalInventoryItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -49,14 +51,16 @@ const InventoryManagement = () => {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const response = await inventoryService.getInventory();
+      const response = await inventoryService.getInventory({ per_page: 1000 });
       const data = response.data || {};
       const list = Array.isArray(data) ? data : (data.products || data.results || []);
       setInventory(Array.isArray(list) ? list : []);
+      setTotalInventoryItems(data.totalItems || list.length);
     } catch (error) {
       console.error('Error fetching inventory:', error);
       toast.error('Failed to load inventory.');
       setInventory([]);
+      setTotalInventoryItems(0);
     } finally {
       setLoading(false);
     }
@@ -116,7 +120,8 @@ const InventoryManagement = () => {
             { id: 'inventory', label: 'Stock list' },
             { id: 'suppliers', label: 'Suppliers' },
             { id: 'batches', label: 'Batches' },
-            { id: 'intake', label: 'Stock received' }
+            { id: 'intake', label: 'Stock received' },
+            { id: 'transfers', label: 'Transfers' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -138,6 +143,8 @@ const InventoryManagement = () => {
         <div className="animate-fade-in"><BatchList /></div>
       ) : activeTab === 'intake' ? (
         <div className="animate-fade-in"><StockIntakeLog /></div>
+      ) : activeTab === 'transfers' ? (
+        <div className="animate-fade-in"><BranchTransfers /></div>
       ) : (
         <div className="animate-fade-in">
           {/* Filters and Search Bento Section */}
@@ -208,7 +215,7 @@ const InventoryManagement = () => {
 
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-field border border-border hover:bg-white/50 transition-all group/stat">
                   <span className="text-muted text-xs font-bold uppercase tracking-widest">Total items</span>
-                  <span className="font-display font-bold text-2xl group-hover:scale-110 transition-transform" style={{ color: 'var(--text-primary)' }}>{inventory.length}</span>
+                  <span className="font-display font-bold text-2xl group-hover:scale-110 transition-transform" style={{ color: 'var(--text-primary)' }}>{totalInventoryItems}</span>
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all group/stat">
                   <span className="text-rose-600 text-xs font-bold uppercase tracking-widest">Need restock</span>

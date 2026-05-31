@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
 import { inventoryService } from '../services/inventoryService';
+import { getProductUnitLabel } from '../utils/displayHelpers';
 
 const DispensePrescription = () => {
   const { id } = useParams();
@@ -194,7 +195,7 @@ const DispensePrescription = () => {
                       </div>
                       <p className="text-sm font-medium mb-4 flex items-center gap-4" style={{color:'var(--text-secondary)'}}>
                         <span className="flex items-center gap-1.5"><svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.638.319a4 4 0 01-2.154.493H8.5a4 4 0 01-4-4V7a4 4 0 014-4h2a4 4 0 011.929.5L13 3.5a2 2 0 011 1.732V9a2 2 0 01-2 2h-1" /></svg> Dosage: {medicine.dosage}</span>
-                        <span className="flex items-center gap-1.5"><svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg> Req: {medicine.quantity} units</span>
+                        <span className="flex items-center gap-1.5"><svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg> Req: {medicine.quantity} {getProductUnitLabel(medicine, medicine.quantity)}</span>
                       </p>
                       {medicine.instructions && (
                         <div className="p-4 rounded-xl border text-xs font-medium italic" style={{background:'var(--bg-field)', borderColor:'var(--border-primary)', color:'var(--text-secondary)'}}>
@@ -207,7 +208,7 @@ const DispensePrescription = () => {
                       <div className="text-right">
                         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{color:'var(--text-secondary)'}}>Available Ledger</p>
                         <p className={`text-2xl font-display font-bold ${isAvailable ? 'text-slate-900' : 'text-rose-600'}`}>
-                          {medicineStatus.currentStock || 0} <span className="text-sm font-medium text-slate-400">units</span>
+                          {medicineStatus.currentStock || 0} <span className="text-sm font-medium text-slate-400">{getProductUnitLabel(medicine, medicineStatus.currentStock || 0)}</span>
                         </p>
                       </div>
 

@@ -92,6 +92,7 @@ urlpatterns += [
     path("api/clinical/", include("clinical.urls")),
     # path("api/dispensing-logs/", include("dispensing_logs.urls")), # Deprecated in favor of products.StockLog
     path("api/reports/", include("reports.urls")),
+    path("api/dashboard/", include("dashboard.urls")),
 ]
 
 # Serve static and media files in development

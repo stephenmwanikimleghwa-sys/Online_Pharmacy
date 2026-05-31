@@ -20,7 +20,11 @@ from users.serializers import (
 )
 from users.models import User, RoleChoices
 from users.permissions import IsAdminUser
-from rest_framework_simplejwt.tokens import RefreshToken
+from users.branch_auth import (
+    issue_tokens,
+    login_user_payload,
+    resolve_branch_session,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,14 +45,22 @@ class UserLoginView(APIView):
             serializer = UserLoginSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.validated_data["user"]
-                # Optimize: prefetch pharmacy to avoid N+1 query
-                user = User.objects.select_related('pharmacy').get(pk=user.pk)
-                refresh = RefreshToken.for_user(user)
+                user = User.objects.select_related("pharmacy", "branch").get(pk=user.pk)
+                session = resolve_branch_session(user)
+                active_branch_id = (
+                    session["active_branch"]["id"] if session["active_branch"] else None
+                )
+                tokens = issue_tokens(user, active_branch_id=active_branch_id)
                 return Response(
                     {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                        "user": UserProfileSerializer(user).data,
+                        "user": login_user_payload(user),
+                        "allowed_branches": session["allowed_branches"],
+                        "requires_branch_selection": session["requires_branch_selection"],
+                        "active_branch": session["active_branch"],
+                        "tokens": tokens,
+                        # Legacy flat keys for older clients
+                        "access": tokens["access"],
+                        "refresh": tokens["refresh"],
                     },
                     status=status.HTTP_200_OK,
                 )
@@ -140,8 +152,20 @@ def profile(request):
     Get or update the authenticated user's profile.
     """
     if request.method == "GET":
-        serializer = UserProfileSerializer(request.user)
-        return Response(serializer.data)
+        user = User.objects.select_related("pharmacy", "branch").get(pk=request.user.pk)
+        active_branch_id = None
+        if getattr(request, "active_branch", None):
+            active_branch_id = request.active_branch.id
+        session = resolve_branch_session(user, active_branch_id=active_branch_id)
+        profile_data = UserProfileSerializer(user).data
+        profile_data.update(
+            {
+                "allowed_branches": session["allowed_branches"],
+                "requires_branch_selection": session["requires_branch_selection"],
+                "active_branch": session["active_branch"],
+            }
+        )
+        return Response(profile_data)
     elif request.method == "PATCH":
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():

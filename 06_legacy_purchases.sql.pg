@@ -1,0 +1,37 @@
+CREATE TABLE legacy_purchases (
+  company varchar(255) DEFAULT NULL,
+  id integer NOT NULL ,
+  name varchar(200) DEFAULT NULL,
+  description varchar(100) DEFAULT NULL,
+  expirydate date DEFAULT NULL,
+  numofunitsbought double precision DEFAULT NULL,
+  costperunit double precision DEFAULT NULL,
+  sellingprice double precision DEFAULT NULL,
+  systemdate varchar(50) DEFAULT NULL,
+  addedby varchar(50) DEFAULT NULL,
+  receiptno varchar(20) DEFAULT NULL,
+  systemtime varchar(50) DEFAULT NULL,
+  supplier varchar(254) DEFAULT NULL,
+  paymentmode varchar(20) DEFAULT NULL,
+  wholesaleprice double precision DEFAULT NULL,
+  paymentstatus varchar(30) DEFAULT NULL,
+  commitstatus varchar(20) DEFAULT NULL,
+  purchase_qty double precision DEFAULT NULL,
+  department varchar(255) NOT NULL,
+  TRANSCOUNTY_MAIN double precision NOT NULL,
+  TRANSCOUNTY_ANNEX double precision NOT NULL,
+  PEAKFARM double precision NOT NULL,
+  MAIN_BRANCH double precision DEFAULT NULL,
+  ANNEX double precision DEFAULT NULL,
+  TOGETHER_MAIN double precision DEFAULT NULL,
+  HIGHWAY_BRANCH double precision DEFAULT NULL,
+  KITALE_BRANCH double precision DEFAULT NULL,
+  KIPKORGOT double precision DEFAULT NULL,
+  Teleview double precision DEFAULT NULL,
+  MainBranch double precision DEFAULT NULL,
+  MAIN double precision NOT NULL,
+  PRIMARY KEY (id)
+) ;
+--
+-- Dumping data for table purchases
+--

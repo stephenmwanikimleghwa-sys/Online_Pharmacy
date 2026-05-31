@@ -16,4 +16,5 @@ urlpatterns = [
     # Keep existing function-based views
     path("search/", views.search_products, name="search"),
     path("my-products/", views.my_products, name="my_products"),
+    path("pricing-summary/", views.pricing_summary, name="pricing_summary"),
 ]

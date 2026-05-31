@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from users.active_branch import get_active_branch, require_active_branch
 from django.db.models import Q, Sum
 from django.utils import timezone
 from ..models.stock_intake import StockIntake
@@ -70,10 +71,12 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                 {'detail': 'Only admins and pharmacists can record stock intake.'},
                 status=status.HTTP_403_FORBIDDEN
             )
+        denied = require_active_branch(request)
+        if denied:
+            return denied
+        branch = get_active_branch(request)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            # Stamp the branch from the user's assigned branch if not provided
-            branch = request.user.branch
             serializer.save(received_by=request.user, branch=branch)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -103,9 +106,14 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
         from products.models import Product, PricingTier, BranchStock, StockLog
         from inventory.models.supplier import Supplier, SupplierCreditTransaction
         
+        denied = require_active_branch(request)
+        if denied:
+            return denied
+        active_branch = get_active_branch(request)
+
         data = request.data
         supplier_id = data.get('supplier_id')
-        branch_id = data.get('branch_id')
+        branch_id = data.get('branch_id') or (active_branch.id if active_branch else None)
         invoice_number = data.get('invoice_number', '')
         payment_status = data.get('payment_status', 'PAID')
         products_data = data.get('products', [])

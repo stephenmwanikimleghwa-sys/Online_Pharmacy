@@ -1,0 +1,26 @@
+CREATE TABLE unitsofmeasure (
+  serialnumber integer NOT NULL ,
+  company varchar(255) DEFAULT NULL,
+  code varchar(100) NOT NULL DEFAULT '',
+  name varchar(254) NOT NULL DEFAULT '',
+  formulation varchar(255) DEFAULT NULL,
+  minimumlevel double precision DEFAULT NULL,
+  normalbp double precision DEFAULT NULL,
+  sellingprice double precision DEFAULT NULL,
+  wholesaleprice double precision DEFAULT NULL,
+  msp double precision DEFAULT NULL,
+  description varchar(150) DEFAULT NULL,
+  expirydate varchar(30) DEFAULT NULL,
+  location varchar(100) DEFAULT NULL,
+  department varchar(20) DEFAULT NULL,
+  shelfno varchar(100) DEFAULT NULL,
+  TRANSCOUNTY_MAIN double precision DEFAULT NULL,
+  TRANSCOUNTY_ANNEX double precision DEFAULT NULL,
+  PEAKFARM double precision DEFAULT NULL,
+  vat_obligation varchar(100) DEFAULT NULL,
+  online_synch varchar(12) DEFAULT NULL,
+  PRIMARY KEY (serialnumber)
+) ;
+--
+-- Dumping data for table unitsofmeasure
+--

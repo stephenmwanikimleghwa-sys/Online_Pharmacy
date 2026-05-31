@@ -21,12 +21,13 @@ class BranchSerializer(serializers.ModelSerializer):
     """Full serializer for Branch — used for CRUD and admin views."""
     pharmacy_name = serializers.CharField(source='pharmacy.name', read_only=True)
     staff_count = serializers.SerializerMethodField()
+    type = serializers.CharField(source='branch_type', read_only=True)
 
     class Meta:
         model = Branch
         fields = [
-            'id', 'pharmacy', 'pharmacy_name', 'name', 'address',
-            'contact_phone', 'license_number', 'is_active',
+            'id', 'pharmacy', 'pharmacy_name', 'name', 'branch_type', 'type',
+            'address', 'contact_phone', 'license_number', 'is_active',
             'is_headquarters', 'staff_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at', 'pharmacy_name', 'staff_count']
@@ -37,9 +38,11 @@ class BranchSerializer(serializers.ModelSerializer):
 
 class BranchMiniSerializer(serializers.ModelSerializer):
     """Compact branch representation embedded inside user profiles."""
+    type = serializers.CharField(source='branch_type', read_only=True)
+
     class Meta:
         model = Branch
-        fields = ['id', 'name', 'is_headquarters']
+        fields = ['id', 'name', 'is_headquarters', 'type']
 
 
 class PharmacySerializer(serializers.ModelSerializer):

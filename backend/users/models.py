@@ -31,6 +31,11 @@ class Pharmacy(models.Model):
         return self.name
 
 
+class BranchTypeChoices(models.TextChoices):
+    CHEMIST = "CHEMIST", "Chemist"
+    AGROVET = "AGROVET", "Agrovet"
+
+
 class Branch(models.Model):
     """
     A physical branch of a pharmacy (e.g., 'CBD Branch', 'Westlands Branch').
@@ -44,6 +49,12 @@ class Branch(models.Model):
         verbose_name='Pharmacy'
     )
     name = models.CharField(max_length=255, verbose_name='Branch Name')  # e.g. "CBD Branch"
+    branch_type = models.CharField(
+        max_length=20,
+        choices=BranchTypeChoices.choices,
+        default=BranchTypeChoices.CHEMIST,
+        verbose_name='Branch Type',
+    )
     address = models.TextField(verbose_name='Address')
     contact_phone = models.CharField(max_length=20, verbose_name='Contact Phone')
     license_number = models.CharField(

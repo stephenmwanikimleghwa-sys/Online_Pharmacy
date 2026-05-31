@@ -117,6 +117,7 @@ const PricingManagement = () => {
   const [filterMissing, setFilterMissing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [unpricedCount, setUnpricedCount] = useState(0);
   const PER_PAGE = 25;
 
   // ── toast helper ──────────────────────────────────────────────
@@ -140,7 +141,17 @@ const PricingManagement = () => {
 
       const productList =
         productsRes.data?.results ?? (Array.isArray(productsRes.data) ? productsRes.data : []);
-      setTotalCount(productsRes.data?.count ?? productList.length);
+      // Attempt to fetch global pricing summary (total/priced/unpriced)
+      try {
+        const summaryRes = await api.get('/products/pricing-summary/');
+        const summary = summaryRes.data?.data ?? summaryRes.data;
+        setTotalCount(summary.total_products ?? (productsRes.data?.count ?? productList.length));
+        setUnpricedCount(summary.unpriced_count ?? 0);
+      } catch (err) {
+        // Fallback to page-local count when summary endpoint is unavailable
+        setTotalCount(productsRes.data?.count ?? productList.length);
+        setUnpricedCount(0);
+      }
       setProducts(productList);
 
       // index tiers by product id
@@ -192,7 +203,8 @@ const PricingManagement = () => {
     ? products.filter((p) => !tiers[p.id])
     : products;
 
-  const missingCount = products.filter((p) => !tiers[p.id]).length;
+  // Use global unpriced count for the header badge; fall back to local page missing if unavailable
+  const missingCount = unpricedCount || products.filter((p) => !tiers[p.id]).length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PER_PAGE));
 
   // ─── render ──────────────────────────────────────────────────
