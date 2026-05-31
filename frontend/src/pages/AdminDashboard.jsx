@@ -169,8 +169,11 @@ const AdminDashboard = () => {
           </h2>
           {activeBranch ? (
             <>
-              <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
-                — {activeBranch.name}
+              <span
+                className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                title="Layer 2 is scoped to this branch. Layer 1 above shows all branches."
+              >
+                {activeBranch.name}
               </span>
               <Link
                 to="/branch/select"

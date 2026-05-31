@@ -143,7 +143,13 @@ function AppLayout() {
                 />
                 <Route
                   path="/branch/dashboard"
-                  element={<ProtectedRoute element={PharmacistDashboard} allowedRoles={['pharmacist']} />}
+                  element={
+                    <ProtectedRoute
+                      element={PharmacistDashboard}
+                      allowedRoles={['pharmacist']}
+                      requiresActiveBranch
+                    />
+                  }
                 />
                 <Route
                   path="/prescriptions/add"

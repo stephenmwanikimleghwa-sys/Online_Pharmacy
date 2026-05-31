@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, BranchInfo } from "../context/AuthContext";
-import { BuildingOffice2Icon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
-
-const formatBranchType = (type?: string): string => {
-  if (!type) return "Chemist";
-  if (type === "AGROVET") return "Agrovet";
-  if (type === "CHEMIST") return "Chemist";
-  return type.charAt(0) + type.slice(1).toLowerCase();
-};
+import { getBranchIcon, getBranchSubtitle } from "../utils/branchDisplay";
 
 const timeGreeting = (): string => {
   const hour = new Date().getHours();
@@ -28,6 +21,10 @@ const BranchSelectionScreen: React.FC = () => {
     if (loading) return;
     if (!user) {
       navigate("/login", { replace: true });
+      return;
+    }
+    if (user.role !== "admin" && !user.is_admin) {
+      navigate("/branch/dashboard", { replace: true });
       return;
     }
     if (!requiresBranchSelection) {
@@ -61,9 +58,9 @@ const BranchSelectionScreen: React.FC = () => {
       className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
       style={{ background: "var(--bg-gradient)", backgroundAttachment: "fixed" }}
     >
-      <div className="w-full max-w-2xl">
-        <header className="text-center mb-10">
-          <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
+      <div className="w-full max-w-lg">
+        <header className="text-center mb-10 px-2">
+          <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-3">
             {timeGreeting()}, {firstName}
           </h1>
           <p className="text-base text-gray-600 dark:text-gray-300">
@@ -71,41 +68,40 @@ const BranchSelectionScreen: React.FC = () => {
           </p>
         </header>
 
-        <div className="grid gap-4 sm:grid-cols-1">
+        <div className="grid gap-4">
           {allowedBranches.map((branch) => {
             const busy = selectingId === branch.id;
+            const icon = getBranchIcon(branch);
+            const subtitle = getBranchSubtitle(branch);
+
             return (
               <button
                 key={branch.id}
                 type="button"
                 disabled={busy || selectingId !== null}
                 onClick={() => handleSelect(branch)}
-                className="group w-full text-left rounded-2xl p-6 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-60"
+                className="group w-full text-left rounded-2xl px-6 py-5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-60 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600"
                 style={{
                   background: "var(--glass-bg)",
                   border: "1.5px solid var(--border-primary)",
                   backdropFilter: "blur(16px)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
                 }}
               >
                 <div className="flex items-center gap-4">
-                  <div
-                    className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ background: "var(--btn-gradient)" }}
-                  >
-                    <BuildingOffice2Icon className="w-6 h-6 text-white" />
-                  </div>
+                  <span className="text-2xl shrink-0" aria-hidden>
+                    {icon}
+                  </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
                       {branch.name}
                     </p>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">
-                      {formatBranchType(branch.type)}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                      {subtitle}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold text-primary-600 dark:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {busy ? "…" : "Select →"}
-                  </span>
+                  {busy && (
+                    <span className="text-sm font-medium text-indigo-600">Setting…</span>
+                  )}
                 </div>
               </button>
             );
@@ -118,7 +114,7 @@ const BranchSelectionScreen: React.FC = () => {
           </p>
         )}
 
-        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-10 max-w-md mx-auto leading-relaxed">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-10 leading-relaxed px-4">
           You can switch branches anytime from the top navigation bar
         </p>
       </div>

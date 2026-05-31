@@ -7,6 +7,20 @@ from typing import Any
 
 from users.models import Branch, RoleChoices, User
 
+# Shown on branch selection cards when address is not set in DB
+BRANCH_SUBTITLE_DEFAULTS: dict[str, str] = {
+    "TRANSCOUNTY_MAIN": "Kitale Town",
+    "TRANSCOUNTY_ANNEX": "Kitale Annex",
+    "PEAKFARM": "Agrovet Branch",
+}
+
+
+def branch_subtitle(branch: Branch) -> str:
+    address = (branch.address or "").strip()
+    if address and address not in ("-", "N/A"):
+        return address[:125]
+    return BRANCH_SUBTITLE_DEFAULTS.get(branch.name, branch.get_branch_type_display())
+
 
 def get_allowed_branches(user: User):
     """Branches this user may operate under."""
@@ -20,11 +34,14 @@ def get_allowed_branches(user: User):
     return qs.none()
 
 
-def branch_to_dict(branch: Branch, *, include_type: bool = False) -> dict[str, Any]:
-    data: dict[str, Any] = {"id": branch.id, "name": branch.name}
-    if include_type:
-        data["type"] = branch.branch_type
-    return data
+def branch_to_dict(branch: Branch, *, include_type: bool = True) -> dict[str, Any]:
+    return {
+        "id": branch.id,
+        "name": branch.name,
+        "type": branch.branch_type,
+        "subtitle": branch_subtitle(branch),
+        "is_headquarters": branch.is_headquarters,
+    }
 
 
 def resolve_branch_session(user: User, active_branch_id: int | None = None) -> dict[str, Any]:
@@ -34,6 +51,13 @@ def resolve_branch_session(user: User, active_branch_id: int | None = None) -> d
     """
     allowed_qs = get_allowed_branches(user)
     allowed_branches = [branch_to_dict(b, include_type=True) for b in allowed_qs]
+    # Enrich active_branch entries with full card fields when resolved from id only
+    def _enrich(branch_data: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not branch_data:
+            return None
+        full = next((b for b in allowed_branches if b["id"] == branch_data["id"]), None)
+        return full if full else branch_data
+
     count = len(allowed_branches)
 
     home_branch = None
@@ -55,7 +79,7 @@ def resolve_branch_session(user: User, active_branch_id: int | None = None) -> d
                 active_branch = match
                 requires_branch_selection = False
     else:
-        # Staff with access to multiple branches (unusual) must pick one.
+        # Staff with multiple allowed branches (unusual) must pick one
         requires_branch_selection = True
         if active_branch_id:
             match = next((b for b in allowed_branches if b["id"] == active_branch_id), None)
@@ -66,7 +90,7 @@ def resolve_branch_session(user: User, active_branch_id: int | None = None) -> d
     return {
         "allowed_branches": allowed_branches,
         "requires_branch_selection": requires_branch_selection,
-        "active_branch": active_branch,
+        "active_branch": _enrich(active_branch),
         "home_branch": home_branch,
     }
 

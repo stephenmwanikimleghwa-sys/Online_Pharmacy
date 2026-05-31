@@ -29,6 +29,7 @@ export interface BranchInfo {
   id: number;
   name: string;
   type?: string;
+  subtitle?: string;
   is_headquarters?: boolean;
   is_active?: boolean;
 }

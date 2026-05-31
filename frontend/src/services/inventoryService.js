@@ -4,8 +4,8 @@ import api from './api';
 
 export const inventoryService = {
   // Get inventory summary (total products, low stock, out of stock)
-  getInventorySummary: () => {
-    return api.get("/inventory/summary/");
+  getInventorySummary: (params = {}) => {
+    return api.get("/inventory/summary/", { params });
   },
 
   // Get all inventory items with pagination and filtering

@@ -8,6 +8,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
+from users.active_branch import get_active_branch
 from products.models import Product, StockLog, BranchStock
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
@@ -21,8 +22,11 @@ def inventory_summary(request):
     branch_param = request.query_params.get('branch')
     
     qs = BranchStock.objects.filter(product__is_active=True)
+    active = get_active_branch(request)
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
+    elif active:
+        qs = qs.filter(branch=active)
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
         

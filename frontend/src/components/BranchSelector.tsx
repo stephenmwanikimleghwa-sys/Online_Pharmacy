@@ -147,8 +147,9 @@ const BranchSelector: React.FC = () => {
             <h3 id="branch-switch-title" className="text-lg font-bold text-gray-900 dark:text-white mb-2">
               Switch to {pendingBranch.name}?
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-              All transactions will be recorded under this branch.
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+              Your active branch will change and all transactions will be recorded under{" "}
+              <strong>{pendingBranch.name}</strong>.
             </p>
             <div className="flex gap-3 justify-end">
               <button

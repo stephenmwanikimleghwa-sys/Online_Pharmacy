@@ -5,6 +5,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import WelcomeBanner from "../components/WelcomeBanner";
 import inventoryService from "../services/inventoryService";
 import { useAuth } from "../context/AuthContext";
+import { useBranchParam } from "../hooks/useBranchParam";
 import PrescriptionCard from "../components/PrescriptionCard";
 import InventorySummaryCard from "../components/InventorySummaryCard";
 import QuickActions from "../components/QuickActions";
@@ -16,12 +17,27 @@ const PharmacistDashboard = () => {
   const [dispensedPrescriptions, setDispensedPrescriptions] = useState([]);
   const [inventorySummary, setInventorySummary] = useState({});
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, activeBranch, requiresBranchSelection, loading: authLoading } = useAuth();
+  const { branchParams } = useBranchParam();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+    if (user.role === "admin") {
+      navigate("/admin/dashboard", { replace: true });
+      return;
+    }
+    if (requiresBranchSelection) {
+      navigate("/branch/select", { replace: true });
+      return;
+    }
+    if (!activeBranch?.id && user.role === "pharmacist") {
+      navigate("/login", { replace: true });
+      return;
+    }
     fetchDashboardData();
-  }, []);
+  }, [user, authLoading, activeBranch?.id, requiresBranchSelection, navigate]);
 
   const fetchDashboardData = async () => {
     try {
@@ -29,7 +45,7 @@ const PharmacistDashboard = () => {
       const [pending, dispensed, inventory] = await Promise.all([
         prescriptionService.getPendingPrescriptions(),
         prescriptionService.getDispensedPrescriptions(),
-        inventoryService.getInventorySummary(),
+        inventoryService.getInventorySummary(branchParams),
       ]);
 
       // Normalize different API response shapes: some endpoints return axios responses
@@ -76,7 +92,7 @@ const PharmacistDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-4">
         <LoadingSpinner size="lg" />
