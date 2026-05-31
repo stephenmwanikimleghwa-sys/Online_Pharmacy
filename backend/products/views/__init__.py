@@ -4,6 +4,7 @@ from .products import (
     ProductRetrieveUpdateDestroyView,
     search_products,
     my_products,
+    pricing_summary,
 )
 from .pricing_tier import PricingTierViewSet
 
@@ -13,5 +14,6 @@ __all__ = [
     'ProductRetrieveUpdateDestroyView',
     'search_products',
     'my_products',
+    'pricing_summary',
     'PricingTierViewSet',
 ]
