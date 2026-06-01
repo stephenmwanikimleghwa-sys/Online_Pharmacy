@@ -13,6 +13,7 @@ from users.branch_auth import (
     user_may_access_branch,
 )
 from users.models import Branch, StaffActivityLog
+from config.api_responses import ApiErrorCode, api_error, api_success
 
 
 def _client_ip(request):
@@ -48,18 +49,21 @@ class SwitchBranchView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not user_may_access_branch(request.user, branch_id):
-            return Response(
-                {"detail": "You do not have access to this branch."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         try:
             branch = Branch.objects.get(pk=branch_id, is_active=True)
         except Branch.DoesNotExist:
-            return Response(
-                {"detail": "Branch not found."},
-                status=status.HTTP_404_NOT_FOUND,
+            return api_error(
+                ApiErrorCode.BRANCH_ACCESS_DENIED,
+                "That branch could not be found.",
+                http_status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not user_may_access_branch(request.user, branch_id):
+            return api_error(
+                ApiErrorCode.BRANCH_ACCESS_DENIED,
+                f"You are not assigned to {branch.name}. Ask an admin to grant you access.",
+                details={"branch_name": branch.name, "branch_id": branch_id},
+                http_status=status.HTTP_403_FORBIDDEN,
             )
 
         tokens = issue_tokens(request.user, active_branch_id=branch.id)
@@ -72,11 +76,16 @@ class SwitchBranchView(APIView):
             ip_address=_client_ip(request),
         )
 
-        return Response(
-            {
+        return api_success(
+            f"You are now working at {branch.name}.",
+            data={
                 "active_branch": branch_to_dict(branch, include_type=True),
                 "requires_branch_selection": session["requires_branch_selection"],
                 "tokens": tokens,
             },
-            status=status.HTTP_200_OK,
+            extra={
+                "active_branch": branch_to_dict(branch, include_type=True),
+                "requires_branch_selection": session["requires_branch_selection"],
+                "tokens": tokens,
+            },
         )

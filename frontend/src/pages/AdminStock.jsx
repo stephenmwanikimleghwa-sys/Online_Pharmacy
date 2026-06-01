@@ -5,8 +5,11 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { AddMedicineModal } from '../components/AddMedicineModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
+import { useNotification } from '../context/NotificationContext';
+import useSlowLoadingWarning from '../hooks/useSlowLoadingWarning';
 
 const AdminStock = () => {
+	const { notify } = useNotification();
 	const navigate = useNavigate();
 	const [items, setItems] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -86,13 +89,7 @@ const AdminStock = () => {
 	const [adjustQty, setAdjustQty] = useState(0);
 	const [adjustReason, setAdjustReason] = useState('');
 
-	// Toast notifications
-	const [toast, setToast] = useState(null); // {message, type:'success'|'error'}
-
-	const showToast = (message, type = 'success', timeout = 4000) => {
-		setToast({ message, type });
-		setTimeout(() => setToast(null), timeout);
-	};
+	useSlowLoadingWarning(loading);
 
 	// Categories list (derived from items)
 	const [categories, setCategories] = useState([]);
@@ -356,13 +353,13 @@ const AdminStock = () => {
 					console.log('Product created:', response.data);
 					// Replace optimistic item with server response immediately
 					setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
-					showToast('Product added', 'success');
+					notify.success('Product Added', 'The product has been added to the system.');
 					// optionally fetch in background to refresh pagination/indices
 					fetchItems();
 				} catch (postErr) {
 					// Remove optimistic item on failure and show error toast
 					setItems(prev => prev.filter(i => i.id !== optimisticId));
-					showToast('Failed to add product', 'error');
+					notify.error('Add Failed', 'The product could not be added. Please try again.');
 					throw postErr;
 				}
 			}
@@ -643,14 +640,6 @@ const AdminStock = () => {
 			)}
 
 
-			{/* Toast */}
-			{
-				toast && (
-					<div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-2xl shadow-premium text-sm font-semibold animate-slide-up ${toast.type === 'success' ? 'bg-white border border-secondary-100 text-secondary-700' : 'bg-white border border-red-100 text-red-600'}`}>
-						{toast.message}
-					</div>
-				)
-			}
 			<AddMedicineModal
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}

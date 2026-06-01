@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import inventoryService from '../../services/inventoryService';
 import SupplierProfileModal from '../../components/SupplierProfileModal';
 import { MagnifyingGlassIcon, TruckIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError } from '../../utils/notifyApiError';
 
 const SupplierList = () => {
+  const { notify } = useNotification();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,7 +81,7 @@ const SupplierList = () => {
           setSelectedSupplier({...selectedSupplier, ...formData});
       }
     } catch (err) {
-      alert('Failed to save supplier');
+      notify.error('Save Failed', 'The supplier could not be saved. Please try again.');
       console.error(err);
     }
   };
@@ -104,7 +107,7 @@ const SupplierList = () => {
           setSelectedSupplier(null);
         }
       } catch (err) {
-        alert('Failed to delete supplier');
+        notify.error('Delete Failed', 'The supplier could not be removed.');
         console.error(err);
       }
     }

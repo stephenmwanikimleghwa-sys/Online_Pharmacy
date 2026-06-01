@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
+import { useNotification } from '../context/NotificationContext';
 
 const ValidatePrescription = () => {
+  const { notify } = useNotification();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -55,7 +57,7 @@ const ValidatePrescription = () => {
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a reason for rejection');
+      notify.warning('Reason Required', 'Please provide a reason for rejecting this prescription.');
       return;
     }
 

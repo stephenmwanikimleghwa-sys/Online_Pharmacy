@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
 import ProductCard from '../components/ProductCard';
 import { Breadcrumb, SearchBar, ProductCardSkeleton, TableSkeleton } from '../components';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Products = () => {
+  const { notify } = useNotification();
   const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuth();
   const { addToCart } = useCart();
@@ -111,7 +112,7 @@ const Products = () => {
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    toast.success(`${product.name} added to cart!`);
+    notify.info('Added to Cart', `${product.name} was added to your cart.`);
   };
 
   const handleSearch = (query) => {

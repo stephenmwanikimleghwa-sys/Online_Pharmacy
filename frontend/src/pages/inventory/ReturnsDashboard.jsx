@@ -4,9 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import returnService from '../../services/returnService';
 import api from '../../services/api';
 import { ArrowUturnLeftIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { useNotification } from '../../context/NotificationContext';
 
 const ReturnsDashboard = () => {
+  const { notify } = useNotification();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showNewModal, setShowNewModal] = useState(false);
@@ -37,7 +38,7 @@ const ReturnsDashboard = () => {
       }));
       setReturnItems(items);
     } catch(err) {
-      toast.error('Dispensation not found');
+      notify.error('Not Found', 'That sale or dispensation could not be found.');
       setDispensation(null);
     }
   };
@@ -63,9 +64,9 @@ const ReturnsDashboard = () => {
       setShowNewModal(false);
       setDispensation(null);
       setDispensationId('');
-      toast.success('Return initiated and pending approval');
+      notify.success('Return Submitted', 'The return request is pending approval.');
     },
-    onError: () => toast.error('Failed to initiate return')
+    onError: () => notify.error('Return Failed', 'Could not initiate this return.'),
   });
 
   const handleCreate = () => {
@@ -76,8 +77,14 @@ const ReturnsDashboard = () => {
       condition: it.condition
     }));
 
-    if (itemsToReturn.length === 0) return toast.error('Select at least one item to return');
-    if (!reason) return toast.error('Please provide a reason');
+    if (itemsToReturn.length === 0) {
+      notify.warning('No Items Selected', 'Select at least one item to return.');
+      return;
+    }
+    if (!reason) {
+      notify.warning('Reason Required', 'Please provide a reason for this return.');
+      return;
+    }
 
     createMutation.mutate({
       dispensation_id: dispensation.id,
@@ -90,7 +97,7 @@ const ReturnsDashboard = () => {
     mutationFn: returnService.approveReturn,
     onSuccess: () => {
       queryClient.invalidateQueries(['returns']);
-      toast.success('Return approved');
+      notify.success('Return Approved', 'Stock and records have been updated.');
     }
   });
 
@@ -98,7 +105,7 @@ const ReturnsDashboard = () => {
     mutationFn: returnService.rejectReturn,
     onSuccess: () => {
       queryClient.invalidateQueries(['returns']);
-      toast.success('Return rejected');
+      notify.info('Return Rejected', 'The return request was rejected.');
     }
   });
 

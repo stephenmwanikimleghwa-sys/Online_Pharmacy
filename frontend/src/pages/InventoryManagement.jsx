@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
+import useSlowLoadingWarning from '../hooks/useSlowLoadingWarning';
 import { useAuth } from '../context/AuthContext';
 import inventoryService from '../services/inventoryService';
 import InventoryItemCard from '../components/InventoryItemCard';
@@ -12,11 +14,13 @@ import StockIntakeLog from './StockIntakeLog';
 import BranchTransfers from './inventory/BranchTransfers';
 
 const InventoryManagement = () => {
+  const { notify } = useNotification();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('inventory');
   const [inventory, setInventory] = useState([]);
   const [totalInventoryItems, setTotalInventoryItems] = useState(0);
   const [loading, setLoading] = useState(true);
+  useSlowLoadingWarning(loading);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -58,7 +62,7 @@ const InventoryManagement = () => {
       setTotalInventoryItems(data.totalItems || list.length);
     } catch (error) {
       console.error('Error fetching inventory:', error);
-      toast.error('Failed to load inventory.');
+      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please refresh the page.');
       setInventory([]);
       setTotalInventoryItems(0);
     } finally {
@@ -69,11 +73,10 @@ const InventoryManagement = () => {
   const handleRestock = async (itemId, quantity, reason) => {
     try {
       await inventoryService.restockInventory(itemId, quantity, reason);
-      toast.success('Inventory restocked successfully!');
-      fetchInventory(); // Refresh list
+      notify.success('Stock Updated', 'Inventory levels have been updated for this product.');
+      fetchInventory();
     } catch (error) {
-      console.error('Error restocking item:', error);
-      toast.error('Failed to restock item.');
+      notifyApiError(notify, error, 'Restock Failed', 'Could not update stock for this item.');
     }
   };
 

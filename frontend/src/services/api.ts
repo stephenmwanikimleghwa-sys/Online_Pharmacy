@@ -3,10 +3,14 @@ import axios, {
   AxiosInstance,
   InternalAxiosRequestConfig,
   AxiosResponse,
-  AxiosError
+  AxiosError,
 } from "axios";
 import { resolveApiBaseUrl } from "../config/apiBaseUrl";
-import { notifyError, getFriendlyAxiosErrorMessage } from "./notification";
+import { notifyError } from "./notification";
+import {
+  isAuthFlowPath,
+  mapAxiosErrorToDisplay,
+} from "./apiErrors";
 
 const API_BASE_URL = resolveApiBaseUrl();
 
@@ -14,69 +18,88 @@ if (import.meta.env.PROD) {
   console.info("[API] Base URL:", API_BASE_URL);
 }
 
-// Create Axios instance
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  // Cold starts on free hosts (e.g. Render) often exceed 10s; keep a generous ceiling.
   timeout: 60000,
   validateStatus: (status: number) => status >= 200 && status < 300,
 });
 
-// Request interceptor to add JWT token to headers
+function clearSession(): void {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("active_branch");
+}
+
+function goToLogin(): void {
+  clearSession();
+  window.location.href = "/login";
+}
+
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("access_token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error: AxiosError) => {
-    return Promise.reject(error);
-  },
+  (error: AxiosError) => Promise.reject(error),
 );
 
-// Response interceptor for handling errors (e.g., token refresh or logout on 401)
 api.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
+  (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.config) {
-      console.error('[API] Request failed', {
-        message: error.message,
-        method: error.config.method,
-        url: error.config.url,
-        baseURL: error.config.baseURL,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers,
-      });
-    } else {
-      console.error('[API] Request failed without config', { message: error.message, stack: error.stack });
-    }
-
+    const config = error.config;
+    const skipToast = config?.skipGlobalErrorNotification === true;
+    const onAuthFlow = isAuthFlowPath();
     const status = error.response?.status;
-    const onAuthFlow = ["/login", "/branch/select", "/force-password-change"].some((path) =>
-      window.location.pathname.includes(path),
-    );
+
+    if (import.meta.env.DEV && config) {
+      console.error("[API] Request failed", {
+        message: error.message,
+        method: config.method,
+        url: config.url,
+        status,
+        data: error.response?.data,
+      });
+    }
 
     if (status === 401) {
       if (!onAuthFlow) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("active_branch");
-        window.location.href = "/login";
+        clearSession();
+        if (!skipToast) {
+          const display = mapAxiosErrorToDisplay(error, {
+            onLogin: goToLogin,
+            onRetry: (cfg) => {
+              void api.request(cfg);
+            },
+          });
+          if (display) {
+            notifyError(display.title, display.message, display.actionLabel, display.action);
+          }
+        }
+        if (!window.location.pathname.includes("/login")) {
+          window.location.href = "/login";
+        }
       }
       return Promise.reject(error);
     }
 
-    notifyError(getFriendlyAxiosErrorMessage(error));
+    if (!skipToast) {
+      const display = mapAxiosErrorToDisplay(error, {
+        onLogin: goToLogin,
+        onRetry: (cfg) => {
+          void api.request(cfg);
+        },
+      });
+      if (display) {
+        notifyError(display.title, display.message, display.actionLabel, display.action);
+      }
+    }
+
     return Promise.reject(error);
   },
 );

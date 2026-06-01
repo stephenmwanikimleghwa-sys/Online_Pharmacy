@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import clinicalService from '../../services/clinicalService';
-import toast from 'react-hot-toast';
+import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError } from '../../utils/notifyApiError';
 import { ArrowLeftIcon, BanknotesIcon, CheckCircleIcon, DocumentTextIcon, BeakerIcon } from '@heroicons/react/24/outline';
 
 const ConsultationWorkflow = () => {
+  const { notify } = useNotification();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -53,7 +55,7 @@ const ConsultationWorkflow = () => {
     mutationFn: (data) => clinicalService.updateConsultation(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['consultation', id]);
-      toast.success('Consultation updated');
+      notify.success('Consultation Updated', 'Your changes have been saved.');
     }
   });
 
@@ -61,10 +63,10 @@ const ConsultationWorkflow = () => {
     mutationFn: (mode) => clinicalService.billToOTC(id, mode),
     onSuccess: (data) => {
       queryClient.invalidateQueries(['consultation', id]);
-      toast.success('Billed to OTC Sales successfully!');
+      notify.success('Sent to OTC Sales', 'Items were sent to the OTC sales screen.');
       navigate(`/otc-sales`); // Redirect to OTC or leave them here
     },
-    onError: (err) => toast.error(err.response?.data?.error || 'Failed to bill')
+    onError: (err) => notifyApiError(notify, err, 'Billing Failed', 'Could not send items to OTC sales.'),
   });
 
   const handleSaveTriage = () => {

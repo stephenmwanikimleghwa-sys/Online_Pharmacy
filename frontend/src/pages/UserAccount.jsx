@@ -8,8 +8,11 @@ import {
   PencilIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { useNotification } from "../context/NotificationContext";
+import { notifyApiError } from "../utils/notifyApiError";
 
 const UserAccount = () => {
+  const { notify } = useNotification();
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -151,11 +154,11 @@ const UserAccount = () => {
                   })
                   .then(response => {
                     setProfile(response.data);
-                    alert("Profile updated successfully!");
+                    notify.success("Profile Updated", "Your account details have been saved.");
                   })
                   .catch(error => {
                     console.error("Profile update error:", error);
-                    alert(error.response?.data?.message || "Failed to update profile. Please try again.");
+                    notifyApiError(notify, error, "Update Failed", "Could not update your profile. Please try again.");
                   });
                 }}
                 className="mt-8 px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group font-bold text-xs uppercase tracking-widest"

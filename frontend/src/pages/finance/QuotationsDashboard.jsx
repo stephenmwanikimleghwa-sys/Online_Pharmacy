@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import quotationService from '../../services/quotationService';
 import { useAuth } from '../../context/AuthContext';
 import { DocumentPlusIcon, CheckCircleIcon, ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError } from '../../utils/notifyApiError';
 import BranchSelector from '../../components/BranchSelector';
 import api from '../../services/api';
 
 const CreateQuotationModal = ({ isOpen, onClose }) => {
+  const { notify } = useNotification();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [customerName, setCustomerName] = useState('');
@@ -56,15 +58,18 @@ const CreateQuotationModal = ({ isOpen, onClose }) => {
     mutationFn: quotationService.createQuotation,
     onSuccess: () => {
       queryClient.invalidateQueries(['quotations']);
-      toast.success('Quotation created successfully');
+      notify.success('Quotation Created', 'The quotation was saved successfully.');
       onClose();
     },
-    onError: () => toast.error('Failed to create quotation')
+    onError: () => notify.error('Creation Failed', 'Could not create this quotation.'),
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (items.length === 0) return toast.error('Add at least one item');
+    if (items.length === 0) {
+      notify.warning('No Items', 'Add at least one item to the quotation.');
+      return;
+    }
     createMutation.mutate({
       branch: branchId,
       customer_name: customerName,
@@ -169,6 +174,7 @@ const CreateQuotationModal = ({ isOpen, onClose }) => {
 };
 
 const QuotationsDashboard = () => {
+  const { notify } = useNotification();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const queryClient = useQueryClient();
@@ -182,10 +188,10 @@ const QuotationsDashboard = () => {
     mutationFn: (id) => quotationService.convertToSale(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['quotations']);
-      toast.success('Successfully converted to sale');
+      notify.success('Sale Complete', 'The quotation was converted to a sale.');
     },
     onError: (err) => {
-      toast.error(err.response?.data?.error || 'Failed to convert');
+      notifyApiError(notify, err, 'Conversion Failed', 'Could not convert this quotation to a sale.');
     }
   });
 

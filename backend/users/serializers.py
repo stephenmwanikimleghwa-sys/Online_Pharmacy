@@ -91,18 +91,29 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
+        from config.api_responses import ApiErrorCode
+
         username = data.get('username')
         password = data.get('password')
 
         if username and password:
             user = authenticate(username=username, password=password)
             if not user:
-                raise serializers.ValidationError("Unable to log in with provided credentials.")
+                raise serializers.ValidationError({
+                    "code": ApiErrorCode.INVALID_CREDENTIALS,
+                    "message": "The password you entered is wrong. Please try again.",
+                })
             if not user.is_active:
-                raise serializers.ValidationError("User account is disabled.")
+                raise serializers.ValidationError({
+                    "code": ApiErrorCode.ACCOUNT_INACTIVE,
+                    "message": "Your account has been deactivated. Please contact your administrator.",
+                })
             data['user'] = user
         else:
-            raise serializers.ValidationError("Must include 'username' and 'password'.")
+            raise serializers.ValidationError({
+                "code": ApiErrorCode.VALIDATION_ERROR,
+                "message": "Username and password are required.",
+            })
         return data
 
 class ChangePasswordSerializer(serializers.Serializer):

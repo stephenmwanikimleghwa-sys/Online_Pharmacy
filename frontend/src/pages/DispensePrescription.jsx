@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
 import { inventoryService } from '../services/inventoryService';
 import { getProductUnitLabel } from '../utils/displayHelpers';
+import { useNotification } from '../context/NotificationContext';
 
 const DispensePrescription = () => {
+  const { notify } = useNotification();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -75,7 +77,7 @@ const DispensePrescription = () => {
       navigate('/pharmacist/dashboard');
     } catch (error) {
       console.error('Error dispensing prescription:', error);
-      alert('Failed to dispense prescription. Please try again.');
+      notify.error('Dispense Failed', 'The prescription could not be dispensed. Please try again.');
     } finally {
       setDispensing(false);
     }

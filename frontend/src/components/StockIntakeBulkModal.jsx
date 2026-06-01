@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
+import LoadingButton from './LoadingButton';
 import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => {
+  const { notify } = useNotification();
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -99,14 +102,24 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!supplierId || !branchId || !invoiceNumber) {
-      toast.error("Please fill in Supplier, Branch, and Invoice Number.");
+    const missing = [];
+    if (!supplierId) missing.push('Supplier');
+    if (!branchId) missing.push('Branch');
+    if (!invoiceNumber) missing.push('Invoice Number');
+    if (missing.length) {
+      notify.error(
+        'Incomplete Information',
+        `Please fill in all required fields: ${missing.join(', ')}.`,
+      );
       return;
     }
 
     const validRows = rows.filter(r => r.product_id && r.quantity_received > 0);
     if (validRows.length === 0) {
-      toast.error("Please add at least one valid product with quantity > 0.");
+      notify.warning(
+        'No Products Added',
+        'Add at least one product with quantity greater than 0.',
+      );
       return;
     }
 
@@ -129,13 +142,17 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
         }))
       };
 
-      await api.post('/inventory/stock-intake/bulk/', payload);
-      toast.success("Stock intake completed successfully!");
+      const response = await api.post('/inventory/stock-intake/bulk/', payload, {
+        skipGlobalErrorNotification: true,
+      });
+      notify.success(
+        'Stock Received',
+        response.data?.message || 'Stock intake was saved successfully.',
+      );
       onSuccess();
       onClose();
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.detail || "Failed to submit stock intake.");
+      notifyApiError(notify, err, 'Stock Intake Failed', 'Could not save stock intake. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { getProductUnitLabel } from '../utils/displayHelpers';
+import { useNotification } from '../context/NotificationContext';
+import LoadingButton from './LoadingButton';
 
 const RestockModal = ({ item, onClose, onRestock }) => {
+  const { notify } = useNotification();
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -9,7 +12,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!quantity || quantity <= 0) {
-      alert('Please enter a valid quantity');
+      notify.warning('Invalid Quantity', 'Quantity must be at least 1.');
       return;
     }
 

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
+import { useNotification } from '../context/NotificationContext';
 
 const AddPrescription = () => {
+  const { notify } = useNotification();
   const [patientDetails, setPatientDetails] = useState({
     name: '',
     age: '',
@@ -85,7 +87,7 @@ const AddPrescription = () => {
       navigate('/pharmacist/dashboard');
     } catch (error) {
       console.error('Error adding prescription:', error);
-      alert('Failed to add prescription. Please try again.');
+      notify.error('Save Failed', 'The prescription could not be saved. Please try again.');
     } finally {
       setLoading(false);
     }

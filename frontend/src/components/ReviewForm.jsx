@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; // Assuming AuthContext provides token
+import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 
 const ReviewForm = ({ productId, onReviewSubmitted }) => {
+  const { notify } = useNotification();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,7 +13,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!comment.trim()) {
-      alert('Please add a comment for your review.');
+      notify.warning('Comment Required', 'Please add a comment for your review.');
       return;
     }
 
@@ -34,10 +36,10 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
       setComment('');
       setRating(5);
       onReviewSubmitted(response.data); // Callback to refresh reviews
-      alert('Review submitted successfully!');
+      notify.success('Review Submitted', 'Thank you for your feedback.');
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert('Failed to submit review. Please try again.');
+      notify.error('Submit Failed', 'Your review could not be submitted. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

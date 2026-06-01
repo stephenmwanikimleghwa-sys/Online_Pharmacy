@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
+import LoadingButton from './LoadingButton';
 import { XMarkIcon, BanknotesIcon, DocumentTextIcon, ReceiptRefundIcon } from '@heroicons/react/24/outline';
 
 const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
+  const { notify } = useNotification();
   const [loading, setLoading] = useState(true);
   const [ledgerData, setLedgerData] = useState({ debt_transactions: [], purchase_history: [] });
   const [activeTab, setActiveTab] = useState('debt'); // 'debt', 'purchases'
@@ -29,7 +32,7 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
       setLedgerData(res.data);
     } catch (err) {
       console.error("Error fetching ledger", err);
-      toast.error("Failed to load customer ledger");
+      notify.error("Could Not Load Ledger", "Customer account history could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -38,7 +41,7 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
   const handleRecordPayment = async (e) => {
     e.preventDefault();
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-      toast.error("Please enter a valid positive amount.");
+      notify.warning("Invalid Amount", "Please enter a valid positive payment amount.");
       return;
     }
 
@@ -50,7 +53,11 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
         notes: notes
       });
       
-      toast.success("Payment recorded successfully!");
+      const newBal = res.data.new_balance;
+      notify.success(
+        "Payment Recorded",
+        `KES ${parseFloat(amount).toLocaleString()} payment from ${customer.name || customer.username} recorded. Remaining balance: KES ${Number(newBal).toLocaleString()}.`,
+      );
       setReceiptData(res.data.receipt);
       setShowPaymentForm(false);
       
@@ -64,7 +71,7 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
       
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.detail || "Failed to record payment");
+      notifyApiError(notify, err, "Payment Failed", "Could not record this payment.");
     } finally {
       setPaymentLoading(false);
     }

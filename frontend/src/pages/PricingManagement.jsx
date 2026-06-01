@@ -11,6 +11,8 @@ import {
   CheckCircleIcon,
   TagIcon,
 } from '@heroicons/react/24/outline';
+import { useNotification } from '../context/NotificationContext';
+import useSlowLoadingWarning from '../hooks/useSlowLoadingWarning';
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
@@ -107,12 +109,12 @@ const EditableCell = ({ value, onSave, saving }) => {
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 const PricingManagement = () => {
+  const { notify } = useNotification();
   const [products, setProducts] = useState([]);
   const [tiers, setTiers] = useState({});       // { productId: tierObj }
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);   // productId being saved
   const [error, setError] = useState('');
-  const [toast, setToast] = useState(null);     // { message, type }
   const [search, setSearch] = useState('');
   const [filterMissing, setFilterMissing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -120,11 +122,7 @@ const PricingManagement = () => {
   const [unpricedCount, setUnpricedCount] = useState(0);
   const PER_PAGE = 25;
 
-  // ── toast helper ──────────────────────────────────────────────
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
-  };
+  useSlowLoadingWarning(loading);
 
   // ── fetch data ────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -189,10 +187,10 @@ const PricingManagement = () => {
       });
       const updated = res.data?.data ?? res.data;
       setTiers((prev) => ({ ...prev, [product.id]: updated }));
-      showToast(`Pricing updated for ${product.name}`, 'success');
+      notify.success('Product Updated', `Changes to ${product.name} have been saved.`);
     } catch (err) {
       console.error(err);
-      showToast('Failed to save pricing. Please try again.', 'error');
+      notify.error('Save Failed', 'Pricing could not be saved. Please try again.');
     } finally {
       setSaving(null);
     }
@@ -543,23 +541,6 @@ const PricingManagement = () => {
         </div>
       </div>
 
-      {/* ── Toast ── */}
-      {toast && (
-        <div
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-premium text-sm font-bold animate-slide-up"
-          style={{
-            background: 'var(--bg-card)',
-            border: `1px solid ${toast.type === 'success' ? 'rgba(16,185,129,0.25)' : 'rgba(244,63,94,0.25)'}`,
-            color: toast.type === 'success' ? '#059669' : '#f43f5e',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          {toast.type === 'success'
-            ? <CheckCircleIcon style={{ width: 18, height: 18 }} />
-            : <ExclamationTriangleIcon style={{ width: 18, height: 18 }} />}
-          {toast.message}
-        </div>
-      )}
     </div>
   );
 };

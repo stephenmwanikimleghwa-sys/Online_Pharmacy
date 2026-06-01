@@ -7,8 +7,9 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import toast from 'react-hot-toast';
 import api from "../services/api";
+import { notifyError, notifySuccess } from "../services/notification";
+import { extractStructuredError } from "../utils/apiErrorDisplay";
 import { useNavigate } from "react-router-dom";
 
 export const ACTIVE_BRANCH_STORAGE_KEY = "active_branch";
@@ -253,7 +254,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (error) {
         logAuthError("Token verification", error);
         if (isAuthRejection(error)) {
-          toast.error("Your session expired. Please log in again.");
+          notifyError(
+            "Session Expired",
+            "You were logged out after a period of inactivity. Please log in again.",
+            "Log In Again",
+            () => {
+              window.location.href = "/login";
+            },
+          );
           setToken(null);
           setUser(null);
           setActiveBranchState(null);
@@ -275,8 +283,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const switchBranch = async (branchId: number) => {
     try {
-      const response = await api.post("/auth/switch-branch/", { branch_id: branchId });
-      const { active_branch: branch, tokens } = response.data || {};
+      const response = await api.post(
+        "/auth/switch-branch/",
+        { branch_id: branchId },
+        { skipGlobalErrorNotification: true },
+      );
+      const payload = response.data?.data ?? response.data;
+      const { active_branch: branch, tokens } = payload || {};
       if (tokens?.access) {
         setToken(tokens.access);
         localStorage.setItem("access_token", tokens.access);
@@ -286,6 +299,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       if (branch) {
         setActiveBranch(branch);
+        notifySuccess(
+          "Branch Switched",
+          `You are now working at ${branch.name}. All transactions will be recorded here.`,
+        );
       }
       setRequiresBranchSelection(false);
       return { success: true };
@@ -301,11 +318,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear stale branch from a previous session so it cannot skip selection
       localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
 
-      const response = await api.post("/auth/login/", {
-        username: credentials.username,
-        password: credentials.password,
-        role: credentials.role,
-      });
+      const response = await api.post(
+        "/auth/login/",
+        {
+          username: credentials.username,
+          password: credentials.password,
+          role: credentials.role,
+        },
+        { skipGlobalErrorNotification: true },
+      );
 
       const resp = response.data || {};
       const tokens = resp.tokens || {};
@@ -402,22 +423,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         );
       }
 
+      const branchLabel =
+        resp.active_branch?.name || finalUser?.branch_info?.name || "your branch";
+      notifySuccess(
+        `Welcome back, ${finalUser?.username || credentials.username}`,
+        `You are now logged in at ${branchLabel}.`,
+      );
+
       return {
         success: true,
         user: finalUser,
         requiresBranchSelection: needsBranchSelection,
       };
     } catch (error: unknown) {
-      console.error("Login failed:", error);
+      logAuthError("Login", error);
       const err = error as { response?: { data?: unknown }; message?: string };
-      if (err.response?.data) {
-        return { success: false, error: err.response.data };
+      const data = err.response?.data;
+      const structured = extractStructuredError(data);
+      if (structured) {
+        return { success: false, error: structured };
+      }
+      if (data) {
+        return { success: false, error: data };
       }
       return { success: false, error: { detail: err.message || "Login failed" } };
     }
   };
 
   const logout = () => {
+    notifySuccess("Logged Out", "You have been logged out safely.");
     setToken(null);
     setUser(null);
     setActiveBranchState(null);

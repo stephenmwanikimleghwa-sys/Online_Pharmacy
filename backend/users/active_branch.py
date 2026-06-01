@@ -1,8 +1,7 @@
 """
 Helpers for enforcing JWT-scoped active branch on requests.
 """
-from rest_framework import status
-from rest_framework.response import Response
+from config.api_responses import ApiErrorCode, api_error
 
 
 def get_active_branch(request):
@@ -11,12 +10,10 @@ def get_active_branch(request):
 
 
 def active_branch_required_response():
-    return Response(
-        {
-            "detail": "Active branch is required. Please select a branch before continuing.",
-            "code": "active_branch_required",
-        },
-        status=status.HTTP_403_FORBIDDEN,
+    return api_error(
+        ApiErrorCode.NO_ACTIVE_BRANCH,
+        "Please select which branch you are working at before continuing.",
+        http_status=403,
     )
 
 

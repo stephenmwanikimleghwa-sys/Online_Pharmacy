@@ -7,6 +7,7 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 from ..models.stock_intake import StockIntake
 from ..serializers.stock_intake import StockIntakeSerializer, StockIntakeDetailSerializer
+from config.api_responses import ApiErrorCode, api_error, api_success
 
 
 class StockIntakeViewSet(viewsets.ModelViewSet):
@@ -119,14 +120,35 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
         products_data = data.get('products', [])
         notes = data.get('notes', '')
 
-        if not all([supplier_id, branch_id, products_data]):
-            return Response({'detail': 'Supplier, Branch, and products are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        missing = []
+        if not supplier_id:
+            missing.append("Supplier")
+        if not branch_id:
+            missing.append("Branch")
+        if not products_data:
+            missing.append("Products")
+        if missing:
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                f"Please fill in all required fields: {', '.join(missing)}.",
+                details={"missing_fields": missing},
+            )
 
         try:
             supplier = Supplier.objects.get(id=supplier_id)
             branch = Branch.objects.get(id=branch_id)
-        except (Supplier.DoesNotExist, Branch.DoesNotExist):
-            return Response({'detail': 'Invalid Supplier or Branch.'}, status=status.HTTP_400_BAD_REQUEST)
+        except Supplier.DoesNotExist:
+            return api_error(
+                ApiErrorCode.SUPPLIER_NOT_FOUND,
+                "The selected supplier could not be found.",
+                http_status=status.HTTP_404_NOT_FOUND,
+            )
+        except Branch.DoesNotExist:
+            return api_error(
+                ApiErrorCode.BRANCH_ACCESS_DENIED,
+                "The selected branch could not be found.",
+                http_status=status.HTTP_404_NOT_FOUND,
+            )
 
         total_invoice_cost = 0
         intake_records = []
@@ -196,9 +218,18 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                         created_by=request.user
                     )
             
-            return Response({'detail': 'Bulk intake successful', 'intakes': intake_records}, status=status.HTTP_201_CREATED)
+            product_count = len(intake_records)
+            return api_success(
+                f"{product_count} product(s) added to {branch.name} stock from {supplier.name}.",
+                data={"intakes": intake_records},
+                extra={"intakes": intake_records},
+                http_status=status.HTTP_201_CREATED,
+            )
         except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                str(e) or "Stock intake could not be completed.",
+            )
 
     @action(detail=False, methods=['get'])
     def by_supplier(self, request):

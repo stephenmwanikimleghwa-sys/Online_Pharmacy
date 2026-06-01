@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, BranchInfo } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
-import toast from "react-hot-toast";
+import { useNotification } from "../context/NotificationContext";
+import { mapBusinessErrorCode, extractStructuredError } from "../utils/apiErrorDisplay";
 import { getBranchIcon, getBranchSubtitle } from "../utils/branchDisplay";
 
 const timeGreeting = (): string => {
@@ -16,6 +17,7 @@ const BranchSelectionScreen: React.FC = () => {
   const { user, token, allowedBranches, requiresBranchSelection, activeBranch, switchBranch, loading } =
     useAuth();
   const navigate = useNavigate();
+  const { notify } = useNotification();
   const [selectingId, setSelectingId] = useState<number | null>(null);
 
   const role = user?.role?.toString?.().toLowerCase?.() ?? "";
@@ -45,7 +47,15 @@ const BranchSelectionScreen: React.FC = () => {
     if (result.success) {
       navigate(isAdmin ? "/admin/dashboard" : "/branch/dashboard", { replace: true });
     } else {
-      toast.error("Could not switch to that branch. Please try again.");
+      const structured = extractStructuredError(result.error);
+      const mapped = structured?.code
+        ? mapBusinessErrorCode(structured.code, structured.message ?? "", structured.details ?? {})
+        : null;
+      if (mapped) {
+        notify.error(mapped.title, mapped.message);
+      } else {
+        notify.error("Branch Switch Failed", "Could not switch to that branch. Please try again.");
+      }
     }
   };
 

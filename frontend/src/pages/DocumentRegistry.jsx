@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import { formatDate } from "../utils/displayHelpers";
-import toast from "react-hot-toast";
+import { useNotification } from "../context/NotificationContext";
+import { notifyApiError } from "../utils/notifyApiError";
 
 const DocumentRegistry = () => {
+  const { notify } = useNotification();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -28,7 +30,7 @@ const DocumentRegistry = () => {
       setDocuments(response.data?.results || response.data || []);
     } catch (error) {
       console.error("Error fetching documents:", error);
-      toast.error("Failed to load documents.");
+      notify.error("Could Not Load Documents", "The document list could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,7 @@ const DocumentRegistry = () => {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!formData.file || !formData.title) {
-      toast.error("Please provide a title and select a file.");
+      notify.warning("Incomplete Upload", "Please provide a title and select a file.");
       return;
     }
     
@@ -56,13 +58,13 @@ const DocumentRegistry = () => {
       await api.post("/inventory/documents/", data, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-      toast.success("Document uploaded successfully");
+      notify.success("Document Uploaded", "Your document was saved successfully.");
       setFormData({ title: "", document_type: "invoice", notes: "", file: null });
       document.getElementById('file-upload').value = "";
       fetchDocuments();
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload document");
+      notifyApiError(notify, err, "Upload Failed", "The document could not be uploaded.");
     } finally {
       setUploading(false);
     }

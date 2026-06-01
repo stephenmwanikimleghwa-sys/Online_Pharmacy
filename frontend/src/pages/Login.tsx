@@ -4,6 +4,8 @@ import { useAuth, LoginCredentials, User } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
+import LoadingButton from '../components/LoadingButton';
+import { getLoginErrorDisplay } from '../utils/apiErrorDisplay';
 
 const getStyles = (isDark: boolean): any => ({
   page: {
@@ -313,27 +315,8 @@ const Login: React.FC = () => {
       skipSessionRedirect.current = true;
       navigate(target, { replace: true });
     } else {
-      const err = result.error;
-      const formatError = (errObj: any): string => {
-        if (!errObj) return "Login failed. Please check your credentials.";
-        if (typeof errObj === "string") return errObj;
-        if (errObj.non_field_errors?.length) return errObj.non_field_errors[0];
-        if (errObj.detail) return errObj.detail;
-        const fieldMessages: string[] = [];
-        ["username", "password", "email"].forEach((f) => {
-          if (errObj[f]) {
-            const msgs = Array.isArray(errObj[f]) ? errObj[f].join(" ") : String(errObj[f]);
-            fieldMessages.push(`${f.charAt(0).toUpperCase() + f.slice(1)}: ${msgs}`);
-          }
-        });
-        if (fieldMessages.length) return fieldMessages.join(" ");
-        try {
-          return Object.values(errObj).flat().filter(Boolean).join(" ") || "Login failed. Please check your credentials.";
-        } catch {
-          return "Login failed. Please check your credentials.";
-        }
-      };
-      setError(formatError(err));
+      const display = getLoginErrorDisplay(result.error);
+      setError(`${display.title}: ${display.message}`);
     }
     setLoading(false);
   };

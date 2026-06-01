@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, BranchInfo } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
 
 const BranchSelector: React.FC = () => {
   const {
@@ -11,6 +11,7 @@ const BranchSelector: React.FC = () => {
     switchBranch,
     requiresBranchSelection,
   } = useAuth();
+  const { notify } = useNotification();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [pendingBranch, setPendingBranch] = useState<BranchInfo | null>(null);
@@ -56,10 +57,9 @@ const BranchSelector: React.FC = () => {
     setPendingBranch(null);
     setOpen(false);
     if (result.success) {
-      toast.success(`Switched to ${pendingBranch.name}`);
       window.location.reload();
     } else {
-      toast.error('Failed to switch branch.');
+      notify.error('Branch Switch Failed', `Could not switch to ${pendingBranch.name}. Please try again.`);
     }
   };
 

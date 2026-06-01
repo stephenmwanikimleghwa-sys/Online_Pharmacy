@@ -24,7 +24,9 @@ from users.branch_auth import (
     issue_tokens,
     login_user_payload,
     resolve_branch_session,
+    get_allowed_branches,
 )
+from config.api_responses import ApiErrorCode, api_error, api_success
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,25 +48,59 @@ class UserLoginView(APIView):
             if serializer.is_valid():
                 user = serializer.validated_data["user"]
                 user = User.objects.select_related("pharmacy", "branch").get(pk=user.pk)
+
+                if not user.is_superuser and user.role != RoleChoices.ADMIN:
+                    if not get_allowed_branches(user).exists():
+                        return api_error(
+                            ApiErrorCode.NO_BRANCH_ASSIGNED,
+                            "Your account has not been assigned to any branch. Contact your administrator to resolve this before you can log in.",
+                            details={"username": user.username},
+                            http_status=status.HTTP_403_FORBIDDEN,
+                        )
+
                 session = resolve_branch_session(user)
                 active_branch_id = (
                     session["active_branch"]["id"] if session["active_branch"] else None
                 )
                 tokens = issue_tokens(user, active_branch_id=active_branch_id)
-                return Response(
-                    {
+                return api_success(
+                    f"Welcome back, {user.username}.",
+                    data={
                         "user": login_user_payload(user),
                         "allowed_branches": session["allowed_branches"],
                         "requires_branch_selection": session["requires_branch_selection"],
                         "active_branch": session["active_branch"],
                         "tokens": tokens,
-                        # Legacy flat keys for older clients
                         "access": tokens["access"],
                         "refresh": tokens["refresh"],
                     },
-                    status=status.HTTP_200_OK,
+                    extra={
+                        "user": login_user_payload(user),
+                        "allowed_branches": session["allowed_branches"],
+                        "requires_branch_selection": session["requires_branch_selection"],
+                        "active_branch": session["active_branch"],
+                        "tokens": tokens,
+                        "access": tokens["access"],
+                        "refresh": tokens["refresh"],
+                    },
+                    http_status=status.HTTP_200_OK,
                 )
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            errors = serializer.errors
+            code = ApiErrorCode.VALIDATION_ERROR
+            message = "Please check your login details and try again."
+            if isinstance(errors, dict):
+                if errors.get("code"):
+                    code = errors["code"][0] if isinstance(errors["code"], list) else errors["code"]
+                if errors.get("message"):
+                    message = (
+                        errors["message"][0]
+                        if isinstance(errors["message"], list)
+                        else errors["message"]
+                    )
+                elif errors.get("non_field_errors"):
+                    nf = errors["non_field_errors"]
+                    message = nf[0] if isinstance(nf, list) else str(nf)
+            return api_error(str(code), str(message), details=dict(errors), http_status=status.HTTP_400_BAD_REQUEST)
         except Exception as exc:
             # Log unexpected errors for debugging
             logger.exception("Unexpected error during login: %s", exc)

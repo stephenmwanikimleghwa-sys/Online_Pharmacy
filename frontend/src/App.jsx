@@ -12,7 +12,6 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import { NotificationProvider } from "./context/NotificationContext";
-import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import PharmacistDashboard from "./pages/PharmacistDashboard";
@@ -73,25 +72,6 @@ function AppLayout() {
 
   return (
     <>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          className: 'toast-glass',
-          style: {
-            background: 'var(--bg-card)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-primary)',
-            borderRadius: '16px',
-            backdropFilter: 'blur(18px)',
-          },
-          success: {
-            iconTheme: { primary: '#10b981', secondary: 'transparent' }
-          },
-          error: {
-            iconTheme: { primary: '#dc2626', secondary: 'transparent' }
-          }
-        }}
-      />
       <ScrollToTop />
       <div className="flex h-[100dvh] w-full overflow-hidden" style={{ background: 'var(--bg-gradient)', backgroundAttachment: 'fixed' }}>
         {showChrome && <Sidebar />}

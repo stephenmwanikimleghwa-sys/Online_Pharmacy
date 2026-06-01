@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
+import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError } from '../../utils/notifyApiError';
+import useSlowLoadingWarning from '../../hooks/useSlowLoadingWarning';
+import LoadingButton from '../../components/LoadingButton';
 import { useAuth } from '../../context/AuthContext';
 import ActiveBranchGuard from '../../components/ActiveBranchGuard';
 import inventoryService from '../../services/inventoryService';
 
 const BranchTransfers = () => {
+  const { notify } = useNotification();
   const { activeBranch, allowedBranches } = useAuth();
   const [transfers, setTransfers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  useSlowLoadingWarning(loading);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     product: '',
@@ -32,7 +37,7 @@ const BranchTransfers = () => {
       setTransfers(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to load transfers.');
+      notify.error('Could Not Load Transfers', 'Transfer history could not be loaded. Please refresh.');
       setTransfers([]);
     } finally {
       setLoading(false);
@@ -60,17 +65,18 @@ const BranchTransfers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!activeBranch?.id) {
-      toast.error('Select an active branch first.');
+      notify.warning('No Branch Selected', 'Select which branch you are working at before requesting a transfer.');
       return;
     }
     const quantity = parseInt(form.quantity, 10);
     if (!form.product || !form.destination_branch || !quantity || quantity < 1) {
-      toast.error('Product, destination branch, and quantity are required.');
+      notify.error('Incomplete Information', 'Product, destination branch, and quantity are required.');
       return;
     }
 
     try {
       setSubmitting(true);
+      const dest = destinationOptions.find((b) => b.id === parseInt(form.destination_branch, 10));
       await inventoryService.createTransfer({
         product: parseInt(form.product, 10),
         source_branch: activeBranch.id,
@@ -78,16 +84,14 @@ const BranchTransfers = () => {
         quantity,
         notes: form.notes,
       });
-      toast.success('Transfer request created.');
+      notify.success(
+        'Transfer Requested',
+        `Stock transfer from ${activeBranch.name} to ${dest?.name || 'the selected branch'} has been submitted for approval.`,
+      );
       setForm({ product: '', destination_branch: '', quantity: '', notes: '' });
       loadTransfers();
     } catch (err) {
-      const detail = err.response?.data?.detail || err.response?.data?.code;
-      if (detail === 'active_branch_required' || err.response?.status === 403) {
-        toast.error('Select an active branch before creating a transfer.');
-      } else {
-        toast.error('Failed to create transfer.');
-      }
+      notifyApiError(notify, err, 'Transfer Failed', 'The transfer request could not be created.');
     } finally {
       setSubmitting(false);
     }
@@ -96,10 +100,10 @@ const BranchTransfers = () => {
   const handleApprove = async (id) => {
     try {
       await inventoryService.approveTransfer(id);
-      toast.success('Transfer approved.');
+      notify.success('Transfer Approved', 'Stock has been moved and branch levels have been updated.');
       loadTransfers();
-    } catch {
-      toast.error('Could not approve transfer.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Approval Failed', 'Could not approve this transfer.');
     }
   };
 

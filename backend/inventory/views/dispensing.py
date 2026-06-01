@@ -24,6 +24,7 @@ from ..serializers.dispensing import (
     DispensationSerializer,
     DispensationItemSerializer
 )
+from config.api_responses import ApiErrorCode, api_error, api_success
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuditorOrAdmin]
@@ -131,9 +132,15 @@ def dispense_otc(request):
             )
             available = branch_stock.quantity
             if available < item['quantity']:
-                return Response(
-                    {'error': f'Insufficient stock for {product.name}. Available: {available}'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return api_error(
+                    ApiErrorCode.INSUFFICIENT_STOCK,
+                    f"{product.name} only has {available} units available at {active_branch.name}.",
+                    details={
+                        "product_name": product.name,
+                        "available": available,
+                        "requested": item['quantity'],
+                        "branch": active_branch.name,
+                    },
                 )
             
             price = product.wholesale_price if pricing_tier == 'WHOLESALE' and product.wholesale_price else product.price
@@ -151,9 +158,22 @@ def dispense_otc(request):
         
         if payment_mode == 'CREDIT':
             if not customer:
-                return Response({'error': 'Customer is required for credit sales.'}, status=status.HTTP_400_BAD_REQUEST)
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    "A customer is required for credit sales.",
+                )
             if float(customer.credit_balance) + total_amount > float(customer.credit_limit):
-                return Response({'error': 'Credit limit exceeded.'}, status=status.HTTP_400_BAD_REQUEST)
+                customer_name = getattr(customer, 'username', None) or str(customer)
+                return api_error(
+                    ApiErrorCode.CREDIT_LIMIT_EXCEEDED,
+                    f"{customer_name} has reached their credit limit.",
+                    details={
+                        "customer_name": customer_name,
+                        "balance": float(customer.credit_balance),
+                        "credit_limit": float(customer.credit_limit),
+                        "requested_total": total_amount,
+                    },
+                )
 
         dispensation = Dispensation.objects.create(
             sale_type='otc',
@@ -218,7 +238,12 @@ def dispense_otc(request):
                 timestamp=timezone.now()
             )
 
-        return Response(DispensationSerializer(dispensation).data)
+        item_count = len(products_to_dispense)
+        return api_success(
+            f"{item_count} item(s) sold. Total: KES {total_amount:.2f}.",
+            data=DispensationSerializer(dispensation).data,
+            extra={"dispensation": DispensationSerializer(dispensation).data},
+        )
 
 @api_view(['GET'])
 @permission_classes([IsAuditorOrAdmin])

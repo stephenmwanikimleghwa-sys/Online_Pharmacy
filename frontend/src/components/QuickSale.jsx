@@ -3,8 +3,10 @@ import { Dialog, Transition } from '@headlessui/react';
 import { MagnifyingGlassIcon as SearchIcon, XMarkIcon as XIcon, PlusIcon, MinusIcon, CheckCircleIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 
 const QuickSale = ({ isOpen, onClose }) => {
+  const { notify } = useNotification();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -75,7 +77,7 @@ const QuickSale = ({ isOpen, onClose }) => {
       setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (error) {
       console.error('Receipt print error:', error);
-      alert('Failed to generate receipt.');
+      notify.error('Receipt Failed', 'Could not generate the receipt. Please try again.');
     }
   };
 

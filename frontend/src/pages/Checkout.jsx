@@ -4,8 +4,10 @@ import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { loadStripe } from '@stripe/stripe-js';
 import axios from 'axios';
+import { useNotification } from '../context/NotificationContext';
 
 const Checkout = () => {
+  const { notify } = useNotification();
   const { cartItems, clearCart, getCartTotal } = useContext(CartContext);
   const { user, token } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -72,7 +74,7 @@ const Checkout = () => {
         });
 
         // Redirect to M-Pesa STK push or show phone prompt
-        alert(`M-Pesa payment initiated. Check your phone for PIN prompt. Reference: ${mpesaResponse.data.checkout_request_id}`);
+        notify.info('M-Pesa Prompt Sent', `Check your phone for the PIN prompt. Reference: ${mpesaResponse.data.checkout_request_id}`);
 
         // Poll for payment confirmation or use callback
         // For demo, assume success after delay

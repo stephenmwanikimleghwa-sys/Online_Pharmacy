@@ -1,13 +1,22 @@
-import type { AxiosError } from "axios";
-
 export type NotificationType = "success" | "error" | "warning" | "info";
 
-export interface NotificationPayload {
-  title?: string;
-  message: string;
+export interface NotificationAction {
+  label: string;
+  onClick: () => void;
 }
 
-type NotificationHandler = (type: NotificationType, payload: NotificationPayload) => void;
+export interface NotificationPayload {
+  title: string;
+  message: string;
+  action?: NotificationAction;
+  /** Override auto-dismiss; omit to use type defaults. */
+  durationMs?: number | null;
+}
+
+type NotificationHandler = (
+  type: NotificationType,
+  payload: NotificationPayload,
+) => void;
 
 let notificationHandler: NotificationHandler | null = null;
 
@@ -19,43 +28,47 @@ export const clearNotificationHandler = () => {
   notificationHandler = null;
 };
 
-const notify = (type: NotificationType, message: string, title?: string) => {
-  notificationHandler?.(type, { message, title });
+const emit = (type: NotificationType, payload: NotificationPayload) => {
+  notificationHandler?.(type, payload);
 };
 
-export const notifySuccess = (message: string, title?: string) => notify("success", message, title);
-export const notifyError = (message: string, title?: string) => notify("error", message, title);
-export const notifyWarning = (message: string, title?: string) => notify("warning", message, title);
-export const notifyInfo = (message: string, title?: string) => notify("info", message, title);
-
-export const getFriendlyAxiosErrorMessage = (error: AxiosError): string => {
-  if (!error.response) {
-    return "Unable to connect to the server. Check your network and try again.";
+function resolveAction(
+  actionOrLabel?: NotificationAction | string,
+  actionFn?: () => void,
+): NotificationAction | undefined {
+  if (typeof actionOrLabel === "string" && actionFn) {
+    return { label: actionOrLabel, onClick: actionFn };
   }
-
-  const status = error.response.status;
-  const data = error.response.data as Record<string, any> | string | undefined;
-  const remoteMessage =
-    (data && typeof data === "object" && (data.detail || data.error)) ||
-    (typeof data === "string" ? data : undefined);
-
-  switch (status) {
-    case 400:
-      return remoteMessage || "Invalid request. Please review your input.";
-    case 401:
-      return remoteMessage || "Your session has expired. Please log in again.";
-    case 403:
-      return remoteMessage || "You do not have permission to perform this action.";
-    case 404:
-      return remoteMessage || "Requested resource could not be found.";
-    case 409:
-      return remoteMessage || "This request conflicts with existing data.";
-    case 422:
-      return remoteMessage || "Validation failed. Please check your entries.";
-    default:
-      if (status >= 500) {
-        return "A server error occurred. Please try again later.";
-      }
-      return remoteMessage || error.message || "An unexpected error occurred.";
+  if (actionOrLabel && typeof actionOrLabel === "object") {
+    return actionOrLabel;
   }
-};
+  return undefined;
+}
+
+export const notifySuccess = (
+  title: string,
+  message: string,
+  actionOrLabel?: NotificationAction | string,
+  actionFn?: () => void,
+) => emit("success", { title, message, action: resolveAction(actionOrLabel, actionFn) });
+
+export const notifyError = (
+  title: string,
+  message: string,
+  actionOrLabel?: NotificationAction | string,
+  actionFn?: () => void,
+) => emit("error", { title, message, action: resolveAction(actionOrLabel, actionFn) });
+
+export const notifyWarning = (
+  title: string,
+  message: string,
+  actionOrLabel?: NotificationAction | string,
+  actionFn?: () => void,
+) => emit("warning", { title, message, action: resolveAction(actionOrLabel, actionFn) });
+
+export const notifyInfo = (
+  title: string,
+  message: string,
+  actionOrLabel?: NotificationAction | string,
+  actionFn?: () => void,
+) => emit("info", { title, message, action: resolveAction(actionOrLabel, actionFn) });

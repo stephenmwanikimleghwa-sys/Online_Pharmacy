@@ -5,9 +5,10 @@ import { Link } from 'react-router-dom';
 import clinicalService from '../../services/clinicalService';
 import api from '../../services/api';
 import { HeartIcon, PlusIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { useNotification } from '../../context/NotificationContext';
 
 const ClinicalDashboard = () => {
+  const { notify } = useNotification();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showNewModal, setShowNewModal] = useState(false);
@@ -36,12 +37,15 @@ const ClinicalDashboard = () => {
       setShowNewModal(false);
       setSelectedPatient(null);
       setSearchPatient('');
-      toast.success('Consultation started');
+      notify.success('Consultation Started', 'You can now record notes and prescriptions.');
     }
   });
 
   const handleCreate = () => {
-    if(!selectedPatient) return toast.error('Select a patient');
+    if(!selectedPatient) {
+      notify.warning('Patient Required', 'Select a patient before starting a consultation.');
+      return;
+    }
     createMutation.mutate({
       patient: selectedPatient.id,
       status: 'waiting',

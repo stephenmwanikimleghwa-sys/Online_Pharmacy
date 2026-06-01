@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import { formatDate } from "../utils/displayHelpers";
-import toast from "react-hot-toast";
+import { useNotification } from "../context/NotificationContext";
+import { notifyApiError } from "../utils/notifyApiError";
+import useSlowLoadingWarning from "../hooks/useSlowLoadingWarning";
+import LoadingButton from "../components/LoadingButton";
 
 const OTCSales = () => {
+  const { notify } = useNotification();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  useSlowLoadingWarning(loading);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState([]);
   const [discountMargin, setDiscountMargin] = useState(0);
@@ -18,11 +23,13 @@ const OTCSales = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/products/");
+      const response = await api.get("/products/", { skipGlobalErrorNotification: true });
       setProducts(response.data?.results || response.data || []);
     } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("Failed to load inventory for OTC sales.");
+      notify.error(
+        "Could Not Load Inventory",
+        "We could not load products for OTC sales. Please refresh and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -47,7 +54,7 @@ const OTCSales = () => {
     } else {
       setCart([...cart, { product, quantity: 1 }]);
     }
-    toast.success(`${product.name} added to cart`);
+    notify.info("Added to Cart", `${product.name} was added to your sale.`);
   };
 
   const calculateSubtotal = () =>
@@ -65,7 +72,7 @@ const OTCSales = () => {
 
   const handleFinalize = async () => {
     if (cart.length === 0) {
-      toast.error("Add items to the cart before finalizing the OTC sale.");
+      notify.warning("Empty Cart", "Add at least one item to the cart before completing the sale.");
       return;
     }
 
@@ -82,13 +89,22 @@ const OTCSales = () => {
         patient_name: "Walk-in customer",
         notes: "OTC sale from admin dashboard",
       };
-      await api.post("/inventory/dispense/otc/", payload);
-      toast.success("OTC sale completed successfully.");
+      const response = await api.post("/inventory/dispense/otc/", payload, {
+        skipGlobalErrorNotification: true,
+      });
+      const msg =
+        response.data?.message ||
+        "Your OTC sale was recorded successfully.";
+      notify.success("Sale Complete", msg);
       setCart([]);
       setDiscountMargin(0);
     } catch (error) {
-      const message = error.response?.data?.error || error.message || "Failed to finalize OTC sale.";
-      toast.error(message);
+      notifyApiError(
+        notify,
+        error,
+        "Sale Failed",
+        "The sale could not be completed. Please try again.",
+      );
     } finally {
       setFinalizing(false);
     }
@@ -226,16 +242,18 @@ const OTCSales = () => {
               </span>
             </div>
 
-            <button
+            <LoadingButton
               onClick={handleFinalize}
-              disabled={cart.length === 0 || finalizing}
+              disabled={cart.length === 0}
+              loading={finalizing}
+              loadingText="Processing..."
               className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all ${
                 cart.length > 0 ? "btn-primary shadow-md hover:shadow-lg" : "opacity-40 cursor-not-allowed"
-              } ${finalizing ? 'opacity-70 cursor-wait' : ''}`}
+              }`}
               style={cart.length === 0 ? {background:'var(--bg-field)', color:'var(--text-secondary)'} : {}}
             >
-              {finalizing ? 'Finalizing...' : 'Finalize OTC Sale'}
-            </button>
+              Finalize OTC Sale
+            </LoadingButton>
           </div>
         </div>
       </div>
