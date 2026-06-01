@@ -10,9 +10,9 @@ from rest_framework import status
 from decimal import Decimal
 import json
 
-from users.models import User, RoleChoices, Pharmacy
+from users.models import User, RoleChoices, Pharmacy, Branch
 from products.models import Product, CategoryChoices
-from orders.models import Order, OrderItem
+from orders.models import Order, OrderItem, OrderTemplate
 from payments.models import Payment
 
 User = get_user_model()
@@ -34,6 +34,18 @@ class CriticalUserFlowTests(APITestCase):
             address="Test Address",
             contact_phone="+254700000000",
             license_number="LIC001"
+        )
+
+        # Create a branch for order templates and inventory-related records
+        self.branch = Branch.objects.create(
+            pharmacy=self.pharmacy,
+            name="Test Branch",
+            branch_type="CHEMIST",
+            address="Branch Address",
+            contact_phone="+254700000001",
+            license_number="BR001",
+            is_active=True,
+            is_headquarters=False,
         )
         
         # Create test users with different roles
@@ -139,6 +151,28 @@ class CriticalUserFlowTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'test_customer')
         self.assertEqual(response.data['email'], 'customer@test.com')
+
+    def test_admin_delete_user_with_protected_related_records(self):
+        """Test: Attempting to delete a user with protected related records returns a controlled error."""
+        # Create a protected record referencing the admin user
+        OrderTemplate.objects.create(
+            branch=self.branch,
+            created_by=self.admin_user,
+            customer_name='Protected Customer',
+            company_name='Protected Corp',
+        )
+
+        login_response = self.client.post('/api/auth/login/', {
+            'username': 'test_admin',
+            'password': 'admin123'
+        }, format='json')
+        token = login_response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        response = self.client.delete(f'/api/auth/admin/users/{self.admin_user.id}/delete/')
+
+        self.assertIn(response.status_code, [status.HTTP_409_CONFLICT, status.HTTP_400_BAD_REQUEST])
+        self.assertTrue('related records' in response.data.get('error', '').lower())
 
     # ============ Product Management Tests ============
 

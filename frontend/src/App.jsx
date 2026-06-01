@@ -11,6 +11,7 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -258,7 +259,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <CartProvider>
-          <AppLayout />
+          <NotificationProvider>
+            <AppLayout />
+          </NotificationProvider>
         </CartProvider>
       </AuthProvider>
     </ThemeProvider>

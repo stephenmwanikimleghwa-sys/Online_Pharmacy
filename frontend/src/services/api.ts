@@ -6,6 +6,7 @@ import axios, {
   AxiosError
 } from "axios";
 import { resolveApiBaseUrl } from "../config/apiBaseUrl";
+import { notifyError, getFriendlyAxiosErrorMessage } from "./notification";
 
 const API_BASE_URL = resolveApiBaseUrl();
 
@@ -60,21 +61,22 @@ api.interceptors.response.use(
       console.error('[API] Request failed without config', { message: error.message, stack: error.stack });
     }
 
-    // Only 401 means the session is invalid. 403 is permission denied — do not log out.
     const status = error.response?.status;
+    const onAuthFlow = ["/login", "/branch/select", "/force-password-change"].some((path) =>
+      window.location.pathname.includes(path),
+    );
+
     if (status === 401) {
-      const path = window.location.pathname;
-      const onAuthFlow =
-        path.includes("/login") ||
-        path.includes("/branch/select") ||
-        path.includes("/force-password-change");
       if (!onAuthFlow) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("active_branch");
         window.location.href = "/login";
       }
+      return Promise.reject(error);
     }
+
+    notifyError(getFriendlyAxiosErrorMessage(error));
     return Promise.reject(error);
   },
 );

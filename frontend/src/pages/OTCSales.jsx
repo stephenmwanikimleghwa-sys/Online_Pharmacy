@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { formatDate } from "../utils/displayHelpers";
 import toast from "react-hot-toast";
@@ -10,6 +9,7 @@ const OTCSales = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState([]);
   const [discountMargin, setDiscountMargin] = useState(0);
+  const [finalizing, setFinalizing] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -28,11 +28,13 @@ const OTCSales = () => {
     }
   };
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    const normalizedTerm = searchTerm.toLowerCase();
+    return (
+      (product.name || '').toLowerCase().includes(normalizedTerm) ||
+      (product.category || '').toLowerCase().includes(normalizedTerm)
+    );
+  });
 
   const handleAddToCart = (product) => {
     const existing = cart.find((item) => item.product.id === product.id);
@@ -59,6 +61,37 @@ const OTCSales = () => {
   const renderPrice = (val) => {
     if (val === undefined || val === null) return "N/A";
     return `KSh ${parseFloat(val).toLocaleString()}`;
+  };
+
+  const handleFinalize = async () => {
+    if (cart.length === 0) {
+      toast.error("Add items to the cart before finalizing the OTC sale.");
+      return;
+    }
+
+    setFinalizing(true);
+    try {
+      const payload = {
+        items: cart.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+        })),
+        payment_mode: "CASH",
+        pricing_tier: "RETAIL",
+        discount: Number(discountMargin) || 0,
+        patient_name: "Walk-in customer",
+        notes: "OTC sale from admin dashboard",
+      };
+      await api.post("/inventory/dispense/otc/", payload);
+      toast.success("OTC sale completed successfully.");
+      setCart([]);
+      setDiscountMargin(0);
+    } catch (error) {
+      const message = error.response?.data?.error || error.message || "Failed to finalize OTC sale.";
+      toast.error(message);
+    } finally {
+      setFinalizing(false);
+    }
   };
 
   return (
@@ -194,13 +227,14 @@ const OTCSales = () => {
             </div>
 
             <button
-              disabled={cart.length === 0}
+              onClick={handleFinalize}
+              disabled={cart.length === 0 || finalizing}
               className={`w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all ${
                 cart.length > 0 ? "btn-primary shadow-md hover:shadow-lg" : "opacity-40 cursor-not-allowed"
-              }`}
+              } ${finalizing ? 'opacity-70 cursor-wait' : ''}`}
               style={cart.length === 0 ? {background:'var(--bg-field)', color:'var(--text-secondary)'} : {}}
             >
-              Finalize OTC Sale
+              {finalizing ? 'Finalizing...' : 'Finalize OTC Sale'}
             </button>
           </div>
         </div>

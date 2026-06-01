@@ -1,3 +1,4 @@
+from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -91,6 +92,11 @@ def delete_pharmacist(request, user_id):
         return Response({"message": "Pharmacist deleted successfully."})
     except User.DoesNotExist:
         return Response({"error": "Pharmacist not found."}, status=404)
+    except ProtectedError:
+        return Response(
+            {"error": "This pharmacist cannot be deleted because they have related records. Deactivate them instead."},
+            status=status.HTTP_409_CONFLICT,
+        )
 
 
 @api_view(['DELETE'])
@@ -105,6 +111,11 @@ def delete_user(request, user_id):
         return Response({"message": "User deleted successfully."})
     except User.DoesNotExist:
         return Response({"error": "User not found."}, status=404)
+    except ProtectedError:
+        return Response(
+            {"error": "This user cannot be deleted because they have related records. Deactivate them instead."},
+            status=status.HTTP_409_CONFLICT,
+        )
 
 
 @api_view(['POST'])

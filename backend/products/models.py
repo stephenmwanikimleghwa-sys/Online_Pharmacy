@@ -308,6 +308,13 @@ class PricingTier(models.Model):
         editable=False,
         help_text='Retail price (Buying Price × 1.33)'
     )
+
+    # When True, preserve literal legacy wholesale_price and retail_price
+    # from import processes and skip formula recalculation in save().
+    use_legacy_prices = models.BooleanField(
+        default=False,
+        help_text='If set, do not recalculate wholesale/retail prices from buying_price'
+    )
     
     minimum_wholesale_quantity = models.PositiveIntegerField(
         default=10,
@@ -329,15 +336,24 @@ class PricingTier(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Automatically calculate wholesale and retail prices."""
-        # Wholesale: Buying Price × 1.10
-        self.wholesale_price = self.buying_price * Decimal('1.10')
-        # Retail: Buying Price × 1.50
-        self.retail_price = self.buying_price * Decimal('1.50')
+        # If this tier is flagged to use legacy prices, preserve the
+        # literal values for wholesale_price and retail_price and do not
+        # recalculate from buying_price. This allows legacy imports to set
+        # exact WP/RP values that must not be overwritten by the formula.
+        if not getattr(self, 'use_legacy_prices', False):
+            # Wholesale: Buying Price × 1.10
+            self.wholesale_price = self.buying_price * Decimal('1.10')
+            # Retail: Buying Price × 1.50
+            self.retail_price = self.buying_price * Decimal('1.50')
 
-        # Update the product's main price to retail price
-        if self.product:
-            self.product.price = self.retail_price
-            self.product.save(update_fields=['price'])
+        # Update the product's main price to retail price if available
+        try:
+            if self.product and self.retail_price is not None:
+                self.product.price = self.retail_price
+                self.product.save(update_fields=['price'])
+        except Exception:
+            # Avoid import-time failures from product save side-effects
+            pass
 
         super().save(*args, **kwargs)
 
