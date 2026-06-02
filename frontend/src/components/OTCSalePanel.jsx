@@ -106,11 +106,6 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   );
 
   const loadCatalog = useCallback(async () => {
-    if (!branchId) {
-      setCatalog([]);
-      setSearchResults([]);
-      return;
-    }
     try {
       const products = await fetchBranchCatalog({ branchId, perPage: 500 });
       const sorted = sortForOTC(products);

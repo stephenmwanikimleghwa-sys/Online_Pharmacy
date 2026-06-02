@@ -1,3 +1,6 @@
+from decimal import Decimal, InvalidOperation
+
+from django.utils.text import slugify
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -28,17 +31,75 @@ class CustomerViewSet(viewsets.GenericViewSet):
             data.append({
                 'id': c.id,
                 'name': c.full_name or c.username,
-                'phone': getattr(c, 'phone', ''), # Might not exist directly, assume it's in address/username for now or handled differently
+                'phone': getattr(c, 'phone_number', ''),
                 'address': c.address or '',
                 'credit_balance': str(c.credit_balance),
             })
         return Response(data)
+
+    def create(self, request):
+        name = (request.data.get('name') or '').strip()
+        phone = (request.data.get('phone') or '').strip()
+        address = (request.data.get('address') or '').strip()
+        email = (request.data.get('email') or '').strip().lower() or None
+        credit_balance_raw = request.data.get('credit_balance', 0)
+
+        if not name:
+            return api_validation_error('Name is required.', details={'name': 'This field is required.'})
+        if not phone:
+            return api_validation_error('Phone number is required.', details={'phone': 'This field is required.'})
+
+        try:
+            credit_balance = Decimal(str(credit_balance_raw or 0))
+        except (InvalidOperation, TypeError, ValueError):
+            return api_validation_error('Credit balance must be a valid number.', details={'credit_balance': credit_balance_raw})
+
+        username_base = phone or slugify(name) or 'customer'
+        username = username_base
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f'{username_base}-{counter}'
+            counter += 1
+
+        first_name = ''
+        last_name = ''
+        parts = name.split()
+        if len(parts) > 1:
+            first_name = parts[0]
+            last_name = ' '.join(parts[1:])
+        else:
+            first_name = name
+
+        customer = User(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            role=RoleChoices.CUSTOMER,
+            phone_number=phone,
+            address=address,
+            credit_balance=credit_balance,
+            is_credit_customer=True,
+            email=email,
+        )
+        customer.set_unusable_password()
+        if hasattr(request.user, 'pharmacy') and request.user.pharmacy:
+            customer.pharmacy = request.user.pharmacy
+        customer.save()
+
+        return Response({
+            'id': customer.id,
+            'name': customer.full_name or customer.username,
+            'phone': customer.phone_number,
+            'address': customer.address or '',
+            'credit_balance': str(customer.credit_balance),
+        }, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
         customer = self.get_object()
         return Response({
             'id': customer.id,
             'name': customer.full_name or customer.username,
+            'phone': getattr(customer, 'phone_number', ''),
             'address': customer.address or '',
             'credit_balance': str(customer.credit_balance),
         })

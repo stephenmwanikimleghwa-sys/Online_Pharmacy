@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import CustomerProfileModal from '../components/CustomerProfileModal';
 import { useAuth } from '../context/AuthContext';
-import { MagnifyingGlassIcon, UserGroupIcon, CurrencyDollarIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { useNotification } from '../context/NotificationContext';
+import { MagnifyingGlassIcon, UserGroupIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const Customers = () => {
   const { user } = useAuth();
+  const { notify } = useNotification();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,6 +16,10 @@ const Customers = () => {
   const [filterDebt, setFilterDebt] = useState('all'); // 'all', 'debt', 'cleared'
   
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '', credit_balance: '' });
 
   const fetchCustomers = async () => {
     try {
@@ -25,6 +31,44 @@ const Customers = () => {
       setError('Failed to load customers');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setCreateError('');
+    setNewCustomer({ name: '', phone: '', address: '', credit_balance: '' });
+  };
+
+  const handleCreateCustomer = async (e) => {
+    e.preventDefault();
+    if (!newCustomer.name.trim() || !newCustomer.phone.trim()) {
+      setCreateError('Name and phone are required.');
+      return;
+    }
+
+    setCreatingCustomer(true);
+    setCreateError('');
+
+    try {
+      await api.post('/auth/customers/', {
+        name: newCustomer.name.trim(),
+        phone: newCustomer.phone.trim(),
+        address: newCustomer.address.trim(),
+        credit_balance: newCustomer.credit_balance ? Number(newCustomer.credit_balance) : 0,
+      });
+      setShowCreateModal(false);
+      resetCreateForm();
+      await fetchCustomers();
+      notify.success('Customer Added', 'New customer was added successfully.');
+    } catch (err) {
+      console.error(err);
+      const data = err.response?.data;
+      setCreateError(
+        (data && typeof data === 'object' && (data.detail || data.message || JSON.stringify(data))) ||
+        'Could not create customer. Please try again.'
+      );
+    } finally {
+      setCreatingCustomer(false);
     }
   };
 
@@ -109,7 +153,7 @@ const Customers = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="glass-card rounded-[2rem] border border-white/60 shadow-sm p-4 flex flex-col md:flex-row gap-4">
+      <div className="glass-card rounded-[2rem] border border-white/60 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
@@ -131,6 +175,16 @@ const Customers = () => {
             <option value="debt">With Outstanding Debt</option>
             <option value="cleared">Cleared / Negative</option>
           </select>
+        </div>
+        <div className="w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => { resetCreateForm(); setShowCreateModal(true); }}
+            className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-premium hover:bg-primary-600 transition-all"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add Customer
+          </button>
         </div>
       </div>
 
@@ -202,6 +256,97 @@ const Customers = () => {
           onClose={() => setSelectedCustomer(null)}
           onRefresh={() => fetchCustomers()}
         />
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-premium overflow-hidden">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-slate-900">Add Customer</h2>
+                <p className="text-sm text-slate-500 mt-1">Create a new credit customer record.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+            <form onSubmit={handleCreateCustomer} className="p-8 space-y-4">
+              {createError && (
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-sm">
+                  {createError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="space-y-2 text-sm text-slate-600">
+                  Name
+                  <input
+                    value={newCustomer.name}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    placeholder="Customer name"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm text-slate-600">
+                  Phone
+                  <input
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                    placeholder="Phone number"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </label>
+              </div>
+              <div>
+                <label className="space-y-2 text-sm text-slate-600">
+                  Address
+                  <textarea
+                    value={newCustomer.address}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                    placeholder="Customer address"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={3}
+                  />
+                </label>
+              </div>
+              <div>
+                <label className="space-y-2 text-sm text-slate-600">
+                  Opening balance (optional)
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newCustomer.credit_balance}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, credit_balance: e.target.value })}
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+              </div>
+              <div className="flex flex-col md:flex-row gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingCustomer}
+                  className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold uppercase tracking-widest shadow-premium hover:bg-primary-600 transition-colors disabled:opacity-50"
+                >
+                  {creatingCustomer ? 'Saving...' : 'Create Customer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

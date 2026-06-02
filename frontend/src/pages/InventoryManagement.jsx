@@ -21,6 +21,7 @@ const InventoryManagement = () => {
   const [totalInventoryItems, setTotalInventoryItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [showRestockModal, setShowRestockModal] = useState(false);
@@ -53,6 +54,13 @@ const InventoryManagement = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchInventory = async () => {
     try {
@@ -88,7 +96,7 @@ const InventoryManagement = () => {
 
   const filteredInventory = inventory.filter(item => {
     const name = (item.name || '').toLowerCase();
-    const matchesSearch = name.includes(searchTerm.toLowerCase());
+    const matchesSearch = name.includes(debouncedSearchTerm.toLowerCase());
     const matchesFilter =
       filter === 'all' ? true :
         filter === 'low' ? (item.is_low_stock && item.stock_quantity > 0) :
