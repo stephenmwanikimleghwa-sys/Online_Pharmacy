@@ -5,6 +5,7 @@ from django.db import transaction
 from inventory.models.supplier import Supplier, SupplierCreditTransaction
 from inventory.models.stock_intake import StockIntake
 from inventory.serializers.supplier import SupplierSerializer
+from config.api_responses import api_success, api_validation_error
 
 class SupplierViewSet(viewsets.ModelViewSet):
     """
@@ -72,7 +73,10 @@ class SupplierViewSet(viewsets.ModelViewSet):
             if amount <= 0:
                 raise ValueError
         except (TypeError, ValueError):
-            return Response({'detail': 'Valid positive amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return api_validation_error(
+                "Please enter a valid positive payment amount.",
+                details={"amount": amount_str},
+            )
 
         with transaction.atomic():
             # Lock the supplier record
@@ -104,4 +108,9 @@ class SupplierViewSet(viewsets.ModelViewSet):
                 'cashier': request.user.username,
             }
 
-        return Response({'detail': 'Payment recorded successfully', 'receipt': receipt, 'new_balance': str(locked_supplier.balance)})
+        return api_success(
+            f"KES {amount:,.2f} paid to {locked_supplier.name}. "
+            f"Remaining balance: KES {float(locked_supplier.balance):,.2f}.",
+            data={'receipt': receipt, 'new_balance': str(locked_supplier.balance)},
+            extra={'receipt': receipt, 'new_balance': str(locked_supplier.balance)},
+        )

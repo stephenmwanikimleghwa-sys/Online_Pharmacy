@@ -6,6 +6,7 @@ from django.db.models import Prefetch
 
 from users.models import User, CustomerDebtTransaction, RoleChoices
 from inventory.models import Dispensation
+from config.api_responses import api_success, api_validation_error
 
 class CustomerViewSet(viewsets.GenericViewSet):
     """
@@ -93,7 +94,10 @@ class CustomerViewSet(viewsets.GenericViewSet):
             if amount <= 0:
                 raise ValueError
         except (TypeError, ValueError):
-            return Response({'detail': 'Valid positive amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return api_validation_error(
+                "Please enter a valid positive payment amount.",
+                details={"amount": amount_str},
+            )
 
         with transaction.atomic():
             # Lock the customer record
@@ -132,4 +136,16 @@ class CustomerViewSet(viewsets.GenericViewSet):
                 'branch_name': branch_name,
             }
 
-        return Response({'detail': 'Payment recorded successfully', 'receipt': receipt, 'new_balance': str(locked_customer.credit_balance)})
+        customer_name = locked_customer.full_name or locked_customer.username
+        return api_success(
+            f"KES {amount:,.2f} payment from {customer_name} has been recorded. "
+            f"Remaining balance: KES {float(locked_customer.credit_balance):,.2f}.",
+            data={
+                'receipt': receipt,
+                'new_balance': str(locked_customer.credit_balance),
+            },
+            extra={
+                'receipt': receipt,
+                'new_balance': str(locked_customer.credit_balance),
+            },
+        )

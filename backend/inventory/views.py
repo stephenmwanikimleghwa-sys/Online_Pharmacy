@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 from products.serializers import ProductSerializer
 from .serializers import StockLogSerializer
+from config.api_responses import ApiErrorCode, api_error, api_validation_error
 
 
 @api_view(["GET"])
@@ -247,20 +248,24 @@ def adjust_inventory(request, pk):
 
     # Validate quantity is provided and is a valid integer
     if quantity is None:
-        return Response({"error": "Quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
+        return api_validation_error("Quantity is required.", details={"missing_fields": ["quantity"]})
 
     try:
         quantity = int(quantity)
     except (ValueError, TypeError):
-        return Response({"error": "Quantity must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+        return api_validation_error("Quantity must be a whole number.")
 
     if quantity == 0:
-        return Response({"error": "Quantity must be non-zero for adjustment."}, status=status.HTTP_400_BAD_REQUEST)
+        return api_validation_error("Quantity must be non-zero for adjustment.")
 
     previous_quantity = product.stock_quantity
     new_quantity = previous_quantity + quantity
     if new_quantity < 0:
-        return Response({"error": "Quantity adjustment would result in negative stock."}, status=status.HTTP_400_BAD_REQUEST)
+        return api_error(
+            ApiErrorCode.INSUFFICIENT_STOCK,
+            "Quantity adjustment would result in negative stock.",
+            details={"available": previous_quantity, "requested": abs(quantity)},
+        )
 
     product.stock_quantity = new_quantity
     product.save()

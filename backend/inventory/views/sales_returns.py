@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
+from config.api_responses import api_not_found, api_success, api_validation_error
 from ..models.dispensing import SaleReturn, SaleReturnItem, Dispensation
 from products.models import BranchStock, StockLog
 from ..serializers.sales_returns import SaleReturnSerializer, SaleReturnItemSerializer
@@ -48,7 +49,10 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
         try:
             dispensation = Dispensation.objects.get(id=dispensation_id)
         except Dispensation.DoesNotExist:
-            return Response({"error": "Dispensation not found"}, status=status.HTTP_404_NOT_FOUND)
+            return api_not_found(
+                "Dispensation not found.",
+                details={"dispensation_id": dispensation_id},
+            )
 
         with transaction.atomic():
             total_refund = sum(float(item.get('refund_amount', 0)) for item in items_data)
@@ -72,14 +76,22 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
                 )
                 
         serializer = self.get_serializer(sale_return)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return api_success(
+            "Return initiated and pending approval.",
+            data=serializer.data,
+            extra=serializer.data,
+            http_status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         sale_return = self.get_object()
         
         if sale_return.status != 'pending':
-            return Response({"error": f"Cannot approve return with status {sale_return.status}"}, status=status.HTTP_400_BAD_REQUEST)
+            return api_validation_error(
+                f"Cannot approve return with status {sale_return.status}.",
+                details={"status": sale_return.status},
+            )
             
         with transaction.atomic():
             sale_return.status = 'approved'
@@ -112,17 +124,17 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
                     branch_stock.quantity = new_qty
                     branch_stock.save()
 
-        return Response({"message": "Return approved and stock updated where applicable."})
+        return api_success("Return approved and stock updated where applicable.")
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         sale_return = self.get_object()
         
         if sale_return.status != 'pending':
-            return Response({"error": "Only pending returns can be rejected."}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return api_validation_error("Only pending returns can be rejected.")
+
         sale_return.status = 'rejected'
         sale_return.approved_by = request.user
         sale_return.save()
-        
-        return Response({"message": "Return rejected successfully."})
+
+        return api_success("Return rejected successfully.")

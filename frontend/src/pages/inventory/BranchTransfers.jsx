@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNotification } from '../../context/NotificationContext';
 import { notifyApiError } from '../../utils/notifyApiError';
-import useSlowLoadingWarning from '../../hooks/useSlowLoadingWarning';
 import LoadingButton from '../../components/LoadingButton';
 import { useAuth } from '../../context/AuthContext';
 import ActiveBranchGuard from '../../components/ActiveBranchGuard';
@@ -13,7 +12,6 @@ const BranchTransfers = () => {
   const [transfers, setTransfers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  useSlowLoadingWarning(loading);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     product: '',

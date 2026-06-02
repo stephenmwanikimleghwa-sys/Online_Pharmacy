@@ -25,6 +25,7 @@ class ApiErrorCode:
     SESSION_EXPIRED = "SESSION_EXPIRED"
     NO_ACTIVE_BRANCH = "NO_ACTIVE_BRANCH"
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    NOT_FOUND = "NOT_FOUND"
 
 
 def api_error(
@@ -60,3 +61,57 @@ def api_success(
     if extra:
         body.update(extra)
     return Response(body, status=http_status)
+
+
+def api_not_found(message: str, *, details: dict[str, Any] | None = None) -> Response:
+    return api_error(
+        ApiErrorCode.NOT_FOUND,
+        message,
+        details=details,
+        http_status=status.HTTP_404_NOT_FOUND,
+    )
+
+
+def api_permission_denied(
+    message: str = "You do not have permission to perform this action.",
+    *,
+    details: dict[str, Any] | None = None,
+) -> Response:
+    return api_error(
+        ApiErrorCode.PERMISSION_DENIED,
+        message,
+        details=details,
+        http_status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def api_validation_error(
+    message: str,
+    *,
+    details: dict[str, Any] | None = None,
+    http_status: int = status.HTTP_400_BAD_REQUEST,
+) -> Response:
+    return api_error(
+        ApiErrorCode.VALIDATION_ERROR,
+        message,
+        details=details,
+        http_status=http_status,
+    )
+
+
+def api_duplicate(message: str, *, details: dict[str, Any] | None = None) -> Response:
+    return api_error(
+        ApiErrorCode.DUPLICATE_ENTRY,
+        message,
+        details=details,
+        http_status=status.HTTP_409_CONFLICT,
+    )
+
+
+def api_invalid_transfer(message: str, *, details: dict[str, Any] | None = None) -> Response:
+    return api_error(
+        ApiErrorCode.INVALID_TRANSFER,
+        message,
+        details=details,
+        http_status=status.HTTP_400_BAD_REQUEST,
+    )

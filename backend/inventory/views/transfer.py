@@ -1,9 +1,9 @@
 from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from users.permissions import IsPharmacistOrAdmin
 from users.active_branch import get_active_branch, require_active_branch
+from config.api_responses import api_invalid_transfer, api_success
 from ..models import InterBranchTransfer
 from ..serializers.transfer import InterBranchTransferSerializer
 
@@ -50,29 +50,51 @@ class InterBranchTransferViewSet(viewsets.ModelViewSet):
     def approve(self, request, pk=None):
         transfer = self.get_object()
         if transfer.status != 'pending':
-            return Response({'error': 'Can only approve pending transfers'}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return api_invalid_transfer(
+                "Only pending transfers can be approved.",
+                details={"status": transfer.status},
+            )
+
         transfer.status = 'approved'
         transfer.approved_by = request.user
         transfer.save()
-        return Response(self.get_serializer(transfer).data)
+        return api_success(
+            f"Transfer from {transfer.source_branch.name} to {transfer.destination_branch.name} has been approved.",
+            data=self.get_serializer(transfer).data,
+            extra={"transfer": self.get_serializer(transfer).data},
+        )
 
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         transfer = self.get_object()
         if transfer.status != 'approved':
-            return Response({'error': 'Can only complete approved transfers'}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return api_invalid_transfer(
+                "Only approved transfers can be completed.",
+                details={"status": transfer.status},
+            )
+
         transfer.status = 'completed'
         transfer.save()
-        return Response(self.get_serializer(transfer).data)
+        return api_success(
+            "Stock has been moved and branch levels have been updated.",
+            data=self.get_serializer(transfer).data,
+            extra={"transfer": self.get_serializer(transfer).data},
+        )
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         transfer = self.get_object()
         if transfer.status not in ['pending', 'approved']:
-            return Response({'error': 'Cannot reject this transfer'}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return api_invalid_transfer(
+                "This transfer cannot be rejected in its current state.",
+                details={"status": transfer.status},
+            )
+
         transfer.status = 'rejected'
         transfer.save()
-        return Response(self.get_serializer(transfer).data)
+        admin_name = request.user.get_full_name() or request.user.username
+        return api_success(
+            f"The stock transfer request was rejected by {admin_name}.",
+            data=self.get_serializer(transfer).data,
+            extra={"transfer": self.get_serializer(transfer).data},
+        )

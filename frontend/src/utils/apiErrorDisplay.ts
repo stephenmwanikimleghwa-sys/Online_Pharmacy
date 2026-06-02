@@ -11,6 +11,7 @@ export const API_ERROR_CODES = {
   NO_BRANCH_ASSIGNED: "NO_BRANCH_ASSIGNED",
   BRANCH_ACCESS_DENIED: "BRANCH_ACCESS_DENIED",
   PRODUCT_NOT_FOUND: "PRODUCT_NOT_FOUND",
+  NOT_FOUND: "NOT_FOUND",
   NO_ACTIVE_BRANCH: "NO_ACTIVE_BRANCH",
   VALIDATION_ERROR: "VALIDATION_ERROR",
 } as const;
@@ -94,6 +95,7 @@ export function mapBusinessErrorCode(
           message ||
           "This record already exists in the system. Please check if it has already been added.",
       };
+    case API_ERROR_CODES.NOT_FOUND:
     case API_ERROR_CODES.PRODUCT_NOT_FOUND:
       return {
         title: "Product Not Found",

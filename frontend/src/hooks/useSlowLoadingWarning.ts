@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
 import { notifyWarning } from "../services/notification";
 
-const SLOW_LOAD_MS = 8000;
+/** Only warn after prolonged waits — avoids clutter during normal slow API calls. */
+const SLOW_LOAD_MS = 30000;
 
 /**
- * Shows a warning toast if loading stays true longer than 8 seconds.
+ * Shows a warning toast if loading stays true longer than 30 seconds.
  */
-export function useSlowLoadingWarning(loading: boolean, enabled = true): void {
+export function useSlowLoadingWarning(loading: boolean, enabled = false): void {
   const shownRef = useRef(false);
 
   useEffect(() => {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
-import useSlowLoadingWarning from '../hooks/useSlowLoadingWarning';
 import { useAuth } from '../context/AuthContext';
 import inventoryService from '../services/inventoryService';
 import InventoryItemCard from '../components/InventoryItemCard';
@@ -20,7 +19,6 @@ const InventoryManagement = () => {
   const [inventory, setInventory] = useState([]);
   const [totalInventoryItems, setTotalInventoryItems] = useState(0);
   const [loading, setLoading] = useState(true);
-  useSlowLoadingWarning(loading);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);

@@ -24,7 +24,9 @@ import json
 import logging
 from datetime import datetime
 from django.core.cache import cache
-from products.models import Product
+from products.models import Product, BranchStock, StockLog
+from users.active_branch import get_active_branch, require_active_branch
+from config.api_responses import ApiErrorCode, api_error, api_success
 from .models import Order, OrderItem, OrderStatusChoices, OrderTemplate, OrderTemplateItem
 
 logger = logging.getLogger(__name__)
@@ -36,145 +38,173 @@ logger = logging.getLogger(__name__)
 def quick_sale(request):
     """
     Create a quick sale order without patient association.
-    Only for pharmacists and admins.
+    Deducts branch stock and writes StockLog + optional DispensingLog.
     """
-    try:
-        logger.debug(f"Quick sale initiated by user {request.user.id}")
+    denied = require_active_branch(request)
+    if denied:
+        return denied
 
-        # Validate input data
+    active_branch = get_active_branch(request)
+
+    try:
+        logger.debug(f"Quick sale initiated by user {request.user.id} at branch {active_branch.id}")
+
         items = request.data.get('items', [])
         if not items:
-            return Response(
-                {'error': 'No items provided'},
-                status=status.HTTP_400_BAD_REQUEST
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Add at least one product to complete the sale.",
             )
 
-        # Create order
         order = Order.objects.create(
-            user=request.user,  # The staff member who made the sale
-            status=OrderStatusChoices.DELIVERED,  # Quick sales are delivered immediately
-            total_amount=0  # Will be calculated from items
+            user=request.user,
+            status=OrderStatusChoices.DELIVERED,
+            total_amount=0,
         )
 
         total_amount = 0
         order_items = []
 
-        # Process each item
         for item in items:
             product_id = item.get('id')
             if not product_id:
                 order.delete()
-                return Response(
-                    {'error': 'Product ID missing in item'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    "Product ID missing in cart item.",
                 )
-            quantity = item.get('quantity', 1)
+            quantity = int(item.get('quantity', 1) or 1)
+            if quantity < 1:
+                order.delete()
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    "Quantity must be at least 1.",
+                )
 
             try:
-                product = Product.objects.get(id=product_id)
-                logger.debug(f"Processing product {product.id}: {product.name}")
+                product = (
+                    Product.objects.select_related("pricing_tier")
+                    .select_for_update()
+                    .get(id=product_id)
+                )
             except Product.DoesNotExist:
-                # Rollback on error
                 order.delete()
-                logger.warning(f"Product not found: {product_id}")
-                return Response(
-                    {'error': f'Product with ID {product_id} not found'},
-                    status=status.HTTP_404_NOT_FOUND
+                return api_error(
+                    ApiErrorCode.PRODUCT_NOT_FOUND,
+                    f"Product could not be found.",
+                    details={"product_id": product_id},
+                    http_status=status.HTTP_404_NOT_FOUND,
                 )
 
-            if product.stock_quantity < quantity:
-                # Rollback on insufficient stock
+            branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                product=product,
+                branch=active_branch,
+                defaults={"quantity": 0, "reorder_level": 0},
+            )
+            available = branch_stock.quantity
+            if available < quantity:
                 order.delete()
-                logger.warning(f"Insufficient stock for product {product_id}: required={quantity}, available={product.stock_quantity}")
-                return Response(
-                    {'error': f'Insufficient stock for product {product.name}'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return api_error(
+                    ApiErrorCode.INSUFFICIENT_STOCK,
+                    f"{product.name} only has {available} units available at {active_branch.name}.",
+                    details={
+                        "product_name": product.name,
+                        "available": available,
+                        "requested": quantity,
+                        "branch": active_branch.name,
+                    },
                 )
 
-            # Create order item
+            unit_price = product.price
+            if hasattr(product, "pricing_tier") and product.pricing_tier:
+                unit_price = product.pricing_tier.retail_price or unit_price
+
             order_item = OrderItem.objects.create(
                 order=order,
                 product=product,
                 quantity=quantity,
-                unit_price=product.price
+                unit_price=unit_price,
             )
             order_items.append(order_item)
 
-            # Record previous stock for logging
-            previous_stock = product.stock_quantity
+            prev_qty = branch_stock.quantity
+            branch_stock.quantity -= quantity
+            branch_stock.save(update_fields=["quantity"])
 
-            # Update product stock
-            product.stock_quantity -= quantity
-            product.save()
+            StockLog.objects.create(
+                product=product,
+                branch=active_branch,
+                logged_by=request.user,
+                change_type="sale",
+                change_amount=-quantity,
+                previous_quantity=prev_qty,
+                new_quantity=branch_stock.quantity,
+                reason=f"Quick sale order #{order.id}",
+            )
 
-            # Create dispensing log with defensive logging and rollback on failure
             try:
                 from dispensing_logs.models import DispensingLog
-                dispenser_name = (
-                    request.user.get_full_name() if hasattr(request.user, 'get_full_name') else str(request.user)
-                )
-                logger.info(f"Creating DispensingLog: product_id={product.id}, quantity={quantity}, prev_stock={previous_stock}, new_stock={product.stock_quantity}, total_cost={order_item.subtotal}, dispensed_by={dispenser_name}")
                 DispensingLog.objects.create(
                     product=product,
                     quantity=quantity,
                     dispensed_by=request.user,
                     order=order,
-                    previous_stock=previous_stock,
-                    new_stock=product.stock_quantity,
+                    previous_stock=prev_qty,
+                    new_stock=branch_stock.quantity,
                     total_cost=order_item.subtotal,
-                    notes=f"Quick sale by {dispenser_name}"
+                    notes=f"Quick sale at {active_branch.name}",
                 )
             except Exception as log_exc:
-                logger.error(f"Failed to create DispensingLog for product {product.id}: {str(log_exc)}", exc_info=True)
-                # Rollback order to avoid inconsistent state
-                try:
-                    order.delete()
-                except Exception:
-                    pass
-                return Response({'error': 'Failed to record dispensing log'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                logger.warning("DispensingLog skipped: %s", log_exc)
 
-            item_subtotal = order_item.subtotal
-            total_amount += item_subtotal
+            total_amount += order_item.subtotal
 
-        # Update order total
         order.total_amount = total_amount
-        order.save()
+        order.save(update_fields=["total_amount"])
 
-        # Create a completed cash payment record
         try:
             Payment.objects.create(
                 order=order,
-                method='cash',
+                method="cash",
                 amount=total_amount,
-                status='completed',
-                reference=f'CASH-{order.id}'
+                status="completed",
+                reference=f"CASH-{order.id}",
             )
-            logger.info(f"Quick sale completed: order_id={order.id}, total_amount={total_amount}, user_id={request.user.id}")
         except Exception as pay_exc:
-            logger.error(f"Failed to create Payment record for order {order.id}: {str(pay_exc)}", exc_info=True)
-            try:
-                order.delete()
-            except Exception:
-                pass
-            return Response({'error': 'Failed to create payment record'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error("Payment record failed for order %s: %s", order.id, pay_exc)
+            order.delete()
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Sale could not be recorded. Please try again.",
+            )
 
-        return Response({
-            'id': order.id,
-            'total_amount': total_amount,
-            'items': [{
-                'product_id': item.product.id,
-                'product_name': item.product.name,
-                'quantity': item.quantity,
-                'unit_price': item.unit_price,
-                'total_price': item.subtotal
-            } for item in order_items]
-        }, status=status.HTTP_201_CREATED)
+        payload = {
+            "id": order.id,
+            "total_amount": float(total_amount),
+            "items": [
+                {
+                    "product_id": oi.product.id,
+                    "product_name": oi.product.name,
+                    "quantity": oi.quantity,
+                    "unit_price": float(oi.unit_price),
+                    "total_price": float(oi.subtotal),
+                }
+                for oi in order_items
+            ],
+        }
+        return api_success(
+            f"Sale complete. Total: KES {total_amount:.2f}.",
+            data=payload,
+            extra=payload,
+            http_status=status.HTTP_201_CREATED,
+        )
 
     except Exception as e:
-        logger.error(f'Quick sale error: {str(e)}', exc_info=True)
-        return Response(
-            {'error': 'Internal server error processing quick sale'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        logger.error("Quick sale error: %s", e, exc_info=True)
+        return api_error(
+            ApiErrorCode.VALIDATION_ERROR,
+            "Something went wrong while processing the sale. Please try again.",
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 

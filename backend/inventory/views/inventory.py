@@ -12,9 +12,10 @@ from users.active_branch import get_active_branch
 from products.models import Product, StockLog, BranchStock
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
+from config.api_responses import ApiErrorCode, api_error, api_validation_error
 
 @api_view(["GET"])
-@permission_classes([IsAuditorOrAdmin])
+@permission_classes([IsPharmacistOrAdmin])
 def inventory_summary(request):
     """Get inventory summary for pharmacist dashboard."""
     user = request.user
@@ -247,13 +248,13 @@ def restock_inventory(request, pk):
             branch = request.user.branch
             
         if not branch:
-            return Response({"error": "Branch must be specified for stock adjustment."}, status=status.HTTP_400_BAD_REQUEST)
+            return api_error(
+                ApiErrorCode.NO_ACTIVE_BRANCH,
+                "Please select which branch you are working at before adjusting stock.",
+            )
 
         if not quantity or int(quantity) <= 0:
-            return Response(
-                {"error": "Quantity must be a positive number."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return api_validation_error("Quantity must be at least 1.")
 
         branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
             product=product,
@@ -296,21 +297,18 @@ def adjust_inventory(request, pk):
             branch = request.user.branch
             
         if not branch:
-            return Response({"error": "Branch must be specified for stock adjustment."}, status=status.HTTP_400_BAD_REQUEST)
+            return api_error(
+                ApiErrorCode.NO_ACTIVE_BRANCH,
+                "Please select which branch you are working at before adjusting stock.",
+            )
 
         try:
             quantity = int(quantity)
         except Exception:
-            return Response(
-                {"error": "Quantity must be an integer."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return api_validation_error("Quantity must be a whole number.")
 
         if quantity == 0:
-            return Response(
-                {"error": "Quantity must be non-zero for adjustment."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return api_validation_error("Quantity must be non-zero for adjustment.")
 
         branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
             product=product,
@@ -321,9 +319,13 @@ def adjust_inventory(request, pk):
         previous_quantity = branch_stock.quantity
         new_quantity = previous_quantity + quantity
         if new_quantity < 0:
-            return Response(
-                {"error": "Quantity adjustment would result in negative stock."},
-                status=status.HTTP_400_BAD_REQUEST
+            return api_error(
+                ApiErrorCode.INSUFFICIENT_STOCK,
+                "Quantity adjustment would result in negative stock.",
+                details={
+                    "available": previous_quantity,
+                    "requested": abs(quantity),
+                },
             )
 
         branch_stock.quantity = new_quantity

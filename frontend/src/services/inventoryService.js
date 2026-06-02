@@ -5,7 +5,10 @@ import api from './api';
 export const inventoryService = {
   // Get inventory summary (total products, low stock, out of stock)
   getInventorySummary: (params = {}) => {
-    return api.get("/inventory/summary/", { params });
+    return api.get("/inventory/summary/", {
+      params,
+      skipGlobalErrorNotification: true,
+    });
   },
 
   // Get all inventory items with pagination and filtering
@@ -28,7 +31,10 @@ export const inventoryService = {
 
       // Make the request to the inventory list endpoint using the shared api client
       console.log('[Inventory Service] Fetching inventory from list endpoint');
-      const response = await api.get('/inventory/list/', { params });
+      const response = await api.get('/inventory/list/', {
+        params,
+        skipGlobalErrorNotification: true,
+      });
 
       // Log successful response
       console.log('[Inventory Service] Inventory fetched successfully:', {

@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@headlessui/react', '@heroicons/react', 'react-hot-toast'],
+          ui: ['@headlessui/react', '@heroicons/react'],
           utils: ['axios', 'date-fns']
         }
       }

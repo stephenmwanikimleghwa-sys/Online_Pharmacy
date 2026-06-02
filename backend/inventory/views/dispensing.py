@@ -43,9 +43,10 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     def verify(self, request, pk=None):
         prescription = self.get_object()
         if prescription.status != 'pending':
-            return Response(
-                {'error': 'Only pending prescriptions can be verified'},
-                status=status.HTTP_400_BAD_REQUEST
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Only pending prescriptions can be verified.",
+                details={"status": prescription.status},
             )
             
         prescription.status = 'verified'

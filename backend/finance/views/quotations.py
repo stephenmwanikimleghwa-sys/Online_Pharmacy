@@ -8,6 +8,7 @@ from ..serializers import QuotationSerializer
 
 from inventory.models.dispensing import Dispensation, DispensationItem
 from products.models import BranchStock
+from config.api_responses import api_success, api_validation_error
 
 class QuotationViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all()
@@ -40,16 +41,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
         quotation = self.get_object()
         
         if quotation.status == 'converted':
-            return Response(
-                {"error": "Quotation has already been converted to a sale."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
+            return api_validation_error("Quotation has already been converted to a sale.")
+
         if quotation.status == 'expired':
-            return Response(
-                {"error": "Cannot convert an expired quotation."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return api_validation_error("Cannot convert an expired quotation.")
 
         with transaction.atomic():
             # 1. Create Dispensation
@@ -84,10 +79,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
             quotation.status = 'converted'
             quotation.save()
             
-        return Response({
-            "message": "Quotation successfully converted to sale.",
-            "dispensation_id": dispensation.id
-        })
+        return api_success(
+            "Quotation successfully converted to sale.",
+            data={"dispensation_id": dispensation.id},
+            extra={"dispensation_id": dispensation.id},
+        )
 
     @action(detail=True, methods=['get'])
     def export_pdf(self, request, pk=None):

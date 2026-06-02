@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AccessDenied from './AccessDenied';
 
 interface ProtectedRouteProps {
   element?: React.ElementType;
@@ -58,7 +59,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (allowFinancials && user.can_view_financials) {
       // allowed via financials flag
     } else if (!userRole || !allowedRolesLower.includes(userRole)) {
-      return <Navigate to="/" replace />;
+      return (
+        <AccessDenied
+          title="Page not available"
+          message="Your role does not include access to this page. Use the menu to open features assigned to you."
+        />
+      );
     }
   }
 

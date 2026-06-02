@@ -13,6 +13,8 @@ from utils.cache import cache_response
 from utils.pdf_generator import PDFGenerator
 
 from users.permissions import IsAuditorOrAdmin
+from reports.params import parse_days_param
+from config.api_responses import api_validation_error
 
 class AnalyticsViewSet(viewsets.ViewSet):
     """
@@ -27,10 +29,11 @@ class AnalyticsViewSet(viewsets.ViewSet):
         Get inventory stock trends over time.
         Defaults to last 30 days.
         """
-        days = int(request.query_params.get('days', 30))
+        days, err = parse_days_param(request)
+        if err:
+            return err
         start_date = timezone.now() - timedelta(days=days)
 
-        # Aggregate stock logs by date
         trends = (
             StockLog.objects.filter(timestamp__gte=start_date)
             .annotate(date=TruncDate('timestamp'))
@@ -74,9 +77,11 @@ class AnalyticsViewSet(viewsets.ViewSet):
         """
         Get top selling products based on stock logs.
         """
-        days = int(request.query_params.get('days', 30))
+        days, err = parse_days_param(request)
+        if err:
+            return err
         start_date = timezone.now() - timedelta(days=days)
-        
+
         logs = StockLog.objects.filter(
             timestamp__gte=start_date,
             change_type='sale'
@@ -141,8 +146,10 @@ class AnalyticsViewSet(viewsets.ViewSet):
         """
         Generate a summary PDF report containing trends, top sellers, and low stock items.
         """
-        days = int(request.query_params.get('days', 30))
-        
+        days, err = parse_days_param(request)
+        if err:
+            return err
+
         # 1. Fetch Trends
         trends_resp = self.inventory_trends(request)
         trends_data = trends_resp.data.get('trends', [])
@@ -262,7 +269,9 @@ class ReportsHubViewSet(viewsets.ViewSet):
     def expiry_report(self, request):
         from products.models import Product
         
-        days = int(request.query_params.get('days', 90))
+        days, err = parse_days_param(request, default=90)
+        if err:
+            return err
         target_date = timezone.now().date() + timedelta(days=days)
         
         qs = Product.objects.filter(expiry_date__isnull=False, expiry_date__lte=target_date).order_by('expiry_date')

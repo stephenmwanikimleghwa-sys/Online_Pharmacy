@@ -289,9 +289,10 @@ REST_FRAMEWORK = {
         "users.authentication.BranchAwareJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
-        "rest_framework.permissions.DjangoModelPermissions",
+        "rest_framework.permissions.IsAuthenticated",
     ),
+    "PAGE_SIZE_QUERY_PARAM": "page_size",
+    "MAX_PAGE_SIZE": 500,
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
@@ -309,6 +310,7 @@ REST_FRAMEWORK = {
         "pharmacist": "5000/hour",
         "admin": "10000/hour",
     },
+    "EXCEPTION_HANDLER": "config.exception_handlers.structured_exception_handler",
 }
 
 # JWT Settings

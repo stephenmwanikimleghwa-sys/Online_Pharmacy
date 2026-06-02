@@ -23,9 +23,36 @@ const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 60000,
+  timeout: 90000,
   validateStatus: (status: number) => status >= 200 && status < 300,
 });
+
+let lastToastKey = "";
+let lastToastAt = 0;
+const TOAST_COOLDOWN_MS = 4000;
+
+function shouldShowGlobalToast(error: AxiosError, config: InternalAxiosRequestConfig | undefined): boolean {
+  if (config?.skipGlobalErrorNotification) return false;
+
+  const status = error.response?.status;
+  const method = config?.method?.toLowerCase() ?? "get";
+
+  // Permission and missing-resource GETs: show inline on the page, not popups.
+  if (status === 403) return false;
+  if (status === 404 && method === "get") return false;
+
+  return true;
+}
+
+function emitGlobalError(display: ReturnType<typeof mapAxiosErrorToDisplay>) {
+  if (!display) return;
+  const key = `${display.title}:${display.message}`;
+  const now = Date.now();
+  if (key === lastToastKey && now - lastToastAt < TOAST_COOLDOWN_MS) return;
+  lastToastKey = key;
+  lastToastAt = now;
+  notifyError(display.title, display.message, display.actionLabel, display.action);
+}
 
 function clearSession(): void {
   localStorage.removeItem("access_token");
@@ -53,7 +80,6 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     const config = error.config;
-    const skipToast = config?.skipGlobalErrorNotification === true;
     const onAuthFlow = isAuthFlowPath();
     const status = error.response?.status;
 
@@ -63,23 +89,20 @@ api.interceptors.response.use(
         method: config.method,
         url: config.url,
         status,
-        data: error.response?.data,
       });
     }
 
     if (status === 401) {
       if (!onAuthFlow) {
         clearSession();
-        if (!skipToast) {
+        if (shouldShowGlobalToast(error, config)) {
           const display = mapAxiosErrorToDisplay(error, {
             onLogin: goToLogin,
             onRetry: (cfg) => {
               void api.request(cfg);
             },
           });
-          if (display) {
-            notifyError(display.title, display.message, display.actionLabel, display.action);
-          }
+          emitGlobalError(display);
         }
         if (!window.location.pathname.includes("/login")) {
           window.location.href = "/login";
@@ -88,16 +111,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (!skipToast) {
+    if (shouldShowGlobalToast(error, config)) {
       const display = mapAxiosErrorToDisplay(error, {
         onLogin: goToLogin,
         onRetry: (cfg) => {
           void api.request(cfg);
         },
       });
-      if (display) {
-        notifyError(display.title, display.message, display.actionLabel, display.action);
-      }
+      emitGlobalError(display);
     }
 
     return Promise.reject(error);

@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { builtInFieldValidate } from '../utils/formValidators';
 
 export interface FormFieldProps {
   name: string;
@@ -85,12 +86,9 @@ const FormField: React.FC<FormFieldProps> = ({
     setIsFocused(false);
 
     // Validate on blur
-    if (validate) {
-      setInternalError(validate(value));
-    }
-
+    setInternalError(runValidation(value));
     onBlur?.();
-  }, [validate, value, onBlur]);
+  }, [runValidation, value, onBlur]);
 
   const handleFocus = useCallback(() => {
     setIsFocused(true);

@@ -12,7 +12,6 @@ import {
   TagIcon,
 } from '@heroicons/react/24/outline';
 import { useNotification } from '../context/NotificationContext';
-import useSlowLoadingWarning from '../hooks/useSlowLoadingWarning';
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
@@ -121,8 +120,6 @@ const PricingManagement = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [unpricedCount, setUnpricedCount] = useState(0);
   const PER_PAGE = 25;
-
-  useSlowLoadingWarning(loading);
 
   // ── fetch data ────────────────────────────────────────────────
   const fetchData = useCallback(async () => {

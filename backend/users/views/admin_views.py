@@ -1,21 +1,24 @@
 from django.db.models import ProtectedError
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
 from django.shortcuts import get_object_or_404
 from users.models import User, RoleChoices, Branch
 from users.permissions import IsAdminUser
+from config.api_responses import (
+    ApiErrorCode,
+    api_duplicate,
+    api_not_found,
+    api_success,
+    api_validation_error,
+)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def admin_create_user(request):
-    """
-    Admin endpoint to create a user (admin or pharmacist).
-    Expects: username, password, email, full_name, role ("admin" or "pharmacist"), optional branch_id, optional permission_flags.
-    """
     data = request.data
     username = data.get('username')
     password = data.get('password')
@@ -23,11 +26,20 @@ def admin_create_user(request):
     full_name = data.get('full_name', '')
     role = (data.get('role') or '').lower()
 
-    if not username or not password or not email or role not in ('admin', 'pharmacist'):
-        return Response({'error': 'username, password, email and role (admin|pharmacist) are required'}, status=status.HTTP_400_BAD_REQUEST)
+    missing = [f for f, v in [
+        ('username', username), ('password', password), ('email', email), ('role', role),
+    ] if not v]
+    if missing or role not in ('admin', 'pharmacist'):
+        return api_validation_error(
+            "Username, password, email and role (admin or pharmacist) are required.",
+            details={"missing_fields": missing},
+        )
 
     if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
-        return Response({'error': 'User with this username or email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+        return api_duplicate(
+            "A user with this username or email already exists.",
+            details={"username": username, "email": email},
+        )
 
     branch = None
     branch_id = data.get('branch_id') or data.get('branch')
@@ -36,7 +48,7 @@ def admin_create_user(request):
 
     permission_flags = data.get('permission_flags') or {}
     if not isinstance(permission_flags, dict):
-        return Response({'error': 'permission_flags must be an object.'}, status=status.HTTP_400_BAD_REQUEST)
+        return api_validation_error("permission_flags must be an object.")
 
     first_name = ''
     last_name = ''
@@ -55,15 +67,17 @@ def admin_create_user(request):
     user.is_verified = True
     user.save()
 
-    return Response({'message': f'{role.title()} created successfully.', 'user_id': user.id}, status=status.HTTP_201_CREATED)
+    return api_success(
+        f"Account for {username} has been created. They can now log in.",
+        data={"user_id": user.id},
+        extra={"user_id": user.id},
+        http_status=status.HTTP_201_CREATED,
+    )
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def list_pharmacists(request):
-    """
-    Admin endpoint to list all pharmacists. Kept for backward compatibility.
-    """
     pharmacists = User.objects.filter(role=RoleChoices.PHARMACIST).order_by('-created_at')
     data = [
         {
@@ -83,77 +97,81 @@ def list_pharmacists(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def delete_pharmacist(request, user_id):
-    """
-    Admin endpoint to delete a pharmacist account (kept for compatibility).
-    """
     try:
         pharmacist = User.objects.get(id=user_id, role=RoleChoices.PHARMACIST)
+        username = pharmacist.username
         pharmacist.delete()
-        return Response({"message": "Pharmacist deleted successfully."})
+        return api_success(f"{username} has been removed from the system.")
     except User.DoesNotExist:
-        return Response({"error": "Pharmacist not found."}, status=404)
+        return api_not_found("Pharmacist not found.", details={"user_id": user_id})
     except ProtectedError:
-        return Response(
-            {"error": "This pharmacist cannot be deleted because they have related records. Deactivate them instead."},
-            status=status.HTTP_409_CONFLICT,
+        return api_duplicate(
+            "This pharmacist cannot be deleted because they have related records. Deactivate them instead.",
         )
 
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def delete_user(request, user_id):
-    """
-    Admin endpoint to delete any user by id.
-    """
     try:
         user = User.objects.get(id=user_id)
+        username = user.username
         user.delete()
-        return Response({"message": "User deleted successfully."})
+        return api_success(f"{username} has been removed from the system.")
     except User.DoesNotExist:
-        return Response({"error": "User not found."}, status=404)
+        return api_not_found("User not found.", details={"user_id": user_id})
     except ProtectedError:
-        return Response(
-            {"error": "This user cannot be deleted because they have related records. Deactivate them instead."},
-            status=status.HTTP_409_CONFLICT,
+        return api_duplicate(
+            "This user cannot be deleted because they have related records. Deactivate them instead.",
         )
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def deactivate_user(request, user_id):
-    """Toggle a user's active status."""
     user = get_object_or_404(User, id=user_id)
     user.is_active = not user.is_active
     user.save(update_fields=['is_active'])
-    return Response({'message': 'User status updated successfully.', 'is_active': user.is_active})
+    if user.is_active:
+        return api_success(f"{user.username}'s account has been reactivated.")
+    return api_success(
+        f"{user.username}'s account has been deactivated. They can no longer log in.",
+        data={"is_active": user.is_active},
+        extra={"is_active": user.is_active},
+    )
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def admin_reset_password(request, user_id):
-    """Force reset a user's password from the admin panel."""
     user = get_object_or_404(User, id=user_id)
     new_password = request.data.get('new_password')
     if not new_password:
-        return Response({'error': 'new_password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        return api_validation_error(
+            "new_password is required.",
+            details={"missing_fields": ["new_password"]},
+        )
 
     try:
         validate_password(new_password, user=user)
     except Exception as exc:
-        return Response({'error': exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+        messages = getattr(exc, "messages", [str(exc)])
+        return api_validation_error(
+            "Password does not meet security requirements.",
+            details={"new_password": list(messages)},
+        )
 
     user.set_password(new_password)
     user.must_change_password = True
     user.save()
-    return Response({'message': 'Password reset successfully.'})
+    return api_success(
+        f"{user.username} will be prompted to set a new password on next login.",
+    )
 
 
 @api_view(['PATCH', 'PUT'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def update_user(request, user_id):
-    """
-    Admin endpoint to update user fields (first_name, last_name, email, role, is_verified).
-    """
     user = get_object_or_404(User, id=user_id)
     data = request.data
     if 'first_name' in data:
@@ -175,11 +193,13 @@ def update_user(request, user_id):
     if 'permission_flags' in data:
         permission_flags = data.get('permission_flags')
         if not isinstance(permission_flags, dict):
-            return Response({'error': 'permission_flags must be an object.'}, status=status.HTTP_400_BAD_REQUEST)
+            return api_validation_error("permission_flags must be an object.")
         user.permission_flags = permission_flags
     if 'is_verified' in data:
         user.is_verified = bool(data.get('is_verified'))
     if 'is_active' in data:
         user.is_active = bool(data.get('is_active'))
     user.save()
-    return Response({'message': 'User updated successfully.'})
+    return api_success(
+        f"{user.username}'s access permissions have been updated.",
+    )

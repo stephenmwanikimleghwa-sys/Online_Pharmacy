@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
+import { unwrapList } from '../utils/parseApiData';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useNotification } from '../context/NotificationContext';
@@ -52,16 +53,12 @@ const Products = () => {
       try {
         setLoading(true);
         const response = await api.get('/products/', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
+          params: { page_size: 500 },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          skipGlobalErrorNotification: true,
         });
 
-        const productsData = Array.isArray(response.data)
-          ? response.data
-          : response.data.results
-            ? response.data.results
-            : [];
-
-        setProducts(productsData);
+        setProducts(unwrapList(response.data));
       } catch (err) {
         console.error('Error fetching products:', err);
         setError(err?.response?.data?.message || err.message || 'Failed to fetch products');

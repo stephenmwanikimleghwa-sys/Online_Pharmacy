@@ -7,6 +7,7 @@ from .models import Consultation, LabTest
 from .serializers import ConsultationSerializer, LabTestSerializer
 
 from inventory.models.dispensing import Dispensation, DispensationItem
+from config.api_responses import api_success, api_validation_error
 
 class ConsultationViewSet(viewsets.ModelViewSet):
     queryset = Consultation.objects.all()
@@ -23,7 +24,7 @@ class ConsultationViewSet(viewsets.ModelViewSet):
         """
         consultation = self.get_object()
         if consultation.is_paid:
-            return Response({"error": "Consultation already paid."}, status=status.HTTP_400_BAD_REQUEST)
+            return api_validation_error("This consultation has already been billed.")
             
         with transaction.atomic():
             # Calculate totals
@@ -56,7 +57,11 @@ class ConsultationViewSet(viewsets.ModelViewSet):
             
             unpaid_labs.update(is_paid=True)
             
-        return Response({"message": "Billed successfully to OTC Sales", "dispensation_id": dispensation.id})
+        return api_success(
+            "Billed to OTC Sales successfully.",
+            data={"dispensation_id": dispensation.id},
+            extra={"dispensation_id": dispensation.id},
+        )
 
 class LabTestViewSet(viewsets.ModelViewSet):
     queryset = LabTest.objects.all()

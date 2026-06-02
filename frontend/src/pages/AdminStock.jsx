@@ -6,7 +6,6 @@ import { AddMedicineModal } from '../components/AddMedicineModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
-import useSlowLoadingWarning from '../hooks/useSlowLoadingWarning';
 
 const AdminStock = () => {
 	const { notify } = useNotification();
@@ -88,8 +87,6 @@ const AdminStock = () => {
 	const [selectedItemForLogs, setSelectedItemForLogs] = useState(null);
 	const [adjustQty, setAdjustQty] = useState(0);
 	const [adjustReason, setAdjustReason] = useState('');
-
-	useSlowLoadingWarning(loading);
 
 	// Categories list (derived from items)
 	const [categories, setCategories] = useState([]);

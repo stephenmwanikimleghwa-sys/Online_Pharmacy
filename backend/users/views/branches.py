@@ -12,6 +12,12 @@ from datetime import timedelta
 
 from users.models import Branch
 from users.serializers import BranchSerializer
+from config.api_responses import (
+    api_not_found,
+    api_permission_denied,
+    api_success,
+    api_validation_error,
+)
 from products.models import Product
 from inventory.models import InterBranchTransfer
 
@@ -131,7 +137,7 @@ def all_branches_summary(request):
     """
     user = request.user
     if not (user.is_superuser or user.role == 'admin'):
-        return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+        return api_permission_denied("Admin access is required for this report.")
 
     today = timezone.now().date()
     month_start = today.replace(day=1)
