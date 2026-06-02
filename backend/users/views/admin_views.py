@@ -1,4 +1,4 @@
-from django.db.models import ProtectedError
+from django.db.models.deletion import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -125,6 +125,17 @@ def delete_user(request, user_id):
                 "Superuser accounts cannot be deleted from this endpoint.",
                 details={"user_id": user_id},
             )
+        # Prevent deleting users who have protected related records (dispensations, orders, activity logs)
+        related_protected = (
+            (hasattr(user, 'dispensations') and user.dispensations.exists()) or
+            (hasattr(user, 'orders') and user.orders.exists()) or
+            (hasattr(user, 'activity_logs') and user.activity_logs.exists())
+        )
+        if related_protected:
+            return api_duplicate(
+                "This user cannot be deleted because they have related records. Deactivate them instead.",
+            )
+
         username = user.username
         user.delete()
         return api_success(f"{username} has been removed from the system.")

@@ -15,19 +15,24 @@ class Migration(migrations.Migration):
             name='use_legacy_prices',
             field=models.BooleanField(default=False, help_text='If set, do not recalculate wholesale/retail prices from buying_price'),
         ),
-        migrations.AddField(
-            model_name='product',
-            name='is_featured',
-            field=models.BooleanField(default=False, verbose_name='Is Featured'),
-        ),
-        migrations.AddField(
-            model_name='product',
-            name='shelf_location',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Shelf Location'),
-        ),
-        migrations.AddField(
-            model_name='product',
-            name='vat_obligation',
-            field=models.CharField(blank=True, max_length=50, null=True, verbose_name='VAT Obligation'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.AddField(
+                    model_name='product',
+                    name='is_featured',
+                    field=models.BooleanField(default=False, verbose_name='Is Featured'),
+                ),
+                migrations.AddField(
+                    model_name='product',
+                    name='shelf_location',
+                    field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Shelf Location'),
+                ),
+                migrations.AddField(
+                    model_name='product',
+                    name='vat_obligation',
+                    field=models.CharField(blank=True, max_length=50, null=True, verbose_name='VAT Obligation'),
+                ),
+            ],
         ),
     ]
