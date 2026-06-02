@@ -36,7 +36,10 @@ const ProductCard = ({ product }) => {
         </span>
 
         {/* Product Name */}
-        <h3 className="text-lg font-semibold mb-1 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+        <h3
+          className="text-lg font-semibold mb-1 leading-snug break-words"
+          style={{ color: 'var(--text-primary)' }}
+        >
           {name}
         </h3>
 

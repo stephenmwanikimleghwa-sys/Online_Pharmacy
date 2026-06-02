@@ -3,7 +3,6 @@ import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
 import inventoryService from '../services/inventoryService';
-import InventoryItemCard from '../components/InventoryItemCard';
 import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
 import RestockModal from '../components/RestockModal';
 import StockLogsModal from '../components/StockLogsModal';
@@ -24,14 +23,9 @@ const InventoryManagement = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const BRANCH_COLUMNS = ['TRANSCOUNTY_MAIN', 'TRANSCOUNTY_ANNEX', 'PEAKFARM'];
 
   const searchInputRef = useRef(null);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filter, activeTab]);
 
   useEffect(() => {
     if (activeTab === 'inventory') {
@@ -94,8 +88,10 @@ const InventoryManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
-  const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const getBranchQty = (item, branchName) => {
+    const match = (item.branch_stocks || []).find((b) => b.branch_name === branchName);
+    return match ? Number(match.quantity || 0) : 0;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
@@ -165,9 +161,11 @@ const InventoryManagement = () => {
                       placeholder="Search by medicine name..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="form-input w-full pl-12 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 transition-all font-medium placeholder:text-muted shadow-sm"
+                      className={`form-input w-full pr-6 py-4 rounded-2xl focus:outline-none focus:ring-4 transition-all font-medium placeholder:text-muted shadow-sm ${searchTerm ? 'pl-4' : 'pl-12'}`}
                     />
-                    <svg className="w-5 h-5 text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    {!searchTerm && (
+                      <svg className="w-5 h-5 text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    )}
                   </div>
                 </div>
 
@@ -290,7 +288,7 @@ const InventoryManagement = () => {
             );
           })()}
 
-          {/* Inventory Grid Layout */}
+          {/* Inventory List Layout */}
           <div className="flex items-center justify-between mb-8 px-4">
             <h2 className="text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Your stock</h2>
             <div className="flex items-center gap-3">
@@ -301,13 +299,15 @@ const InventoryManagement = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="glass-card rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--border-primary)' }}>
             {loading ? (
-              Array.from({ length: 6 }).map((_, idx) => (
-                <InventoryItemCardSkeleton key={idx} />
-              ))
+              <div className="p-6 grid grid-cols-1 gap-4">
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <InventoryItemCardSkeleton key={idx} />
+                ))}
+              </div>
             ) : filteredInventory.length === 0 ? (
-              <div className="col-span-full py-24 glass-card rounded-[2.5rem] border border-white/10 dark:border-slate-800 flex flex-col items-center justify-center text-center px-10 relative overflow-hidden group transition-all duration-500 hover:shadow-glow">
+              <div className="py-24 flex flex-col items-center justify-center text-center px-10 relative overflow-hidden group transition-all duration-500 hover:shadow-glow">
                 <div className="absolute inset-0 bg-primary-500/5 blur-[100px] rounded-full group-hover:bg-primary-500/10 transition-colors duration-700"></div>
                 <div className="w-24 h-24 bg-slate-100 dark:bg-slate-900/50 rounded-3xl flex items-center justify-center mb-6 shadow-inner relative z-10 border border-white/50 dark:border-white/5">
                   <svg className="w-12 h-12 text-slate-400 dark:text-primary-500 group-hover:scale-110 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -330,44 +330,75 @@ const InventoryManagement = () => {
                 </div>
               </div>
             ) : (
-              paginatedInventory.map(item => (
-                <InventoryItemCard
-                  key={item.id}
-                  item={item}
-                  onRestock={user?.role === 'auditor' ? null : () => {
-                    setSelectedItem(item);
-                    setShowRestockModal(true);
-                  }}
-                  onViewLogs={() => handleViewLogs(item)}
-                />
-              ))
+              <div className="overflow-auto max-h-[70vh]">
+                <table className="min-w-full text-sm">
+                  <thead className="sticky top-0 z-10" style={{ background: 'var(--bg-card)' }}>
+                    <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                      <th className="text-left px-4 py-3 font-bold">Product</th>
+                      <th className="text-right px-4 py-3 font-bold">MAIN</th>
+                      <th className="text-right px-4 py-3 font-bold">ANNEX</th>
+                      <th className="text-right px-4 py-3 font-bold">PEAKFARM</th>
+                      <th className="text-right px-4 py-3 font-bold">Total</th>
+                      <th className="text-left px-4 py-3 font-bold">Status</th>
+                      <th className="text-right px-4 py-3 font-bold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredInventory.map((item) => {
+                      const main = getBranchQty(item, BRANCH_COLUMNS[0]);
+                      const annex = getBranchQty(item, BRANCH_COLUMNS[1]);
+                      const peakfarm = getBranchQty(item, BRANCH_COLUMNS[2]);
+                      const total = main + annex + peakfarm;
+                      const out = total <= 0;
+                      const low = !out && item.is_low_stock;
+                      const expSoon = item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry';
+                      return (
+                        <tr key={item.id} className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                          <td className={`px-4 py-3 ${out ? 'text-slate-400' : ''}`}>
+                            <p className="font-semibold leading-tight break-words max-w-[20rem]">{item.name}</p>
+                            {item.category && <p className="text-xs text-slate-500">{item.category}</p>}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold">{main}</td>
+                          <td className="px-4 py-3 text-right font-semibold">{annex}</td>
+                          <td className="px-4 py-3 text-right font-semibold">{peakfarm}</td>
+                          <td className="px-4 py-3 text-right font-bold">{total}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {out && <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700">Out of Stock</span>}
+                              {low && <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-700">Low Stock</span>}
+                              {expSoon && <span className="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-700">Expiring Soon</span>}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex gap-2 justify-end">
+                              {user?.role !== 'auditor' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedItem(item);
+                                    setShowRestockModal(true);
+                                  }}
+                                  className="btn-primary px-3 py-1.5 rounded-lg text-xs font-bold"
+                                >
+                                  Restock
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleViewLogs(item)}
+                                className="px-3 py-1.5 rounded-lg border text-xs font-bold"
+                                style={{ borderColor: 'var(--border-primary)' }}
+                              >
+                                Logs
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-
-          {/* Pagination Controls */}
-          {!loading && totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 mt-8 pt-6 border-t border-slate-200/60 dark:border-slate-800/60">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                Page <span className="text-slate-900 dark:text-slate-200">{currentPage}</span> of {totalPages}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="form-cancel-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="form-cancel-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Modals with Premium Styling */}
           {showRestockModal && selectedItem && (

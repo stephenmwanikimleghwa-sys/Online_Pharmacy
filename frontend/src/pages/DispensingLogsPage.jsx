@@ -1,10 +1,91 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DispensingLogs from '../components/DispensingLogs';
+import api from '../services/api';
+
+const UserActivityLogs = () => {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/auth/activity-logs/', {
+          params: { page_size: 100 },
+          skipGlobalErrorNotification: true,
+        });
+        const results = Array.isArray(res.data) ? res.data : (res.data.results || []);
+        setLogs(results);
+      } catch (err) {
+        setError('Could not load user activity logs.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  return (
+    <div className="glass-card rounded-2xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100">
+        <h2 className="font-display font-bold text-slate-800">User Activity Logs</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-100">
+          <thead className="bg-slate-50/50">
+            <tr>
+              {['User', 'Action', 'Branch', 'IP Address', 'Timestamp'].map((h) => (
+                <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading ? (
+              <tr><td colSpan={5} className="py-12 text-center text-slate-400">Loading...</td></tr>
+            ) : error ? (
+              <tr><td colSpan={5} className="py-12 text-center text-rose-500">{error}</td></tr>
+            ) : logs.length === 0 ? (
+              <tr><td colSpan={5} className="py-12 text-center text-slate-400">No activity logs found.</td></tr>
+            ) : (
+              logs.map((log) => (
+                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-5 py-3 text-sm font-medium text-slate-800">{log.username || log.user || '—'}</td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{log.action_type || log.event_type || '—'}</td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{log.branch_name || log.branch || '—'}</td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{log.ip_address || '—'}</td>
+                  <td className="px-5 py-3 text-sm text-slate-500">{log.timestamp ? new Date(log.timestamp).toLocaleString() : '—'}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 const DispensingLogsPage = () => {
+  const [activeTab, setActiveTab] = useState('dispensing');
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <DispensingLogs />
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className="flex gap-2 p-1.5 rounded-2xl border w-fit" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+        <button
+          onClick={() => setActiveTab('dispensing')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest ${activeTab === 'dispensing' ? 'bg-white text-primary shadow' : 'text-slate-500'}`}
+        >
+          Dispensing Logs
+        </button>
+        <button
+          onClick={() => setActiveTab('activity')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest ${activeTab === 'activity' ? 'bg-white text-primary shadow' : 'text-slate-500'}`}
+        >
+          User Activity Logs
+        </button>
+      </div>
+
+      {activeTab === 'dispensing' ? <DispensingLogs /> : <UserActivityLogs />}
     </div>
   );
 };

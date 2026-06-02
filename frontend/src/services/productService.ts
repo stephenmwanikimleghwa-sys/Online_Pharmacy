@@ -17,9 +17,9 @@ export async function searchProducts(
   const q = (term || "").trim();
   const perPage = options.perPage ?? 100;
 
-  const productRes = await api.get("/products/", {
+  const productRes = await api.get("/products/search/", {
     params: {
-      search: q || undefined,
+      q: q || undefined,
       page_size: perPage,
     },
     skipGlobalErrorNotification: true,
@@ -44,12 +44,12 @@ export async function searchProducts(
 
 export async function fetchBranchCatalog(options: ProductSearchOptions = {}) {
   const perPage = options.perPage ?? 500;
-  const invRes = await api.get("/inventory/list/", {
+  const invRes = await api.get("/products/", {
     params: {
-      per_page: perPage,
-      branch: options.branchId || undefined,
+      context: "sales",
+      page_size: perPage,
     },
     skipGlobalErrorNotification: true,
   });
-  return (invRes.data as { products?: unknown[] })?.products ?? [];
+  return unwrapList(invRes.data);
 }

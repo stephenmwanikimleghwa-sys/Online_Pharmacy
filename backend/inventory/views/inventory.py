@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
 from users.active_branch import get_active_branch
 from products.models import Product, StockLog, BranchStock
+from users.models import Branch
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
 from config.api_responses import ApiErrorCode, api_error, api_validation_error
@@ -359,3 +360,52 @@ def stock_logs(request):
     logs = logs.order_by("-timestamp")[:100]
     serializer = StockLogSerializer(logs, many=True)
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsPharmacistOrAdmin])
+def branch_stock_view(request):
+    """
+    RULE 8: branch-stock endpoint.
+    - Admin: all branches side-by-side.
+    - Pharmacist/Cashier: active branch only.
+    """
+    user = request.user
+    is_admin = getattr(user, "role", None) == "admin" or user.is_superuser
+    active_branch = get_active_branch(request) or getattr(user, "branch", None)
+
+    products_qs = Product.objects.filter(is_active=True).order_by("name")
+    product_id = request.query_params.get("product_id")
+    if product_id:
+        products_qs = products_qs.filter(id=product_id)
+
+    if is_admin:
+        branches = list(Branch.objects.filter(is_active=True).order_by("name"))
+    else:
+        branches = [active_branch] if active_branch else []
+
+    bs_qs = BranchStock.objects.filter(product__in=products_qs)
+    bs_map = {(bs.product_id, bs.branch_id): bs for bs in bs_qs}
+
+    rows = []
+    for product in products_qs:
+        row = {
+            "product_id": product.id,
+            "product_name": product.name,
+            "branches": [],
+            "total": 0.0,
+        }
+        total = 0.0
+        for br in branches:
+            if not br:
+                continue
+            bs = bs_map.get((product.id, br.id))
+            qty = float(bs.quantity) if bs else 0.0
+            total += qty
+            row["branches"].append(
+                {"branch_id": br.id, "branch_name": br.name, "quantity": qty}
+            )
+        row["total"] = total
+        rows.append(row)
+
+    return Response({"results": rows})

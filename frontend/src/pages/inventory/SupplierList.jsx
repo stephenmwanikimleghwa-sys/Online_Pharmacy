@@ -203,20 +203,20 @@ const SupplierList = () => {
       ) : error ? (
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center font-semibold">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredSuppliers.map(supplier => {
             const bal = parseFloat(supplier.balance);
             const isDebt = bal > 0;
             const isCredit = bal < 0;
 
             return (
-              <button 
+              <button
                 key={supplier.id}
                 onClick={() => setSelectedSupplier(supplier)}
-                className="text-left group relative glass-card rounded-3xl p-6 border border-white/60 shadow-sm hover:shadow-premium hover:border-primary/20 transition-all duration-300 hover:-translate-y-1"
+                className="text-left group relative glass-card rounded-2xl p-4 border border-white/60 shadow-sm hover:shadow-premium hover:border-primary/20 transition-all duration-300"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white font-display font-bold text-lg shadow-md group-hover:scale-110 transition-transform">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white font-display font-bold text-base shadow-md">
                     {supplier.name[0]?.toUpperCase()}
                   </div>
                   <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
@@ -228,13 +228,13 @@ const SupplierList = () => {
                   </div>
                 </div>
                 
-                <h3 className="font-display font-bold text-slate-900 text-lg mb-1 truncate">{supplier.name}</h3>
-                <p className="text-xs text-slate-500 font-medium mb-4 flex items-center gap-1.5 truncate">
+                <h3 className="font-display font-bold text-slate-900 text-base mb-1 break-words leading-snug">{supplier.name}</h3>
+                <p className="text-xs text-slate-500 font-medium mb-3 flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                   {supplier.phone || 'No phone'}
                 </p>
 
-                <div className="pt-4 border-t border-slate-100">
+                <div className="pt-3 border-t border-slate-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Balance</p>
                   <p className={`font-display font-bold text-xl ${
                     isDebt ? 'text-rose-600' :

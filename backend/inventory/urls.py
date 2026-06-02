@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views.inventory import (
     inventory_summary, inventory_list, low_stock_items,
     out_of_stock_items, inventory_detail, restock_inventory,
-    adjust_inventory, stock_logs
+    adjust_inventory, stock_logs, branch_stock_view
 )
 from .views.restock import RestockRequestViewSet
 from .views.stock_intake import StockIntakeViewSet
@@ -15,9 +15,11 @@ from .views.returns import ProductReturnViewSet
 from .views.sales_returns import SaleReturnViewSet
 from .views.document import DocumentViewSet
 from .views.supplier import SupplierViewSet
+from .views.batch import BatchViewSet
 
 router = DefaultRouter()
 router.register(r'suppliers', SupplierViewSet, basename='supplier')
+router.register(r'batches', BatchViewSet, basename='batch')
 router.register(r'restock-requests', RestockRequestViewSet, basename='restockrequest')
 router.register(r'stock-intake', StockIntakeViewSet, basename='stockintake')
 router.register(r'transfers', InterBranchTransferViewSet, basename='interbranchtransfer')
@@ -40,6 +42,7 @@ urlpatterns = [
     path('list/', inventory_list, name='list'),
     path('low-stock/', low_stock_items, name='low-stock'),
     path('out-of-stock/', out_of_stock_items, name='out-of-stock'),
+    path('branch-stock/', branch_stock_view, name='branch-stock'),
     
     # Item Operations
     path('<int:pk>/', inventory_detail, name='detail'),

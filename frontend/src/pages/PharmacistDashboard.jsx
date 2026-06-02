@@ -98,22 +98,51 @@ const PharmacistDashboard = () => {
       {/* Welcome Banner */}
       <WelcomeBanner />
 
-      {/* Quick Actions & Quick Sale - Top Row Bento */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
-        <div className="lg:col-span-12">
-          <QuickActions
-            onAddPrescription={handleAddPrescription}
-            onViewReports={handleViewReports}
-            onViewInventory={() => navigate("/inventory")}
-          />
-        </div>
+      {/* Inventory Summary immediately after greeting */}
+      <div className="mb-10">
+        <InventorySummaryCard
+          summary={inventorySummary}
+          onViewInventory={() => navigate("/inventory")}
+        />
+      </div>
+
+      {/* Quick Operations below inventory summary */}
+      <div className="mb-10">
+        <QuickActions
+          onQuickSale={() => setIsQuickSaleOpen(true)}
+          onAddPrescription={handleAddPrescription}
+          onViewReports={handleViewReports}
+          onViewInventory={() => navigate("/inventory")}
+        />
       </div>
 
       {/* Main Content Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
 
-        {/* Pending Prescriptions - Large Bento Card */}
-        <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 flex flex-col border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
+        {/* Direct OTC Sale (moved to primary slot) */}
+        <div className="lg:col-span-8 btn-primary rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
+          {/* Decorative blobs */}
+          <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+          <div className="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+
+          <div className="relative z-10">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/20">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+            <h3 className="text-2xl font-display font-bold mb-3 tracking-tight">Direct OTC Sale</h3>
+            <p className="text-sm mb-8 font-medium leading-relaxed" style={{color:'rgba(255,255,255,0.8)'}}>Handle non-prescription over-the-counter sales instantly and update inventory.</p>
+            <button
+              onClick={() => setIsQuickSaleOpen(true)}
+              className="w-full py-4 bg-white text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
+              style={{color:'var(--color-primary)'}}
+            >
+              Quick Sale (OTC)
+            </button>
+          </div>
+        </div>
+
+        {/* Pending Prescriptions - moved to side */}
+        <div className="lg:col-span-4 glass-card rounded-[2rem] p-8 flex flex-col border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl" style={{background:'var(--brand-mist)'}}>
@@ -160,8 +189,8 @@ const PharmacistDashboard = () => {
           )}
         </div>
 
-        {/* Recently Dispensed - Side Bento Card */}
-        <div className="lg:col-span-4 flex flex-col gap-8">
+        {/* Recently Dispensed and Pending scripts section */}
+        <div className="lg:col-span-12 flex flex-col gap-8">
           <div className="glass-card rounded-[2rem] p-8 border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 rounded-xl" style={{background:'rgba(16,185,129,0.12)'}}>
@@ -198,35 +227,6 @@ const PharmacistDashboard = () => {
             )}
           </div>
 
-          {/* Quick Sale Module - Featured Callout */}
-          <div className="btn-primary rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
-            {/* Decorative blobs */}
-            <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-            <div className="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/20">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              </div>
-              <h3 className="text-2xl font-display font-bold mb-3 tracking-tight">Direct OTC Sale</h3>
-              <p className="text-sm mb-8 font-medium leading-relaxed" style={{color:'rgba(255,255,255,0.8)'}}>Handle non-prescription over-the-counter sales instantly and update inventory.</p>
-              <button
-                onClick={() => setIsQuickSaleOpen(true)}
-                className="w-full py-4 bg-white text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
-                style={{color:'var(--color-primary)'}}
-              >
-                Quick Sale (OTC)
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Inventory Summary - Bottom Wide Bento */}
-        <div className="lg:col-span-12">
-          <InventorySummaryCard
-            summary={inventorySummary}
-            onViewInventory={() => navigate("/inventory")}
-          />
         </div>
       </div>
 

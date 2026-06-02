@@ -4,14 +4,15 @@ from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
-from products.models import Product
+from django.db.models import Q, Sum
+from products.models import Product, BranchStock
 from products.serializers import (
     ProductSerializer,
     ProductCreateSerializer,
     ProductUpdateSerializer,
 )
 from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
+from users.active_branch import get_active_branch
 # Pharmacy import removed - single pharmacy app
 from rest_framework.request import Request
 from django.db.models.query import QuerySet
@@ -20,6 +21,14 @@ import logging
 from utils.response import api_response
 
 logger = logging.getLogger(__name__)
+
+
+def _branch_for_request(request):
+    active = get_active_branch(request)
+    if active:
+        return active
+    user = getattr(request, "user", None)
+    return getattr(user, "branch", None)
 
 
 class ProductListCreateView(generics.ListCreateAPIView):
@@ -139,14 +148,22 @@ def search_products(request: Request) -> Response:
     Returns:
         Response: JSON response containing the list of matching products.
     """
-    query = request.GET.get("q", "")
+    query = request.GET.get("q", "").strip()
     category = request.GET.get("category", "")
     min_price = request.GET.get("min_price", "")
     max_price = request.GET.get("max_price", "")
 
     products = Product.objects.filter(is_active=True).select_related(
         'pharmacy', 'pricing_tier'
-    ).prefetch_related('pricing_tier')
+    ).prefetch_related('pricing_tier', 'branch_stocks')
+
+    active_branch = _branch_for_request(request)
+    # RULE 8: /products/search always branch-scoped for sales behavior
+    if active_branch:
+        products = products.filter(
+            branch_stocks__branch=active_branch,
+            branch_stocks__quantity__gt=0,
+        ).distinct()
 
     if query:
         products = products.filter(
@@ -164,7 +181,7 @@ def search_products(request: Request) -> Response:
     if max_price:
         products = products.filter(price__lte=max_price)
 
-    serializer = ProductSerializer(products, many=True)
+    serializer = ProductSerializer(products.order_by("name"), many=True)
     return api_response(data=serializer.data, message="Search results retrieved successfully")
 
 
@@ -249,7 +266,27 @@ class ProductViewSet(viewsets.ModelViewSet):
         """
         queryset = Product.objects.filter(is_active=True).select_related(
             'pharmacy', 'pricing_tier'
-        ).prefetch_related('pricing_tier')
+        ).prefetch_related('pricing_tier', 'branch_stocks')
+
+        context = self.request.query_params.get("context")
+        active_branch = _branch_for_request(self.request)
+        is_public_store = not self.request.user.is_authenticated
+
+        # RULE 2 + RULE 8: sales context shows only in-stock at active branch
+        if context == "sales":
+            if active_branch:
+                queryset = queryset.filter(
+                    branch_stocks__branch=active_branch,
+                    branch_stocks__quantity__gt=0,
+                ).distinct()
+            else:
+                queryset = queryset.none()
+        # RULE 5: public store shows products with stock in at least one branch
+        elif context == "store" or is_public_store:
+            queryset = queryset.filter(branch_stocks__quantity__gt=0).distinct()
+        # RULE 4: inventory context returns all active products
+        elif context == "inventory":
+            pass
         
         if self.action in ['update', 'partial_update', 'destroy']:
             if self.request.user.is_authenticated and self.request.user.role == 'pharmacist':
@@ -346,3 +383,31 @@ class ProductViewSet(viewsets.ModelViewSet):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 success=False
             )
+
+    @action(detail=True, methods=['get'], url_path='availability')
+    def availability(self, request: Request, pk=None) -> Response:
+        """
+        RULE 8: Returns stock availability for a product across all branches.
+        """
+        product = self.get_object()
+        active_branch = _branch_for_request(request)
+        stocks = (
+            BranchStock.objects.filter(product=product)
+            .select_related("branch")
+            .order_by("branch__name")
+        )
+        branches = [
+            {
+                "branch": bs.branch.name,
+                "quantity": float(bs.quantity),
+                "is_active_branch": bool(active_branch and bs.branch_id == active_branch.id),
+            }
+            for bs in stocks
+        ]
+        return Response(
+            {
+                "product_id": product.id,
+                "product_name": product.name,
+                "branches": branches,
+            }
+        )

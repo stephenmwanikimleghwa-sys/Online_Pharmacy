@@ -8,5 +8,6 @@ from .inventory import (
     restock_inventory,
     adjust_inventory,
     stock_logs,
+    branch_stock_view,
 )
 from .transfer import InterBranchTransferViewSet

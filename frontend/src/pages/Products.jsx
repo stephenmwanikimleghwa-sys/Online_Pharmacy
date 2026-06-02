@@ -53,7 +53,7 @@ const Products = () => {
       try {
         setLoading(true);
         const response = await api.get('/products/', {
-          params: { page_size: 500 },
+          params: { context: 'store', page_size: 5000 },
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           skipGlobalErrorNotification: true,
         });

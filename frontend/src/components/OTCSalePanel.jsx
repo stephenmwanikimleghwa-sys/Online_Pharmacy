@@ -28,6 +28,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [completing, setCompleting] = useState(false);
   const [saleError, setSaleError] = useState("");
   const [lastOrder, setLastOrder] = useState(null);
+  const [outOfStockHint, setOutOfStockHint] = useState(null);
 
   const runSearch = useCallback(
     async (term) => {
@@ -40,6 +41,27 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       try {
         const products = await searchProducts(q, { branchId, perPage: 80 });
         setSearchResults(products);
+        setOutOfStockHint(null);
+        if (products.length === 0) {
+          // RULE 3: explain out-of-stock + show other-branch availability when possible
+          const broad = await api.get("/products/", {
+            params: { context: "inventory", search: q, page_size: 5 },
+            skipGlobalErrorNotification: true,
+          });
+          const matches = broad.data?.results || broad.data?.data || [];
+          if (matches.length > 0) {
+            const product = matches[0];
+            const availability = await api.get(`/products/${product.id}/availability/`, {
+              skipGlobalErrorNotification: true,
+            });
+            const branches = availability.data?.branches || [];
+            const alternatives = branches.filter((b) => Number(b.quantity) > 0 && !b.is_active_branch);
+            setOutOfStockHint({
+              productName: product.name,
+              alternatives,
+            });
+          }
+        }
       } catch {
         setSearchResults([]);
       } finally {
@@ -160,6 +182,24 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   };
 
   const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
+  const stockBadge = (qty) => {
+    if (qty <= 0) return null;
+    if (qty <= 5) {
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700">
+          Only {qty} left
+        </span>
+      );
+    }
+    if (qty <= 20) {
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+          {qty} in stock
+        </span>
+      );
+    }
+    return null;
+  };
 
   if (lastOrder) {
     return (
@@ -191,10 +231,12 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       <div className="glass-card rounded-2xl p-6 border" style={{ borderColor: "var(--border-primary)" }}>
         <label className="form-label">Search product</label>
         <div className="relative mb-4">
-          <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          {!searchTerm && (
+            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          )}
           <input
             type="search"
-            className="form-input pl-10"
+            className={`form-input ${searchTerm ? "pl-3" : "pl-10"}`}
             placeholder="Type at least 2 characters..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -212,9 +254,34 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             </p>
           )}
           {!searching && searchTerm.length >= 2 && searchResults.length === 0 && (
-            <p className="text-sm text-center py-4" style={{ color: "var(--text-secondary)" }}>
-              No products found. Try another name.
-            </p>
+            <div className="text-sm text-center py-4 space-y-2" style={{ color: "var(--text-secondary)" }}>
+              <p>No products found at this branch.</p>
+              {outOfStockHint && (
+                <div className="text-left bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs space-y-2">
+                  <p>
+                    <strong>{outOfStockHint.productName}</strong> is out of stock at{" "}
+                    <strong>{activeBranch?.name || "your branch"}</strong>.
+                  </p>
+                  {outOfStockHint.alternatives?.length > 0 && (
+                    <div>
+                      <p className="font-semibold mb-1">Available at:</p>
+                      {outOfStockHint.alternatives.map((alt) => (
+                        <div key={alt.branch} className="flex items-center justify-between">
+                          <span>{alt.branch} ({alt.quantity} units)</span>
+                          <button
+                            type="button"
+                            className="text-[11px] underline font-semibold"
+                            onClick={() => notify.info("Transfer Request", "Open Branch Transfers to request stock transfer.")}
+                          >
+                            Request Transfer
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           {searchResults.map((product) => {
             const qty = getProductBranchQuantity(product, branchId);
@@ -235,6 +302,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                 <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
                   Stock: {qty}
                 </span>
+                <div className="mt-1">{stockBadge(qty)}</div>
               </button>
             );
           })}

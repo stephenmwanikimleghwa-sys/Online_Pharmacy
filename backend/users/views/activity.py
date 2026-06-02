@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from ..models import StaffActivityLog
 from ..serializers import StaffActivityLogSerializer
+from users.permissions import IsPharmacistOrAdmin
 
 class StaffActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -9,17 +10,17 @@ class StaffActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = StaffActivityLog.objects.select_related('user').all()
     serializer_class = StaffActivityLogSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_permissions(self):
-        from users.permissions import CanViewAuditLogs
-        return [permissions.IsAuthenticated(), CanViewAuditLogs()]
+    permission_classes = [permissions.IsAuthenticated, IsPharmacistOrAdmin]
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return StaffActivityLog.objects.none()
             
         qs = super().get_queryset()
+        user = self.request.user
+        # Non-admin staff should only see their own actions
+        if not (user.is_superuser or getattr(user, "role", None) == "admin"):
+            qs = qs.filter(user=user)
         
         # Filter by user
         user_id = self.request.query_params.get('user')
