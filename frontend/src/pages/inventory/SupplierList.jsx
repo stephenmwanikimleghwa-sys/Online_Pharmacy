@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import inventoryService from '../../services/inventoryService';
 import SupplierProfileModal from '../../components/SupplierProfileModal';
 import { MagnifyingGlassIcon, TruckIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 import { useNotification } from '../../context/NotificationContext';
 import { notifyApiError } from '../../utils/notifyApiError';
 
@@ -15,6 +16,7 @@ const SupplierList = () => {
   const [filterDebt, setFilterDebt] = useState('all'); // 'all', 'debt', 'cleared'
   
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [deleteCandidateId, setDeleteCandidateId] = useState(null);
   
   // Create/Edit Supplier Form State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -99,17 +101,21 @@ const SupplierList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this supplier? This may fail if they have linked transactions.')) {
-      try {
-        await inventoryService.deleteSupplier(id);
-        fetchSuppliers();
-        if (selectedSupplier && selectedSupplier.id === id) {
-          setSelectedSupplier(null);
-        }
-      } catch (err) {
-        notify.error('Delete Failed', 'The supplier could not be removed.');
-        console.error(err);
+    setDeleteCandidateId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteCandidateId) return;
+    try {
+      await inventoryService.deleteSupplier(deleteCandidateId);
+      fetchSuppliers();
+      if (selectedSupplier && selectedSupplier.id === deleteCandidateId) {
+        setSelectedSupplier(null);
       }
+      setDeleteCandidateId(null);
+    } catch (err) {
+      notify.error('Delete Failed', 'The supplier could not be removed.');
+      console.error(err);
     }
   };
 
@@ -310,6 +316,24 @@ const SupplierList = () => {
             </div>
         </div>
       )}
+
+      <Transition show={Boolean(deleteCandidateId)} as={React.Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-[70] overflow-y-auto" onClose={() => setDeleteCandidateId(null)}>
+          <div className="min-h-screen flex items-center justify-center px-4">
+            <DialogBackdrop className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
+            <div className="relative z-10 bg-white rounded-2xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-bold mb-2">Delete Supplier</h3>
+              <p className="text-sm text-slate-600 mb-5">
+                Are you sure you want to delete this supplier? This can fail if there are linked transactions.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setDeleteCandidateId(null)} className="px-4 py-2 rounded-xl bg-slate-100 font-semibold">Cancel</button>
+                <button type="button" onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-rose-600 text-white font-semibold">Delete</button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };

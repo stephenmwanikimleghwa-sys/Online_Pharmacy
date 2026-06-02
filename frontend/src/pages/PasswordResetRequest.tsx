@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { ExclamationCircleIcon, CheckCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
+import { extractStructuredError } from "../utils/apiErrorDisplay";
 
 const PasswordResetRequest: React.FC = () => {
     const [email, setEmail] = useState("");
@@ -21,7 +22,13 @@ const PasswordResetRequest: React.FC = () => {
             const response = await api.post("/auth/password-reset/", { email });
             setMessage(response.data.message || "Reset link sent!");
         } catch (err: any) {
-            setError(err.response?.data?.email?.[0] || err.response?.data?.detail || "Failed to send reset link.");
+            const structured = extractStructuredError(err.response?.data);
+            setError(
+                structured?.message ||
+                err.response?.data?.email?.[0] ||
+                err.response?.data?.detail ||
+                "Failed to send reset link.",
+            );
         } finally {
             setLoading(false);
         }

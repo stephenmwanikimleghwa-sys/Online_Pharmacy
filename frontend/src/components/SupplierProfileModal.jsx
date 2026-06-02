@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import inventoryService from '../services/inventoryService';
+import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { XMarkIcon, BanknotesIcon, PencilIcon, TrashIcon, ReceiptRefundIcon } from '@heroicons/react/24/outline';
@@ -28,7 +29,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
   const fetchLedger = async () => {
     try {
       setLoading(true);
-      const res = await inventoryService.api.get(`/inventory/suppliers/${supplier.id}/ledger/`);
+      const res = await api.get(`/inventory/suppliers/${supplier.id}/ledger/`);
       setLedgerData(res.data);
     } catch (err) {
       console.error("Error fetching ledger", err);
@@ -47,7 +48,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
 
     setPaymentLoading(true);
     try {
-      const res = await inventoryService.api.post(`/inventory/suppliers/${supplier.id}/record_payment/`, {
+      const res = await api.post(`/inventory/suppliers/${supplier.id}/record_payment/`, {
         amount: parseFloat(amount),
         payment_mode: paymentMode,
         invoice_number: invoiceNumber,

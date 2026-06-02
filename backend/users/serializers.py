@@ -101,7 +101,7 @@ class UserLoginSerializer(serializers.Serializer):
             if not user:
                 raise serializers.ValidationError({
                     "code": ApiErrorCode.INVALID_CREDENTIALS,
-                    "message": "The password you entered is wrong. Please try again.",
+                    "message": "Invalid username or password, try again.",
                 })
             if not user.is_active:
                 raise serializers.ValidationError({
@@ -148,8 +148,9 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class StaffActivityLogSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     full_name = serializers.CharField(source='user.full_name', read_only=True)
+    branch_name = serializers.CharField(source='branch.name', read_only=True)
 
     class Meta:
         model = StaffActivityLog
-        fields = ['id', 'user', 'username', 'full_name', 'action_type', 'description', 'ip_address', 'timestamp']
+        fields = ['id', 'user', 'username', 'full_name', 'event_type', 'branch', 'branch_name', 'ip_address', 'timestamp']
         read_only_fields = ['timestamp']

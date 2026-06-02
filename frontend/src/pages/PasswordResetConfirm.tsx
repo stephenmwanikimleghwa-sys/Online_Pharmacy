@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
+import { extractStructuredError } from "../utils/apiErrorDisplay";
 
 const PasswordResetConfirm: React.FC = () => {
     const { uid, token } = useParams();
@@ -36,7 +37,13 @@ const PasswordResetConfirm: React.FC = () => {
                 navigate("/login");
             }, 3000);
         } catch (err: any) {
-            setError(err.response?.data?.error || err.response?.data?.detail || "Failed to reset password. Link may be expired.");
+            const structured = extractStructuredError(err.response?.data);
+            setError(
+                structured?.message ||
+                err.response?.data?.error ||
+                err.response?.data?.detail ||
+                "Failed to reset password. Link may be expired.",
+            );
         } finally {
             setLoading(false);
         }

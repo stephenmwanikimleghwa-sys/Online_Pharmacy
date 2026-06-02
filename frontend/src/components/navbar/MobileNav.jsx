@@ -1,102 +1,94 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import {
+  HomeIcon,
+  Squares2X2Icon,
+  ClipboardDocumentListIcon,
+  ShoppingBagIcon,
+  UsersIcon,
+  UserCircleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
-const MobileNav = ({ isOpen, user, handleLogout }) => {
+const MobileNav = ({ isOpen, user, handleLogout, onClose }) => {
   if (!isOpen) return null;
 
   const linkBase =
     "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200";
 
+  const getDashboardHref = (role) => {
+    if (role === "admin") return "/admin/dashboard";
+    if (role === "pharmacist") return "/branch/dashboard";
+    if (role === "cashier") return "/cashier/dashboard";
+    return "/account";
+  };
+
+  const getUserManagementHref = (u) => {
+    if (u?.role === "admin") return "/admin/users";
+    if (u?.role === "pharmacist" || u?.role === "cashier") return "/customers";
+    return "/account";
+  };
+
   return (
-    <div
-      className="mobile-nav-panel md:hidden"
-      id="mobile-menu"
-      role="dialog"
-      aria-label="Mobile menu"
-    >
-      <div className="px-3 py-4 space-y-1">
-        {user && (
-          <>
-            {(user.role === "admin" || user.role === "pharmacist" || user.role === "cashier") && (
-              <Link
-                to={
-                  user.role === "admin"
-                    ? "/admin/dashboard"
-                    : user.role === "pharmacist"
-                      ? "/pharmacist/dashboard"
-                      : "/cashier/dashboard"
-                }
-                className={`${linkBase} mobile-nav-cta`}
-              >
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                {user.role === "admin"
-                  ? "Admin Dashboard"
-                  : user.role === "pharmacist"
-                    ? "Pharmacy Dashboard"
-                    : "Cashier Terminal"}
+    <div className="fixed inset-0 z-[70] md:hidden" role="dialog" aria-label="Mobile menu">
+      <button
+        type="button"
+        aria-label="Close navigation"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
+      <aside className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shadow-xl">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-700">
+          <p className="font-bold text-sm">Navigation</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="px-3 py-4 space-y-1">
+          {user ? (
+            <>
+              <Link to="/" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+                <HomeIcon className="h-5 w-5" /> Home
               </Link>
-            )}
+              <Link to={getDashboardHref(user.role)} onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+                <Squares2X2Icon className="h-5 w-5" /> Dashboard
+              </Link>
+              <Link to="/inventory" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+                <ClipboardDocumentListIcon className="h-5 w-5" /> Inventory
+              </Link>
+              <Link to="/otc-sales" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+                <ShoppingBagIcon className="h-5 w-5" /> OTC Sale
+              </Link>
+              <Link to={getUserManagementHref(user)} onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+                <UsersIcon className="h-5 w-5" /> User Management
+              </Link>
+              <Link to="/account" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+                <UserCircleIcon className="h-5 w-5" /> Profile
+              </Link>
 
-            <Link to="/" className={`${linkBase} mobile-nav-link`}>Home</Link>
-            <Link to="/products" className={`${linkBase} mobile-nav-link`}>Products</Link>
-
-            {(user.role === "admin" || user.role === "pharmacist" || user.role === "auditor" || user.role === "cashier") && (
-              <>
-                {(user.role !== "auditor") && (
-                  <>
-                    <Link to="/otc-sales" className={`${linkBase} mobile-nav-link`}>OTC Sales</Link>
-                    <Link to="/customers" className={`${linkBase} mobile-nav-link`}>Customers</Link>
-                  </>
-                )}
-                {(user.role !== "cashier") && (
-                  <Link to="/inventory" className={`${linkBase} mobile-nav-link`}>Inventory</Link>
-                )}
-                <Link to="/reports" className={`${linkBase} mobile-nav-link`}>Reports</Link>
-                <Link to="/quotations" className={`${linkBase} mobile-nav-link`}>Quotations</Link>
-                <Link to="/returns" className={`${linkBase} mobile-nav-link`}>Returns</Link>
-                <Link to="/clinical" className={`${linkBase} mobile-nav-link`}>Clinical Services</Link>
-                {(user.role === "admin" || user.role === "pharmacist") && (
-                  <>
-                    <Link to="/licensing" className={`${linkBase} mobile-nav-link`}>Licensing</Link>
-                    <Link to="/dispensing-logs" className={`${linkBase} mobile-nav-link`}>Dispensing Logs</Link>
-                  </>
-                )}
-                {(user.can_view_financials || user.role === "admin" || user.role === "auditor") && (
-                  <Link to="/financials" className={`${linkBase} mobile-nav-link`}>Financials</Link>
-                )}
-              </>
-            )}
-
-            <div className="border-t border-neutral-200/80 my-3" />
-
-            <Link to="/account" className={`${linkBase} mobile-nav-link`}>
-              <div className="nav-avatar flex-shrink-0" aria-hidden>
-                {user.username?.[0]?.toUpperCase() ?? "?"}
-              </div>
-              {user.username}
+              <div className="border-t border-neutral-200/80 my-3" />
+              <button
+                type="button"
+                onClick={() => {
+                  handleLogout();
+                  onClose?.();
+                }}
+                className={`${linkBase} w-full text-left text-red-600 hover:bg-red-50 hover:text-red-700`}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/login" onClick={onClose} className="nav-cta-btn flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold">
+              Sign in
             </Link>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className={`${linkBase} w-full text-left text-red-600 hover:bg-red-50 hover:text-red-700`}
-            >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Logout
-            </button>
-          </>
-        )}
-
-        {!user && (
-          <Link to="/login" className="nav-cta-btn flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold">
-            Sign in
-          </Link>
-        )}
-      </div>
+          )}
+        </div>
+      </aside>
     </div>
   );
 };

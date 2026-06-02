@@ -59,9 +59,6 @@ def inventory_list(request):
             .order_by("name")
         )
 
-        if hasattr(request.user, "pharmacy") and request.user.pharmacy:
-            products = products.filter(pharmacy=request.user.pharmacy)
-
         search = request.GET.get("search", "").strip()
         if search:
             products = products.filter(
@@ -90,8 +87,11 @@ def inventory_list(request):
         serialized_products = ProductSerializer(products_page, many=True).data
         
         target_branch_id = None
+        active_branch = get_active_branch(request)
         if is_admin and branch_param and branch_param != 'all':
             target_branch_id = int(branch_param)
+        elif active_branch:
+            target_branch_id = active_branch.id
         elif not is_admin and user.branch:
             target_branch_id = user.branch.id
 

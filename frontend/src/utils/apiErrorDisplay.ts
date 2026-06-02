@@ -64,8 +64,8 @@ export function mapBusinessErrorCode(
       };
     case API_ERROR_CODES.INVALID_CREDENTIALS:
       return {
-        title: "Incorrect Password",
-        message: message || "The password you entered is wrong. Please try again.",
+        title: "Login Failed",
+        message: message || "Invalid username or password, try again.",
       };
     case API_ERROR_CODES.ACCOUNT_INACTIVE:
       return {
@@ -135,8 +135,8 @@ export function getLoginErrorDisplay(errorData: unknown): ApiErrorDisplay {
     detail.toLowerCase().includes("unable to log in")
   ) {
     return {
-      title: "Incorrect Password",
-      message: "The password you entered is wrong. Please try again.",
+      title: "Login Failed",
+      message: "Invalid username or password, try again.",
     };
   }
 

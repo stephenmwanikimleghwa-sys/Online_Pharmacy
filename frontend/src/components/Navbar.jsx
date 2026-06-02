@@ -42,7 +42,16 @@ const Navbar = () => {
       <div className="nav-accent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center">
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="nav-mobile-btn"
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
             <Link
               to="/"
               className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-xl"
@@ -65,20 +74,11 @@ const Navbar = () => {
             >
               {effectiveTheme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
             </button>
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="nav-mobile-btn"
-              aria-label={isOpen ? "Close menu" : "Open menu"}
-              aria-expanded={isOpen}
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
           </div>
         </div>
       </div>
 
-      <MobileNav isOpen={isOpen} user={user} handleLogout={handleLogout} />
+      <MobileNav isOpen={isOpen} user={user} handleLogout={handleLogout} onClose={() => setIsOpen(false)} />
     </nav>
   );
 };

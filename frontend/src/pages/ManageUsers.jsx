@@ -15,6 +15,9 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [resetCandidate, setResetCandidate] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
@@ -117,12 +120,17 @@ const ManageUsers = () => {
   };
 
   const handleDelete = async (user) => {
-    if (!window.confirm(`Delete user ${user.username}?`)) return;
+    setDeleteCandidate(user);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteCandidate) return;
     try {
-      await api.delete(`/auth/admin/users/${user.id}/delete/`);
+      await api.delete(`/auth/admin/users/${deleteCandidate.id}/delete/`);
       setSuccessMessage('User deleted successfully');
       await fetchUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
+      setDeleteCandidate(null);
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
       setError('Failed to delete user: ' + (serverMsg || err.message));
@@ -141,13 +149,19 @@ const ManageUsers = () => {
     }
   };
 
-  const handleResetPassword = async (user) => {
-    const newPassword = window.prompt(`Set a new password for ${user.username}:`);
-    if (!newPassword) return;
+  const handleResetPassword = (user) => {
+    setResetCandidate(user);
+    setResetPassword('');
+  };
+
+  const confirmResetPassword = async () => {
+    if (!resetCandidate || !resetPassword.trim()) return;
     try {
-      await api.post(`/auth/admin/users/${user.id}/reset-password/`, { new_password: newPassword });
+      await api.post(`/auth/admin/users/${resetCandidate.id}/reset-password/`, { new_password: resetPassword.trim() });
       setSuccessMessage('Password reset successfully');
       setTimeout(() => setSuccessMessage(''), 4000);
+      setResetCandidate(null);
+      setResetPassword('');
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
       setError('Failed to reset password: ' + (serverMsg || err.message));
@@ -362,6 +376,49 @@ const ManageUsers = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      <Transition show={Boolean(deleteCandidate)} as={React.Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={() => setDeleteCandidate(null)}>
+          <div className="min-h-screen flex items-center justify-center px-4">
+            <DialogBackdrop className="fixed inset-0 modal-overlay" />
+            <div className="relative z-10 w-full max-w-md modal-card p-6">
+              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Delete User</h3>
+              <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Delete user <strong>{deleteCandidate?.username}</strong>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setDeleteCandidate(null)} className="form-cancel-btn px-4 py-2 rounded-xl">Cancel</button>
+                <button type="button" onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-rose-600 text-white font-semibold">Delete</button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      <Transition show={Boolean(resetCandidate)} as={React.Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={() => setResetCandidate(null)}>
+          <div className="min-h-screen flex items-center justify-center px-4">
+            <DialogBackdrop className="fixed inset-0 modal-overlay" />
+            <div className="relative z-10 w-full max-w-md modal-card p-6">
+              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Reset Password</h3>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                Set a new password for <strong>{resetCandidate?.username}</strong>.
+              </p>
+              <input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                className="form-input w-full mb-6"
+                placeholder="Enter new password"
+              />
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setResetCandidate(null)} className="form-cancel-btn px-4 py-2 rounded-xl">Cancel</button>
+                <button type="button" onClick={confirmResetPassword} className="btn-primary px-4 py-2 rounded-xl text-white font-semibold">Reset</button>
+              </div>
             </div>
           </div>
         </Dialog>

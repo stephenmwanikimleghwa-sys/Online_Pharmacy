@@ -37,13 +37,21 @@ export function getProductDisplayPrice(product: {
 export function getProductBranchQuantity(
   product: {
     stock_quantity?: number;
-    branch_stocks?: { branch_id: number; quantity: number }[];
+    branch_stocks?: { branch_id: number | string; branch_name?: string; quantity: number }[];
   },
-  branchId?: number | null,
+  branchId?: number | string | null,
+  branchName?: string | null,
 ): number {
-  if (branchId && product.branch_stocks?.length) {
-    const match = product.branch_stocks.find((b) => b.branch_id === branchId);
+  const normalizedBranchId = branchId != null ? Number(branchId) : null;
+  if (product.branch_stocks?.length && normalizedBranchId != null && !Number.isNaN(normalizedBranchId)) {
+    const match = product.branch_stocks.find((b) => Number(b.branch_id) === normalizedBranchId);
     if (match) return Number(match.quantity) || 0;
+  }
+  if (product.branch_stocks?.length && branchName) {
+    const byName = product.branch_stocks.find(
+      (b) => (b.branch_name || "").toLowerCase() === branchName.toLowerCase(),
+    );
+    if (byName) return Number(byName.quantity) || 0;
   }
   return Number(product.stock_quantity) || 0;
 }

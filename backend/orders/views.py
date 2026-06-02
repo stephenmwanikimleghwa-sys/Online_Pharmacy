@@ -11,6 +11,7 @@ from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 # Pharmacy import removed - single pharmacy app
 from users.models import User
 from payments.models import Payment
+from payments.models import PaymentMethodChoices
 import stripe
 from django.conf import settings
 from django.utils import timezone
@@ -50,6 +51,20 @@ def quick_sale(request):
         logger.debug(f"Quick sale initiated by user {request.user.id} at branch {active_branch.id}")
 
         items = request.data.get('items', [])
+        requested_payment_method = (request.data.get("payment_method") or "cash").strip().lower()
+        payment_method_map = {
+            "cash": PaymentMethodChoices.CASH_ON_DELIVERY,
+            "till": PaymentMethodChoices.MPESA,
+            "paybill": PaymentMethodChoices.MPESA,
+            "mobile_money": PaymentMethodChoices.MPESA,
+            "bank_transfer": PaymentMethodChoices.STRIPE,
+            "card": PaymentMethodChoices.STRIPE,
+            "other": PaymentMethodChoices.CASH_ON_DELIVERY,
+            "mpesa": PaymentMethodChoices.MPESA,
+            "stripe": PaymentMethodChoices.STRIPE,
+            "cash_on_delivery": PaymentMethodChoices.CASH_ON_DELIVERY,
+        }
+        payment_method = payment_method_map.get(requested_payment_method, PaymentMethodChoices.CASH_ON_DELIVERY)
         if not items:
             return api_error(
                 ApiErrorCode.VALIDATION_ERROR,
@@ -165,10 +180,11 @@ def quick_sale(request):
         try:
             Payment.objects.create(
                 order=order,
-                method="cash",
+                method=payment_method,
                 amount=total_amount,
                 status="completed",
-                reference=f"CASH-{order.id}",
+                reference=f"{requested_payment_method.upper()}-{order.id}",
+                notes=f"Requested payment method: {requested_payment_method}",
             )
         except Exception as pay_exc:
             logger.error("Payment record failed for order %s: %s", order.id, pay_exc)

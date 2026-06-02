@@ -2,45 +2,45 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
-  ShoppingBagIcon,
-  ChartBarIcon,
+  UserCircleIcon,
   ClipboardDocumentListIcon,
   Squares2X2Icon,
+  ShoppingBagIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
-
-// Resolve dashboard URL from user role
-const getDashboardHref = (role?: string): string => {
-  switch (role) {
-    case 'admin': return '/admin/dashboard';
-    case 'pharmacist': return '/branch/dashboard';
-    case 'cashier': return '/cashier/dashboard';
-    case 'customer': return '/customer/dashboard';
-    default: return '/account';
-  }
-};
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Pre-login: only Home & Products (centred)
-  const loggedOutItems = [
-    { label: 'Home', href: '/', icon: HomeIcon },
-    { label: 'Products', href: '/products', icon: ShoppingBagIcon },
-  ];
+  const getDashboardHref = (role?: string): string => {
+    switch (role) {
+      case 'admin': return '/admin/dashboard';
+      case 'pharmacist': return '/branch/dashboard';
+      case 'cashier': return '/cashier/dashboard';
+      case 'customer': return '/customer/dashboard';
+      default: return '/account';
+    }
+  };
 
-  // Post-login: Home, Dashboard, Products, Inventory, Reports
+  const getUserManagementHref = (): string => {
+    if (user?.role === 'admin') return '/admin/users';
+    if (user?.role === 'pharmacist' || user?.role === 'cashier') return '/customers';
+    return '/account';
+  };
+
+  // Post-login order requested: Home, Dashboard, Inventory, OTC Sale, User Management, Profile
   const loggedInItems = [
     { label: 'Home', href: '/', icon: HomeIcon },
     { label: 'Dashboard', href: getDashboardHref(user?.role), icon: Squares2X2Icon },
-    { label: 'Products', href: '/products', icon: ShoppingBagIcon },
-    { label: 'OTC Sales', href: '/otc-sales', icon: ClipboardDocumentListIcon },
     { label: 'Inventory', href: '/inventory', icon: ClipboardDocumentListIcon },
-    { label: 'Reports', href: '/reports', icon: ChartBarIcon },
+    { label: 'OTC Sale', href: '/otc-sales', icon: ShoppingBagIcon },
+    { label: 'User Management', href: getUserManagementHref(), icon: UsersIcon },
+    { label: 'Profile', href: '/account', icon: UserCircleIcon },
   ];
 
-  const navItems = user ? loggedInItems : loggedOutItems;
+  const navItems = user ? loggedInItems : [{ label: 'Home', href: '/', icon: HomeIcon }];
 
   return (
     <nav
@@ -58,7 +58,7 @@ const BottomNav: React.FC = () => {
             <Link
               key={item.href}
               to={item.href}
-              className={`relative flex flex-col items-center justify-center flex-1 max-w-[80px] h-full transition-colors ${
+              className={`relative flex items-center justify-center flex-1 max-w-[80px] h-full transition-colors ${
                 isActive
                   ? 'text-primary dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -70,7 +70,6 @@ const BottomNav: React.FC = () => {
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 btn-primary dark:bg-indigo-400 rounded-full" />
               )}
               <Icon className="h-6 w-6" aria-hidden="true" />
-              <span className="text-[10px] font-medium mt-1">{item.label}</span>
             </Link>
           );
         })}

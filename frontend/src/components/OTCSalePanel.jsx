@@ -30,6 +30,47 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [lastOrder, setLastOrder] = useState(null);
   const [outOfStockHint, setOutOfStockHint] = useState(null);
   const [catalog, setCatalog] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  const sortForOTC = useCallback(
+    (products) => {
+      const branchName = activeBranch?.name || null;
+      return [...products].sort((a, b) => {
+        const aq = getProductBranchQuantity(a, branchId, branchName);
+        const bq = getProductBranchQuantity(b, branchId, branchName);
+        const aActiveStock = aq > 0 ? 1 : 0;
+        const bActiveStock = bq > 0 ? 1 : 0;
+        if (aActiveStock !== bActiveStock) return bActiveStock - aActiveStock;
+        return (a?.name || "").localeCompare(b?.name || "");
+      });
+    },
+    [activeBranch?.name, branchId],
+  );
+
+  const showAvailabilityHint = useCallback(
+    async (product) => {
+      try {
+        const availability = await api.get(`/products/${product.id}/availability/`, {
+          skipGlobalErrorNotification: true,
+        });
+        const branches = availability.data?.branches || [];
+        const alternatives = branches.filter((b) => Number(b.quantity) > 0 && !b.is_active_branch);
+        setOutOfStockHint({
+          productName: product.name,
+          activeBranchName:
+            branches.find((b) => b.is_active_branch)?.branch || activeBranch?.name || "your branch",
+          alternatives,
+        });
+      } catch {
+        setOutOfStockHint({
+          productName: product.name,
+          activeBranchName: activeBranch?.name || "your branch",
+          alternatives: [],
+        });
+      }
+    },
+    [activeBranch?.name],
+  );
 
   const runSearch = useCallback(
     async (term) => {
@@ -42,7 +83,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       setSearching(true);
       try {
         const products = await searchProducts(q, { branchId, perPage: 80 });
-        setSearchResults(products);
+        setSearchResults(sortForOTC(products));
         setOutOfStockHint(null);
         if (products.length === 0) {
           // RULE 3: explain out-of-stock + show other-branch availability when possible
@@ -52,18 +93,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           });
           const matches = broad.data?.results || broad.data?.data || [];
           if (matches.length > 0) {
-            const product = matches[0];
-            const availability = await api.get(`/products/${product.id}/availability/`, {
-              skipGlobalErrorNotification: true,
-            });
-            const branches = availability.data?.branches || [];
-            const alternatives = branches.filter((b) => Number(b.quantity) > 0 && !b.is_active_branch);
-            setOutOfStockHint({
-              productName: product.name,
-              activeBranchName:
-                branches.find((b) => b.is_active_branch)?.branch || activeBranch?.name || "your branch",
-              alternatives,
-            });
+            setSearchResults(sortForOTC(matches));
           }
         }
       } catch {
@@ -72,7 +102,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         setSearching(false);
       }
     },
-    [activeBranch?.name, branchId, catalog],
+    [branchId, catalog, sortForOTC],
   );
 
   const loadCatalog = useCallback(async () => {
@@ -83,15 +113,16 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     }
     try {
       const products = await fetchBranchCatalog({ branchId, perPage: 500 });
-      setCatalog(products);
+      const sorted = sortForOTC(products);
+      setCatalog(sorted);
       if (!searchTerm.trim()) {
-        setSearchResults(products);
+        setSearchResults(sorted);
       }
     } catch {
       setCatalog([]);
       setSearchResults([]);
     }
-  }, [branchId, searchTerm]);
+  }, [branchId, searchTerm, sortForOTC]);
 
   useEffect(() => {
     void loadCatalog();
@@ -103,12 +134,13 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   }, [searchTerm, runSearch]);
 
   const addToSale = (product) => {
-    const qtyAvail = getProductBranchQuantity(product, branchId);
+    const qtyAvail = getProductBranchQuantity(product, branchId, activeBranch?.name);
     if (qtyAvail <= 0) {
       notify.warning(
         "Out of Stock",
         `${product.name} is out of stock at ${activeBranch?.name || "your branch"}.`,
       );
+      void showAvailabilityHint(product);
       return;
     }
     const existing = selectedItems.find((item) => item.id === product.id);
@@ -164,6 +196,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             id: item.id,
             quantity: item.quantity,
           })),
+          payment_method: paymentMethod,
         },
         { skipGlobalErrorNotification: true },
       );
@@ -317,15 +350,14 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             </div>
           )}
           {searchResults.map((product) => {
-            const qty = getProductBranchQuantity(product, branchId);
+            const qty = getProductBranchQuantity(product, branchId, activeBranch?.name);
             const price = getProductDisplayPrice(product);
             return (
               <button
                 key={product.id}
                 type="button"
-                disabled={qty <= 0}
                 onClick={() => addToSale(product)}
-                className="w-full text-left p-3 rounded-xl border transition-colors disabled:opacity-50"
+                className={`w-full text-left p-3 rounded-xl border transition-colors ${qty <= 0 ? "opacity-80 bg-amber-50" : ""}`}
                 style={{ borderColor: "var(--border-primary)" }}
               >
                 <div className="flex justify-between gap-2">
@@ -383,6 +415,22 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           )}
         </div>
         <div className="border-t pt-4" style={{ borderColor: "var(--border-primary)" }}>
+          <div className="mb-3">
+            <label className="form-label text-xs">Payment method</label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="form-input w-full"
+            >
+              <option value="cash">Cash</option>
+              <option value="till">Till</option>
+              <option value="paybill">Paybill</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="card">Card</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
           <div className="flex justify-between mb-4">
             <span className="font-bold">Total</span>
             <span className="text-xl font-bold text-primary">{fmt(calculateTotal())}</span>

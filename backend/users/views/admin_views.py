@@ -114,7 +114,17 @@ def delete_pharmacist(request, user_id):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def delete_user(request, user_id):
     try:
+        if request.user.id == user_id:
+            return api_validation_error(
+                "You cannot delete your own account while signed in.",
+                details={"user_id": user_id},
+            )
         user = User.objects.get(id=user_id)
+        if user.is_superuser:
+            return api_validation_error(
+                "Superuser accounts cannot be deleted from this endpoint.",
+                details={"user_id": user_id},
+            )
         username = user.username
         user.delete()
         return api_success(f"{username} has been removed from the system.")

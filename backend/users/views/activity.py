@@ -27,10 +27,10 @@ class StaffActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
         if user_id:
             qs = qs.filter(user_id=user_id)
             
-        # Filter by action type
-        action_type = self.request.query_params.get('action_type')
-        if action_type:
-            qs = qs.filter(action_type=action_type)
+        # Filter by event type
+        event_type = self.request.query_params.get('event_type') or self.request.query_params.get('action_type')
+        if event_type:
+            qs = qs.filter(event_type=event_type)
             
         # Filter by date range
         start_date = self.request.query_params.get('start_date')

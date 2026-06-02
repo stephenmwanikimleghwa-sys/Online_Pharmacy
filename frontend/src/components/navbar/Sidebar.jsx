@@ -37,6 +37,7 @@ const getNavGroups = (user) => {
     operationsLinks.push(
       { to: "/inventory", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/admin/stock", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
@@ -47,6 +48,7 @@ const getNavGroups = (user) => {
     );
     adminLinks.push(
       { to: "/admin/branches", label: "Branches Overview", icon: BuildingOffice2Icon },
+      { to: "/admin/pricing", label: "Pricing (BP/WP/RP)", icon: BanknotesIcon },
       { to: "/admin/users", label: "User Management", icon: ShieldCheckIcon },
       { to: "/dispensing-logs", label: "Audit Logs", icon: DocumentDuplicateIcon },
     );
