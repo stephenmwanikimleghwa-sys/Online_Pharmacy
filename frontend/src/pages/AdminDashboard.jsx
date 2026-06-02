@@ -11,9 +11,11 @@ import {
   ShoppingBagIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import WelcomeBanner from '../components/WelcomeBanner';
 
 const formatMoney = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
-const formatBranchType = (type) => {
+const formatBranchType = (type, name) => {
+  if ((name || '').toUpperCase().includes('PEAKFARM')) return 'Agrovet';
   if (!type || type === 'CHEMIST') return 'Chemist';
   if (type === 'AGROVET') return 'Agrovet';
   return type;
@@ -88,12 +90,7 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in font-sans">
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          Admin <span className="text-primary">Dashboard</span>
-        </h1>
-        <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Welcome back, <span className="text-primary font-bold">{user?.first_name || user?.username}</span>.
-        </p>
+        <WelcomeBanner />
       </div>
 
       {error && (
@@ -134,7 +131,7 @@ const AdminDashboard = () => {
               <div className="flex items-start justify-between gap-2 mb-4">
                 <div>
                   <h3 className="font-bold text-gray-900 dark:text-white">{branch.name}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{formatBranchType(branch.type)}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{formatBranchType(branch.type, branch.name)}</p>
                 </div>
                 <BuildingOffice2Icon className="w-8 h-8 text-indigo-400 opacity-60 shrink-0" />
               </div>
@@ -191,6 +188,24 @@ const AdminDashboard = () => {
             </Link>
           )}
         </div>
+
+        {activeBranch?.id && (
+          <div className="mb-6 btn-primary rounded-2xl p-5 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-lg">Direct OTC Sale</h3>
+              <p className="text-sm text-white/90">
+                Sell directly at <strong>{activeBranch.name}</strong>. Stock checks are branch-scoped.
+              </p>
+            </div>
+            <Link
+              to="/otc-sales"
+              className="px-5 py-2.5 rounded-xl bg-white font-semibold self-start md:self-auto"
+              style={{ color: 'var(--color-primary)' }}
+            >
+              Open OTC Sale
+            </Link>
+          </div>
+        )}
 
         {!activeBranch?.id && (
           <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-10 text-center text-gray-500">

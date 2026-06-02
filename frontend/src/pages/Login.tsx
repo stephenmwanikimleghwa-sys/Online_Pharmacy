@@ -4,7 +4,6 @@ import { useAuth, LoginCredentials, User } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from '../components/LoadingSpinner';
-import LoadingButton from '../components/LoadingButton';
 import { getLoginErrorDisplay } from '../utils/apiErrorDisplay';
 
 const getStyles = (isDark: boolean): any => ({
@@ -316,7 +315,7 @@ const Login: React.FC = () => {
       navigate(target, { replace: true });
     } else {
       const display = getLoginErrorDisplay(result.error);
-      setError(`${display.title}: ${display.message}`);
+      setError(display.message || "Invalid username or password, try again.");
     }
     setLoading(false);
   };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +15,7 @@ import BranchTransfers from './inventory/BranchTransfers';
 const InventoryManagement = () => {
   const { notify } = useNotification();
   const { user } = useAuth();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('inventory');
   const [inventory, setInventory] = useState([]);
   const [totalInventoryItems, setTotalInventoryItems] = useState(0);
@@ -26,6 +28,14 @@ const InventoryManagement = () => {
   const BRANCH_COLUMNS = ['TRANSCOUNTY_MAIN', 'TRANSCOUNTY_ANNEX', 'PEAKFARM'];
 
   const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && ['inventory', 'suppliers', 'batches', 'intake', 'transfers'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (activeTab === 'inventory') {
@@ -46,15 +56,14 @@ const InventoryManagement = () => {
 
   const fetchInventory = async () => {
     try {
-      setLoading(true);
+      if (inventory.length === 0) setLoading(true);
       const response = await inventoryService.getInventory({ per_page: 1000 });
       const data = response.data || {};
       const list = Array.isArray(data) ? data : (data.products || data.results || []);
       setInventory(Array.isArray(list) ? list : []);
       setTotalInventoryItems(data.totalItems || list.length);
     } catch (error) {
-      console.error('Error fetching inventory:', error);
-      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please refresh the page.');
+      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please try again.');
       setInventory([]);
       setTotalInventoryItems(0);
     } finally {

@@ -9,7 +9,7 @@ import {
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
-import { searchProducts } from "../services/productService";
+import { fetchBranchCatalog, searchProducts } from "../services/productService";
 import { getProductDisplayPrice, getProductBranchQuantity } from "../utils/parseApiData";
 import LoadingButton from "./LoadingButton";
 
@@ -29,12 +29,14 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [saleError, setSaleError] = useState("");
   const [lastOrder, setLastOrder] = useState(null);
   const [outOfStockHint, setOutOfStockHint] = useState(null);
+  const [catalog, setCatalog] = useState([]);
 
   const runSearch = useCallback(
     async (term) => {
       const q = term.trim();
       if (q.length < 2) {
-        setSearchResults([]);
+        setSearchResults(catalog);
+        setOutOfStockHint(null);
         return;
       }
       setSearching(true);
@@ -58,6 +60,8 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             const alternatives = branches.filter((b) => Number(b.quantity) > 0 && !b.is_active_branch);
             setOutOfStockHint({
               productName: product.name,
+              activeBranchName:
+                branches.find((b) => b.is_active_branch)?.branch || activeBranch?.name || "your branch",
               alternatives,
             });
           }
@@ -68,8 +72,30 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         setSearching(false);
       }
     },
-    [branchId],
+    [activeBranch?.name, branchId, catalog],
   );
+
+  const loadCatalog = useCallback(async () => {
+    if (!branchId) {
+      setCatalog([]);
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const products = await fetchBranchCatalog({ branchId, perPage: 500 });
+      setCatalog(products);
+      if (!searchTerm.trim()) {
+        setSearchResults(products);
+      }
+    } catch {
+      setCatalog([]);
+      setSearchResults([]);
+    }
+  }, [branchId, searchTerm]);
+
+  useEffect(() => {
+    void loadCatalog();
+  }, [loadCatalog]);
 
   useEffect(() => {
     const t = setTimeout(() => runSearch(searchTerm), 350);
@@ -79,7 +105,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const addToSale = (product) => {
     const qtyAvail = getProductBranchQuantity(product, branchId);
     if (qtyAvail <= 0) {
-      notify.warning("Out of Stock", `${product.name} is not available at your branch.`);
+      notify.warning(
+        "Out of Stock",
+        `${product.name} is out of stock at ${activeBranch?.name || "your branch"}.`,
+      );
       return;
     }
     const existing = selectedItems.find((item) => item.id === product.id);
@@ -142,7 +171,8 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       setLastOrder(order);
       setSelectedItems([]);
       setSearchTerm("");
-      setSearchResults([]);
+      setSearchResults(catalog);
+      void loadCatalog();
       notify.success(
         "Sale Complete",
         `Sale recorded. Total: KES ${Number(order?.total_amount ?? calculateTotal()).toLocaleString()}.`,
@@ -237,7 +267,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           <input
             type="search"
             className={`form-input ${searchTerm ? "pl-3" : "pl-10"}`}
-            placeholder="Type at least 2 characters..."
+            placeholder="Products are listed. Type to narrow down..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -260,7 +290,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                 <div className="text-left bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs space-y-2">
                   <p>
                     <strong>{outOfStockHint.productName}</strong> is out of stock at{" "}
-                    <strong>{activeBranch?.name || "your branch"}</strong>.
+                    <strong>{outOfStockHint.activeBranchName || activeBranch?.name || "your branch"}</strong>.
                   </p>
                   {outOfStockHint.alternatives?.length > 0 && (
                     <div>
@@ -271,7 +301,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                           <button
                             type="button"
                             className="text-[11px] underline font-semibold"
-                            onClick={() => notify.info("Transfer Request", "Open Branch Transfers to request stock transfer.")}
+                            onClick={() => {
+                              notify.info("Transfer Request", "Opening branch transfers.");
+                              window.location.href = "/inventory?tab=transfers";
+                            }}
                           >
                             Request Transfer
                           </button>

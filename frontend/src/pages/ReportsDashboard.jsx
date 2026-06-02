@@ -82,6 +82,8 @@ const ReportsDashboard = () => {
     { id: 'expiry', label: 'Expiry Report', icon: CalendarDaysIcon },
     { id: 'staff', label: 'Staff Activity', icon: UserGroupIcon },
   ];
+  const valuationRows = valuationData?.valuation || [];
+  const totalStockValuation = valuationRows.reduce((sum, item) => sum + Number(item?.cost_value || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-slate-800">
@@ -162,7 +164,11 @@ const ReportsDashboard = () => {
             salesError ? (
               <div className="bg-rose-50 border border-rose-200 rounded-xl p-6 text-center">
                 <p className="text-rose-700 font-semibold">Failed to load sales report</p>
-                <p className="text-rose-600 text-sm mt-1">{salesError?.message || 'Please try again later or contact support.'}</p>
+                <p className="text-rose-600 text-sm mt-1">
+                  {salesError?.message?.includes('403')
+                    ? 'You do not have permission to view this report. Ask an admin to grant access.'
+                    : (salesError?.message || 'Please try again later or contact support.')}
+                </p>
                 <button onClick={() => refetchSales()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
               </div>
             ) : loadingSales ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
@@ -204,6 +210,10 @@ const ReportsDashboard = () => {
                 <button onClick={() => refetchValuation()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
               </div>
             ) : loadingValuation ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+              <>
+              <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold">
+                Total Stock Valuation: KES {totalStockValuation.toLocaleString()}
+              </div>
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50">
@@ -231,6 +241,7 @@ const ReportsDashboard = () => {
                   )}
                 </tbody>
               </table>
+              </>
             )
           )}
 

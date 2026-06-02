@@ -188,7 +188,7 @@ function AppLayout() {
                 />
                 <Route
                   path="/reports"
-                  element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
+                  element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor', 'cashier']} />}
                 />
                 <Route
                   path="/documents"

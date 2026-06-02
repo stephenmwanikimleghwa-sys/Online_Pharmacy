@@ -15,7 +15,7 @@ export function getBranchSubtitle(branch: Pick<BranchInfo, 'name' | 'subtitle' |
 }
 
 export function getBranchIcon(branch: Pick<BranchInfo, 'type'>): string {
-  return branch.type === 'AGROVET' ? '🌱' : '🏥';
+  return branch.type === 'AGROVET' ? '🌱' : '💊';
 }
 
 export function getBranchTypeLabel(type?: string): string {

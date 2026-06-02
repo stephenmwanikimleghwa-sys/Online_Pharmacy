@@ -76,7 +76,7 @@ function buildAction(
 
 function defaultDuration(type: NotificationType): number | null {
   if (type === "success" || type === "info") return AUTO_DISMISS_MS;
-  return null;
+  return 8000;
 }
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({

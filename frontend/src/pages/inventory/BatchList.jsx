@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import inventoryService from '../../services/inventoryService';
+import { useNotification } from '../../context/NotificationContext';
 
 const BatchList = () => {
     const [batches, setBatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { notify } = useNotification();
 
     useEffect(() => {
         fetchBatches();
@@ -16,15 +18,22 @@ const BatchList = () => {
             const response = await inventoryService.getBatches();
             setBatches(Array.isArray(response.data) ? response.data : (response.data?.results || []));
         } catch (err) {
-            setError('Failed to load batches');
-            console.error(err);
+            setError('Batch records could not be loaded.');
+            notify.error('Could Not Load Batches', 'Batch records could not be loaded. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     if (loading) return <div className="p-4 text-gray-500">Loading batches...</div>;
-    if (error) return <div className="p-4 text-red-600">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>;
+    if (error) return (
+        <div className="p-4 text-red-600">
+            <p>{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
+            <button type="button" onClick={fetchBatches} className="mt-2 px-3 py-1 rounded border border-red-300 text-sm">
+                Retry
+            </button>
+        </div>
+    );
 
     return (
         <div className="glass-card  overflow-hidden">

@@ -124,6 +124,11 @@ def delete_user(request, user_id):
         return api_duplicate(
             "This user cannot be deleted because they have related records. Deactivate them instead.",
         )
+    except Exception:
+        return api_validation_error(
+            "This user could not be deleted. Deactivate the account instead.",
+            details={"user_id": user_id},
+        )
 
 
 @api_view(['POST'])

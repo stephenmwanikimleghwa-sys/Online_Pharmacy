@@ -137,48 +137,48 @@ const SupplierList = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-card rounded-3xl p-6 shadow-premium border border-white/60">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass-card rounded-2xl p-4 shadow-sm border border-white/60">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
               <TruckIcon className="w-5 h-5" />
             </div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Suppliers</p>
           </div>
-          <p className="text-3xl font-display font-bold text-slate-900">{suppliers.length}</p>
+          <p className="text-2xl font-display font-bold text-slate-900">{suppliers.length}</p>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 shadow-premium border border-rose-100 bg-gradient-to-br from-rose-50/50 to-white">
+        <div className="glass-card rounded-2xl p-4 shadow-sm border border-rose-100 bg-gradient-to-br from-rose-50/50 to-white">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
             <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Total Payables (AP)</p>
           </div>
-          <p className="text-3xl font-display font-bold text-rose-600">KES {totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+          <p className="text-2xl font-display font-bold text-rose-600">KES {totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 shadow-premium border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white">
+        <div className="glass-card rounded-2xl p-4 shadow-sm border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
             <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Supplier Credit</p>
           </div>
-          <p className="text-3xl font-display font-bold text-emerald-600">KES {totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+          <p className="text-2xl font-display font-bold text-emerald-600">KES {totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="glass-card rounded-[2rem] border border-white/60 shadow-sm p-4 flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          {!search && <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />}
           <input
             type="text"
             placeholder="Search suppliers by name, email, or phone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+            className={`w-full pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none ${search ? 'pl-4' : 'pl-11'}`}
           />
         </div>
         <div className="relative w-full md:w-64">
@@ -203,7 +203,7 @@ const SupplierList = () => {
       ) : error ? (
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center font-semibold">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredSuppliers.map(supplier => {
             const bal = parseFloat(supplier.balance);
             const isDebt = bal > 0;
@@ -213,7 +213,7 @@ const SupplierList = () => {
               <button
                 key={supplier.id}
                 onClick={() => setSelectedSupplier(supplier)}
-                className="text-left group relative glass-card rounded-2xl p-4 border border-white/60 shadow-sm hover:shadow-premium hover:border-primary/20 transition-all duration-300"
+                className="text-left group relative glass-card rounded-xl p-3 border border-white/60 shadow-sm hover:shadow-premium hover:border-primary/20 transition-all duration-300"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white font-display font-bold text-base shadow-md">
@@ -228,13 +228,13 @@ const SupplierList = () => {
                   </div>
                 </div>
                 
-                <h3 className="font-display font-bold text-slate-900 text-base mb-1 break-words leading-snug">{supplier.name}</h3>
-                <p className="text-xs text-slate-500 font-medium mb-3 flex items-center gap-1.5">
+                <h3 className="font-display font-bold text-slate-900 text-sm mb-1 break-words leading-snug">{supplier.name}</h3>
+                <p className="text-xs text-slate-500 font-medium mb-2 flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                   {supplier.phone || 'No phone'}
                 </p>
 
-                <div className="pt-3 border-t border-slate-100">
+                <div className="pt-2 border-t border-slate-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Balance</p>
                   <p className={`font-display font-bold text-xl ${
                     isDebt ? 'text-rose-600' :

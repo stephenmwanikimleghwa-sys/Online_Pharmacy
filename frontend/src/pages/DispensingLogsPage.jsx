@@ -15,10 +15,11 @@ const UserActivityLogs = () => {
           params: { page_size: 100 },
           skipGlobalErrorNotification: true,
         });
-        const results = Array.isArray(res.data) ? res.data : (res.data.results || []);
+        const payload = res.data?.data ?? res.data;
+        const results = Array.isArray(payload) ? payload : (payload?.results || []);
         setLogs(results);
       } catch (err) {
-        setError('Could not load user activity logs.');
+        setError('User activity logs are not available for this account.');
       } finally {
         setLoading(false);
       }

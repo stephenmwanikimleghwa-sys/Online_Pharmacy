@@ -184,7 +184,14 @@ class ReportsHubViewSet(viewsets.ViewSet):
     """
     ViewSet for generating detailed tabular reports for the Reports Hub.
     """
-    permission_classes = [IsAuditorOrAdmin]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        # Expiry report is available to all authenticated users.
+        if getattr(self, "action", None) == "expiry_report":
+            return [permissions.IsAuthenticated()]
+        # Keep other hub reports restricted to auditor/admin.
+        return [permissions.IsAuthenticated(), IsAuditorOrAdmin()]
 
     @action(detail=False, methods=['get'])
     def sales_report(self, request):
