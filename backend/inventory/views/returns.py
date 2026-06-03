@@ -16,7 +16,12 @@ class ProductReturnViewSet(viewsets.ModelViewSet):
             return ProductReturn.objects.none()
             
         user = self.request.user
-        qs = ProductReturn.objects.all().order_by('-timestamp')
+        qs = (
+            ProductReturn.objects
+            .select_related('product', 'handled_by', 'branch')
+            .all()
+            .order_by('-timestamp')
+        )
         if not (user.is_superuser or getattr(user, 'role', None) == 'admin') and user.branch:
             qs = qs.filter(branch=user.branch)
         return qs

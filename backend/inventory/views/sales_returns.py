@@ -13,7 +13,12 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = SaleReturn.objects.all()
+        qs = (
+            SaleReturn.objects
+            .select_related('initiated_by', 'approved_by')
+            .prefetch_related('items', 'items__dispensation_item', 'items__dispensation_item__product')
+            .all()
+        )
         if user.role not in ['admin', 'manager', 'auditor']:
             qs = qs.filter(branch=user.branch)
         return qs

@@ -49,9 +49,13 @@ class ProductListCreateView(generics.ListCreateAPIView):
         Get the list of items for this view.
         Returns active products ordered by name.
         """
-        return Product.objects.filter(is_active=True).select_related(
-            'pharmacy', 'pricing_tier'
-        ).prefetch_related('pricing_tier').order_by('name')
+        return (
+            Product.objects
+            .filter(is_active=True)
+            .select_related('pharmacy', 'pricing_tier')
+            .prefetch_related('pricing_tier', 'branch_stocks', 'branch_stocks__branch')
+            .order_by('name')
+        )
 
     def get_permissions(self) -> List[Any]:
         """

@@ -95,17 +95,34 @@ def inventory_list(request):
         elif not is_admin and user.branch:
             target_branch_id = user.branch.id
 
-        # Determine branch quantity
-        # Since we use ProductSerializer, we'll override 'stock_quantity' dynamically
+        # Determine branch quantity - OPTIMIZED: Bulk fetch all branch stocks at once
+        # Create lookup dict to avoid O(n) search
+        products_by_id = {p.id: p for p in products_page}
+        
+        # Bulk fetch all branch stocks for these products
+        all_branch_stocks = BranchStock.objects.filter(product_id__in=products_by_id.keys())
+        
+        # Build lookup dict: product_id -> {branch_id -> stock}
+        branch_stocks_by_product = {}
+        total_qty_by_product = {}
+        for bs in all_branch_stocks:
+            if bs.product_id not in branch_stocks_by_product:
+                branch_stocks_by_product[bs.product_id] = {}
+                total_qty_by_product[bs.product_id] = 0
+            branch_stocks_by_product[bs.product_id][bs.branch_id] = bs
+            total_qty_by_product[bs.product_id] += bs.quantity
+        
+        # Update serialized products with efficient lookups
         for p_data in serialized_products:
-            # Reconstruct the stock for the target branch
-            p_obj = [p for p in products_page if p.id == p_data['id']][0]
+            product_id = p_data['id']
+            p_obj = products_by_id[product_id]
+            
             if target_branch_id:
-                bs = p_obj.branch_stocks.filter(branch_id=target_branch_id).first()
+                bs = branch_stocks_by_product.get(product_id, {}).get(target_branch_id)
                 qty = bs.quantity if bs else 0
                 r_lvl = bs.reorder_level if bs else p_obj.reorder_threshold
             else:
-                qty = sum(bs.quantity for bs in p_obj.branch_stocks.all())
+                qty = total_qty_by_product.get(product_id, 0)
                 r_lvl = p_obj.reorder_threshold
                 
             p_data['stock_quantity'] = float(qty)
