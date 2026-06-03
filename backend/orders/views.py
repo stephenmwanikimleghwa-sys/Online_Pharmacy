@@ -98,7 +98,7 @@ def quick_sale(request):
 
             try:
                 product = (
-                    Product.objects.select_related("pricing_tier")
+                    Product.objects
                     .select_for_update()
                     .get(id=product_id)
                 )
