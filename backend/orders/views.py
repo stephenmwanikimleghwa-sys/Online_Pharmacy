@@ -97,11 +97,7 @@ def quick_sale(request):
                 )
 
             try:
-                product = (
-                    Product.objects
-                    .select_for_update()
-                    .get(id=product_id)
-                )
+                product = Product.objects.get(id=product_id)
             except Product.DoesNotExist:
                 order.delete()
                 return api_error(
@@ -111,7 +107,7 @@ def quick_sale(request):
                     http_status=status.HTTP_404_NOT_FOUND,
                 )
 
-            branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+            branch_stock, _ = BranchStock.objects.get_or_create(
                 product=product,
                 branch=active_branch,
                 defaults={"quantity": 0, "reorder_level": 0},
@@ -248,17 +244,23 @@ class OrderListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Order.objects.select_related("user", "payment").order_by(
-            "-created_at"
+        from django.db.models import Prefetch
+        queryset = (
+            Order.objects
+            .select_related("user", "payment")
+            .prefetch_related(
+                Prefetch("items__product")
+            )
+            .order_by("-created_at")
         )
         # Filter by user if specified
         user_id = self.request.query_params.get("user_id")
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         # Filter by status
-        status = self.request.query_params.get("status")
-        if status:
-            queryset = queryset.filter(status=status)
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
         return queryset
 
     def get_permissions(self):
@@ -287,14 +289,22 @@ class OrderRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsOrderOwner]
 
     def get_queryset(self):
+        from django.db.models import Prefetch
+        
         if not self.request.user.is_authenticated:
             return Order.objects.none()
+        
+        queryset = (
+            Order.objects
+            .select_related("user", "payment")
+            .prefetch_related(Prefetch("items__product"))
+        )
         # Customers see only their orders
         if self.request.user.role == "customer":
-            return Order.objects.filter(user=self.request.user)
+            return queryset.filter(user=self.request.user)
         # Pharmacists/admins see all
         elif self.request.user.role in ["pharmacist", "admin"]:
-            return Order.objects.all()
+            return queryset
         return Order.objects.none()
 
     def get_object(self):
@@ -314,12 +324,25 @@ def my_orders(request):
     Customers see their own orders.
     Pharmacists/admins see all orders.
     """
+    from django.db.models import Prefetch
+    
     if not request.user.is_authenticated:
         orders = Order.objects.none()
     elif request.user.role == "customer":
-        orders = Order.objects.filter(user=request.user).order_by("-created_at")
+        orders = (
+            Order.objects
+            .filter(user=request.user)
+            .select_related("user", "payment")
+            .prefetch_related(Prefetch("items__product"))
+            .order_by("-created_at")
+        )
     elif request.user.role in ["pharmacist", "admin"]:
-        orders = Order.objects.all().order_by("-created_at")
+        orders = (
+            Order.objects.all()
+            .select_related("user", "payment")
+            .prefetch_related(Prefetch("items__product"))
+            .order_by("-created_at")
+        )
     else:
         orders = Order.objects.none()
     serializer = OrderSerializer(orders, many=True)
@@ -332,7 +355,12 @@ def my_payments(request):
     """
     List payments for the authenticated user.
     """
-    payments = Payment.objects.filter(order__user=request.user).order_by("-created_at")
+    payments = (
+        Payment.objects
+        .filter(order__user=request.user)
+        .select_related("order")
+        .order_by("-created_at")
+    )
     serializer = PaymentSerializer(payments, many=True)
     return Response(serializer.data)
 

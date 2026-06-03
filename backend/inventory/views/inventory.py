@@ -166,22 +166,27 @@ def inventory_list(request):
 @permission_classes([IsAuditorOrAdmin])
 def low_stock_items(request):
     """Get list of low stock items."""
+    from django.db.models import Prefetch
+    
     user = request.user
     is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
     branch_param = request.query_params.get('branch')
 
-    qs = BranchStock.objects.filter(
-        product__is_active=True,
-        quantity__lte=F("reorder_level"),
-        quantity__gt=0
+    qs = (
+        BranchStock.objects
+        .filter(
+            product__is_active=True,
+            quantity__lte=F("reorder_level"),
+            quantity__gt=0
+        )
+        .select_related("product", "product__pharmacy")
+        .order_by("quantity")
     )
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
-        
-    qs = qs.order_by("quantity")
-    # For compatibility, we return the Product but with stock overridden
+    
     data = []
     for bs in qs:
         prod_data = ProductSerializer(bs.product).data
@@ -198,16 +203,19 @@ def out_of_stock_items(request):
     is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
     branch_param = request.query_params.get('branch')
 
-    qs = BranchStock.objects.filter(
-        product__is_active=True,
-        quantity__lte=0
+    qs = (
+        BranchStock.objects
+        .filter(
+            product__is_active=True,
+            quantity__lte=0
+        )
+        .select_related("product", "product__pharmacy")
+        .order_by("product__name")
     )
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
-        
-    qs = qs.order_by("product__name")
     
     data = []
     for bs in qs:
@@ -257,7 +265,7 @@ def restock_inventory(request, pk):
         if not quantity or int(quantity) <= 0:
             return api_validation_error("Quantity must be at least 1.")
 
-        branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+        branch_stock, _ = BranchStock.objects.get_or_create(
             product=product,
             branch=branch,
             defaults={'quantity': 0}
@@ -311,7 +319,7 @@ def adjust_inventory(request, pk):
         if quantity == 0:
             return api_validation_error("Quantity must be non-zero for adjustment.")
 
-        branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+        branch_stock, _ = BranchStock.objects.get_or_create(
             product=product,
             branch=branch,
             defaults={'quantity': 0}

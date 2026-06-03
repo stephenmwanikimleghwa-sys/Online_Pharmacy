@@ -101,7 +101,7 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
             # Process stock updates
             for item in sale_return.items.all():
                 if item.condition == 'sellable':
-                    branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                    branch_stock, _ = BranchStock.objects.get_or_create(
                         product=item.dispensation_item.product,
                         branch=sale_return.branch,
                         defaults={'quantity': 0}

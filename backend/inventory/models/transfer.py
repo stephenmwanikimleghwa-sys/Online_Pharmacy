@@ -46,7 +46,7 @@ class InterBranchTransfer(models.Model):
             # If status changes to completed, perform the transfer
             if self.status == 'completed' and old_status != 'completed':
                 # Decrement source
-                source_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                source_stock, _ = BranchStock.objects.get_or_create(
                     product=self.product,
                     branch=self.source_branch,
                     defaults={'quantity': 0}
@@ -67,7 +67,7 @@ class InterBranchTransfer(models.Model):
                 )
 
                 # Increment destination
-                dest_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                dest_stock, _ = BranchStock.objects.get_or_create(
                     product=self.product,
                     branch=self.destination_branch,
                     defaults={'quantity': 0}

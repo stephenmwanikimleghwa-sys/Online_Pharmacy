@@ -143,7 +143,7 @@ class StockIntake(models.Model):
                 if not branch:
                     raise ValueError("StockIntake must have a branch to update stock.")
                     
-                branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                branch_stock, _ = BranchStock.objects.get_or_create(
                     product=self.product,
                     branch=branch,
                     defaults={'quantity': 0}

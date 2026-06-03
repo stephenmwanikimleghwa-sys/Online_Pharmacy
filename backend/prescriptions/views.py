@@ -67,8 +67,11 @@ class PrescriptionListView(generics.ListAPIView):
     filter_backends = []
 
     def get_queryset(self):
-        return Prescription.objects.filter(user=self.request.user).order_by(
-            "-uploaded_at"
+        return (
+            Prescription.objects
+            .filter(user=self.request.user)
+            .select_related("verified_by")
+            .order_by("-uploaded_at")
         )
 
 
@@ -119,9 +122,11 @@ def pharmacist_prescriptions(request):
     """
     List pending prescriptions for verification (pharmacists/admins).
     """
-    prescriptions = Prescription.objects.filter(
-        status=PrescriptionStatusChoices.PENDING
-    ).select_related("user")
+    prescriptions = (
+        Prescription.objects
+        .filter(status=PrescriptionStatusChoices.PENDING)
+        .select_related("user", "verified_by")
+    )
     serializer = PrescriptionSerializer(prescriptions, many=True)
     return Response(serializer.data)
 
@@ -146,9 +151,11 @@ def pharmacist_dispensed_prescriptions(request):
     """
     List dispensed prescriptions for pharmacists/admins.
     """
-    prescriptions = Prescription.objects.filter(
-        status=PrescriptionStatusChoices.DISPENSED
-    ).select_related("user")
+    prescriptions = (
+        Prescription.objects
+        .filter(status=PrescriptionStatusChoices.DISPENSED)
+        .select_related("user", "verified_by")
+    )
     serializer = PrescriptionSerializer(prescriptions, many=True)
     return Response(serializer.data)
 
@@ -160,7 +167,7 @@ def dispense_prescription(request, pk):
     """
     Dispense a prescription (mark as filled).
     """
-    prescription = get_object_or_404(Prescription.objects.select_for_update(), pk=pk)
+    prescription = get_object_or_404(Prescription, pk=pk)
     if prescription.status != PrescriptionStatusChoices.VALIDATED:
         return Response(
             {"error": "Prescription must be verified before dispensing."},
@@ -226,7 +233,7 @@ def dispense_prescription_medicines(request: HttpRequest, pk: int):
     """
     Dispense medicines from a prescription and update inventory.
     """
-    prescription = get_object_or_404(Prescription.objects.select_for_update(), pk=pk)
+    prescription = get_object_or_404(Prescription, pk=pk)
 
     if prescription.status != PrescriptionStatusChoices.VALIDATED:
         return Response(

@@ -33,7 +33,7 @@ class ProductReturn(models.Model):
             super().save(*args, **kwargs)
             
             if is_new:
-                branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                branch_stock, _ = BranchStock.objects.get_or_create(
                     product=self.product, 
                     branch=self.branch,
                     defaults={'quantity': 0, 'reorder_level': 0}

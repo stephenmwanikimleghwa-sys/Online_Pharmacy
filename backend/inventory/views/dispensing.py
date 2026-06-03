@@ -128,7 +128,7 @@ def dispense_otc(request):
         # Pre-check stock and calculate total
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
-            branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+            branch_stock, _ = BranchStock.objects.get_or_create(
                 product=product, branch=active_branch, defaults={'quantity': 0, 'reorder_level': 0}
             )
             available = branch_stock.quantity
