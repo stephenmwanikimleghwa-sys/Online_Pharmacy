@@ -48,11 +48,7 @@ const AdminStock = () => {
 		};
 	};
 
-	// Pagination state
-	const [currentPage, setCurrentPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0);
-	const [perPage, setPerPage] = useState(20);
+	// Removed pagination - now loading all products on single page
 
 	// Search and filter state
 	const [searchQuery, setSearchQuery] = useState('');
@@ -105,7 +101,7 @@ const AdminStock = () => {
 		}
 		api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 		fetchItems();
-	}, [currentPage, perPage, debouncedSearch, filters.lowStock, filters.outOfStock, filters.category]);
+	}, [debouncedSearch, filters.lowStock, filters.outOfStock, filters.category]);
 
 	const fetchItems = async () => {
 		try {
@@ -113,10 +109,9 @@ const AdminStock = () => {
 			setError('');
 			setItems([]); // Reset items to empty array
 
-			// Build query params
+			// Build query params - load ALL products (no pagination)
 			const params = new URLSearchParams({
-				page: currentPage,
-				per_page: perPage,
+				per_page: 10000, // Load all products
 			});
 
 			// Add filters
@@ -141,36 +136,34 @@ const AdminStock = () => {
 				if (Array.isArray(data)) {
 					products = data;
 					totalItemsCount = data.length;
-					totalPagesCount = Math.ceil(totalItemsCount / perPage);
+					totalPagesCount = 1;
 				} else if (data?.results && Array.isArray(data.results)) {
 					products = data.results;
 					totalItemsCount = data.count ?? data.results.length;
-					totalPagesCount = Math.ceil(totalItemsCount / perPage);
+					totalPagesCount = 1;
 				} else if (data?.products && Array.isArray(data.products)) {
 					products = data.products;
 					totalItemsCount = data.totalItems ?? data.products.length;
-					totalPagesCount = data.totalPages ?? Math.ceil(totalItemsCount / perPage);
+					totalPagesCount = 1;
 				} else {
 					// unexpected shape; try to coerce to array or fall back
 					products = [];
 					totalItemsCount = 0;
-					totalPagesCount = 0;
+					totalPagesCount = 1;
 				}
-				console.log('[Fetch Debug] Products endpoint success:', { count: totalItemsCount });
+				console.log('[Fetch Debug] Products endpoint success - All products loaded:', { count: totalItemsCount });
 			} catch (productErr) {
 				console.log('[Fetch Debug] Products endpoint failed, trying inventory endpoint');
 				// Fallback to inventory endpoint
 				const inventoryRes = await api.get(`/inventory/?${params.toString()}`);
 				const idata = inventoryRes.data || {};
 				products = Array.isArray(idata.products) ? idata.products : (Array.isArray(idata) ? idata : []);
-				totalPagesCount = idata.totalPages ?? Math.ceil((idata.products?.length || products.length) / perPage);
+				totalPagesCount = 1;
 				totalItemsCount = idata.totalItems ?? (idata.products?.length || products.length);
-				console.log('[Fetch Debug] Inventory endpoint response:', { totalItemsCount, totalPagesCount });
+				console.log('[Fetch Debug] Inventory endpoint response - All products loaded:', { totalItemsCount });
 			}
 
 			setItems(products.map(sanitizeItem));
-			setTotalPages(totalPagesCount);
-			setTotalItems(totalItemsCount);
 
 			// Extract unique categories
 			const uniqueCategories = [...new Set(products.map(p => getCategoryLabel(p.category)).filter(Boolean))];
@@ -526,8 +519,8 @@ const AdminStock = () => {
 							</thead>
 							<tbody className="divide-y divide-slate-100">
 								{items.map((item, idx) => (
-									<tr key={String(item.id ?? `row-${(currentPage - 1) * perPage + idx}`)} className="hover:bg-slate-50/50 transition-colors">
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{(currentPage - 1) * perPage + idx + 1}</td>
+								<tr key={String(item.id ?? `row-${idx}`)} className="hover:bg-slate-50/50 transition-colors">
+									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{idx + 1}</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{normalizeDisplayValue(item.category)}</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KES {normalizeDisplayValue(item.price, '0')}</td>
@@ -590,22 +583,7 @@ const AdminStock = () => {
 						</table>
 					</div>
 
-					{/* Pagination */}
-					<div className="px-6 py-4 flex items-center justify-between border-t border-slate-100">
-						<p className="text-sm text-slate-400">
-							Showing <span className="font-semibold text-slate-600">{Math.min((currentPage - 1) * perPage + 1, Number(totalItems) || 0)}</span>–<span className="font-semibold text-slate-600">{Math.min(currentPage * perPage, Number(totalItems) || 0)}</span> of <span className="font-semibold text-slate-600">{Number(totalItems) || 0}</span>
-						</p>
-						<div className="flex items-center gap-2">
-							<select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }} className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 bg-slate-50 focus:outline-none focus:ring-2 /30">
-								<option value={10}>10 / page</option>
-								<option value={20}>20 / page</option>
-								<option value={50}>50 / page</option>
-								<option value={100}>100 / page</option>
-							</select>
-							<button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-40">Previous</button>
-							<button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-5 py-2.5 btn-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest  shadow-premium transition-all active:scale-95 disabled:opacity-40">Next</button>
-						</div>
-					</div>
+					{/* Removed pagination - all products loaded on single scrollable page */}
 				</div>
 			</ErrorBoundary>
 
