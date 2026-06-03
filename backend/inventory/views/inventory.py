@@ -71,17 +71,26 @@ def inventory_list(request):
         if category:
             products = products.filter(category=category)
 
-        # Pagination
+        # No pagination for inventory management - return all products
+        # When per_page is large (99999), return all results without pagination
+        per_page = int(request.GET.get("per_page", 99999))
         page = request.GET.get("page", 1)
-        per_page = int(request.GET.get("per_page", 100))
-        paginator = Paginator(products, per_page)
-
-        try:
-            products_page = paginator.page(page)
-        except PageNotAnInteger:
-            products_page = paginator.page(1)
-        except EmptyPage:
-            products_page = paginator.page(paginator.num_pages)
+        paginator = None
+        
+        if per_page >= 99999:
+            # Return all products without pagination
+            products_page = products
+            total_count = products.count()
+        else:
+            # Fallback to pagination if per_page is reasonable
+            paginator = Paginator(products, per_page)
+            try:
+                products_page = paginator.page(page)
+            except PageNotAnInteger:
+                products_page = paginator.page(1)
+            except EmptyPage:
+                products_page = paginator.page(paginator.num_pages)
+            total_count = paginator.count
 
         # Serialize
         serialized_products = ProductSerializer(products_page, many=True).data
@@ -161,12 +170,23 @@ def inventory_list(request):
             else:
                 product["expiry_status"] = "valid"
         
-        response_data = {
-            "products": serialized_products,
-            "totalPages": paginator.num_pages,
-            "currentPage": int(page),
-            "totalItems": paginator.count,
-        }
+        # Build response - handle both paginated and non-paginated responses
+        if paginator is None:
+            # Non-paginated response
+            response_data = {
+                "products": serialized_products,
+                "totalPages": 1,
+                "currentPage": 1,
+                "totalItems": total_count,
+            }
+        else:
+            # Paginated response
+            response_data = {
+                "products": serialized_products,
+                "totalPages": paginator.num_pages,
+                "currentPage": int(page),
+                "totalItems": paginator.count,
+            }
 
         return Response(response_data)
 

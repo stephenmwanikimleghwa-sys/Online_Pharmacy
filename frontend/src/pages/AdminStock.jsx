@@ -58,12 +58,8 @@ const AdminStock = () => {
 		category: '',
 	});
 
-	// Debounced search query
-	const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
-	useEffect(() => {
-		const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
-		return () => clearTimeout(timer);
-	}, [searchQuery]);
+	// Removed debounce - instant search as user types
+	const [isInitialLoad, setIsInitialLoad] = useState(true);
 
 	// Form state
 	const [form, setForm] = useState({
@@ -101,24 +97,40 @@ const AdminStock = () => {
 		}
 		api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 		fetchItems();
-	}, [debouncedSearch, filters.lowStock, filters.outOfStock, filters.category]);
+	}, []);
 
-	const fetchItems = async () => {
+	// Instant search - refetch when search or filters change (no debounce)
+	useEffect(() => {
+		if (isInitialLoad) return; // Skip on first render
+		const controller = new AbortController();
+		const timeout = setTimeout(() => {
+			fetchItems(controller.signal);
+		}, 50); // Very small delay to batch rapid changes
+		return () => {
+			clearTimeout(timeout);
+			controller.abort();
+		};
+	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category]);
+
+	const fetchItems = async (signal) => {
 		try {
-			setLoading(true);
+			// Only show loading spinner on initial page load, not on search/filter
+			if (isInitialLoad) {
+				setLoading(true);
+				setIsInitialLoad(false);
+			}
 			setError('');
-			setItems([]); // Reset items to empty array
 
 			// Build query params - load ALL products (no pagination)
 			const params = new URLSearchParams({
-				per_page: 10000, // Load all products
+				per_page: 99999, // Load all products without pagination limit
 			});
 
 			// Add filters
 			if (filters.lowStock) params.append('low_stock', 'true');
 			if (filters.outOfStock) params.append('out_of_stock', 'true');
 			if (filters.category) params.append('category', filters.category);
-			if (debouncedSearch) params.append('search', debouncedSearch);
+if (searchQuery) params.append('search', searchQuery);
 
 			let products = [];
 			let totalPagesCount = 0;
@@ -151,7 +163,7 @@ const AdminStock = () => {
 					totalItemsCount = 0;
 					totalPagesCount = 1;
 				}
-				console.log('[Fetch Debug] Products endpoint success - All products loaded:', { count: totalItemsCount });
+				console.log('[Fetch Debug] Products endpoint success - All products loaded:', { count: totalItemsCount, search: searchQuery });
 			} catch (productErr) {
 				console.log('[Fetch Debug] Products endpoint failed, trying inventory endpoint');
 				// Fallback to inventory endpoint
@@ -170,15 +182,21 @@ const AdminStock = () => {
 			setCategories(uniqueCategories.sort());
 
 		} catch (err) {
+			if (err.name === 'AbortError') return; // Ignore aborted requests
 			console.error(err);
 			if (err.response?.status === 401) {
 				setError('Please log in to view inventory');
 				navigate('/login');
-			} else {
+			} else if (isInitialLoad) {
+				// Only show error on initial load, not on search/filter changes
 				setError('Failed to load inventory');
+			} else {
+				// Silently log search/filter errors
+				console.error('Search/filter request failed:', err);
 			}
 		} finally {
-			setLoading(false);
+			// Only show loading spinner on initial load
+			if (isInitialLoad) setLoading(false);
 		}
 	};
 
