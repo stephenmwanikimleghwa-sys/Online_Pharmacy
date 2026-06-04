@@ -10,11 +10,11 @@ router.register(r'pricing-tiers', views.PricingTierViewSet, basename='pricing-ti
 router.register(r'', views.ProductViewSet, basename='product')
 
 urlpatterns = [
-    # ViewSet URLs (includes list, create, retrieve, update, delete)
-    path('', include(router.urls)),
-    
-    # Keep existing function-based views
+    # Keep existing function-based views BEFORE router to avoid being intercepted
     path("search/", views.search_products, name="search"),
     path("my-products/", views.my_products, name="my_products"),
     path("pricing-summary/", views.pricing_summary, name="pricing_summary"),
+    
+    # ViewSet URLs (includes list, create, retrieve, update, delete)
+    path('', include(router.urls)),
 ]
