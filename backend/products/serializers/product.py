@@ -12,6 +12,13 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     pricing_tier = PricingTierSerializer(read_only=True)
     branch_stocks = serializers.SerializerMethodField()
+    # Add pricing fields for quick access
+    buying_price = serializers.SerializerMethodField()
+    selling_price = serializers.SerializerMethodField()
+    wholesale_price = serializers.SerializerMethodField()
+    # Add aggregated branch stock info
+    branch_stock_summary = serializers.SerializerMethodField()
+    total_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -20,6 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "category",
+            "department",
             "dosage_form",
             "manufacturer",
             "strength",
@@ -27,11 +35,16 @@ class ProductSerializer(serializers.ModelSerializer):
             "expiry_date",
             "price",
             "pricing_tier",
+            "buying_price",
+            "selling_price",
+            "wholesale_price",
             "stock_quantity",
             "reorder_threshold",
             "vat_obligation",
             "shelf_location",
             "branch_stocks",
+            "branch_stock_summary",
+            "total_stock",
             "image",
             "is_active",
             "is_low_stock",
@@ -53,7 +66,35 @@ class ProductSerializer(serializers.ModelSerializer):
             data['pricing_tier'] = None
         return data
 
+    def get_buying_price(self, instance):
+        """Get buying price from pricing tier if available."""
+        try:
+            if hasattr(instance, 'pricing_tier') and instance.pricing_tier:
+                return float(instance.pricing_tier.buying_price)
+        except Exception:
+            pass
+        return None
+
+    def get_selling_price(self, instance):
+        """Get selling/retail price from pricing tier if available."""
+        try:
+            if hasattr(instance, 'pricing_tier') and instance.pricing_tier:
+                return float(instance.pricing_tier.retail_price)
+        except Exception:
+            pass
+        return None
+
+    def get_wholesale_price(self, instance):
+        """Get wholesale price from pricing tier if available."""
+        try:
+            if hasattr(instance, 'pricing_tier') and instance.pricing_tier:
+                return float(instance.pricing_tier.wholesale_price)
+        except Exception:
+            pass
+        return None
+
     def get_branch_stocks(self, instance):
+        """Get branch stocks with all details."""
         return [
             {
                 "branch_id": bs.branch_id,
@@ -63,6 +104,25 @@ class ProductSerializer(serializers.ModelSerializer):
             }
             for bs in getattr(instance, "branch_stocks", []).all()
         ]
+
+    def get_branch_stock_summary(self, instance):
+        """Get summary of branch stocks as a dict for easy frontend access."""
+        summary = {}
+        for bs in getattr(instance, "branch_stocks", []).all():
+            branch_name = getattr(bs.branch, "name", f"Branch {bs.branch_id}")
+            summary[branch_name] = {
+                "quantity": float(bs.quantity),
+                "reorder_level": float(bs.reorder_level),
+                "branch_id": bs.branch_id,
+            }
+        return summary
+
+    def get_total_stock(self, instance):
+        """Get total stock across all branches."""
+        total = 0
+        for bs in getattr(instance, "branch_stocks", []).all():
+            total += float(bs.quantity)
+        return total
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):

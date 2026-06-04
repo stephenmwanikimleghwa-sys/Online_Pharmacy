@@ -17,6 +17,13 @@ class CategoryChoices(models.TextChoices):
     OTHER = "other", "Other"
 
 
+class DepartmentChoices(models.TextChoices):
+    """Department/branch type classification for products."""
+    CHEMIST = "CHEMIST", "Chemist"
+    AGROVET = "AGROVET", "Agrovet"
+    OTHER = "OTHER", "Other"
+
+
 class PricingTierChoices(models.TextChoices):
     """Pricing tier options."""
     RETAIL = "retail", "Retail (1.33× markup)"
@@ -33,6 +40,13 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="Description")
     category = models.CharField(
         max_length=100, blank=True, null=True, verbose_name="Category"
+    )
+    department = models.CharField(
+        max_length=50,
+        choices=DepartmentChoices.choices,
+        default=DepartmentChoices.OTHER,
+        verbose_name="Department",
+        help_text="Pharmacy department: CHEMIST or AGROVET"
     )
     price = models.DecimalField(
         max_digits=10,
@@ -121,6 +135,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=["name"]),
             models.Index(fields=["category"]),
+            models.Index(fields=["department"]),
             models.Index(fields=["price"]),
             models.Index(fields=["is_active"]),
             models.Index(fields=["name", "category"]),  # For search
