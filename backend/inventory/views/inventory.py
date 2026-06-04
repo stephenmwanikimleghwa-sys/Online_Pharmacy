@@ -8,6 +8,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
+# Phase 6: Inventory management with department and branch stock filtering
 from users.active_branch import get_active_branch
 from products.models import Product, StockLog, BranchStock
 from users.models import Branch
