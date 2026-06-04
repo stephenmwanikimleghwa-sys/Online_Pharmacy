@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('buying_price', models.DecimalField(decimal_places=2, help_text='Cost price from distributor (Base Price)', max_digits=10, validators=[django.core.validators.MinValueValidator(0)])),
-                ('wholesale_price', models.DecimalField(decimal_places=2, editable=False, help_text='Wholesale price (Buying Price × 1.1)', max_digits=10, validators=[django.core.validators.MinValueValidator(0)])),
-                ('retail_price', models.DecimalField(decimal_places=2, editable=False, help_text='Retail price (Buying Price × 1.5)', max_digits=10, validators=[django.core.validators.MinValueValidator(0)])),
+                ('wholesale_price', models.DecimalField(decimal_places=2, editable=False, help_text='Wholesale price (Buying Price × 1.15)', max_digits=10, validators=[django.core.validators.MinValueValidator(0)])),
+                ('retail_price', models.DecimalField(decimal_places=2, editable=False, help_text='Retail price (Buying Price × 1.33)', max_digits=10, validators=[django.core.validators.MinValueValidator(0)])),
                 ('minimum_wholesale_quantity', models.PositiveIntegerField(default=10, help_text='Minimum quantity required to qualify for wholesale price')),
                 ('is_active', models.BooleanField(default=True, help_text='Whether this pricing tier is currently active')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

@@ -253,7 +253,7 @@ const PricingManagement = () => {
           </div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-secondary)' }}>Pricing Formula</p>
-            <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>WP = BP × 1.10 &nbsp;|&nbsp; RP = BP × 1.50</p>
+            <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>WP = BP × 1.15 &nbsp;|&nbsp; RP = BP × 1.33</p>
           </div>
         </div>
         {/* Summary chips */}

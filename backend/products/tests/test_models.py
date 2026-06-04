@@ -59,10 +59,10 @@ class PricingTierModelTest(TestCase):
 
     def test_price_calculation(self):
         """Test that wholesale and retail prices are calculated correctly."""
-        # Wholesale: 100 * 1.1 = 110.00
-        # Retail: 100 * 1.5 = 150.00
-        self.assertEqual(self.pricing_tier.wholesale_price, Decimal("110.00"))
-        self.assertEqual(self.pricing_tier.retail_price, Decimal("150.00"))
+        # Wholesale: 100 * 1.15 = 115.00
+        # Retail: 100 * 1.33 = 133.00
+        self.assertEqual(self.pricing_tier.wholesale_price, Decimal("115.00"))
+        self.assertEqual(self.pricing_tier.retail_price, Decimal("133.00"))
         
         # Check that product price was updated to retail price
         self.product.refresh_from_db()

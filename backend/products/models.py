@@ -341,10 +341,10 @@ class PricingTier(models.Model):
         # recalculate from buying_price. This allows legacy imports to set
         # exact WP/RP values that must not be overwritten by the formula.
         if not getattr(self, 'use_legacy_prices', False):
-            # Wholesale: Buying Price × 1.10
-            self.wholesale_price = self.buying_price * Decimal('1.10')
-            # Retail: Buying Price × 1.50
-            self.retail_price = self.buying_price * Decimal('1.50')
+            # Wholesale: Buying Price × 1.15
+            self.wholesale_price = self.buying_price * Decimal('1.15')
+            # Retail: Buying Price × 1.33
+            self.retail_price = self.buying_price * Decimal('1.33')
 
         # Update the product's main price to retail price if available
         try:
