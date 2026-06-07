@@ -65,7 +65,7 @@ const InventoryManagement = () => {
   const fetchInventory = async () => {
     try {
       if (inventory.length === 0) setLoading(true);
-      const response = await inventoryService.getInventory({ per_page: 1000 });
+      const response = await inventoryService.getInventory({ per_page: 5000 });
       const data = response.data || {};
       const list = Array.isArray(data) ? data : (data.products || data.results || []);
       setInventory(Array.isArray(list) ? list : []);

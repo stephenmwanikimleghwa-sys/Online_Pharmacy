@@ -131,7 +131,7 @@ const PricingManagement = () => {
 
       const [productsRes, tiersRes] = await Promise.all([
         api.get('/products/', { params }),
-        api.get('/products/pricing-tiers/', { params: { page_size: 1000, is_active: true } }),
+        api.get('/products/pricing-tiers/', { params: { page_size: 5000, is_active: true } }),
       ]);
 
       const productList =
