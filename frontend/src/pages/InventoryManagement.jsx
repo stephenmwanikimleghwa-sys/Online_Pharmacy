@@ -376,7 +376,7 @@ const InventoryManagement = () => {
                       const expSoon = item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry';
                       return (
                         <tr key={item.id} className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                          <td className={`px-3 py-3 font-semibold text-sm max-w-[12rem] truncate ${out ? 'text-slate-400' : ''}`}>
+                          <td className={`px-3 py-3 font-semibold text-sm ${out ? 'text-slate-400' : ''}`}>
                             {item.name}
                           </td>
                           <td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">

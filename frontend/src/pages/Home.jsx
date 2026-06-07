@@ -298,7 +298,7 @@ const Home = () => {
                         {product.category || 'Product'}
                       </span>
                     </div>
-                    <h3 className="text-xl font-display font-bold mb-2 truncate" style={{ color: 'var(--text-primary)' }}>
+                    <h3 className="text-xl font-display font-bold mb-2 break-words" style={{ color: 'var(--text-primary)' }}>
                       {product.name}
                     </h3>
                     <p className="text-sm mb-6 font-medium leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>

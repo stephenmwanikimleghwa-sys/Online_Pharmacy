@@ -386,7 +386,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                 className="flex items-center justify-between gap-2 p-3 rounded-xl data-cell"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{item.name}</p>
+                  <p className="font-semibold text-sm break-words">{item.name}</p>
                   <p className="text-xs">{fmt(item.unitPrice)} each</p>
                 </div>
                 <div className="flex items-center gap-2">

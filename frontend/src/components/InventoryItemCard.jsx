@@ -77,7 +77,7 @@ const InventoryItemCard = ({ item, onRestock, onViewLogs }) => {
               {item.category?.replace('_', ' ')}
             </p>
           </div>
-          <h3 className="text-xl font-display font-bold truncate group-hover:text-[var(--color-highlight)] transition-colors tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-xl font-display font-bold break-words group-hover:text-[var(--color-highlight)] transition-colors tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {item.name}
           </h3>
         </div>

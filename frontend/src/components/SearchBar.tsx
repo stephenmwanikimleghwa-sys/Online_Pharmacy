@@ -225,7 +225,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <p className="font-medium text-gray-900 dark:text-gray-100 break-words">
                     {suggestion.label}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
