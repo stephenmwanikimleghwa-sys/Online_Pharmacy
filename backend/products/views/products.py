@@ -159,7 +159,7 @@ def search_products(request: Request) -> Response:
 
     products = Product.objects.filter(is_active=True).select_related(
         'pharmacy', 'pricing_tier'
-    ).prefetch_related('pricing_tier', 'branch_stocks')
+    ).prefetch_related('branch_stocks__branch')
 
     active_branch = _branch_for_request(request)
     # RULE 8: /products/search always branch-scoped for sales behavior
@@ -207,7 +207,7 @@ def my_products(request: Request) -> Response:
     
     products = Product.objects.filter(is_active=True).select_related(
         'pharmacy', 'pricing_tier'
-    ).prefetch_related('pricing_tier')
+    ).prefetch_related('branch_stocks__branch')
     if request.user.pharmacy:
         products = products.filter(pharmacy=request.user.pharmacy)
     else:
@@ -270,7 +270,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         """
         queryset = Product.objects.filter(is_active=True).select_related(
             'pharmacy', 'pricing_tier'
-        ).prefetch_related('pricing_tier', 'branch_stocks')
+        ).prefetch_related('branch_stocks__branch')
 
         context = self.request.query_params.get("context")
         active_branch = _branch_for_request(self.request)

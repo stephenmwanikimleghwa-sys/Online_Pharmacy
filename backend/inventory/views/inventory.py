@@ -55,7 +55,7 @@ def inventory_list(request):
         products = (
             Product.objects.filter(is_active=True)
             .select_related("pharmacy", "pricing_tier")
-            .prefetch_related("pricing_tier", "branch_stocks")
+            .prefetch_related("branch_stocks__branch")
             .annotate(next_batch_expiry=Min("batches__expiry_date"))
             .order_by("name")
         )
@@ -217,7 +217,8 @@ def low_stock_items(request):
             quantity__lte=F("reorder_level"),
             quantity__gt=0
         )
-        .select_related("product", "product__pharmacy")
+        .select_related("product", "product__pharmacy", "product__pricing_tier")
+        .prefetch_related("product__branch_stocks__branch")
         .order_by("quantity")
     )
     if is_admin and branch_param and branch_param != 'all':
@@ -247,7 +248,8 @@ def out_of_stock_items(request):
             product__is_active=True,
             quantity__lte=0
         )
-        .select_related("product", "product__pharmacy")
+        .select_related("product", "product__pharmacy", "product__pricing_tier")
+        .prefetch_related("product__branch_stocks__branch")
         .order_by("product__name")
     )
     if is_admin and branch_param and branch_param != 'all':
