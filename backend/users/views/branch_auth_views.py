@@ -69,10 +69,12 @@ class SwitchBranchView(APIView):
         tokens = issue_tokens(request.user, active_branch_id=branch.id)
         session = resolve_branch_session(request.user, active_branch_id=branch.id)
 
-        StaffActivityLog.objects.create(
+        from users.utils import log_activity
+        log_activity(
             user=request.user,
-            event_type="BRANCH_SWITCHED",
+            event_type='BRANCH_SWITCHED',
             branch=branch,
+            details_dict={'action': 'User switched active branch'},
             ip_address=_client_ip(request),
         )
 

@@ -152,5 +152,5 @@ class StaffActivityLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StaffActivityLog
-        fields = ['id', 'user', 'username', 'full_name', 'event_type', 'branch', 'branch_name', 'ip_address', 'timestamp']
+        fields = ['id', 'user', 'username', 'full_name', 'event_type', 'branch', 'branch_name', 'ip_address', 'timestamp', 'details']
         read_only_fields = ['timestamp']

@@ -35,8 +35,8 @@ const getNavGroups = (user) => {
 
   if (user?.role === "admin") {
     operationsLinks.push(
-      { to: "/inventory", label: "Inventory Management", icon: ClipboardDocumentListIcon },
-      { to: "/admin/stock", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/control", label: "Inventory Control", icon: ClipboardDocumentListIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
@@ -54,7 +54,8 @@ const getNavGroups = (user) => {
     );
   } else if (user?.role === "pharmacist") {
     operationsLinks.push(
-      { to: "/inventory", label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/control", label: "Inventory Control", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
@@ -68,7 +69,7 @@ const getNavGroups = (user) => {
     operationsLinks.push({ to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon });
   } else if (user?.role === "auditor") {
     operationsLinks.push(
-      { to: "/inventory", label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
     );

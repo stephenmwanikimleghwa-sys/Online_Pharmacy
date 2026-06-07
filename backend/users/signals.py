@@ -12,10 +12,9 @@ def log_user_login(sender, request, user, **kwargs):
         else:
             ip_address = request.META.get('REMOTE_ADDR')
 
-    StaffActivityLog.objects.create(
+    log_activity(
         user=user,
-        action_type='login',
-        description='User logged in',
+        event_type='LOGIN',
         ip_address=ip_address
     )
 
@@ -30,9 +29,8 @@ def log_user_logout(sender, request, user, **kwargs):
             ip_address = request.META.get('REMOTE_ADDR')
 
     if user:
-        StaffActivityLog.objects.create(
+        log_activity(
             user=user,
-            action_type='logout',
-            description='User logged out',
+            event_type='LOGOUT',
             ip_address=ip_address
         )

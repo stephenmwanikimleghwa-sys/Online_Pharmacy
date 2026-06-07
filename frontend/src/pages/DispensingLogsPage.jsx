@@ -27,6 +27,27 @@ const UserActivityLogs = () => {
     load();
   }, []);
 
+  const formatDetails = (log) => {
+    if (!log.details || Object.keys(log.details).length === 0) return '—';
+    const d = log.details;
+    switch (log.event_type || log.action_type) {
+      case 'SALE_MADE':
+        return `Receipt #${d.dispensation_id || '?'} — KES ${Number(d.total_amount || 0).toLocaleString()}`;
+      case 'USER_CREATED':
+        return `Created user: ${d.created_user} (${d.role})`;
+      case 'USER_DEACTIVATED':
+      case 'USER_REACTIVATED':
+      case 'PASSWORD_RESET':
+        return `Target user: ${d.target_user}`;
+      case 'PERMISSION_CHANGED':
+        return `Updated permissions for ${d.target_user}`;
+      case 'BRANCH_SWITCHED':
+        return d.action || 'Switched branch';
+      default:
+        return JSON.stringify(d);
+    }
+  };
+
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100">
@@ -36,23 +57,24 @@ const UserActivityLogs = () => {
         <table className="min-w-full divide-y divide-slate-100">
           <thead className="bg-slate-50/50">
             <tr>
-              {['User', 'Action', 'Branch', 'IP Address', 'Timestamp'].map((h) => (
+              {['User', 'Action', 'Details', 'Branch', 'IP Address', 'Timestamp'].map((h) => (
                 <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? (
-              <tr><td colSpan={5} className="py-12 text-center text-slate-400">Loading...</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-slate-400">Loading...</td></tr>
             ) : error ? (
-              <tr><td colSpan={5} className="py-12 text-center text-rose-500">{error}</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-rose-500">{error}</td></tr>
             ) : logs.length === 0 ? (
-              <tr><td colSpan={5} className="py-12 text-center text-slate-400">No activity logs found.</td></tr>
+              <tr><td colSpan={6} className="py-12 text-center text-slate-400">No activity logs found.</td></tr>
             ) : (
               logs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-5 py-3 text-sm font-medium text-slate-800">{log.username || log.user || '—'}</td>
-                  <td className="px-5 py-3 text-sm text-slate-600">{log.action_type || log.event_type || '—'}</td>
+                  <td className="px-5 py-3 text-sm font-semibold text-indigo-600">{log.action_type || log.event_type || '—'}</td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{formatDetails(log)}</td>
                   <td className="px-5 py-3 text-sm text-slate-600">{log.branch_name || log.branch || '—'}</td>
                   <td className="px-5 py-3 text-sm text-slate-600">{log.ip_address || '—'}</td>
                   <td className="px-5 py-3 text-sm text-slate-500">{log.timestamp ? new Date(log.timestamp).toLocaleString() : '—'}</td>

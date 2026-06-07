@@ -42,7 +42,7 @@ class Prescription(models.Model):
 
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="prescriptions",
         verbose_name="User",
         null=True,

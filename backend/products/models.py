@@ -312,7 +312,6 @@ class PricingTier(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        editable=False,
         help_text='Wholesale price (Buying Price × 1.15)'
     )
     
@@ -320,7 +319,6 @@ class PricingTier(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        editable=False,
         help_text='Retail price (Buying Price × 1.33)'
     )
 

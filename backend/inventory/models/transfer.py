@@ -14,7 +14,7 @@ class InterBranchTransfer(models.Model):
     destination_branch = models.ForeignKey('users.Branch', on_delete=models.CASCADE, related_name='transfers_in')
     quantity = models.PositiveIntegerField()
     
-    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='transfers_requested')
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='transfers_requested')
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers_approved')
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

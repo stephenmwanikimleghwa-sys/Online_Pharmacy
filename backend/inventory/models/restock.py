@@ -24,7 +24,7 @@ class RestockRequest(models.Model):
         verbose_name='Branch',
         help_text='The branch making this restock request.'
     )
-    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='restock_requests_created')
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='restock_requests_created')
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 

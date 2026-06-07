@@ -13,7 +13,8 @@ class Review(models.Model):
 
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="reviews",
         verbose_name="Reviewer",
     )

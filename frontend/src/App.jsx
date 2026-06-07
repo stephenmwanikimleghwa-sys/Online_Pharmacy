@@ -105,8 +105,8 @@ function AppLayout() {
 
                 {/* Protected Customer Routes */}
                 <Route
-                  path="/admin/stock"
-                  element={<ProtectedRoute element={AdminStock} allowedRoles={["admin"]} />}
+                  path="/inventory/control"
+                  element={<ProtectedRoute element={AdminStock} allowedRoles={["admin", "pharmacist", "cashier"]} requiresActiveBranch />}
                 />
                 <Route
                   path="/customer/dashboard"
@@ -151,8 +151,15 @@ function AppLayout() {
                   }
                 />
                 <Route
-                  path="/inventory"
-                  element={<ProtectedRoute element={InventoryManagement} allowedRoles={['admin', 'pharmacist', 'auditor']} />}
+                  path="/inventory/management"
+                  element={
+                    <ProtectedRoute 
+                      element={InventoryManagement} 
+                      allowedRoles={['admin', 'auditor']}
+                      deniedTitle="Access Denied"
+                      deniedMessage="Access Denied — Inventory Management is only available to administrators. You can manage your branch inventory in Inventory Control."
+                    />
+                  }
                 />
                 <Route
                   path="/stock-intake"

@@ -21,6 +21,7 @@ const ManageUsers = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // 'active', 'inactive', 'all'
   const [formData, setFormData] = useState({
     username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist', branch_id: ''
   });
@@ -127,20 +128,20 @@ const ManageUsers = () => {
     if (!deleteCandidate) return;
     try {
       await api.delete(`/auth/admin/users/${deleteCandidate.id}/delete/`);
-      setSuccessMessage('User deleted successfully');
+      setSuccessMessage('User deactivated successfully');
       await fetchUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
       setDeleteCandidate(null);
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
-      setError('Failed to delete user: ' + (serverMsg || err.message));
+      setError('Failed to deactivate user: ' + (serverMsg || err.message));
     }
   };
 
-  const handleDeactivate = async (user) => {
+  const handleReactivate = async (user) => {
     try {
       await api.post(`/auth/admin/users/${user.id}/deactivate/`);
-      setSuccessMessage('User status updated successfully');
+      setSuccessMessage('User reactivated successfully');
       await fetchUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
@@ -212,13 +213,31 @@ const ManageUsers = () => {
 
       {/* Table Container */}
       <div className="glass-card rounded-[2.5rem] overflow-hidden">
-        <div className="table-header-row px-8 py-6 flex items-center gap-3">
-          <UserIcon className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
-          <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>All Users</h2>
-          <span className="ml-auto text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
-            style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
-            {users.length} total
-          </span>
+        <div className="table-header-row px-8 py-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div className="flex items-center gap-3">
+            <UserIcon className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
+            <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>All Users</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+              style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
+              {users.length} total
+            </span>
+          </div>
+          
+          <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200">
+            {['active', 'inactive', 'all'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                  filterStatus === status 
+                    ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {status === 'all' ? 'All' : `${status} Staff`}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -231,8 +250,8 @@ const ManageUsers = () => {
               </tr>
             </thead>
             <tbody style={{ borderTop: '1px solid var(--border-primary)' }}>
-              {users.map((user) => (
-                <tr key={user.id} className="group transition-colors"
+              {users.filter(u => filterStatus === 'all' || (filterStatus === 'active' ? u.is_active : !u.is_active)).map((user) => (
+                <tr key={user.id} className={`group transition-colors ${!user.is_active ? 'opacity-75' : ''}`}
                   style={{ borderBottom: '1px solid var(--border-primary)' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-mist)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
@@ -255,10 +274,17 @@ const ManageUsers = () => {
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${user.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${user.is_verified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                      {user.is_verified ? 'Verified' : 'Pending'}
-                    </span>
+                    {user.is_active ? (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${user.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${user.is_verified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        {user.is_verified ? 'Verified' : 'Pending'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border bg-slate-50 text-slate-500 border-slate-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        Inactive
+                      </span>
+                    )}
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2">
@@ -267,20 +293,22 @@ const ManageUsers = () => {
                         style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)', borderColor: 'var(--brand-border-soft)' }}>
                         <PencilSquareIcon className="h-3.5 w-3.5" /> Edit
                       </button>
-                      <button onClick={() => handleDeactivate(user)}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
-                        style={{ background: 'rgba(251,146,60,0.08)', color: '#ea580c', borderColor: 'rgba(251,146,60,0.18)' }}>
-                        {user.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
                       <button onClick={() => handleResetPassword(user)}
                         className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
                         style={{ background: 'rgba(59,130,246,0.08)', color: '#2563eb', borderColor: 'rgba(59,130,246,0.18)' }}>
                         Reset Password
                       </button>
-                      <button onClick={() => handleDelete(user)}
-                        className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100 shadow-sm flex items-center gap-1">
-                        <TrashIcon className="h-3.5 w-3.5" /> Delete
-                      </button>
+                      {user.is_active ? (
+                        <button onClick={() => handleDelete(user)}
+                          className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-100 shadow-sm flex items-center gap-1">
+                          <XCircleIcon className="h-3.5 w-3.5" /> Deactivate Account
+                        </button>
+                      ) : (
+                        <button onClick={() => handleReactivate(user)}
+                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm flex items-center gap-1">
+                          <CheckCircleIcon className="h-3.5 w-3.5" /> Reactivate Account
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -385,14 +413,17 @@ const ManageUsers = () => {
         <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={() => setDeleteCandidate(null)}>
           <div className="min-h-screen flex items-center justify-center px-4">
             <DialogBackdrop className="fixed inset-0 modal-overlay" />
-            <div className="relative z-10 w-full max-w-md modal-card p-6">
-              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Delete User</h3>
+            <div className="relative z-10 w-full max-w-md modal-card p-6 border-t-4 border-amber-500">
+              <h3 className="text-lg font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <XCircleIcon className="h-6 w-6 text-amber-500" />
+                Deactivate Account
+              </h3>
               <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-                Delete user <strong>{deleteCandidate?.username}</strong>? This action cannot be undone.
+                Deactivate <strong>{deleteCandidate?.username}</strong>? This will prevent them from logging in. All their records and history will be preserved in the system. You can reactivate this account later.
               </p>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setDeleteCandidate(null)} className="form-cancel-btn px-4 py-2 rounded-xl">Cancel</button>
-                <button type="button" onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-rose-600 text-white font-semibold">Delete</button>
+                <button type="button" onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors">Deactivate</button>
               </div>
             </div>
           </div>

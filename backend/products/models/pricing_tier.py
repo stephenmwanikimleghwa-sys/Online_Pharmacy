@@ -26,6 +26,14 @@ class PricingTier(models.Model):
         help_text='The product this pricing applies to'
     )
     
+    pricing_mode = models.CharField(
+        max_length=10,
+        choices=[("auto", "Auto-calculate"), ("manual", "Manual pricing")],
+        default="auto",
+        help_text="Whether to auto-calculate wholesale/retail prices from buying price."
+    )
+
+    
     buying_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -37,7 +45,6 @@ class PricingTier(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        editable=False,
         help_text='Wholesale price (Buying Price × 1.15)'
     )
     
@@ -45,7 +52,6 @@ class PricingTier(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        editable=False,
         help_text='Retail price (Buying Price × 1.33)'
     )
     
@@ -68,11 +74,13 @@ class PricingTier(models.Model):
         verbose_name_plural = 'Pricing Tiers'
 
     def save(self, *args, **kwargs):
-        """Automatically calculate wholesale and retail prices."""
-        # Wholesale: Buying Price × 1.15
-        self.wholesale_price = self.buying_price * 1.15
-        # Retail: Buying Price × 1.33
-        self.retail_price = self.buying_price * 1.33
+        """Automatically calculate wholesale and retail prices if in auto mode."""
+        from decimal import Decimal
+        if self.pricing_mode == "auto":
+            # Wholesale: Buying Price × 1.15
+            self.wholesale_price = self.buying_price * Decimal('1.15')
+            # Retail: Buying Price × 1.33
+            self.retail_price = self.buying_price * Decimal('1.33')
         
         # Update the product's main price to retail price
         if self.product:

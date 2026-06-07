@@ -67,6 +67,13 @@ def admin_create_user(request):
     user.is_verified = True
     user.save()
 
+    from users.utils import log_activity
+    log_activity(
+        user=request.user,
+        event_type='USER_CREATED',
+        details_dict={'created_user': username, 'role': role, 'branch': branch.name if branch else 'None'}
+    )
+
     return api_success(
         f"Account for {username} has been created. They can now log in.",
         data={"user_id": user.id},
@@ -98,16 +105,20 @@ def list_pharmacists(request):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def delete_pharmacist(request, user_id):
     try:
+        if request.user.id == user_id:
+            return api_validation_error(
+                "You cannot deactivate your own account while signed in.",
+                details={"user_id": user_id},
+            )
         pharmacist = User.objects.get(id=user_id, role=RoleChoices.PHARMACIST)
-        username = pharmacist.username
-        pharmacist.delete()
-        return api_success(f"{username} has been removed from the system.")
+        pharmacist.is_active = False
+        pharmacist.save()
+        return api_success(
+            f"{pharmacist.username}'s account has been deactivated. Their records are preserved.",
+            data={"user": {"id": pharmacist.id, "is_active": False}}
+        )
     except User.DoesNotExist:
         return api_not_found("Pharmacist not found.", details={"user_id": user_id})
-    except ProtectedError:
-        return api_duplicate(
-            "This pharmacist cannot be deleted because they have related records. Deactivate them instead.",
-        )
 
 
 @api_view(['DELETE'])
@@ -116,40 +127,24 @@ def delete_user(request, user_id):
     try:
         if request.user.id == user_id:
             return api_validation_error(
-                "You cannot delete your own account while signed in.",
+                "You cannot deactivate your own account while signed in.",
                 details={"user_id": user_id},
             )
         user = User.objects.get(id=user_id)
         if user.is_superuser:
             return api_validation_error(
-                "Superuser accounts cannot be deleted from this endpoint.",
+                "Superuser accounts cannot be deactivated from this endpoint.",
                 details={"user_id": user_id},
             )
-        # Prevent deleting users who have protected related records (dispensations, orders, activity logs)
-        related_protected = (
-            (hasattr(user, 'dispensations') and user.dispensations.exists()) or
-            (hasattr(user, 'orders') and user.orders.exists()) or
-            (hasattr(user, 'activity_logs') and user.activity_logs.exists())
-        )
-        if related_protected:
-            return api_duplicate(
-                "This user cannot be deleted because they have related records. Deactivate them instead.",
-            )
 
-        username = user.username
-        user.delete()
-        return api_success(f"{username} has been removed from the system.")
+        user.is_active = False
+        user.save()
+        return api_success(
+            f"{user.username}'s account has been deactivated. Their records are preserved.",
+            data={"user": {"id": user.id, "is_active": False}}
+        )
     except User.DoesNotExist:
         return api_not_found("User not found.", details={"user_id": user_id})
-    except ProtectedError:
-        return api_duplicate(
-            "This user cannot be deleted because they have related records. Deactivate them instead.",
-        )
-    except Exception:
-        return api_validation_error(
-            "This user could not be deleted. Deactivate the account instead.",
-            details={"user_id": user_id},
-        )
 
 
 @api_view(['POST'])
@@ -158,6 +153,14 @@ def deactivate_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.is_active = not user.is_active
     user.save(update_fields=['is_active'])
+    
+    from users.utils import log_activity
+    log_activity(
+        user=request.user,
+        event_type='USER_REACTIVATED' if user.is_active else 'USER_DEACTIVATED',
+        details_dict={'target_user': user.username}
+    )
+
     if user.is_active:
         return api_success(f"{user.username}'s account has been reactivated.")
     return api_success(
@@ -190,6 +193,14 @@ def admin_reset_password(request, user_id):
     user.set_password(new_password)
     user.must_change_password = True
     user.save()
+    
+    from users.utils import log_activity
+    log_activity(
+        user=request.user,
+        event_type='PASSWORD_RESET',
+        details_dict={'target_user': user.username}
+    )
+    
     return api_success(
         f"{user.username} will be prompted to set a new password on next login.",
     )
@@ -226,6 +237,14 @@ def update_user(request, user_id):
     if 'is_active' in data:
         user.is_active = bool(data.get('is_active'))
     user.save()
+    
+    from users.utils import log_activity
+    log_activity(
+        user=request.user,
+        event_type='PERMISSION_CHANGED',
+        details_dict={'target_user': user.username, 'updated_fields': list(data.keys())}
+    )
+    
     return api_success(
         f"{user.username}'s access permissions have been updated.",
     )

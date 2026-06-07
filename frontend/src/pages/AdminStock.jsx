@@ -61,13 +61,17 @@ const AdminStock = () => {
 	// Removed debounce - instant search as user types
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-	// Form state
 	const [form, setForm] = useState({
 		name: '',
 		category: '',
 		buying_price: '',
-		price: '',
+		use_legacy_prices: false,
+		wholesale_price: '',
+		retail_price: '',
 		stock_quantity: 0,
+		dosage_form: 'other',
+		strength: '',
+		shelf_location: '',
 		expiry_date: '',
 		supplier: '',
 		description: '',
@@ -208,8 +212,13 @@ if (searchQuery) params.append('search', searchQuery);
 			name: '',
 			category: '',
 			buying_price: '',
-			price: '',
+			use_legacy_prices: false,
+			wholesale_price: '',
+			retail_price: '',
 			stock_quantity: 0,
+			dosage_form: 'other',
+			strength: '',
+			shelf_location: '',
 			expiry_date: '',
 			supplier: '',
 			description: '',
@@ -233,8 +242,13 @@ if (searchQuery) params.append('search', searchQuery);
 			name: item.name || '',
 			category: item.category || '',
 			buying_price: item.pricing_tier?.buying_price || '',
-			price: item.price || '',
+			use_legacy_prices: item.pricing_tier?.use_legacy_prices || false,
+			wholesale_price: item.pricing_tier?.wholesale_price || '',
+			retail_price: item.pricing_tier?.retail_price || '',
 			stock_quantity: item.stock_quantity || 0,
+			dosage_form: item.dosage_form || 'other',
+			strength: item.strength || '',
+			shelf_location: item.shelf_location || '',
 			expiry_date: item.expiry_date || '',
 			supplier: item.supplier || '',
 			description: item.description || '',
@@ -266,17 +280,19 @@ if (searchQuery) params.append('search', searchQuery);
 			errors.category = 'Category is required';
 		}
 
-		// At least one of buying_price or price is required
+		// Buying price is always required now (as it calculates the others)
 		const hasBP = form.buying_price && !isNaN(form.buying_price) && Number(form.buying_price) > 0;
-		const hasPrice = form.price && !isNaN(form.price) && Number(form.price) > 0;
-		if (!hasBP && !hasPrice) {
+		if (!hasBP) {
 			errors.buying_price = 'Buying Price is required';
 		}
-		if (hasBP && Number(form.buying_price) <= 0) {
-			errors.buying_price = 'Buying Price must be a positive number';
-		}
-		if (hasPrice && Number(form.price) <= 0) {
-			errors.price = 'Price must be a positive number';
+
+		if (form.use_legacy_prices) {
+			if (!form.wholesale_price || isNaN(form.wholesale_price) || Number(form.wholesale_price) <= 0) {
+				errors.wholesale_price = 'Wholesale Price must be a positive number';
+			}
+			if (!form.retail_price || isNaN(form.retail_price) || Number(form.retail_price) <= 0) {
+				errors.retail_price = 'Retail Price must be a positive number';
+			}
 		}
 
 		if (!form.stock_quantity || isNaN(form.stock_quantity) || Number(form.stock_quantity) < 0) {
@@ -317,8 +333,17 @@ if (searchQuery) params.append('search', searchQuery);
 				data.append('name', form.name.trim());
 				data.append('category', form.category.trim());
 				if (form.buying_price) data.append('buying_price', Number(form.buying_price));
-				if (form.price) data.append('price', Number(form.price));
+				
+				data.append('use_legacy_prices', form.use_legacy_prices);
+				if (form.use_legacy_prices) {
+					if (form.wholesale_price) data.append('wholesale_price', Number(form.wholesale_price));
+					if (form.retail_price) data.append('retail_price', Number(form.retail_price));
+				}
+
 				data.append('stock_quantity', Number(form.stock_quantity));
+				data.append('dosage_form', form.dosage_form);
+				data.append('strength', form.strength?.trim() || '');
+				data.append('shelf_location', form.shelf_location?.trim() || '');
 				data.append('description', form.description?.trim() || '');
 				data.append('supplier', form.supplier?.trim() || '');
 				if (form.expiry_date) {
@@ -330,8 +355,13 @@ if (searchQuery) params.append('search', searchQuery);
 					name: form.name.trim(),
 					category: form.category.trim(),
 					...(form.buying_price ? { buying_price: Number(form.buying_price) } : {}),
-					...(form.price ? { price: Number(form.price) } : {}),
+					use_legacy_prices: form.use_legacy_prices,
+					...(form.use_legacy_prices && form.wholesale_price ? { wholesale_price: Number(form.wholesale_price) } : {}),
+					...(form.use_legacy_prices && form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
 					stock_quantity: Number(form.stock_quantity),
+					dosage_form: form.dosage_form,
+					strength: form.strength?.trim() || '',
+					shelf_location: form.shelf_location?.trim() || '',
 					description: form.description?.trim() || '',
 					supplier: form.supplier?.trim() || null,
 					expiry_date: form.expiry_date || null,

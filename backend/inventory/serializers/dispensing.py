@@ -64,11 +64,15 @@ class DispensationSerializer(serializers.ModelSerializer):
         source='customer.get_full_name',
         read_only=True
     )
+    branch_name = serializers.CharField(
+        source='branch.name',
+        read_only=True
+    )
     
     class Meta:
         model = Dispensation
         fields = [
-            'id', 'sale_type', 'prescription', 'patient_name', 'customer', 'customer_name',
+            'id', 'sale_type', 'prescription', 'branch_name', 'patient_name', 'customer', 'customer_name',
             'dispensed_by', 'dispensed_by_name', 'dispensed_at',
             'total_amount', 'payment_mode', 'pricing_tier', 'discount', 
             'notes', 'shift_info', 'items'

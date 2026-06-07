@@ -19,8 +19,8 @@ const DispensingLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      // Use inventory stock logs endpoint (returns latest stock logs)
-      let url = `${API_BASE_URL}/inventory/logs/`;
+      // Fetch completed orders to show transactions
+      let url = `${API_BASE_URL}/orders/`;
       if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
       if (dateFilter) url += `${searchTerm ? '&' : '?'}created_at=${encodeURIComponent(dateFilter)}`;
       const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -38,7 +38,7 @@ const DispensingLogs = () => {
   const handleSearch = (e) => { setSearchTerm(e.target.value); setCurrentPage(1); };
   const handleDateFilter = (e) => { setDateFilter(e.target.value); setCurrentPage(1); };
 
-  const headers = ["Product", "Qty", "Prev. Stock", "New Stock", "Total (KES)", "Dispensed By", "Date"];
+  const headers = ["Ref No", "Date", "Branch", "Staff", "Customer", "Items", "Total", "Payment Mode", "Actions"];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
@@ -101,32 +101,58 @@ const DispensingLogs = () => {
               ) : (
                 logs.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{log.product_name}</td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">{log.quantity}</td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">{log.previous_stock}</td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">{log.new_stock}</td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-slate-700">
-                      KES {Number(log.total_cost || 0).toFixed(2)}
+                    <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">
+                      #{log.id}
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
-                          {log.dispensed_by_name?.[0]?.toUpperCase()}
-                        </div>
-                        <span className="text-sm text-slate-600">{log.dispensed_by_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-400">
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">
                       {
                         (() => {
-                          const dateStr = log.created_at || log.timestamp || log.dispensed_at || log.logged_at;
+                          const dateStr = log.created_at;
                           if (!dateStr) return '—';
                           const d = new Date(dateStr);
                           if (isNaN(d)) return String(dateStr);
                           try { return format(d, 'MMM d, yyyy HH:mm'); } catch (e) { return String(dateStr); }
                         })()
                       }
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {log.branch_name || '—'}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                          style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+                          {(log.user || 'U')[0].toUpperCase()}
+                        </div>
+                        <span className="text-sm text-slate-600">{log.user || 'Unknown'}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-slate-700">
+                      Walk-in
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {log.items?.length || 0} item(s)
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-slate-800">
+                      KES {Number(log.total_amount || 0).toFixed(2)}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm">
+                      <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
+                        {log.payment || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm">
+                      <div className="flex gap-3 items-center">
+                        <button 
+                          className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1"
+                          onClick={() => {
+                            window.open(`${API_BASE_URL}/orders/${log.id}/receipt/`, "_blank");
+                          }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                          Print Receipt
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

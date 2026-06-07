@@ -245,6 +245,19 @@ def dispense_otc(request):
                 timestamp=timezone.now()
             )
 
+        from users.utils import log_activity
+        log_activity(
+            user=request.user,
+            event_type='SALE_MADE',
+            branch=active_branch,
+            details_dict={
+                'dispensation_id': dispensation.id,
+                'total_amount': total_amount,
+                'items_count': len(products_to_dispense),
+                'payment_mode': payment_mode
+            }
+        )
+
         item_count = len(products_to_dispense)
         return api_success(
             f"{item_count} item(s) sold. Total: KES {total_amount:.2f}.",

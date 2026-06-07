@@ -217,7 +217,8 @@ class CustomerDebtTransaction(models.Model):
 
     customer = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='debt_transactions',
         verbose_name='Customer'
     )
@@ -268,7 +269,8 @@ class StaffActivityLog(models.Model):
     """
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='activity_logs'
     )
     event_type = models.CharField(max_length=20, default='LOGIN')
@@ -281,6 +283,7 @@ class StaffActivityLog(models.Model):
         blank=True,
         related_name='activity_logs'
     )
+    details = models.JSONField(default=dict, blank=True, null=True)
 
     class Meta:
         db_table = "staff_activity_logs"

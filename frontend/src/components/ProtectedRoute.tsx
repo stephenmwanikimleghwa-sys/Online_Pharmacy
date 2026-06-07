@@ -10,6 +10,8 @@ interface ProtectedRouteProps {
   allowFinancials?: boolean;
   /** Redirect to branch selection if no active branch (staff operations). */
   requiresActiveBranch?: boolean;
+  deniedTitle?: string;
+  deniedMessage?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -18,6 +20,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles = [],
   allowFinancials = false,
   requiresActiveBranch = false,
+  deniedTitle,
+  deniedMessage,
 }) => {
   const { user, token, loading, activeBranch, requiresBranchSelection, allowedBranches } = useAuth();
   const location = useLocation();
@@ -61,8 +65,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     } else if (!userRole || !allowedRolesLower.includes(userRole)) {
       return (
         <AccessDenied
-          title="Page not available"
-          message="Your role does not include access to this page. Use the menu to open features assigned to you."
+          title={deniedTitle || "Page not available"}
+          message={deniedMessage || "Your role does not include access to this page. Use the menu to open features assigned to you."}
         />
       );
     }

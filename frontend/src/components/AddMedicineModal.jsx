@@ -60,22 +60,65 @@ export const AddMedicineModal = ({
             {/* Category */}
             <div>
               <label className="form-label">Category</label>
-              <select
-                name="category"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className={`${inputBase(formErrors.category)} appearance-none`}
-              >
-                <option value="">Select a category...</option>
-                <option value="pain_relief">Pain Relief</option>
-                <option value="antibiotics">Antibiotics</option>
-                <option value="vitamins">Vitamins & Supplements</option>
-                <option value="chronic_care">Chronic Care</option>
-                <option value="dermatology">Dermatology</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="relative">
+                <input
+                  name="category"
+                  type="text"
+                  value={form.category}
+                  onChange={(e) => {
+                    setForm({ ...form, category: e.target.value });
+                    setShowCategoryDropdown(true);
+                  }}
+                  onFocus={() => setShowCategoryDropdown(true)}
+                  placeholder="e.g. Painkillers"
+                  className={inputBase(formErrors.category)}
+                  autoComplete="off"
+                />
+                {showCategoryDropdown && categories.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-slate-200 mt-1 rounded-xl shadow-lg max-h-48 overflow-y-auto overflow-x-hidden">
+                    {categories
+                      .filter(c => c.toLowerCase().includes(form.category.toLowerCase()))
+                      .map((cat, idx) => (
+                        <li
+                          key={idx}
+                          className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
+                          onClick={() => {
+                            setForm({ ...form, category: cat });
+                            setShowCategoryDropdown(false);
+                          }}
+                        >
+                          {cat}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </div>
               {formErrors.category && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.category}</p>}
             </div>
+
+            {/* Dosage Form (Unit of Measure) */}
+            <div>
+              <label className="form-label">Unit of Measure / Form</label>
+              <select
+                name="dosage_form"
+                value={form.dosage_form || 'other'}
+                onChange={(e) => setForm({ ...form, dosage_form: e.target.value })}
+                className={inputBase()}
+              >
+                <option value="tablet">Tablet</option>
+                <option value="capsule">Capsule</option>
+                <option value="syrup">Syrup</option>
+                <option value="injection">Injection</option>
+                <option value="cream">Cream/Ointment</option>
+                <option value="drops">Drops</option>
+                <option value="inhaler">Inhaler</option>
+                <option value="solution">Solution</option>
+                <option value="powder">Powder</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+
 
             {/* Buying Price (BP) */}
             <div>
@@ -95,19 +138,51 @@ export const AddMedicineModal = ({
               {formErrors.buying_price && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.buying_price}</p>}
             </div>
 
-            {/* Price (optional override) */}
-            <div>
-              <label className="form-label">Price Override (KES) <span className="normal-case font-normal text-slate-400">— leave blank to use SP</span></label>
-              <input
-                name="price"
-                type="number"
-                step="0.01"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                placeholder="Auto-calculated from B.P if blank"
-                className={inputBase(formErrors.price)}
-              />
-              {formErrors.price && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.price}</p>}
+            {/* Pricing Mode Toggle */}
+            <div className="md:col-span-2 mt-2 p-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50">
+              <label className="form-label flex items-center justify-between cursor-pointer mb-0">
+                <span className="text-sm font-bold text-slate-700">Pricing Mode</span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${!form.use_legacy_prices ? 'text-primary' : 'text-slate-400'}`}>Auto</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, use_legacy_prices: !form.use_legacy_prices })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.use_legacy_prices ? 'bg-primary' : 'bg-slate-300'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.use_legacy_prices ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                  <span className={`text-xs font-bold uppercase tracking-wider ${form.use_legacy_prices ? 'text-primary' : 'text-slate-400'}`}>Manual</span>
+                </div>
+              </label>
+
+              {form.use_legacy_prices && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 animate-fade-in">
+                  <div>
+                    <label className="form-label">Wholesale Price (KES)</label>
+                    <input
+                      name="wholesale_price"
+                      type="number"
+                      step="0.01"
+                      value={form.wholesale_price || ''}
+                      onChange={(e) => setForm({ ...form, wholesale_price: e.target.value })}
+                      placeholder="e.g. 115"
+                      className={inputBase(formErrors.wholesale_price)}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Retail Price / SP (KES)</label>
+                    <input
+                      name="retail_price"
+                      type="number"
+                      step="0.01"
+                      value={form.retail_price || ''}
+                      onChange={(e) => setForm({ ...form, retail_price: e.target.value })}
+                      placeholder="e.g. 133"
+                      className={inputBase(formErrors.retail_price)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Stock Quantity */}

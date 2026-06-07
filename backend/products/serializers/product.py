@@ -139,6 +139,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         required=False, write_only=True,
         help_text='Buying/cost price from supplier. WSP (×1.15) and SP (×1.33) are auto-calculated.'
     )
+    use_legacy_prices = serializers.BooleanField(required=False, write_only=True)
+    wholesale_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01, required=False, write_only=True)
+    retail_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01, required=False, write_only=True)
 
     class Meta:
         model = Product
@@ -188,18 +191,31 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data: Dict[str, Any]) -> Product:
         """Create product, then auto-create PricingTier if buying_price was supplied."""
         buying_price = validated_data.pop('buying_price', None)
+        use_legacy_prices = validated_data.pop('use_legacy_prices', False)
+        wholesale_price = validated_data.pop('wholesale_price', None)
+        retail_price = validated_data.pop('retail_price', None)
 
         # If only buying_price was given, derive a fallback price (retail SP = ×1.33)
         if buying_price and not validated_data.get('price'):
-            validated_data['price'] = buying_price * Decimal('1.33')
+            if use_legacy_prices and retail_price:
+                validated_data['price'] = retail_price
+            else:
+                validated_data['price'] = buying_price * Decimal('1.33')
 
         product = super().create(validated_data)
 
         if buying_price is not None:
-            PricingTier.objects.create(
+            tier = PricingTier(
                 product=product,
-                buying_price=buying_price
+                buying_price=buying_price,
+                use_legacy_prices=use_legacy_prices
             )
+            if use_legacy_prices:
+                if wholesale_price is not None:
+                    tier.wholesale_price = wholesale_price
+                if retail_price is not None:
+                    tier.retail_price = retail_price
+            tier.save()
 
         return product
 
@@ -220,6 +236,9 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         required=False, write_only=True,
         help_text='Buying/cost price from supplier. WSP (×1.15) and SP (×1.33) are auto-calculated.'
     )
+    use_legacy_prices = serializers.BooleanField(required=False, write_only=True)
+    wholesale_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01, required=False, write_only=True)
+    retail_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01, required=False, write_only=True)
 
     class Meta:
         model = Product
@@ -260,14 +279,36 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance: Product, validated_data: Dict[str, Any]) -> Product:
         """Update product and create-or-update PricingTier if buying_price was supplied."""
         buying_price = validated_data.pop('buying_price', None)
+        use_legacy_prices = validated_data.pop('use_legacy_prices', None)
+        wholesale_price = validated_data.pop('wholesale_price', None)
+        retail_price = validated_data.pop('retail_price', None)
+        
         product = super().update(instance, validated_data)
 
-        if buying_price is not None:
+        if buying_price is not None or use_legacy_prices is not None:
             try:
                 tier = product.pricing_tier
-                tier.buying_price = buying_price
+                if buying_price is not None:
+                    tier.buying_price = buying_price
+                if use_legacy_prices is not None:
+                    tier.use_legacy_prices = use_legacy_prices
+                
+                if tier.use_legacy_prices:
+                    if wholesale_price is not None:
+                        tier.wholesale_price = wholesale_price
+                    if retail_price is not None:
+                        tier.retail_price = retail_price
                 tier.save()
             except PricingTier.DoesNotExist:
-                PricingTier.objects.create(product=product, buying_price=buying_price)
+                if buying_price is not None:
+                    tier = PricingTier(
+                        product=product, 
+                        buying_price=buying_price,
+                        use_legacy_prices=use_legacy_prices or False
+                    )
+                    if tier.use_legacy_prices:
+                        if wholesale_price is not None: tier.wholesale_price = wholesale_price
+                        if retail_price is not None: tier.retail_price = retail_price
+                    tier.save()
 
         return product

@@ -162,10 +162,38 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     setSelectedItems(
       selectedItems.map((item) => {
         if (item.id !== productId) return item;
-        const max = getProductBranchQuantity(item, branchId);
-        const next = Math.max(1, Math.min(max, item.quantity + delta));
+        const max = getProductBranchQuantity(item, branchId, activeBranch?.name);
+        const current = parseInt(item.quantity) || 0;
+        const next = Math.max(1, Math.min(max, current + delta));
         return { ...item, quantity: next };
       }),
+    );
+  };
+
+  const handleQuantityChange = (productId, valStr) => {
+    const val = parseInt(valStr, 10);
+    if (isNaN(val)) {
+      setSelectedItems(selectedItems.map(item => item.id === productId ? { ...item, quantity: '' } : item));
+      return;
+    }
+    setSelectedItems(
+      selectedItems.map((item) => {
+        if (item.id !== productId) return item;
+        const max = getProductBranchQuantity(item, branchId, activeBranch?.name);
+        return { ...item, quantity: Math.max(1, Math.min(max, val)) };
+      })
+    );
+  };
+
+  const handleQuantityBlur = (productId) => {
+    setSelectedItems(
+      selectedItems.map((item) => {
+        if (item.id !== productId) return item;
+        if (!item.quantity || parseInt(item.quantity) < 1) {
+          return { ...item, quantity: 1 };
+        }
+        return item;
+      })
     );
   };
 
@@ -182,6 +210,17 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       notify.warning("Empty Cart", "Add at least one product before completing the sale.");
       return;
     }
+
+    const cleanedItems = selectedItems.map(i => ({...i, quantity: parseInt(i.quantity) || 1}));
+    const total = cleanedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+
+    if (total > 10000) {
+      const confirmMsg = cleanedItems.length === 1 
+        ? `Large order: ${cleanedItems[0].quantity} × KES ${cleanedItems[0].unitPrice.toLocaleString()} = KES ${total.toLocaleString()}. Confirm?`
+        : `Large order: ${cleanedItems.reduce((sum, item) => sum + item.quantity, 0)} items = KES ${total.toLocaleString()}. Confirm?`;
+      if (!window.confirm(confirmMsg)) return;
+    }
+
     setCompleting(true);
     try {
       const response = await api.post(
@@ -390,11 +429,19 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                   <p className="text-xs">{fmt(item.unitPrice)} each</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => updateQuantity(item.id, -1)} className="p-1 rounded-lg border">
+                  <button type="button" onClick={() => updateQuantity(item.id, -1)} className="p-1 rounded-lg border bg-white hover:bg-slate-50 text-slate-600 transition-colors">
                     <MinusIcon className="h-4 w-4" />
                   </button>
-                  <span className="font-bold w-6 text-center">{item.quantity}</span>
-                  <button type="button" onClick={() => updateQuantity(item.id, 1)} className="p-1 rounded-lg border">
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                    onBlur={() => handleQuantityBlur(item.id)}
+                    className="w-16 text-center font-bold text-sm border rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    style={{ borderColor: "var(--border-primary)" }}
+                  />
+                  <button type="button" onClick={() => updateQuantity(item.id, 1)} className="p-1 rounded-lg border bg-white hover:bg-slate-50 text-slate-600 transition-colors">
                     <PlusIcon className="h-4 w-4" />
                   </button>
                   <button
