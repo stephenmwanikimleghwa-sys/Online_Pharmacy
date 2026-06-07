@@ -25,7 +25,7 @@ class PricingTierViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter pricing tiers based on user role."""
-        queryset = PricingTier.objects.all()
+        queryset = PricingTier.objects.select_related('product').all()
         
         # Filter by product ID if provided
         product_id = self.request.query_params.get('product_id')
