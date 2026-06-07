@@ -351,13 +351,18 @@ const InventoryManagement = () => {
                 <table className="min-w-full text-sm">
                   <thead className="sticky top-0 z-10" style={{ background: 'var(--bg-card)' }}>
                     <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                      <th className="text-left px-4 py-3 font-bold">Product</th>
-                      <th className="text-right px-4 py-3 font-bold">MAIN</th>
-                      <th className="text-right px-4 py-3 font-bold">ANNEX</th>
-                      <th className="text-right px-4 py-3 font-bold">PEAKFARM</th>
-                      <th className="text-right px-4 py-3 font-bold">Total</th>
-                      <th className="text-left px-4 py-3 font-bold">Status</th>
-                      <th className="text-right px-4 py-3 font-bold">Actions</th>
+                      <th className="text-left px-3 py-3 font-bold">Product</th>
+                      <th className="text-left px-3 py-3 font-bold text-xs">Category</th>
+                      <th className="text-left px-3 py-3 font-bold text-xs">Dept</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">BP</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">SP</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">WP</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">MAIN</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">ANNEX</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">PEAK</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">Total</th>
+                      <th className="text-left px-3 py-3 font-bold text-xs">Status</th>
+                      <th className="text-right px-3 py-3 font-bold text-xs">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -371,37 +376,53 @@ const InventoryManagement = () => {
                       const expSoon = item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry';
                       return (
                         <tr key={item.id} className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                          <td className={`px-4 py-3 ${out ? 'text-slate-400' : ''}`}>
-                            <p className="font-semibold leading-tight break-words max-w-[20rem]">{item.name}</p>
-                            {item.category && <p className="text-xs text-slate-500">{item.category}</p>}
+                          <td className={`px-3 py-3 font-semibold text-sm max-w-[12rem] truncate ${out ? 'text-slate-400' : ''}`}>
+                            {item.name}
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold">{main}</td>
-                          <td className="px-4 py-3 text-right font-semibold">{annex}</td>
-                          <td className="px-4 py-3 text-right font-semibold">{peakfarm}</td>
-                          <td className="px-4 py-3 text-right font-bold">{total}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">
+                            {item.category || '—'}
+                          </td>
+                          <td className="px-3 py-3 text-xs font-semibold">
+                            <span className={`px-2 py-1 rounded-md text-white text-[10px] font-bold ${item.department === 'CHEMIST' ? 'bg-blue-600' : item.department === 'AGROVET' ? 'bg-green-600' : 'bg-slate-600'}`}>
+                              {item.department || '—'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                            {item.buying_price ? `${item.buying_price}` : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                            {item.selling_price ? `${item.selling_price}` : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                            {item.wholesale_price ? `${item.wholesale_price}` : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-right font-semibold">{main}</td>
+                          <td className="px-3 py-3 text-right font-semibold">{annex}</td>
+                          <td className="px-3 py-3 text-right font-semibold">{peakfarm}</td>
+                          <td className="px-3 py-3 text-right font-bold">{total}</td>
+                          <td className="px-3 py-3">
                             <div className="flex flex-wrap gap-1">
-                              {out && <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700">Out of Stock</span>}
-                              {low && <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-700">Low Stock</span>}
-                              {expSoon && <span className="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-700">Expiring Soon</span>}
+                              {out && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 whitespace-nowrap">Out</span>}
+                              {low && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">Low</span>}
+                              {expSoon && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 whitespace-nowrap">Exp</span>}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex gap-2 justify-end">
+                          <td className="px-3 py-3 text-right">
+                            <div className="flex gap-1 justify-end">
                               {user?.role !== 'auditor' && (
                                 <button
                                   onClick={() => {
                                     setSelectedItem(item);
                                     setShowRestockModal(true);
                                   }}
-                                  className="btn-primary px-3 py-1.5 rounded-lg text-xs font-bold"
+                                  className="btn-primary px-2 py-1 rounded-lg text-xs font-bold"
                                 >
                                   Restock
                                 </button>
                               )}
                               <button
                                 onClick={() => handleViewLogs(item)}
-                                className="px-3 py-1.5 rounded-lg border text-xs font-bold"
+                                className="px-2 py-1 rounded-lg border text-xs font-bold"
                                 style={{ borderColor: 'var(--border-primary)' }}
                               >
                                 Logs
