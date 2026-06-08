@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 from django.db.models import Q, Sum
 from products.models import Product, BranchStock
 from products.serializers import (
@@ -414,4 +415,55 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "product_name": product.name,
                 "branches": branches,
             }
+        )
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request: Request) -> Response:
+        """
+        Create multiple products in bulk.
+        Accepts a JSON list of product data.
+        If any product fails validation, the entire transaction is rolled back.
+        """
+        if not isinstance(request.data, list):
+            return api_response(
+                error="Expected a list of products.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                success=False
+            )
+
+        created_products = []
+        errors = []
+
+        try:
+            with transaction.atomic():
+                for index, item_data in enumerate(request.data):
+                    serializer = self.get_serializer(data=item_data)
+                    if serializer.is_valid():
+                        self.perform_create(serializer)
+                        created_products.append(serializer.data)
+                    else:
+                        errors.append({"index": index, "errors": serializer.errors})
+                
+                if errors:
+                    # Rollback transaction by raising an exception
+                    raise Exception("Validation failed for some items.")
+        except Exception as e:
+            if errors:
+                return api_response(
+                    error="Validation failed.",
+                    data={"details": errors},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    success=False
+                )
+            logger.exception("Error during bulk product creation: %s", e)
+            return api_response(
+                error="An unexpected error occurred during bulk creation.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                success=False
+            )
+
+        return api_response(
+            data={"created_count": len(created_products), "products": created_products},
+            message=f"Successfully created {len(created_products)} products.",
+            status_code=status.HTTP_201_CREATED
         )

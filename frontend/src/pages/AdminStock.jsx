@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { AddMedicineModal } from '../components/AddMedicineModal';
+import BulkAddMedicineModal from '../components/BulkAddMedicineModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
@@ -20,6 +21,7 @@ const AdminStock = () => {
 	}, [items]);
 	const [formErrors, setFormErrors] = useState({});
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 	const [isEditMode, setIsEditMode] = useState(false);
 	const [editingItem, setEditingItem] = useState(null);
 
@@ -474,12 +476,20 @@ if (searchQuery) params.append('search', searchQuery);
 					</div>
 					<p className="text-lg text-slate-500 font-medium">Add, edit, and manage pharmaceutical products in your inventory.</p>
 				</div>
-				<div className="flex gap-3">
+				<div className="flex flex-wrap gap-3">
 					<button
 						onClick={() => navigate('/admin/restock-requests')}
 						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-card hover:bg-slate-50 transition-all active:scale-[0.98]"
 					>
 						Restock Requests
+					</button>
+					<button
+						onClick={(e) => { e.preventDefault(); setIsBulkModalOpen(true); }}
+						className="px-6 py-3.5 bg-white border border-indigo-200 text-indigo-700 rounded-2xl shadow-sm hover:shadow-card hover:bg-indigo-50 transition-all active:scale-[0.98] flex items-center gap-2 group"
+					>
+						{/* Stack icon for bulk */}
+						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+						<span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Bulk Add</span>
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); openAddModal(); }}
@@ -671,6 +681,13 @@ if (searchQuery) params.append('search', searchQuery);
 				setForm={setForm}
 				formErrors={formErrors}
 				onSubmit={handleSubmit}
+				categories={categories}
+			/>
+
+			<BulkAddMedicineModal
+				isOpen={isBulkModalOpen}
+				onClose={() => setIsBulkModalOpen(false)}
+				onSuccess={() => fetchItems()}
 				categories={categories}
 			/>
 		</div>
