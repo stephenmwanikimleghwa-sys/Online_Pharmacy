@@ -671,6 +671,7 @@ if (searchQuery) params.append('search', searchQuery);
 				setForm={setForm}
 				formErrors={formErrors}
 				onSubmit={handleSubmit}
+				categories={categories}
 			/>
 		</div>
 

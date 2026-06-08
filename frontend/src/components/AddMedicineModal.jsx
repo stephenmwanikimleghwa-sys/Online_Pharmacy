@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PlusIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 export const AddMedicineModal = ({
@@ -8,8 +8,11 @@ export const AddMedicineModal = ({
   form,
   setForm,
   formErrors,
-  onSubmit
+  onSubmit,
+  categories = []
 }) => {
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
   if (!isOpen) return null;
 
   const inputBase = (hasError) =>
@@ -211,27 +214,6 @@ export const AddMedicineModal = ({
               {formErrors.reorder_threshold && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.reorder_threshold}</p>}
             </div>
 
-            {/* Dosage Form */}
-            <div>
-              <label className="form-label">Dosage Form</label>
-              <select
-                name="dosage_form"
-                value={form.dosage_form || 'other'}
-                onChange={(e) => setForm({ ...form, dosage_form: e.target.value })}
-                className={`${inputBase(false)} appearance-none`}
-              >
-                <option value="tablet">Tablet</option>
-                <option value="capsule">Capsule</option>
-                <option value="syrup">Syrup</option>
-                <option value="injection">Injection</option>
-                <option value="cream">Cream/Ointment</option>
-                <option value="drops">Drops</option>
-                <option value="inhaler">Inhaler</option>
-                <option value="solution">Solution</option>
-                <option value="powder">Powder</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
 
             {/* Strength */}
             <div>
