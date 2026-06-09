@@ -18,6 +18,8 @@ class PDFGenerator:
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
 
+    def _setup_custom_styles(self):
+        """Setup custom styles for the documents."""
         self.styles.add(ParagraphStyle(
             name='CenterHeader',
             parent=self.styles['Heading1'],
@@ -105,7 +107,10 @@ class PDFGenerator:
 
         # Meta
         dt = order.created_at.strftime('%Y-%m-%d %H:%M')
-        served_by = order.user.get_full_name() or order.user.username
+        if order.user:
+            served_by = order.user.get_full_name() or order.user.username
+        else:
+            served_by = "System"
         elements.append(Paragraph(f"Date: {dt}", self.styles['ThermalNormal']))
         elements.append(Paragraph(f"Served by: {served_by}", self.styles['ThermalNormal']))
         
