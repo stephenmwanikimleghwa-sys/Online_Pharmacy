@@ -955,54 +955,8 @@ html {
 }
 
 /* ============================================================
-   THERMAL RECEIPT PRINT STYLES — 80mm width
+   THERMAL RECEIPT PREVIEW STYLES
    ============================================================ */
-
-/* Hide everything in print by default */
-@media print {
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  body > *,
-  #root > *,
-  nav,
-  header,
-  footer,
-  aside,
-  .no-print {
-    display: none !important;
-  }
-
-  /* Show only the receipt content */
-  #receipt-printout,
-  #receipt-printout * {
-    display: revert !important;
-    visibility: visible !important;
-  }
-
-  #receipt-printout {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 80mm !important;
-    margin: 0 !important;
-    padding: 4mm 3mm !important;
-    background: #fff !important;
-    color: #000 !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 11px !important;
-    line-height: 1.4 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  @page {
-    size: 80mm auto;
-    margin: 0;
-  }
-}
 
 /* Receipt preview styles (screen — inside the modal) */
 .receipt-paper {

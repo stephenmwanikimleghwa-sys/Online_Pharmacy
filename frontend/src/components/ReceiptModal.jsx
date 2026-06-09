@@ -43,7 +43,67 @@ const ReceiptModal = ({ order, onClose }) => {
 
     /* Give React one tick to re-render the hidden printout with correct header */
     setTimeout(() => {
-      window.print();
+      const printContent = document.getElementById("receipt-printout").innerHTML;
+      const iframe = document.createElement("iframe");
+      
+      // Hide the iframe off-screen
+      iframe.style.position = "absolute";
+      iframe.style.width = "0px";
+      iframe.style.height = "0px";
+      iframe.style.border = "none";
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <html>
+          <head>
+            <title>Receipt</title>
+            <style>
+              @page {
+                size: 80mm auto;
+                margin: 0;
+              }
+              body {
+                margin: 0;
+                padding: 4mm 3mm;
+                background: #fff;
+                color: #000;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                line-height: 1.4;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .receipt-paper {
+                width: 100%;
+                max-width: 80mm;
+              }
+              .r-center  { text-align: center; }
+              .r-bold    { font-weight: 700; }
+              .r-dash    { border-top: 1px dashed #333; margin: 5px 0; }
+              .r-dash-solid { border-top: 1px solid #333; margin: 5px 0; }
+              .r-row     { display: flex; justify-content: space-between; gap: 4px; }
+              .r-row-right { text-align: right; }
+              .r-small   { font-size: 10px; }
+              .r-spacer  { height: 4px; }
+            </style>
+          </head>
+          <body>
+            ${printContent}
+          </body>
+        </html>
+      `);
+      doc.close();
+
+      iframe.contentWindow.focus();
+      // Wait for iframe layout then trigger print
+      setTimeout(() => {
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 250);
     }, 80);
   };
 
