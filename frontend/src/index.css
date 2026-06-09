@@ -953,3 +953,77 @@ html {
   animation: spin-b 0.7s linear infinite;
   opacity: 0.7;
 }
+
+/* ============================================================
+   THERMAL RECEIPT PRINT STYLES — 80mm width
+   ============================================================ */
+
+/* Hide everything in print by default */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body > *,
+  #root > *,
+  nav,
+  header,
+  footer,
+  aside,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show only the receipt content */
+  #receipt-printout,
+  #receipt-printout * {
+    display: revert !important;
+    visibility: visible !important;
+  }
+
+  #receipt-printout {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 4mm 3mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
+
+/* Receipt preview styles (screen — inside the modal) */
+.receipt-paper {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #111;
+  background: #fff;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 12px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.receipt-paper .r-center  { text-align: center; }
+.receipt-paper .r-bold    { font-weight: 700; }
+.receipt-paper .r-dash    { border-top: 1px dashed #333; margin: 5px 0; }
+.receipt-paper .r-dash-solid { border-top: 1px solid #333; margin: 5px 0; }
+.receipt-paper .r-row     { display: flex; justify-content: space-between; gap: 4px; }
+.receipt-paper .r-row-right { text-align: right; }
+.receipt-paper .r-small   { font-size: 10px; }
+.receipt-paper .r-spacer  { height: 4px; }

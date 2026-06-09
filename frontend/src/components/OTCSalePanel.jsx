@@ -4,7 +4,7 @@ import {
   PlusIcon,
   MinusIcon,
   CheckCircleIcon,
-  ArrowDownTrayIcon,
+  PrinterIcon,
 } from "@heroicons/react/24/outline";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +12,7 @@ import { useNotification } from "../context/NotificationContext";
 import { fetchBranchCatalog, searchProducts } from "../services/productService";
 import { getProductDisplayPrice, getProductBranchQuantity } from "../utils/parseApiData";
 import LoadingButton from "./LoadingButton";
+import ReceiptModal from "./ReceiptModal";
 
 /**
  * Shared OTC quick-sale UI (same flow as pharmacist QuickSale modal).
@@ -28,6 +29,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [completing, setCompleting] = useState(false);
   const [saleError, setSaleError] = useState("");
   const [lastOrder, setLastOrder] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
   const [outOfStockHint, setOutOfStockHint] = useState(null);
   const [catalog, setCatalog] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -244,6 +246,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         "Sale Complete",
         `Sale recorded. Total: KES ${Number(order?.total_amount ?? calculateTotal()).toLocaleString()}.`,
       );
+      setShowReceipt(true);
     } catch (error) {
       const data = error.response?.data;
       const msg =
@@ -258,24 +261,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     }
   };
 
-  const handleDownloadReceipt = async (orderId) => {
-    try {
-      const response = await api.get(`/orders/${orderId}/receipt/`, {
-        responseType: "blob",
-        skipGlobalErrorNotification: true,
-      });
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-    } catch {
-      notify.error("Receipt Failed", "Could not generate the receipt.");
-    }
-  };
-
   const resetSale = () => {
     setLastOrder(null);
     setSaleError("");
+    setShowReceipt(false);
   };
 
   const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
@@ -300,26 +289,31 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
   if (lastOrder) {
     return (
-      <div className="glass-card rounded-2xl p-8 text-center">
-        <CheckCircleIcon className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
-        <h3 className="text-xl font-bold mb-2">Sale completed</h3>
-        <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-          Order #{lastOrder.id} — {fmt(lastOrder.total_amount)}
-        </p>
-        <div className="flex gap-3 justify-center flex-wrap">
-          <button type="button" className="btn-primary px-6 py-2 rounded-xl" onClick={resetSale}>
-            New sale
-          </button>
-          <button
-            type="button"
-            className="px-6 py-2 rounded-xl border flex items-center gap-2"
-            style={{ borderColor: "var(--border-primary)" }}
-            onClick={() => handleDownloadReceipt(lastOrder.id)}
-          >
-            <ArrowDownTrayIcon className="h-5 w-5" /> Receipt
-          </button>
+      <>
+        {showReceipt && (
+          <ReceiptModal order={lastOrder} onClose={() => setShowReceipt(false)} />
+        )}
+        <div className="glass-card rounded-2xl p-8 text-center">
+          <CheckCircleIcon className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
+          <h3 className="text-xl font-bold mb-2">Sale completed</h3>
+          <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+            Order #{lastOrder.id} — {fmt(lastOrder.total_amount)}
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <button type="button" className="btn-primary px-6 py-2 rounded-xl" onClick={resetSale}>
+              New sale
+            </button>
+            <button
+              type="button"
+              className="px-6 py-2 rounded-xl border flex items-center gap-2"
+              style={{ borderColor: "var(--border-primary)" }}
+              onClick={() => setShowReceipt(true)}
+            >
+              <PrinterIcon className="h-5 w-5" /> Print Receipt
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 

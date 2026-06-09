@@ -1,0 +1,119 @@
+<USER_REQUEST>
+I have 6 enhancements to implement. Work through them 
+one at a time, show findings before making changes, 
+and wait for my approval before moving to the next.
+
+═══════════════════════════════════════════════
+ENHANCEMENT 1 — SOFT DELETE USER
+═══════════════════════════════════════════════
+
+PROBLEM:
+Deleting a user fails with a foreign key error because 
+the user is linked to sales, logs, stock intakes, 
+and other records throughout the system.
+
+SOLUTION — Soft delete (deactivate, never hard delete):
+
+1. Find the delete user endpoint in Django
+2. Replace hard delete (user.delete()) with:
+   user.is_active = False
+   user.save()
+   
+3. All related records (dispensing logs, sales, 
+   stock intake, staff activity logs, audit records) 
+   must be PRESERVED exactly as they are.
+   Never cascade delete any related records.
+
+4. Check all ForeignKey fields pointing to the 
+   User model across the entire codebase.
+   For any that have on_delete=CASCADE:
+   Change to on_delete=SET_NULL with null=True
+   EXCEPT for auth-critical fields — list those 
+   for my review before changing.
+
+5. Update the frontend:
+   - Rename "Delete User" button to 
+     "Deactivate Account" everywhere
+   - Change button color from red/danger to 
+     amber/warning to reflect it is not permanent
+   - Update confirmation dialog to say:
+     "Deactivate {username}?
+      This will prevent them from logging in.
+      All their records and history will be 
+      preserved in the system.
+      You can reactivate this account later."
+   - Add a [Reactivate Account] button for 
+     deactivated users (sets is_active = True)
+
+6. In user listings, show deactivated users 
+   with a grey "Inactive" badge instead of 
+   hiding them completely.
+   Add a filter toggle: 
+   [Active Staff] [Inactive Staff] [All]
+
+7. The API response for deactivation:
+   {
+
+<truncated 15155 bytes>
+tock intake)
+  - Low stock items appear at the top 
+    with red/amber badges
+
+ADD MEDICINE form in Inventory Control:
+  - Product name
+  - Category (free text with autocomplete 
+    from existing categories)
+  - Unit of measure
+  - Pricing section with toggle:
+    [Manual Entry] / [Auto Calculate]
+    (as defined in Enhancement 5)
+  - Reorder level (when to trigger low stock alert)
+  - Initial stock quantity for THIS branch
+  - Expiry date (optional)
+  - Supplier (optional)
+  - Shelf location (optional)
+
+NAVIGATION:
+In the sidebar:
+  Inventory Management → /inventory/management
+    (shows cross-branch table — admin only)
+  Inventory Control → /inventory/control
+    (shows branch-scoped operational view)
+
+If a pharmacist clicks Inventory Management:
+  Show: "Access Denied — Inventory Management 
+  is only available to administrators. 
+  You can manage your branch inventory in 
+  Inventory Control."
+
+Show me the current inventory components and 
+routing before making any changes.
+
+═══════════════════════════════════════════════
+IMPLEMENTATION ORDER:
+═══════════════════════════════════════════════
+
+1. Enhancement 1 — Soft delete user (backend first)
+2. Enhancement 3 — Activity logging (backend first)
+3. Enhancement 4 — Quantity input fix 
+   (fix the stock check bug immediately — 
+   this is breaking sales)
+4. Enhancement 2 — Receipt format
+5. Enhancement 5 — Pricing modes
+6. Enhancement 6 — Inventory separation
+
+For each enhancement:
+  Show me current code/findings first
+  Propose the changes
+  Wait for "approved, proceed"
+  Implement
+  Tell me what to test
+
+Start with Enhancement 1.
+Find all ForeignKey CASCADE relationships 
+pointing to the User model.
+Show me the list before touching anything.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-07T23:13:53+03:00.
+</ADDITIONAL_METADATA>

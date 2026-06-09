@@ -52,7 +52,7 @@ class PharmacySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'address', 'contact_phone', 'license_number', 'is_active', 'documents', 'branches']
+        fields = ['id', 'name', 'address', 'contact_phone', 'email', 'tagline', 'license_number', 'is_active', 'documents', 'branches']
         read_only_fields = ['created_at', 'updated_at']
 
 class UserProfileSerializer(serializers.ModelSerializer):

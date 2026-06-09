@@ -32,7 +32,29 @@ const pharmacyService = {
     deleteDocument: async (documentId) => {
         const response = await api.delete(`/auth/documents/${documentId}/`);
         return response.data;
-    }
+    },
+
+    /**
+     * Get the current user's pharmacy profile
+     */
+    getPharmacy: async () => {
+        const response = await api.get('/auth/pharmacies/');
+        const d = response.data;
+        if (Array.isArray(d)) return d[0] ?? null;
+        if (d?.results) return d.results[0] ?? null;
+        return d ?? null;
+    },
+
+    /**
+     * Update pharmacy profile fields (name, phone, email, address, tagline)
+     * @param {number} pharmacyId
+     * @param {object} payload
+     */
+    updatePharmacy: async (pharmacyId, payload) => {
+        const response = await api.patch(`/auth/pharmacies/${pharmacyId}/`, payload);
+        return response.data;
+    },
 };
 
 export default pharmacyService;
+

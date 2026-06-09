@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { MagnifyingGlassIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
+import api from '../services/api';
+import { MagnifyingGlassIcon, ClipboardDocumentListIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import ReceiptModal from './ReceiptModal';
 
 const DispensingLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -11,6 +13,8 @@ const DispensingLogs = () => {
   const [dateFilter, setDateFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [reprintOrder, setReprintOrder] = useState(null);
+  const [reprintLoading, setReprintLoading] = useState(null); // orderId being loaded
   const { token } = useAuth();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -19,12 +23,10 @@ const DispensingLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      // Fetch completed orders to show transactions
       let url = `${API_BASE_URL}/orders/`;
       if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
       if (dateFilter) url += `${searchTerm ? '&' : '?'}created_at=${encodeURIComponent(dateFilter)}`;
       const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-      // The backend returns an array of logs (no pagination)
       const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
       setLogs(data);
       setTotalPages(Math.max(1, Math.ceil(data.length / 20)));
@@ -35,6 +37,20 @@ const DispensingLogs = () => {
     }
   };
 
+  /* Fetch full order detail then open receipt modal */
+  const handleReprint = async (orderId) => {
+    setReprintLoading(orderId);
+    try {
+      const res = await api.get(`/orders/${orderId}/`);
+      const order = res.data?.data ?? res.data;
+      setReprintOrder(order);
+    } catch {
+      alert('Could not load order details. Please try again.');
+    } finally {
+      setReprintLoading(null);
+    }
+  };
+
   const handleSearch = (e) => { setSearchTerm(e.target.value); setCurrentPage(1); };
   const handleDateFilter = (e) => { setDateFilter(e.target.value); setCurrentPage(1); };
 
@@ -42,6 +58,10 @@ const DispensingLogs = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      {/* Receipt reprint modal */}
+      {reprintOrder && (
+        <ReceiptModal order={reprintOrder} onClose={() => setReprintOrder(null)} />
+      )}
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Dispensing Logs</h1>
@@ -143,14 +163,13 @@ const DispensingLogs = () => {
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3 items-center">
-                        <button 
-                          className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1"
-                          onClick={() => {
-                            window.open(`${API_BASE_URL}/orders/${log.id}/receipt/`, "_blank");
-                          }}
+                        <button
+                          className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1 disabled:opacity-50"
+                          disabled={reprintLoading === log.id}
+                          onClick={() => handleReprint(log.id)}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                          Print Receipt
+                          <PrinterIcon className="w-4 h-4" />
+                          {reprintLoading === log.id ? 'Loading...' : 'Reprint'}
                         </button>
                       </div>
                     </td>

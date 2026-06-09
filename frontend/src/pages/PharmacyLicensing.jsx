@@ -4,7 +4,8 @@ import {
     DocumentTextIcon as DocIcon,
     TrashIcon,
     ExclamationTriangleIcon as WarningIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 import pharmacyService from '../services/pharmacyService';
 import { formatDate } from '../utils/displayHelpers';
@@ -15,6 +16,12 @@ const PharmacyLicensing = () => {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Pharmacy profile state
+    const [pharmacy, setPharmacy] = useState(null);
+    const [profileForm, setProfileForm] = useState({ email: '', tagline: '' });
+    const [profileSaving, setProfileSaving] = useState(false);
+    const [profileSaved, setProfileSaved] = useState(false);
+
     const [formData, setFormData] = useState({
         title: '',
         document_type: 'license',
@@ -24,6 +31,13 @@ const PharmacyLicensing = () => {
 
     useEffect(() => {
         fetchDocuments();
+        // Load pharmacy profile for email/tagline editing
+        pharmacyService.getPharmacy().then((p) => {
+            if (p) {
+                setPharmacy(p);
+                setProfileForm({ email: p.email || '', tagline: p.tagline || '' });
+            }
+        }).catch(() => {});
     }, []);
 
     const fetchDocuments = async () => {
@@ -89,12 +103,97 @@ const PharmacyLicensing = () => {
         }
     };
 
+    const handleProfileSave = async (e) => {
+        e.preventDefault();
+        if (!pharmacy?.id) return;
+        setProfileSaving(true);
+        setProfileSaved(false);
+        try {
+            const updated = await pharmacyService.updatePharmacy(pharmacy.id, {
+                email: profileForm.email,
+                tagline: profileForm.tagline,
+            });
+            setPharmacy(updated);
+            setProfileSaved(true);
+            setTimeout(() => setProfileSaved(false), 3000);
+        } catch {
+            setError('Failed to save pharmacy profile. Please try again.');
+        } finally {
+            setProfileSaving(false);
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="mb-12">
-                <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Licensing &amp; Permits</h1>
-                <p className="mt-2 text-lg" style={{ color: 'var(--text-secondary)' }}>Manage and track your pharmacy's legal documentation and compliance status.</p>
+                <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Licensing &amp; Settings</h1>
+                <p className="mt-2 text-lg" style={{ color: 'var(--text-secondary)' }}>Manage pharmacy profile, receipt header details, and legal documentation.</p>
             </div>
+
+            {/* ── Pharmacy Profile / Receipt Header ── */}
+            {pharmacy && (
+                <div className="glass-card rounded-[2.5rem] p-8 border border-white/60 shadow-premium mb-12">
+                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <BuildingStorefrontIcon className="w-6 h-6 text-primary" />
+                        Pharmacy Profile &amp; Receipt Header
+                    </h3>
+                    <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                        These details appear on printed receipts. Name, address, and phone are set by your system administrator.
+                    </p>
+                    <form onSubmit={handleProfileSave}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label className="form-label">Pharmacy Name</label>
+                                <input className="form-input" value={pharmacy.name || ''} disabled />
+                            </div>
+                            <div>
+                                <label className="form-label">Contact Phone</label>
+                                <input className="form-input" value={pharmacy.contact_phone || ''} disabled />
+                            </div>
+                            <div>
+                                <label className="form-label">Address</label>
+                                <input className="form-input" value={pharmacy.address || ''} disabled />
+                            </div>
+                            <div>
+                                <label className="form-label">Email (shown on receipt)</label>
+                                <input
+                                    type="email"
+                                    className="form-input"
+                                    placeholder="e.g. pharmacy@email.com"
+                                    value={profileForm.email}
+                                    onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
+                                />
+                            </div>
+                            <div className="sm:col-span-2">
+                                <label className="form-label">Tagline (shown on receipt)</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g. Dealers in Human Drugs &amp; Surgical Products"
+                                    value={profileForm.tagline}
+                                    onChange={e => setProfileForm({ ...profileForm, tagline: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="submit"
+                                disabled={profileSaving}
+                                className={`px-8 py-3 rounded-2xl text-white font-bold transition-all ${
+                                    profileSaving ? 'opacity-60 cursor-not-allowed' : 'btn-primary hover:opacity-90'
+                                }`}
+                            >
+                                {profileSaving ? 'Saving...' : 'Save Receipt Details'}
+                            </button>
+                            {profileSaved && (
+                                <span className="flex items-center gap-1 text-emerald-600 text-sm font-semibold">
+                                    <CheckCircleIcon className="w-4 h-4" /> Saved!
+                                </span>
+                            )}
+                        </div>
+                    </form>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Upload Section */}

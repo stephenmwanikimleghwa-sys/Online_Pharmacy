@@ -17,6 +17,8 @@ class Pharmacy(models.Model):
     name = models.CharField(max_length=255, verbose_name="Pharmacy Name")
     address = models.TextField(verbose_name="Address")
     contact_phone = models.CharField(max_length=20, verbose_name="Contact Phone")
+    email = models.EmailField(blank=True, null=True, verbose_name="Email")
+    tagline = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tagline")
     license_number = models.CharField(max_length=50, verbose_name="License Number", unique=True)
     is_active = models.BooleanField(default=True, verbose_name="Is Active")
     created_at = models.DateTimeField(auto_now_add=True)
