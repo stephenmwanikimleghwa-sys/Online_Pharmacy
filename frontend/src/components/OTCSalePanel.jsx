@@ -139,7 +139,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const loadCustomers = useCallback(async () => {
     try {
       setLoadingCustomers(true);
-      const res = await api.get('/users/', { params: { role: 'customer' } });
+      const res = await api.get('/auth/customers/');
       const data = res.data?.results || res.data?.data || res.data || [];
       setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -405,7 +405,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                 >
                   <option value="">-- Choose Customer --</option>
                   {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.first_name} {c.last_name} ({c.username})</option>
+                    <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
                   ))}
                 </select>
               )}
