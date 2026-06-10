@@ -1,3 +1,4 @@
+import uuid
 from django.db.models.deletion import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -116,8 +117,19 @@ def delete_pharmacist(request, user_id):
         username = pharmacist.username
         pharmacist_id = pharmacist.id
         
-        # Perform actual deletion
-        pharmacist.delete()
+        # Perform hard anonymization instead of actual database deletion
+        # This preserves foreign key records (logs, sales, etc.)
+        pharmacist.is_active = False
+        pharmacist.username = f"deleted_{pharmacist_id}_{uuid.uuid4().hex[:8]}"
+        pharmacist.email = ""
+        pharmacist.first_name = "Deleted"
+        pharmacist.last_name = "User"
+        if hasattr(pharmacist, 'phone_number'):
+            pharmacist.phone_number = None
+        if hasattr(pharmacist, 'address'):
+            pharmacist.address = None
+        pharmacist.set_unusable_password()
+        pharmacist.save()
         
         return api_success(
             f"{username}'s account has been deleted. Their records are preserved.",
@@ -147,8 +159,19 @@ def delete_user(request, user_id):
         username = user.username
         user_id_deleted = user.id
 
-        # Perform actual deletion
-        user.delete()
+        # Perform hard anonymization instead of actual database deletion
+        # This preserves foreign key records (logs, sales, etc.)
+        user.is_active = False
+        user.username = f"deleted_{user_id_deleted}_{uuid.uuid4().hex[:8]}"
+        user.email = ""
+        user.first_name = "Deleted"
+        user.last_name = "User"
+        if hasattr(user, 'phone_number'):
+            user.phone_number = None
+        if hasattr(user, 'address'):
+            user.address = None
+        user.set_unusable_password()
+        user.save()
         
         return api_success(
             f"{username}'s account has been deleted. Their records are preserved.",
