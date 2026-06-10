@@ -14,7 +14,7 @@ class ProductReturn(models.Model):
     branch = models.ForeignKey('users.Branch', on_delete=models.PROTECT, related_name="returns")
     quantity = models.PositiveIntegerField(verbose_name="Quantity")
     reason = models.TextField(verbose_name="Reason")
-    handled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="handled_returns")
+    handled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="handled_returns")
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Timestamp")
 
     class Meta:

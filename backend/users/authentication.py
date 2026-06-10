@@ -24,4 +24,11 @@ class BranchAwareJWTAuthentication(JWTAuthentication):
             except (Branch.DoesNotExist, TypeError, ValueError):
                 request.active_branch = None
 
+        # Update last_activity if more than 5 minutes ago to avoid db spam
+        from django.utils import timezone
+        now = timezone.now()
+        if not user.last_activity or (now - user.last_activity).total_seconds() > 300:
+            user.last_activity = now
+            user.save(update_fields=['last_activity'])
+
         return user, validated_token

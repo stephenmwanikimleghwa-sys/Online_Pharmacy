@@ -29,9 +29,17 @@ def build_global_overview(user):
 
     for branch in _branches_for_admin(user):
         dispensations = Dispensation.objects.filter(branch=branch)
-        today_qs = dispensations.filter(dispensed_at__date=today)
-        sales_count = today_qs.count()
-        revenue = today_qs.aggregate(total=Sum("total_amount"))["total"] or 0
+        today_disp_qs = dispensations.filter(dispensed_at__date=today)
+        
+        from orders.models import Order
+        orders = Order.objects.filter(branch=branch)
+        today_orders_qs = orders.filter(created_at__date=today)
+        
+        sales_count = today_disp_qs.count() + today_orders_qs.count()
+        
+        disp_rev = today_disp_qs.aggregate(total=Sum("total_amount"))["total"] or 0
+        order_rev = today_orders_qs.aggregate(total=Sum("total_amount"))["total"] or 0
+        revenue = disp_rev + order_rev
         low_stock = BranchStock.objects.filter(
             branch=branch,
             quantity__lte=F("reorder_level"),
@@ -55,8 +63,22 @@ def build_global_overview(user):
         total_sales += sales_count
         total_low_stock += low_stock
 
+    from users.models import User
+    from datetime import timedelta
+    active_users = []
+    threshold = timezone.now() - timedelta(minutes=15)
+    for u in User.objects.filter(is_active=True, last_activity__gte=threshold).select_related('branch'):
+        active_users.append({
+            "id": u.id,
+            "username": u.username,
+            "role": u.role,
+            "branch": u.branch.name if u.branch else None,
+            "last_activity": u.last_activity.isoformat() if u.last_activity else None,
+        })
+
     return {
         "branches": branches,
+        "active_users": active_users,
         "totals": {
             "total_revenue_today": total_revenue,
             "total_sales_today": total_sales,
@@ -109,6 +131,8 @@ def build_branch_operations(branch):
         )
 
     recent_transactions = []
+    
+    # Fetch from Dispensations
     for sale in (
         Dispensation.objects.filter(branch=branch)
         .select_related("dispensed_by")
@@ -116,14 +140,40 @@ def build_branch_operations(branch):
     ):
         recent_transactions.append(
             {
-                "id": sale.id,
+                "id": f"D-{sale.id}",
                 "sale_type": sale.sale_type,
                 "total_amount": float(sale.total_amount),
                 "payment_mode": sale.payment_mode,
-                "dispensed_at": sale.dispensed_at.isoformat(),
+                "dispensed_at": sale.dispensed_at,
                 "dispensed_by": sale.dispensed_by.username if sale.dispensed_by else None,
             }
         )
+
+    # Fetch from Orders
+    from orders.models import Order
+    for order in (
+        Order.objects.filter(branch=branch)
+        .select_related("user", "payment")
+        .order_by("-created_at")[:5]
+    ):
+        recent_transactions.append(
+            {
+                "id": f"O-{order.id}",
+                "sale_type": "otc",
+                "total_amount": float(order.total_amount),
+                "payment_mode": order.payment.payment_method if hasattr(order, 'payment') and order.payment else "cash",
+                "dispensed_at": order.created_at,
+                "dispensed_by": order.user.username if order.user else None,
+            }
+        )
+        
+    # Sort merged transactions and take top 5
+    recent_transactions.sort(key=lambda x: x["dispensed_at"], reverse=True)
+    recent_transactions = recent_transactions[:5]
+    
+    # Format dates
+    for tx in recent_transactions:
+        tx["dispensed_at"] = tx["dispensed_at"].isoformat()
 
     pending_transfers = []
     for transfer in (

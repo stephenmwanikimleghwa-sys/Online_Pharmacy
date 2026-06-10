@@ -91,7 +91,8 @@ class Dispensation(models.Model):
     patient_name = models.CharField(max_length=255, blank=True)  # For OTC sales
     dispensed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='dispensations'
     )
     dispensed_at = models.DateTimeField(auto_now_add=True)
@@ -228,7 +229,8 @@ class SaleReturn(models.Model):
     
     initiated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='initiated_returns'
     )
     approved_by = models.ForeignKey(

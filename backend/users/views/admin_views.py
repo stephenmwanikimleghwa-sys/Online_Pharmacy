@@ -107,15 +107,21 @@ def delete_pharmacist(request, user_id):
     try:
         if request.user.id == user_id:
             return api_validation_error(
-                "You cannot deactivate your own account while signed in.",
+                "You cannot delete your own account while signed in.",
                 details={"user_id": user_id},
             )
         pharmacist = User.objects.get(id=user_id, role=RoleChoices.PHARMACIST)
-        pharmacist.is_active = False
-        pharmacist.save()
+        
+        # Save username for message
+        username = pharmacist.username
+        pharmacist_id = pharmacist.id
+        
+        # Perform actual deletion
+        pharmacist.delete()
+        
         return api_success(
-            f"{pharmacist.username}'s account has been deactivated. Their records are preserved.",
-            data={"user": {"id": pharmacist.id, "is_active": False}}
+            f"{username}'s account has been deleted. Their records are preserved.",
+            data={"user": {"id": pharmacist_id, "is_active": False}}
         )
     except User.DoesNotExist:
         return api_not_found("Pharmacist not found.", details={"user_id": user_id})
@@ -127,21 +133,26 @@ def delete_user(request, user_id):
     try:
         if request.user.id == user_id:
             return api_validation_error(
-                "You cannot deactivate your own account while signed in.",
+                "You cannot delete your own account while signed in.",
                 details={"user_id": user_id},
             )
         user = User.objects.get(id=user_id)
         if user.is_superuser:
             return api_validation_error(
-                "Superuser accounts cannot be deactivated from this endpoint.",
+                "Superuser accounts cannot be deleted from this endpoint.",
                 details={"user_id": user_id},
             )
 
-        user.is_active = False
-        user.save()
+        # Save username for message
+        username = user.username
+        user_id_deleted = user.id
+
+        # Perform actual deletion
+        user.delete()
+        
         return api_success(
-            f"{user.username}'s account has been deactivated. Their records are preserved.",
-            data={"user": {"id": user.id, "is_active": False}}
+            f"{username}'s account has been deleted. Their records are preserved.",
+            data={"user": {"id": user_id_deleted, "is_active": False}}
         )
     except User.DoesNotExist:
         return api_not_found("User not found.", details={"user_id": user_id})

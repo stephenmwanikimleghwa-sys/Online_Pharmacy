@@ -26,7 +26,7 @@ class SoldService(models.Model):
     service = models.ForeignKey(ClinicalService, on_delete=models.PROTECT, related_name="sales")
     patient_name = models.CharField(max_length=255, verbose_name="Patient Name")
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="sold_services")
-    sold_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="sold_services")
+    sold_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="sold_services")
     payment_mode = models.CharField(
         max_length=50, 
         choices=[

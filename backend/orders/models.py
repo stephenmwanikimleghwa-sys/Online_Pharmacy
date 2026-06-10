@@ -28,6 +28,32 @@ class Order(models.Model):
         verbose_name="Staff Member",  # Changed from Customer to Staff Member
     )
 
+    branch = models.ForeignKey(
+        "users.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+        verbose_name="Branch"
+    )
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="customer_orders",
+        verbose_name="Customer",
+    )
+    
+    patient_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Patient Name",
+        help_text="Name for walk-in customers.",
+    )
+
     total_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -154,7 +180,8 @@ class OrderTemplate(models.Model):
     )
     created_by = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='created_order_templates'
     )
     customer_name = models.CharField(max_length=255)

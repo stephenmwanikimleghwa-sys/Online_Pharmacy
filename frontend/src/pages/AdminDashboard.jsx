@@ -103,9 +103,28 @@ const AdminDashboard = () => {
       {/* SECTION A — Global Overview */}
       <section className="mb-12">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Global Overview</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            Global Overview
+            <span title="System is Operational" className="text-emerald-500 animate-[spin_4s_linear_infinite] flex items-center">
+              ⚙️
+            </span>
+          </h2>
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">All branches</span>
         </div>
+
+        {globalData?.active_users?.length > 0 && (
+          <div className="mb-6 bg-white dark:bg-gray-800 rounded-2xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Currently Logged-in Users</h3>
+            <div className="flex flex-wrap gap-3">
+              {globalData.active_users.map(u => (
+                <div key={u.id} className="flex flex-col bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 px-3 border border-gray-100 dark:border-gray-600">
+                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{u.username}</span>
+                  <span className="text-[10px] text-gray-500 uppercase">{u.role} {u.branch ? `• ${u.branch}` : ''}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">

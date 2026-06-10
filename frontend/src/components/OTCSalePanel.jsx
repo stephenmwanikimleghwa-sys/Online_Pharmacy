@@ -34,6 +34,17 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [catalog, setCatalog] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
+  // Setup Phase State
+  const [setup, setSetup] = useState({
+    complete: false,
+    customerType: "walk-in",
+    patientName: "",
+    creditCustomerId: "",
+    pricingTier: "retail",
+  });
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+
   const sortForOTC = useCallback(
     (products) => {
       const branchName = activeBranch?.name || null;
@@ -125,6 +136,26 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     void loadCatalog();
   }, [loadCatalog]);
 
+  const loadCustomers = useCallback(async () => {
+    try {
+      setLoadingCustomers(true);
+      const res = await api.get('/users/', { params: { role: 'customer' } });
+      const data = res.data?.results || res.data?.data || res.data || [];
+      setCustomers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setCustomers([]);
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (setup.customerType === 'credit' && customers.length === 0) {
+      void loadCustomers();
+    }
+  }, [setup.customerType, customers.length, loadCustomers]);
+
   useEffect(() => {
     const t = setTimeout(() => runSearch(searchTerm), 350);
     return () => clearTimeout(t);
@@ -152,7 +183,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         ),
       );
     } else {
-      const unitPrice = getProductDisplayPrice(product);
+      let unitPrice = getProductDisplayPrice(product);
+      if (setup.pricingTier === 'wholesale' && product.pricing_tier?.wholesale_price) {
+        unitPrice = Number(product.pricing_tier.wholesale_price);
+      }
       setSelectedItems([
         ...selectedItems,
         { ...product, quantity: 1, unitPrice },
@@ -233,6 +267,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             quantity: item.quantity,
           })),
           payment_method: paymentMethod,
+          customer_type: setup.customerType,
+          patient_name: setup.patientName,
+          credit_customer_id: setup.creditCustomerId,
+          pricing_tier: setup.pricingTier,
         },
         { skipGlobalErrorNotification: true },
       );
@@ -314,6 +352,101 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           </div>
         </div>
       </>
+    );
+  }
+
+  if (!setup.complete) {
+    return (
+      <div className="max-w-xl mx-auto glass-card rounded-2xl p-8 border" style={{ borderColor: "var(--border-primary)" }}>
+        <h2 className="text-2xl font-bold mb-6 text-center">OTC Sale Setup</h2>
+        
+        <div className="space-y-6">
+          <div>
+            <label className="form-label font-bold mb-3 block">Customer Type</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                className={`p-4 rounded-xl border-2 text-center transition-all ${setup.customerType === 'walk-in' ? 'border-primary bg-primary/5 font-bold text-primary' : 'border-transparent bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                onClick={() => setSetup({ ...setup, customerType: 'walk-in' })}
+              >
+                Walk-in
+              </button>
+              <button
+                type="button"
+                className={`p-4 rounded-xl border-2 text-center transition-all ${setup.customerType === 'credit' ? 'border-primary bg-primary/5 font-bold text-primary' : 'border-transparent bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                onClick={() => setSetup({ ...setup, customerType: 'credit' })}
+              >
+                Credit Customer
+              </button>
+            </div>
+          </div>
+
+          {setup.customerType === 'walk-in' ? (
+            <div>
+              <label className="form-label">Patient Name (Optional)</label>
+              <input
+                type="text"
+                className="form-input w-full"
+                placeholder="Leave blank if not needed..."
+                value={setup.patientName}
+                onChange={e => setSetup({ ...setup, patientName: e.target.value })}
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="form-label">Select Registered Customer</label>
+              {loadingCustomers ? (
+                <p className="text-sm text-gray-500">Loading customers...</p>
+              ) : (
+                <select
+                  className="form-input w-full"
+                  value={setup.creditCustomerId}
+                  onChange={e => setSetup({ ...setup, creditCustomerId: e.target.value })}
+                >
+                  <option value="">-- Choose Customer --</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.first_name} {c.last_name} ({c.username})</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="form-label font-bold mb-3 block">Pricing Tier</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                className={`p-3 rounded-xl border transition-all ${setup.pricingTier === 'retail' ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold shadow-sm' : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => setSetup({ ...setup, pricingTier: 'retail' })}
+              >
+                Retail
+              </button>
+              <button
+                type="button"
+                className={`p-3 rounded-xl border transition-all ${setup.pricingTier === 'wholesale' ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-bold shadow-sm' : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => setSetup({ ...setup, pricingTier: 'wholesale' })}
+              >
+                Wholesale
+              </button>
+            </div>
+          </div>
+          
+          <div className="pt-4 mt-6 border-t" style={{ borderColor: "var(--border-primary)" }}>
+            <button
+              type="button"
+              className="btn-primary w-full py-3 rounded-xl font-bold disabled:opacity-50"
+              disabled={setup.customerType === 'credit' && !setup.creditCustomerId}
+              onClick={() => {
+                setPaymentMethod(setup.customerType === 'credit' ? 'other' : 'cash');
+                setSetup({ ...setup, complete: true });
+              }}
+            >
+              Continue to Sale
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

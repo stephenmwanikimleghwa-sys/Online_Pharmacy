@@ -65,6 +65,17 @@ def quick_sale(request):
             "cash_on_delivery": PaymentMethodChoices.CASH_ON_DELIVERY,
         }
         payment_method = payment_method_map.get(requested_payment_method, PaymentMethodChoices.CASH_ON_DELIVERY)
+        
+        customer_type = request.data.get("customer_type", "walk-in")
+        patient_name = request.data.get("patient_name", "")
+        credit_customer_id = request.data.get("credit_customer_id")
+        pricing_tier = request.data.get("pricing_tier", "retail")
+        
+        if customer_type == "credit" and not credit_customer_id:
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Credit customer ID is required for credit sales.",
+            )
         if not items:
             return api_error(
                 ApiErrorCode.VALIDATION_ERROR,
@@ -73,8 +84,11 @@ def quick_sale(request):
 
         order = Order.objects.create(
             user=request.user,
+            branch=active_branch,
             status=OrderStatusChoices.DELIVERED,
             total_amount=0,
+            customer_id=credit_customer_id if customer_type == "credit" else None,
+            patient_name=patient_name if customer_type == "walk-in" else "",
         )
 
         total_amount = 0
@@ -128,7 +142,10 @@ def quick_sale(request):
 
             unit_price = product.price
             if hasattr(product, "pricing_tier") and product.pricing_tier:
-                unit_price = product.pricing_tier.retail_price or unit_price
+                if pricing_tier == "wholesale" and product.pricing_tier.wholesale_price:
+                    unit_price = product.pricing_tier.wholesale_price
+                else:
+                    unit_price = product.pricing_tier.retail_price or unit_price
 
             order_item = OrderItem.objects.create(
                 order=order,
@@ -174,14 +191,39 @@ def quick_sale(request):
         order.save(update_fields=["total_amount"])
 
         try:
-            Payment.objects.create(
-                order=order,
-                method=payment_method,
-                amount=total_amount,
-                status="completed",
-                reference=f"{requested_payment_method.upper()}-{order.id}",
-                notes=f"Requested payment method: {requested_payment_method}",
-            )
+            if customer_type == "credit" and credit_customer_id:
+                customer_user = User.objects.get(id=credit_customer_id)
+                customer_user.credit_balance += total_amount
+                customer_user.save(update_fields=["credit_balance"])
+                
+                from users.models import CustomerDebtTransaction
+                CustomerDebtTransaction.objects.create(
+                    customer=customer_user,
+                    transaction_type='SALE_ON_CREDIT',
+                    amount=total_amount,
+                    balance_after=customer_user.credit_balance,
+                    description=f"Credit sale for Order #{order.id}",
+                    branch=active_branch,
+                    created_by=request.user
+                )
+                
+                Payment.objects.create(
+                    order=order,
+                    method="credit",
+                    amount=total_amount,
+                    status="pending",
+                    reference=f"CREDIT-{order.id}",
+                    notes="Credit Sale"
+                )
+            else:
+                Payment.objects.create(
+                    order=order,
+                    method=payment_method,
+                    amount=total_amount,
+                    status="completed",
+                    reference=f"{requested_payment_method.upper()}-{order.id}",
+                    notes=f"Requested payment method: {requested_payment_method}",
+                )
         except Exception as pay_exc:
             logger.error("Payment record failed for order %s: %s", order.id, pay_exc)
             order.delete()

@@ -19,7 +19,8 @@ class Quotation(models.Model):
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='created_quotations'
     )
     customer_name = models.CharField(max_length=255)

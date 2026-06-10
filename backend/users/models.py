@@ -115,6 +115,7 @@ class User(AbstractUser):
     must_change_password = models.BooleanField(default=False, help_text="Designates whether the user must change their password upon login.")
     credit_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name='Credit Balance', help_text='Outstanding debt or credit balance for customers')
     is_credit_customer = models.BooleanField(default=False, verbose_name='Is Credit Customer')
+    last_activity = models.DateTimeField(blank=True, null=True, verbose_name='Last Activity')
     
     # Granular Permissions
     can_process_sales = models.BooleanField(default=False, verbose_name="Can Process Sales")

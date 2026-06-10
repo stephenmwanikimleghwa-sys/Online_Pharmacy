@@ -21,7 +21,8 @@ class DispensingLog(models.Model):
     )
     dispensed_by = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,  # Don't delete logs if user is deleted
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='dispensing_logs',
         verbose_name='Dispensed By'
     )
