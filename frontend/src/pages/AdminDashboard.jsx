@@ -12,6 +12,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import WelcomeBanner from '../components/WelcomeBanner';
+import NewStockIntake from '../components/NewStockIntake';
 
 const formatMoney = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
 const formatBranchType = (type, name) => {
@@ -29,6 +30,7 @@ const AdminDashboard = () => {
   const [loadingGlobal, setLoadingGlobal] = useState(true);
   const [loadingOps, setLoadingOps] = useState(false);
   const [error, setError] = useState('');
+  const [showStockIntake, setShowStockIntake] = useState(false);
 
   const fetchGlobal = useCallback(async () => {
     try {
@@ -209,20 +211,76 @@ const AdminDashboard = () => {
         </div>
 
         {activeBranch?.id && (
-          <div className="mb-6 btn-primary rounded-2xl p-5 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg">Direct OTC Sale</h3>
-              <p className="text-sm text-white/90">
-                Sell directly at <strong>{activeBranch.name}</strong>. Stock checks are branch-scoped.
-              </p>
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* OTC Sale */}
+            <div className="btn-primary rounded-2xl p-5 text-white flex flex-col justify-between gap-4">
+              <div>
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                  <ShoppingBagIcon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-bold text-lg">Direct OTC Sale</h3>
+                <p className="text-sm text-white/90 mt-1">
+                  Sell at <strong>{activeBranch.name}</strong>. Stock checks are branch-scoped.
+                </p>
+              </div>
+              <Link
+                to="/otc-sales"
+                className="px-5 py-2.5 rounded-xl bg-white font-semibold self-start text-sm"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                Open OTC Sale →
+              </Link>
             </div>
-            <Link
-              to="/otc-sales"
-              className="px-5 py-2.5 rounded-xl bg-white font-semibold self-start md:self-auto"
-              style={{ color: 'var(--color-primary)' }}
-            >
-              Open OTC Sale
-            </Link>
+
+            {/* New Stock Intake */}
+            <div className="rounded-2xl p-5 text-white flex flex-col justify-between gap-4"
+              style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
+              <div>
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                  <TruckIcon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-bold text-lg">New Stock Intake</h3>
+                <p className="text-sm text-white/90 mt-1">
+                  Receive stock at <strong>{activeBranch.name}</strong>. Updates branch stock instantly.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowStockIntake(true)}
+                className="px-5 py-2.5 rounded-xl bg-white font-semibold self-start text-sm text-teal-700"
+              >
+                New Stock Intake →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Stock Intake Modal */}
+        {showStockIntake && (
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4 pb-10"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+            <div className="w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden"
+              style={{ background: 'var(--bg-card)', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div className="flex items-center justify-between px-8 py-6 border-b sticky top-0 z-10"
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                <div>
+                  <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>New Stock Intake</h2>
+                  <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Receiving stock at {activeBranch?.name}</p>
+                </div>
+                <button onClick={() => setShowStockIntake(false)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  style={{ color: 'var(--text-secondary)' }}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-8">
+                <NewStockIntake
+                  onClose={() => setShowStockIntake(false)}
+                  onSuccess={() => { fetchBranchOps(); }}
+                />
+              </div>
+            </div>
           </div>
         )}
 
