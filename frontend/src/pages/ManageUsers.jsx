@@ -99,7 +99,8 @@ const ManageUsers = () => {
       setPermissionFlags({ can_manage_users: false, can_manage_inventory: false, can_view_reports: false, can_edit_prices: false });
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
-      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      const data = err.response?.data;
+      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
       setError('Failed to save user: ' + (serverMsg || err.message));
     }
   };
@@ -133,7 +134,8 @@ const ManageUsers = () => {
       setTimeout(() => setSuccessMessage(''), 4000);
       setDeleteCandidate(null);
     } catch (err) {
-      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      const data = err.response?.data;
+      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
       setError('Failed to delete user: ' + (serverMsg || err.message));
     }
   };
@@ -145,7 +147,8 @@ const ManageUsers = () => {
       await fetchUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
-      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      const data = err.response?.data;
+      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
       setError('Failed to update user status: ' + (serverMsg || err.message));
     }
   };
@@ -164,7 +167,8 @@ const ManageUsers = () => {
       setResetCandidate(null);
       setResetPassword('');
     } catch (err) {
-      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      const data = err.response?.data;
+      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
       setError('Failed to reset password: ' + (serverMsg || err.message));
     }
   };
