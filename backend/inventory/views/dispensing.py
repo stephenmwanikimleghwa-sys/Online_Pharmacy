@@ -77,6 +77,19 @@ class DispensationViewSet(viewsets.ModelViewSet):
             qs = qs.filter(branch_id=branch_param)
         elif not is_admin and user.branch:
             qs = qs.filter(branch=user.branch)
+            
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(
+                Q(items__product__name__icontains=search) |
+                Q(notes__icontains=search) |
+                Q(patient_name__icontains=search)
+            ).distinct()
+            
+        date = self.request.query_params.get('date')
+        if date:
+            qs = qs.filter(dispensed_at__date=date)
+            
         return qs
 
     def get_permissions(self):

@@ -23,9 +23,9 @@ const DispensingLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      let url = `${API_BASE_URL}/orders/`;
+      let url = `${API_BASE_URL}/inventory/dispensations/`;
       if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
-      if (dateFilter) url += `${searchTerm ? '&' : '?'}created_at=${encodeURIComponent(dateFilter)}`;
+      if (dateFilter) url += `${searchTerm ? '&' : '?'}date=${encodeURIComponent(dateFilter)}`;
       const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
       const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
       setLogs(data);
@@ -41,7 +41,7 @@ const DispensingLogs = () => {
   const handleReprint = async (orderId) => {
     setReprintLoading(orderId);
     try {
-      const res = await api.get(`/orders/${orderId}/`);
+      const res = await api.get(`/inventory/dispensations/${orderId}/`);
       const order = res.data?.data ?? res.data;
       setReprintOrder(order);
     } catch {
@@ -127,7 +127,7 @@ const DispensingLogs = () => {
                     <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">
                       {
                         (() => {
-                          const dateStr = log.created_at;
+                          const dateStr = log.dispensed_at;
                           if (!dateStr) return '—';
                           const d = new Date(dateStr);
                           if (isNaN(d)) return String(dateStr);
@@ -142,13 +142,13 @@ const DispensingLogs = () => {
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
                           style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
-                          {(log.user || 'U')[0].toUpperCase()}
+                          {(log.dispensed_by_name || 'U')[0].toUpperCase()}
                         </div>
-                        <span className="text-sm text-slate-600">{log.user || 'Unknown'}</span>
+                        <span className="text-sm text-slate-600">{log.dispensed_by_name || 'Unknown'}</span>
                       </div>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-slate-700">
-                      Walk-in
+                      {log.sale_type === 'prescription' ? 'Prescription' : 'Walk-in'}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">
                       {log.items?.length || 0} item(s)
@@ -158,7 +158,7 @@ const DispensingLogs = () => {
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm">
                       <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
-                        {log.payment || 'N/A'}
+                        {log.payment_mode || 'N/A'}
                       </span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm">

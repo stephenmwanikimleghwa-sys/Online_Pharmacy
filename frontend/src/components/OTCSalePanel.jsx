@@ -259,18 +259,31 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
     setCompleting(true);
     try {
+      const getMappedPaymentMode = () => {
+        if (setup.customerType === 'credit') return 'CREDIT';
+        switch(paymentMethod) {
+          case 'cash': return 'CASH';
+          case 'till': return 'MPESA_TILL';
+          case 'paybill': return 'MPESA_TILL';
+          case 'bank_transfer': return 'NATIONAL_BANK';
+          case 'card': return 'EQUITY_TILL';
+          case 'mobile_money': return 'MPESA_TILL';
+          default: return 'CASH';
+        }
+      };
+
       const response = await api.post(
-        "/orders/quick/",
+        "/inventory/dispense-otc/",
         {
           items: selectedItems.map((item) => ({
-            id: item.id,
+            product_id: item.id,
             quantity: item.quantity,
           })),
-          payment_method: paymentMethod,
-          customer_type: setup.customerType,
+          payment_mode: getMappedPaymentMode(),
+          customer_id: setup.customerType === 'credit' ? setup.creditCustomerId : null,
           patient_name: setup.patientName,
-          credit_customer_id: setup.creditCustomerId,
-          pricing_tier: setup.pricingTier,
+          pricing_tier: setup.pricingTier.toUpperCase(),
+          discount: 0,
         },
         { skipGlobalErrorNotification: true },
       );
@@ -281,8 +294,8 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       setSearchResults(catalog);
       void loadCatalog();
       notify.success(
-        "Sale Complete",
         `Sale recorded. Total: KES ${Number(order?.total_amount ?? calculateTotal()).toLocaleString()}.`,
+        "success"
       );
       setShowReceipt(true);
     } catch (error) {

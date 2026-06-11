@@ -131,6 +131,13 @@ def delete_pharmacist(request, user_id):
         pharmacist.set_unusable_password()
         pharmacist.save()
         
+        from users.utils import log_activity
+        log_activity(
+            user=request.user,
+            event_type='USER_DEACTIVATED',
+            details_dict={'target_user': username, 'action': 'User deleted and anonymized'}
+        )
+        
         return api_success(
             f"{username}'s account has been deleted. Their records are preserved.",
             data={"user": {"id": pharmacist_id, "is_active": False}}
@@ -172,6 +179,13 @@ def delete_user(request, user_id):
             user.address = None
         user.set_unusable_password()
         user.save()
+        
+        from users.utils import log_activity
+        log_activity(
+            user=request.user,
+            event_type='USER_DEACTIVATED',
+            details_dict={'target_user': username, 'action': 'User deleted and anonymized'}
+        )
         
         return api_success(
             f"{username}'s account has been deleted. Their records are preserved.",
