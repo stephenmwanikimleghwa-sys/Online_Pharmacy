@@ -273,7 +273,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       };
 
       const response = await api.post(
-        "/inventory/dispense-otc/",
+        "/inventory/dispense/otc/",
         {
           items: selectedItems.map((item) => ({
             product_id: item.id,
