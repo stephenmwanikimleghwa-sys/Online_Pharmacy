@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('inventory', '0016_auto_migrate_legacy_data'),
         ('users', '0001_initial'),
-        ('products', '0004_pricingtier'),
+        ('products', '0021_alter_pricingtier_retail_price_and_more'),
     ]
 
     operations = [
