@@ -116,6 +116,36 @@ class PricingTierViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'])
+    def migrate_legacy_prices(self, request):
+        """
+        Migrate legacy product prices to PricingTiers.
+        For products without a PricingTier, this creates one by reverse-calculating
+        buying_price from the legacy price (assuming legacy price = Retail Price = BP * 1.33).
+        """
+        from decimal import Decimal
+        products_without_tiers = Product.objects.filter(pricing_tier__isnull=True)
+        count = 0
+        
+        for product in products_without_tiers:
+            if product.price and product.price > 0:
+                # Reverse calculate buying price (BP = RP / 1.33)
+                bp = product.price / Decimal('1.33')
+                # Round to 2 decimal places
+                bp = bp.quantize(Decimal('0.01'))
+                
+                PricingTier.objects.create(
+                    product=product,
+                    buying_price=bp,
+                    use_legacy_prices=False
+                )
+                count += 1
+                
+        return Response({
+            'message': f'Successfully migrated {count} legacy prices to Pricing Tiers.',
+            'migrated_count': count
+        })
+
     @action(detail=False, methods=['get'])
     def summary(self, request):
         """Get summary statistics for all pricing tiers."""

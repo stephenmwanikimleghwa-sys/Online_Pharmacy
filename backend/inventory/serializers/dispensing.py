@@ -56,18 +56,26 @@ class DispensationItemSerializer(serializers.ModelSerializer):
 
 class DispensationSerializer(serializers.ModelSerializer):
     items = DispensationItemSerializer(many=True)
-    dispensed_by_name = serializers.CharField(
-        source='dispensed_by.get_full_name',
-        read_only=True
-    )
-    customer_name = serializers.CharField(
-        source='customer.get_full_name',
-        read_only=True
-    )
+    dispensed_by_name = serializers.SerializerMethodField()
+    customer_name = serializers.SerializerMethodField()
     branch_name = serializers.CharField(
         source='branch.name',
         read_only=True
     )
+    
+    def get_dispensed_by_name(self, obj):
+        user = obj.dispensed_by
+        if not user:
+            return 'Unknown'
+        full = user.get_full_name()
+        return full if full.strip() else user.username
+    
+    def get_customer_name(self, obj):
+        customer = obj.customer
+        if not customer:
+            return None
+        full = customer.get_full_name()
+        return full if full.strip() else customer.username
     
     class Meta:
         model = Dispensation

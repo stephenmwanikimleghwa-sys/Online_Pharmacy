@@ -202,6 +202,27 @@ const PricingManagement = () => {
   const missingCount = unpricedCount || products.filter((p) => !tiers[p.id]).length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PER_PAGE));
 
+  // ── migrate legacy prices ─────────────────────────────────────
+  const [migrating, setMigrating] = useState(false);
+  const migrateLegacyPrices = async () => {
+    if (!window.confirm(
+      `This will auto-calculate Buying Price from existing product prices for all ${missingCount} unpriced products.\n\n` +
+      `Formula: BP = Current Price ÷ 1.33\n\nContinue?`
+    )) return;
+    setMigrating(true);
+    try {
+      const res = await api.post('/products/pricing-tiers/migrate_legacy_prices/');
+      const result = res.data?.data ?? res.data;
+      notify.success('Migration Complete', `${result.migrated_count ?? 0} products updated.`);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      notify.error('Migration Failed', 'Could not migrate prices. Please try again.');
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   // ─── render ──────────────────────────────────────────────────
 
   return (
@@ -231,15 +252,29 @@ const PricingManagement = () => {
           </p>
         </div>
 
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl border font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-        >
-          <ArrowPathIcon style={{ width: 16, height: 16 }} className={loading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          {missingCount > 0 && (
+            <button
+              onClick={migrateLegacyPrices}
+              disabled={migrating || loading}
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl border font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+              style={{ background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.3)', color: '#b45309', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              title="Auto-generate pricing tiers from existing product prices"
+            >
+              <ExclamationTriangleIcon style={{ width: 16, height: 16 }} className={migrating ? 'animate-pulse' : ''} />
+              {migrating ? 'Migrating…' : `Fix ${missingCount} Unpriced`}
+            </button>
+          )}
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl border font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+          >
+            <ArrowPathIcon style={{ width: 16, height: 16 }} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* ── Pricing Formula Banner ── */}

@@ -56,7 +56,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(prescription).data)
 
 class DispensationViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuditorOrAdmin]
+    permission_classes = [IsPharmacistOrAdmin]
     serializer_class = DispensationSerializer
 
     def get_queryset(self):
@@ -75,8 +75,9 @@ class DispensationViewSet(viewsets.ModelViewSet):
         branch_param = self.request.query_params.get('branch')
         if is_admin and branch_param and branch_param != 'all':
             qs = qs.filter(branch_id=branch_param)
-        elif not is_admin and user.branch:
+        elif not is_admin and getattr(user, 'branch', None):
             qs = qs.filter(branch=user.branch)
+        # If non-admin has no branch, they still see all (pharmacist/cashier without branch assignment)
             
         search = self.request.query_params.get('search')
         if search:

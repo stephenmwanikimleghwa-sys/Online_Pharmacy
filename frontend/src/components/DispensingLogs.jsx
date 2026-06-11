@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
 import api from '../services/api';
 import { MagnifyingGlassIcon, ClipboardDocumentListIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
@@ -16,20 +15,20 @@ const DispensingLogs = () => {
   const [reprintOrder, setReprintOrder] = useState(null);
   const [reprintLoading, setReprintLoading] = useState(null); // orderId being loaded
   const { token } = useAuth();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => { fetchLogs(); }, [currentPage, searchTerm, dateFilter]);
 
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      let url = `${API_BASE_URL}/inventory/dispensations/`;
-      if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
-      if (dateFilter) url += `${searchTerm ? '&' : '?'}date=${encodeURIComponent(dateFilter)}`;
-      const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      if (dateFilter) params.date = dateFilter;
+      if (currentPage > 1) params.page = currentPage;
+      const response = await api.get('/inventory/dispensations/', { params, skipGlobalErrorNotification: true });
       const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
       setLogs(data);
-      setTotalPages(Math.max(1, Math.ceil(data.length / 20)));
+      setTotalPages(Math.max(1, Math.ceil((response.data.count || data.length) / 20)));
     } catch (error) {
       console.error('Error fetching dispensing logs:', error);
     } finally {
