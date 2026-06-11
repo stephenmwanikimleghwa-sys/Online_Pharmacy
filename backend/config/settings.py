@@ -37,20 +37,26 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 #  - single '*' -> allow all hosts (use with caution)
 _allowed_raw = env("ALLOWED_HOSTS", default="")
 if _allowed_raw.strip() == "":
-    ALLOWED_HOSTS = env.list(
-        "ALLOWED_HOSTS",
-        default=[
-            "localhost",
-            "127.0.0.1",
-            ".onrender.com",
-        ]
-    )
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        ".onrender.com",
+    ]
 elif _allowed_raw.strip() == "*":
     # Explicit wildcard requested
     ALLOWED_HOSTS = ["*"]
 else:
     # Parse comma-separated list
     ALLOWED_HOSTS = [h.strip() for h in _allowed_raw.split(",") if h.strip()]
+
+# Always ensure .onrender.com is allowed (prevents Render deploy lockouts)
+# and pick up the auto-set RENDER_EXTERNAL_HOSTNAME env var if present.
+_render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if ALLOWED_HOSTS != ["*"]:
+    if ".onrender.com" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(".onrender.com")
+    if _render_hostname and _render_hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_render_hostname)
 
 # CSRF: required for HTTPS (e.g. Django admin login on Render). Comma-separated full origins.
 # Example: https://online-pharmacy-sn88.onrender.com,https://example.com
