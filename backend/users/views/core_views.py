@@ -161,7 +161,11 @@ def admin_user_list(request):
     """
     Admin-only view to list all users.
     """
-    users = User.objects.exclude(role=RoleChoices.CUSTOMER).order_by("-created_at")
+    users = User.objects.exclude(
+        role=RoleChoices.CUSTOMER
+    ).filter(
+        is_active=True
+    ).order_by("-created_at")
     serializer = UserProfileSerializer(users, many=True)
     return Response(serializer.data)
 
