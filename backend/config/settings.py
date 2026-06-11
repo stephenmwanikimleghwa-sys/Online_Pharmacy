@@ -77,6 +77,8 @@ elif DEBUG:
     ]
 else:
     CSRF_TRUSTED_ORIGINS = _csrf_trusted_origins_from_allowed_hosts()
+    CSRF_TRUSTED_ORIGINS.append("https://*.onrender.com")
+    
     # Render sets this to the service public URL (helps when ALLOWED_HOSTS is only ".onrender.com")
     _render_url = os.getenv("RENDER_EXTERNAL_URL", "").strip().rstrip("/")
     if _render_url and _render_url not in CSRF_TRUSTED_ORIGINS:
