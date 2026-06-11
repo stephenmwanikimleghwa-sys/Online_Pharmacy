@@ -78,7 +78,7 @@ def migrate_orders_to_dispensations(apps, schema_editor):
                 product=item.product,
                 quantity=item.quantity,
                 price_per_unit=item.unit_price,
-                total_price=item.subtotal,
+                total_price=item.quantity * item.unit_price,
             )
             
         # Migrate CashFlow records as well so the legacy accounting matches the dashboard
