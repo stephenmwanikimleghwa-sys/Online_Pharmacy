@@ -34,10 +34,12 @@ const ProductSearch = ({ value, onChange, branchId }) => {
   }, [branchId]);
 
   const handleInput = (e) => {
-    setQuery(e.target.value);
+    const val = e.target.value;
+    setQuery(val);
+    onChange({ product_id: "", product_name: val });
     setOpen(true);
     clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => search(e.target.value), 350);
+    timeoutRef.current = setTimeout(() => search(val), 350);
   };
 
   const select = (p) => {

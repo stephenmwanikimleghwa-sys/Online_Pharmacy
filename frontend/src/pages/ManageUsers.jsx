@@ -128,13 +128,13 @@ const ManageUsers = () => {
     if (!deleteCandidate) return;
     try {
       await api.delete(`/auth/admin/users/${deleteCandidate.id}/delete/`);
-      setSuccessMessage('User deactivated successfully');
+      setSuccessMessage('User deleted successfully');
       await fetchUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
       setDeleteCandidate(null);
     } catch (err) {
       const serverMsg = err.response?.data?.error || err.response?.data?.message;
-      setError('Failed to deactivate user: ' + (serverMsg || err.message));
+      setError('Failed to delete user: ' + (serverMsg || err.message));
     }
   };
 
@@ -301,7 +301,7 @@ const ManageUsers = () => {
                       {user.is_active ? (
                         <button onClick={() => handleDelete(user)}
                           className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-100 shadow-sm flex items-center gap-1">
-                          <XCircleIcon className="h-3.5 w-3.5" /> Deactivate Account
+                          <TrashIcon className="h-3.5 w-3.5" /> Delete
                         </button>
                       ) : (
                         <button onClick={() => handleReactivate(user)}
@@ -415,15 +415,15 @@ const ManageUsers = () => {
             <DialogBackdrop className="fixed inset-0 modal-overlay" />
             <div className="relative z-10 w-full max-w-md modal-card p-6 border-t-4 border-amber-500">
               <h3 className="text-lg font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                <XCircleIcon className="h-6 w-6 text-amber-500" />
-                Deactivate Account
+                <TrashIcon className="h-6 w-6 text-amber-500" />
+                Delete Account
               </h3>
               <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-                Deactivate <strong>{deleteCandidate?.username}</strong>? This will prevent them from logging in. All their records and history will be preserved in the system. You can reactivate this account later.
+                Delete <strong>{deleteCandidate?.username}</strong>? This will permanently deactivate their access, but all their records and history will be preserved in the system.
               </p>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setDeleteCandidate(null)} className="form-cancel-btn px-4 py-2 rounded-xl">Cancel</button>
-                <button type="button" onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors">Deactivate</button>
+                <button type="button" onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors">Delete</button>
               </div>
             </div>
           </div>

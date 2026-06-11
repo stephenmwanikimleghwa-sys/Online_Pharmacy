@@ -164,13 +164,24 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                     expiry_date = p_data.get('expiry_date') or None
                     batch_number = p_data.get('batch_number', '')
 
-                    if not product_id or quantity_received <= 0:
+                    if quantity_received <= 0:
                         continue
 
-                    try:
-                        product = Product.objects.get(id=product_id)
-                    except Product.DoesNotExist:
-                        continue
+                    if product_id:
+                        try:
+                            product = Product.objects.get(id=product_id)
+                        except Product.DoesNotExist:
+                            continue
+                    else:
+                        # Create new product dynamically
+                        product_name = p_data.get('product_name', '').strip()
+                        if not product_name:
+                            continue
+                        product = Product.objects.create(
+                            name=product_name,
+                            price=selling_price or cost_price or 0,
+                            created_by=request.user
+                        )
 
                     # Update pricing
                     tier, _ = PricingTier.objects.get_or_create(product=product, defaults={'buying_price': cost_price, 'retail_price': selling_price, 'wholesale_price': wholesale_price})
