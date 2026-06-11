@@ -206,8 +206,8 @@ const PricingManagement = () => {
   const [migrating, setMigrating] = useState(false);
   const migrateLegacyPrices = async () => {
     if (!window.confirm(
-      `This will auto-calculate Buying Price from existing product prices for all ${missingCount} unpriced products.\n\n` +
-      `Formula: BP = Current Price ÷ 1.33\n\nContinue?`
+      `This will create pricing tiers using existing product prices for all ${missingCount} unpriced products.\n\n` +
+      `Formula: Buying Price = Wholesale Price = Retail Price = Current Product Price.\n\nContinue?`
     )) return;
     setMigrating(true);
     try {

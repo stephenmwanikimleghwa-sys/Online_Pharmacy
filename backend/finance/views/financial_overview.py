@@ -32,17 +32,22 @@ class FinancialOverviewViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def cash_flow(self, request):
         """
-        Returns daily income over the past 30 days (based on Dispensations).
+        Returns daily income over the past 30 days (based on Dispensations and legacy Orders).
         """
+        from orders.models import Order
         end_date = timezone.now()
         start_date = end_date - timedelta(days=30)
         
         branch_id = request.query_params.get('branch_id')
-        query = Q(dispensed_at__range=(start_date, end_date))
+        disp_query = Q(dispensed_at__range=(start_date, end_date))
+        order_query = Q(created_at__range=(start_date, end_date), status__in=['delivered', 'completed'])
+        
         if branch_id:
-            query &= Q(branch_id=branch_id)
+            disp_query &= Q(branch_id=branch_id)
+            order_query &= Q(branch_id=branch_id)
             
-        dispensations = Dispensation.objects.filter(query)
+        dispensations = Dispensation.objects.filter(disp_query)
+        orders = Order.objects.filter(order_query)
         
         # Aggregate by day
         # For simplicity, we process in memory for SQLite compatibility. 
@@ -54,6 +59,13 @@ class FinancialOverviewViewSet(viewsets.ViewSet):
             if day_str not in daily_totals:
                 daily_totals[day_str] = 0
             daily_totals[day_str] += amount
+            
+        for o in orders:
+            day_str = o.created_at.strftime('%Y-%m-%d')
+            amount = float(o.total_amount)
+            if day_str not in daily_totals:
+                daily_totals[day_str] = 0
+            daily_totals[day_str] += amount
 
         result = [{"date": k, "income": v} for k, v in sorted(daily_totals.items())]
         
@@ -62,17 +74,34 @@ class FinancialOverviewViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def account_balances(self, request):
         """
-        Returns total sums of dispensations grouped by payment mode.
+        Returns total sums of dispensations and legacy orders grouped by payment mode.
         """
+        from orders.models import Order
         branch_id = request.query_params.get('branch_id')
-        query = Q()
-        if branch_id:
-            query &= Q(branch_id=branch_id)
-            
-        # Group by payment mode
-        balances = Dispensation.objects.filter(query).values('payment_mode').annotate(total=Sum('total_amount'))
+        disp_query = Q()
+        order_query = Q(status__in=['delivered', 'completed'])
         
-        formatted_balances = {item['payment_mode']: str(item['total'] or 0) for item in balances}
+        if branch_id:
+            disp_query &= Q(branch_id=branch_id)
+            order_query &= Q(branch_id=branch_id)
+            
+        # Group by payment mode for dispensations
+        disp_balances = Dispensation.objects.filter(disp_query).values('payment_mode').annotate(total=Sum('total_amount'))
+        
+        totals_by_mode = {}
+        for item in disp_balances:
+            mode = item['payment_mode'] or 'UNKNOWN'
+            totals_by_mode[mode] = totals_by_mode.get(mode, 0) + float(item['total'] or 0)
+            
+        # Group legacy orders (method is in related Payment object, but for simplicity we can just check the first payment or default)
+        orders = Order.objects.filter(order_query).prefetch_related('payment')
+        for o in orders:
+            mode = 'UNKNOWN'
+            if getattr(o, 'payment', None):
+                mode = str(o.payment.method).upper()
+            totals_by_mode[mode] = totals_by_mode.get(mode, 0) + float(o.total_amount)
+        
+        formatted_balances = {k: str(v) for k, v in totals_by_mode.items()}
         
         return Response({"account_balances": formatted_balances})
 
