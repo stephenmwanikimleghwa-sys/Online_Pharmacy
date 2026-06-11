@@ -30,7 +30,7 @@ def migrate_orders_to_dispensations(apps, schema_editor):
     OrderItem = apps.get_model('orders', 'OrderItem')
     Dispensation = apps.get_model('inventory', 'Dispensation')
     DispensationItem = apps.get_model('inventory', 'DispensationItem')
-    Payment = apps.get_model('orders', 'Payment')
+    Payment = apps.get_model('payments', 'Payment')
     CashFlow = apps.get_model('inventory', 'CashFlow')
     
     # We only migrate delivered or completed orders
@@ -103,6 +103,7 @@ class Migration(migrations.Migration):
         ('inventory', '0015_alter_dispensation_dispensed_by_and_more'),
         ('products', '0021_alter_pricingtier_retail_price_and_more'),
         ('orders', '0008_order_customer_order_patient_name'),
+        ('payments', '0001_initial'),
     ]
 
     operations = [
