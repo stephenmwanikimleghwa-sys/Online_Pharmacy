@@ -27,7 +27,7 @@ services:
       - key: FRONTEND_URL
         value: "https://online-pharmacy-1-np3y.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://online-pharmacy-sn88.onrender.com,https://online-pharmacy-1-np3y.onrender.com"
+        value: "https://online-pharmacy-sn88.onrender.com,https://online-pharmacy-1-np3y.onrender.com,https://*.onrender.com"
       - key: PYTHON_VERSION
         value: "3.11.0"
       - key: REDIS_URL
