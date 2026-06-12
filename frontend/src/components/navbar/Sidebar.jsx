@@ -48,7 +48,6 @@ const getNavGroups = (user) => {
     );
     adminLinks.push(
       { to: "/admin/branches", label: "Branches Overview", icon: BuildingOffice2Icon },
-      { to: "/admin/pricing", label: "Pricing (BP/WP/RP)", icon: BanknotesIcon },
       { to: "/admin/users", label: "User Management", icon: ShieldCheckIcon },
       { to: "/dispensing-logs", label: "Audit Logs", icon: DocumentDuplicateIcon },
     );

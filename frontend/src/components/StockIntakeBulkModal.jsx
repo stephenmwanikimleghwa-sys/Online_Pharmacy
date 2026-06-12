@@ -3,7 +3,75 @@ import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import LoadingButton from './LoadingButton';
-import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+
+const SearchableProductSelect = ({ value, onChange, products }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = React.useRef(null);
+
+  const selectedProduct = products.find(p => p.id === parseInt(value));
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <div 
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30 cursor-pointer bg-white flex items-center justify-between"
+        onClick={() => { setIsOpen(!isOpen); setSearch(''); }}
+      >
+        <span className="truncate">{selectedProduct ? selectedProduct.name : 'Select product...'}</span>
+        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50">
+            <MagnifyingGlassIcon className="w-4 h-4 text-slate-400" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search..."
+              className="w-full bg-transparent border-none focus:outline-none text-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="overflow-y-auto flex-1 custom-scrollbar">
+            {filteredProducts.length === 0 ? (
+              <div className="p-3 text-sm text-slate-500 text-center">No products found</div>
+            ) : (
+              filteredProducts.map(p => (
+                <div
+                  key={p.id}
+                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-primary-50 ${p.id === parseInt(value) ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-700'}`}
+                  onClick={() => {
+                    onChange(p.id);
+                    setIsOpen(false);
+                  }}
+                >
+                  {p.name}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => {
   const { notify } = useNotification();
@@ -272,15 +340,12 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                   <tbody className="divide-y divide-slate-200">
                     {rows.map((row) => (
                       <tr key={row.id} className="bg-white hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-2">
-                          <select
+                        <td className="px-4 py-2 relative">
+                          <SearchableProductSelect
                             value={row.product_id}
-                            onChange={(e) => updateRow(row.id, 'product_id', e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30"
-                          >
-                            <option value="">Select...</option>
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                          </select>
+                            onChange={(val) => updateRow(row.id, 'product_id', val)}
+                            products={products}
+                          />
                         </td>
                         <td className="px-4 py-2">
                           <input type="number" min="1" value={row.quantity_received} onChange={(e) => updateRow(row.id, 'quantity_received', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0" />

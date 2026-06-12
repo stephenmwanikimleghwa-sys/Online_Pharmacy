@@ -40,7 +40,7 @@ class OrderSerializer(serializers.ModelSerializer):
     """
 
     user = serializers.StringRelatedField(read_only=True)
-
+    branch_name = serializers.CharField(source='branch.name', read_only=True)
     payment = serializers.StringRelatedField(read_only=True)
     items = OrderItemSerializer(many=True, read_only=True)
 
@@ -49,6 +49,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user",
+            "branch_name",
             "items",
             "total_amount",
             "status",

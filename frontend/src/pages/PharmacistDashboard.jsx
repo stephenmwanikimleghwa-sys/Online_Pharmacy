@@ -120,7 +120,7 @@ const PharmacistDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
 
         {/* Direct OTC Sale (moved to primary slot) */}
-        <div className="lg:col-span-8 btn-primary rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
+        <div className="lg:col-span-12 btn-primary rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
           {/* Decorative blobs */}
           <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
           <div className="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
@@ -142,7 +142,7 @@ const PharmacistDashboard = () => {
         </div>
 
         {/* Pending Prescriptions - moved to side */}
-        <div className="lg:col-span-4 glass-card rounded-[2rem] p-8 flex flex-col border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
+        <div className="lg:col-span-12 glass-card rounded-[2rem] p-8 flex flex-col border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl" style={{background:'var(--brand-mist)'}}>

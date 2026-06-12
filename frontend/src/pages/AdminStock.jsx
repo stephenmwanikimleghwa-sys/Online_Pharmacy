@@ -7,13 +7,16 @@ import BulkAddMedicineModal from '../components/BulkAddMedicineModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 
 const AdminStock = () => {
 	const { notify } = useNotification();
 	const navigate = useNavigate();
+	const { user } = useAuth();
 	const [items, setItems] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [selectedBranch, setSelectedBranch] = useState('all');
 
 	// Debug items state
 	useEffect(() => {
@@ -139,46 +142,28 @@ const AdminStock = () => {
 if (searchQuery) params.append('search', searchQuery);
 
 			let products = [];
-			let totalPagesCount = 0;
+			let totalPagesCount = 1;
 			let totalItemsCount = 0;
 
-			// Try products endpoint first
+			// Always use the inventory endpoint to get branch-scoped stock
 			try {
-				console.log('[Fetch Debug] Trying products endpoint...');
-				const productsRes = await api.get(`/products/?${params.toString()}`);
-				const data = productsRes.data;
-				// Handle several possible shapes:
-				// 1) Direct array: [ {...}, ... ]
-				// 2) DRF paginated: { count, next, previous, results: [...] }
-				// 3) Custom wrapper: { products: [...], totalPages, totalItems }
-				if (Array.isArray(data)) {
-					products = data;
-					totalItemsCount = data.length;
-					totalPagesCount = 1;
-				} else if (data?.results && Array.isArray(data.results)) {
-					products = data.results;
-					totalItemsCount = data.count ?? data.results.length;
-					totalPagesCount = 1;
-				} else if (data?.products && Array.isArray(data.products)) {
+				console.log('[Fetch Debug] Trying inventory endpoint...');
+				const inventoryRes = await inventoryService.getInventory(params);
+				const data = inventoryRes.data || {};
+				
+				if (Array.isArray(data.products)) {
 					products = data.products;
-					totalItemsCount = data.totalItems ?? data.products.length;
-					totalPagesCount = 1;
-				} else {
-					// unexpected shape; try to coerce to array or fall back
-					products = [];
-					totalItemsCount = 0;
+					totalItemsCount = data.totalItems ?? products.length;
+					totalPagesCount = data.totalPages ?? 1;
+				} else if (Array.isArray(data)) {
+					products = data;
+					totalItemsCount = products.length;
 					totalPagesCount = 1;
 				}
-				console.log('[Fetch Debug] Products endpoint success - All products loaded:', { count: totalItemsCount, search: searchQuery });
-			} catch (productErr) {
-				console.log('[Fetch Debug] Products endpoint failed, trying inventory endpoint');
-				// Fallback to inventory endpoint
-				const inventoryRes = await api.get(`/inventory/?${params.toString()}`);
-				const idata = inventoryRes.data || {};
-				products = Array.isArray(idata.products) ? idata.products : (Array.isArray(idata) ? idata : []);
-				totalPagesCount = 1;
-				totalItemsCount = idata.totalItems ?? (idata.products?.length || products.length);
-				console.log('[Fetch Debug] Inventory endpoint response - All products loaded:', { totalItemsCount });
+				console.log('[Fetch Debug] Inventory endpoint success - Products loaded:', { count: totalItemsCount });
+			} catch (inventoryErr) {
+				console.error('[Fetch Debug] Inventory endpoint failed:', inventoryErr);
+				throw inventoryErr;
 			}
 
 			setItems(products.map(sanitizeItem));
@@ -442,6 +427,7 @@ if (searchQuery) params.append('search', searchQuery);
 				quantity: qty,
 				reason: adjustReason,
 				change_type: 'adjustment',
+				branch_id: selectedBranch !== 'all' ? selectedBranch : undefined,
 			});
 			setAdjustQty(0);
 			setAdjustReason('');
@@ -630,9 +616,7 @@ if (searchQuery) params.append('search', searchQuery);
 										<td className="px-6 py-4 whitespace-nowrap">
 											<div className="flex items-center gap-1.5">
 												<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
-												<button onClick={() => handleDelete(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-all">Delete</button>
 												<button onClick={() => openLogs(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all">Logs</button>
-												<button onClick={() => { setSelectedItemForLogs(item); setAdjustQty(0); setAdjustReason(''); }} className="px-2.5 py-1 rounded-lg text-xs font-medium text-secondary-600 bg-secondary-50 hover:bg-secondary-100 border border-secondary-100 transition-all">Adjust</button>
 											</div>
 										</td>
 									</tr>
@@ -649,9 +633,24 @@ if (searchQuery) params.append('search', searchQuery);
 			{selectedItemForLogs && (
 				<div className="mt-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
 					<h3 className="font-display font-bold text-slate-800 mb-4">Adjust Stock — {normalizeDisplayValue(selectedItemForLogs.name)}</h3>
-					<div className="flex gap-3">
+					<div className="flex flex-wrap gap-3">
+						<select
+							className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 /30 focus:border-indigo-400"
+							value={selectedBranch}
+							onChange={(e) => setSelectedBranch(e.target.value || 'all')}
+						>
+							<option value="all">Select Branch</option>
+							{user?.role === 'admin' ? (
+								<>
+									<option value="1">Main Branch</option>
+									<option value="2">Peakfam</option>
+								</>
+							) : (
+								<option value={user?.branch?.id}>{user?.branch?.name || "Your Branch"}</option>
+							)}
+						</select>
 						<input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm w-40 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="+10 or -5" />
-						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="Reason for adjustment" />
+						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="Reason for adjustment" />
 						<button onClick={() => handleAdjust(selectedItemForLogs)} className="px-6 py-3 btn-primary text-white rounded-2xl  shadow-premium font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">Apply</button>
 					</div>
 					{logEntries.length > 0 && (

@@ -88,11 +88,10 @@ export const inventoryService = {
   },
 
   // Restock inventory
-  restockInventory: (itemId, quantity, reason = "Restock") => {
-    return api.post(`/inventory/${itemId}/restock/`, {
-      quantity,
-      reason,
-    });
+  restockInventory: (itemId, quantity, reason = "Restock", branchId = null) => {
+    const payload = { quantity, reason };
+    if (branchId) payload.branch_id = branchId;
+    return api.post(`/inventory/${itemId}/restock/`, payload);
   },
 
   // Get stock logs for an item

@@ -58,7 +58,7 @@ const ReceiptModal = ({ order, onClose }) => {
       doc.write(`
         <html>
           <head>
-            <title>Receipt</title>
+            <title>Receipt - Order #${order.id || ''}</title>
             <style>
               @page {
                 size: 80mm auto;

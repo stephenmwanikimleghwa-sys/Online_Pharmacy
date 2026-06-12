@@ -96,7 +96,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       {withHeader && (
         <>
           <div className="r-center r-bold" style={{ fontSize: 13 }}>
-            {pharmacy?.name || "TRANSCOUNTY PHARMACY MAIN"}
+            {order?.branch_name || pharmacy?.name || "TRANSCOUNTY PHARMACY MAIN"}
           </div>
           {(pharmacy?.contact_phone) && (
             <div className="r-center r-small">

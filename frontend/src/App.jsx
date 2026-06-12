@@ -36,7 +36,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminStock from "./pages/AdminStock";
 import BranchesOverview from "./pages/BranchesOverview";
 import BranchSelectionScreen from "./pages/BranchSelectionScreen";
-import PricingManagement from "./pages/PricingManagement";
 import StockIntakeLog from "./pages/StockIntakeLog";
 import OTCSales from "./pages/OTCSales";
 import Customers from "./pages/Customers";
@@ -180,10 +179,6 @@ function AppLayout() {
                 <Route
                   path="/admin/branches"
                   element={<ProtectedRoute element={BranchesOverview} allowedRoles={['admin']} />}
-                />
-                <Route
-                  path="/admin/pricing"
-                  element={<ProtectedRoute element={PricingManagement} allowedRoles={['admin']} />}
                 />
                 <Route
                   path="/admin/users"

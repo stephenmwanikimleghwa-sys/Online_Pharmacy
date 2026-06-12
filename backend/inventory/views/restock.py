@@ -41,7 +41,15 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
         return queryset.select_related('product', 'requested_by', 'approved_by', 'branch')
 
     def perform_create(self, serializer):
-        serializer.save(requested_by=self.request.user, branch=self.request.user.branch)
+        branch = self.request.user.branch
+        branch_id = self.request.data.get('branch_id')
+        if branch_id:
+            from users.models import Branch
+            try:
+                branch = Branch.objects.get(id=branch_id)
+            except Branch.DoesNotExist:
+                pass
+        serializer.save(requested_by=self.request.user, branch=branch)
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):

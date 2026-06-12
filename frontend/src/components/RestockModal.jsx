@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { getProductUnitLabel } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 import LoadingButton from './LoadingButton';
 
 const RestockModal = ({ item, onClose, onRestock }) => {
   const { notify } = useNotification();
+  const { user } = useAuth();
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState(user?.branch?.id?.toString() || '1');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -15,10 +18,14 @@ const RestockModal = ({ item, onClose, onRestock }) => {
       notify.warning('Invalid Quantity', 'Quantity must be at least 1.');
       return;
     }
+    if (!selectedBranch) {
+      notify.warning('Branch Required', 'Please select a branch.');
+      return;
+    }
 
     setLoading(true);
     try {
-      await onRestock(item.id, parseInt(quantity), reason);
+      await onRestock(item.id, parseInt(quantity), reason, selectedBranch);
       onClose();
     } catch (error) {
       console.error('Error restocking item:', error);
@@ -37,6 +44,28 @@ const RestockModal = ({ item, onClose, onRestock }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8" style={{ background: 'var(--bg-card)' }}>
+          <div className="mb-6">
+            <label className="form-label">
+              Branch *
+            </label>
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              required
+              className="form-input"
+            >
+              <option value="">Select Branch</option>
+              {user?.role === 'admin' ? (
+                <>
+                  <option value="1">Main Branch</option>
+                  <option value="2">Peakfam</option>
+                </>
+              ) : (
+                <option value={user?.branch?.id}>{user?.branch?.name || "Your Branch"}</option>
+              )}
+            </select>
+          </div>
+
           <div className="mb-6">
             <label className="form-label">
               How many to add? *
