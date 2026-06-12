@@ -150,13 +150,14 @@ if (searchQuery) params.append('search', searchQuery);
 				console.log('[Fetch Debug] Trying inventory endpoint...');
 				const inventoryRes = await inventoryService.getInventory(params);
 				const data = inventoryRes.data || {};
+				const payload = data.data || data;
 				
-				if (Array.isArray(data.products)) {
-					products = data.products;
-					totalItemsCount = data.totalItems ?? products.length;
-					totalPagesCount = data.totalPages ?? 1;
-				} else if (Array.isArray(data)) {
-					products = data;
+				if (Array.isArray(payload.products)) {
+					products = payload.products;
+					totalItemsCount = payload.totalItems ?? products.length;
+					totalPagesCount = payload.totalPages ?? 1;
+				} else if (Array.isArray(payload)) {
+					products = payload;
 					totalItemsCount = products.length;
 					totalPagesCount = 1;
 				}
