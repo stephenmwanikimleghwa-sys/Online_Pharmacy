@@ -26,7 +26,8 @@ const InventoryManagement = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
-  const BRANCH_COLUMNS = ['TRANSCOUNTY_MAIN', 'TRANSCOUNTY_ANNEX', 'PEAKFARM'];
+  const BRANCH_COLUMNS = ['Transcounty Main', 'Transcounty Annex', 'Peakfarm'];
+
 
   const searchInputRef = useRef(null);
 

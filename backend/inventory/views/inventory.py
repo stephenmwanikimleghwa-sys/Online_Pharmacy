@@ -192,10 +192,17 @@ def inventory_list(request):
         return Response(response_data)
 
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("inventory_list error: %s", str(e))
         return Response(
             {
-                "error": "Failed to fetch inventory",
-                "detail": str(e),
+                "success": False,
+                "error": {
+                    "code": "INVENTORY_ERROR",
+                    "message": "Failed to fetch inventory. Please try again.",
+                    "details": {"detail": str(e)},
+                },
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
@@ -399,6 +406,11 @@ def stock_logs(request):
     """View recent stock logs."""
     logs = StockLog.objects.select_related("product", "logged_by", "branch").all()
     
+    # Filter by product if specified
+    product_id = request.query_params.get("product_id")
+    if product_id:
+        logs = logs.filter(product_id=product_id)
+        
     # Filter by user branch unless admin
     user = request.user
     is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser

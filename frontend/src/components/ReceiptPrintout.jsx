@@ -30,6 +30,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   });
 
   const servedBy =
+    order.dispensed_by_name ||
     order.user_full_name ||
     order.user_name ||
     order.user ||
@@ -46,7 +47,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   const LINE_WIDTH = 40;
 
   const renderItemRow = (item, idx) => {
-    const name = item.product_name || item.name || "Item";
+    const name = item.product_details?.name || item.product_name || item.name || "Item";
     const qty = String(item.quantity);
     const price = fmt(item.unit_price);
     const tot = fmt(Number(item.unit_price) * Number(item.quantity));
@@ -96,8 +97,13 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       {withHeader && (
         <>
           <div className="r-center r-bold" style={{ fontSize: 13 }}>
-            {order?.branch_name || pharmacy?.name || "TRANSCOUNTY PHARMACY MAIN"}
+            {pharmacy?.name || "TRANSCOUNTY PHARMACY"}
           </div>
+          {order?.branch_name && order.branch_name !== pharmacy?.name && (
+            <div className="r-center r-bold" style={{ fontSize: 11, marginTop: '2px' }}>
+              Branch: {order.branch_name}
+            </div>
+          )}
           {(pharmacy?.contact_phone) && (
             <div className="r-center r-small">
               Cell: {pharmacy.contact_phone}

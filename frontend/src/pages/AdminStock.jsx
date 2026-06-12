@@ -178,18 +178,17 @@ if (searchQuery) params.append('search', searchQuery);
 			if (err.response?.status === 401) {
 				setError('Please log in to view inventory');
 				navigate('/login');
-			} else if (isInitialLoad) {
-				// Only show error on initial load, not on search/filter changes
-				setError('Failed to load inventory');
 			} else {
-				// Silently log search/filter errors
-				console.error('Search/filter request failed:', err);
+				// Show error state
+				setError('Failed to load inventory');
+				console.error('Inventory fetch failed:', err);
 			}
 		} finally {
-			// Only show loading spinner on initial load
-			if (isInitialLoad) setLoading(false);
+			// Always reset loading state
+			setLoading(false);
 		}
 	};
+
 
 	const openAddModal = () => {
 		console.log('openAddModal called');
@@ -408,9 +407,10 @@ if (searchQuery) params.append('search', searchQuery);
 	const openLogs = async (item) => {
 		setSelectedItemForLogs(item);
 		try {
-			const res = await api.get(`/inventory/${item.id}/logs/`);
+			const res = await api.get(`/inventory/logs/?product_id=${item.id}`);
 			setLogEntries(res.data || []);
 		} catch (err) {
+
 			console.error(err);
 			setError('Failed to load logs');
 		}
@@ -629,47 +629,7 @@ if (searchQuery) params.append('search', searchQuery);
 				</div>
 			</ErrorBoundary>
 
-			{/* Adjust Section */}
-			{selectedItemForLogs && (
-				<div className="mt-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
-					<h3 className="font-display font-bold text-slate-800 mb-4">Adjust Stock — {normalizeDisplayValue(selectedItemForLogs.name)}</h3>
-					<div className="flex flex-wrap gap-3">
-						<select
-							className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 /30 focus:border-indigo-400"
-							value={selectedBranch}
-							onChange={(e) => setSelectedBranch(e.target.value || 'all')}
-						>
-							<option value="all">Select Branch</option>
-							{user?.role === 'admin' ? (
-								<>
-									<option value="1">Main Branch</option>
-									<option value="2">Peakfam</option>
-								</>
-							) : (
-								<option value={user?.branch?.id}>{user?.branch?.name || "Your Branch"}</option>
-							)}
-						</select>
-						<input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm w-40 focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="+10 or -5" />
-						<input type="text" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 /30 focus:border-indigo-400" placeholder="Reason for adjustment" />
-						<button onClick={() => handleAdjust(selectedItemForLogs)} className="px-6 py-3 btn-primary text-white rounded-2xl  shadow-premium font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">Apply</button>
-					</div>
-					{logEntries.length > 0 && (
-						<div className="mt-5">
-							<h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Recent Logs</h4>
-							<ul className="space-y-2">
-								{logEntries.map(log => (
-									<li key={log.id} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-sm">
-										<span className="font-semibold text-slate-700">{log.change_type}</span>
-										<span className={log.change_amount > 0 ? 'text-secondary-600 font-bold' : 'text-red-500 font-bold'}>{log.change_amount > 0 ? `+${log.change_amount}` : log.change_amount}</span>
-										<span className="text-slate-400">by {log.logged_by?.username || 'system'} · {new Date(log.timestamp).toLocaleString()}</span>
-										{log.reason && <span className="text-slate-500 ml-auto">{normalizeDisplayValue(log.reason, '')}</span>}
-									</li>
-								))}
-							</ul>
-						</div>
-					)}
-				</div>
-			)}
+
 
 
 			<AddMedicineModal

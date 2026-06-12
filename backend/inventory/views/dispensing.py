@@ -127,6 +127,18 @@ def dispense_otc(request):
     from django.contrib.auth import get_user_model
     User = get_user_model()
     active_branch = get_active_branch(request)
+    
+    # Allow explicit branch_id override for admin/pharmacists making sales across branches
+    req_branch_id = request.data.get('branch_id')
+    if req_branch_id:
+        from users.models import Branch
+        try:
+            active_branch = Branch.objects.get(pk=req_branch_id, is_active=True)
+        except Branch.DoesNotExist:
+            pass
+            
+    if not active_branch:
+        active_branch = getattr(request.user, 'branch', None)
 
     with transaction.atomic():
         items_data = request.data.get('items', [])

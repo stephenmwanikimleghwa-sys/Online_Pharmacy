@@ -284,6 +284,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           patient_name: setup.patientName,
           pricing_tier: setup.pricingTier.toUpperCase(),
           discount: 0,
+          branch_id: branchId,
         },
         { skipGlobalErrorNotification: true },
       );

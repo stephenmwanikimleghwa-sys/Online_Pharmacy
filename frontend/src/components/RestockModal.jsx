@@ -1,34 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getProductUnitLabel } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
-import LoadingButton from './LoadingButton';
+import api from '../services/api';
 
 const RestockModal = ({ item, onClose, onRestock }) => {
   const { notify } = useNotification();
   const { user } = useAuth();
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState(user?.branch?.id?.toString() || '1');
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Load branches from API
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const res = await api.get('/users/branches/');
+        const data = res.data;
+        const list = Array.isArray(data) ? data : (data.results || data.branches || []);
+        setBranches(list);
+        // Default selection: admin sees all, others see their own branch
+        if (user?.role === 'admin') {
+          // No default — let admin pick
+        } else if (user?.branch?.id) {
+          setSelectedBranch(String(user.branch.id));
+        } else if (list.length === 1) {
+          setSelectedBranch(String(list[0].id));
+        }
+      } catch (err) {
+        // Fallback to known static branches if API fails
+        const fallback = [
+          { id: 1, name: 'Main Branch' },
+          { id: 2, name: 'Transcounty Main' },
+          { id: 3, name: 'Transcounty Annex' },
+          { id: 4, name: 'Peakfarm' },
+        ];
+        setBranches(fallback);
+        if (user?.branch?.id) setSelectedBranch(String(user.branch.id));
+      }
+    };
+    loadBranches();
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!quantity || quantity <= 0) {
+    const qty = parseInt(quantity, 10);
+    if (!quantity || isNaN(qty) || qty <= 0) {
       notify.warning('Invalid Quantity', 'Quantity must be at least 1.');
       return;
     }
     if (!selectedBranch) {
-      notify.warning('Branch Required', 'Please select a branch.');
+      notify.warning('Branch Required', 'Please select a branch before restocking.');
       return;
     }
 
     setLoading(true);
     try {
-      await onRestock(item.id, parseInt(quantity), reason, selectedBranch);
+      await onRestock(item.id, qty, reason, parseInt(selectedBranch, 10));
       onClose();
     } catch (error) {
       console.error('Error restocking item:', error);
+      // error notification is handled by the parent's handleRestock via notifyApiError
     } finally {
       setLoading(false);
     }
@@ -44,6 +78,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8" style={{ background: 'var(--bg-card)' }}>
+          {/* Branch Selection */}
           <div className="mb-6">
             <label className="form-label">
               Branch *
@@ -55,17 +90,13 @@ const RestockModal = ({ item, onClose, onRestock }) => {
               className="form-input"
             >
               <option value="">Select Branch</option>
-              {user?.role === 'admin' ? (
-                <>
-                  <option value="1">Main Branch</option>
-                  <option value="2">Peakfam</option>
-                </>
-              ) : (
-                <option value={user?.branch?.id}>{user?.branch?.name || "Your Branch"}</option>
-              )}
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
             </select>
           </div>
 
+          {/* Quantity */}
           <div className="mb-6">
             <label className="form-label">
               How many to add? *
@@ -81,6 +112,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
             />
           </div>
 
+          {/* Notes */}
           <div className="mb-8">
             <label className="form-label">
               Notes (optional)

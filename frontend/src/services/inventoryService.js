@@ -96,7 +96,7 @@ export const inventoryService = {
 
   // Get stock logs for an item
   getStockLogs: (itemId) => {
-    return api.get(`/inventory/${itemId}/logs/`);
+    return api.get(`/inventory/logs/?product_id=${itemId}`);
   },
 
   // Request restock (for low stock alerts)
