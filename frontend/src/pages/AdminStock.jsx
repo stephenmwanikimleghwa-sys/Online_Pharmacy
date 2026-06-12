@@ -8,6 +8,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { inventoryService } from '../services/inventoryService';
 
 const AdminStock = () => {
 	const { notify } = useNotification();
