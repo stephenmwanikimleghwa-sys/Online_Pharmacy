@@ -290,8 +290,9 @@ def inventory_detail(request, pk):
 @permission_classes([IsPharmacistOrAdmin])
 def restock_inventory(request, pk):
     """Restock an inventory item (manual adjustment)."""
-    with transaction.atomic():
-        product = get_object_or_404(Product, pk=pk)
+    try:
+        with transaction.atomic():
+            product = get_object_or_404(Product, pk=pk)
         quantity = request.data.get("quantity")
         reason = request.data.get("reason", "Restock")
         branch_id = request.data.get("branch_id")
@@ -331,6 +332,10 @@ def restock_inventory(request, pk):
             reason=reason,
             logged_by=request.user,
         )
+
+    except Exception as e:
+        import traceback
+        return Response({"success": False, "error": {"code": "SYSTEM_ERROR", "message": f"Server crash: {str(e)}", "details": {"trace": traceback.format_exc()}}}, status=500)
 
     return Response(ProductSerializer(product).data)
 

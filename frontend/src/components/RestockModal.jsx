@@ -30,9 +30,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
           setSelectedBranch(String(list[0].id));
         }
       } catch (err) {
-        // Fallback to known static branches if API fails
         const fallback = [
-          { id: 1, name: 'Main Branch' },
           { id: 2, name: 'Transcounty Main' },
           { id: 3, name: 'Transcounty Annex' },
           { id: 4, name: 'Peakfarm' },
