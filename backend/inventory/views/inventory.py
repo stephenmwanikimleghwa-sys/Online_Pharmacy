@@ -290,36 +290,51 @@ def inventory_detail(request, pk):
 @permission_classes([IsPharmacistOrAdmin])
 def restock_inventory(request, pk):
     """Restock an inventory item (manual adjustment)."""
+    product = get_object_or_404(Product, pk=pk)
+    quantity_raw = request.data.get("quantity")
+    reason = request.data.get("reason", "Restock")
+    branch_id = request.data.get("branch_id")
+
     try:
-        with transaction.atomic():
-            product = get_object_or_404(Product, pk=pk)
-        quantity = request.data.get("quantity")
-        reason = request.data.get("reason", "Restock")
-        branch_id = request.data.get("branch_id")
-        
-        branch = None
-        if branch_id:
-            from users.models import Branch
-            branch = get_object_or_404(Branch, pk=branch_id)
-        else:
-            branch = request.user.branch
-            
+        quantity = int(quantity_raw)
+    except (TypeError, ValueError, OverflowError):
+        return api_validation_error("Quantity must be a whole number.")
+
+    if quantity <= 0:
+        return api_validation_error("Quantity must be at least 1.")
+
+    branch = None
+    if branch_id not in (None, ""):
+        try:
+            branch_id = int(branch_id)
+        except (TypeError, ValueError, OverflowError):
+            return api_validation_error("Please select a valid branch before adjusting stock.")
+
+        from users.models import Branch
+        branch = Branch.objects.filter(pk=branch_id).first()
         if not branch:
             return api_error(
-                ApiErrorCode.NO_ACTIVE_BRANCH,
-                "Please select which branch you are working at before adjusting stock.",
+                ApiErrorCode.PRODUCT_NOT_FOUND,
+                "The selected branch could not be found.",
+                details={"branch_id": branch_id},
             )
+    else:
+        branch = request.user.branch
 
-        if not quantity or int(quantity) <= 0:
-            return api_validation_error("Quantity must be at least 1.")
+    if not branch:
+        return api_error(
+            ApiErrorCode.NO_ACTIVE_BRANCH,
+            "Please select which branch you are working at before adjusting stock.",
+        )
 
+    with transaction.atomic():
         branch_stock, _ = BranchStock.objects.get_or_create(
             product=product,
             branch=branch,
             defaults={'quantity': 0}
         )
         previous_quantity = branch_stock.quantity
-        branch_stock.quantity += int(quantity)
+        branch_stock.quantity += quantity
         branch_stock.save()
 
         StockLog.objects.create(
@@ -327,15 +342,11 @@ def restock_inventory(request, pk):
             branch=branch,
             previous_quantity=previous_quantity,
             new_quantity=branch_stock.quantity,
-            change_amount=int(quantity),
+            change_amount=quantity,
             change_type="restock",
             reason=reason,
             logged_by=request.user,
         )
-
-    except Exception as e:
-        import traceback
-        return Response({"success": False, "error": {"code": "SYSTEM_ERROR", "message": f"Server crash: {str(e)}", "details": {"trace": traceback.format_exc()}}}, status=500)
 
     return Response(ProductSerializer(product).data)
 
@@ -343,34 +354,45 @@ def restock_inventory(request, pk):
 @permission_classes([IsPharmacistOrAdmin])
 def adjust_inventory(request, pk):
     """Adjust an inventory item's stock by positive or negative amount."""
-    with transaction.atomic():
-        product = get_object_or_404(Product, pk=pk)
-        quantity = request.data.get("quantity")
-        reason = request.data.get("reason", "Adjustment")
-        change_type = request.data.get("change_type", "adjustment")
-        branch_id = request.data.get("branch_id")
+    product = get_object_or_404(Product, pk=pk)
+    quantity_raw = request.data.get("quantity")
+    reason = request.data.get("reason", "Adjustment")
+    change_type = request.data.get("change_type", "adjustment")
+    branch_id = request.data.get("branch_id")
 
-        branch = None
-        if branch_id:
-            from users.models import Branch
-            branch = get_object_or_404(Branch, pk=branch_id)
-        else:
-            branch = request.user.branch
-            
+    try:
+        quantity = int(quantity_raw)
+    except (TypeError, ValueError, OverflowError):
+        return api_validation_error("Quantity must be a whole number.")
+
+    if quantity == 0:
+        return api_validation_error("Quantity must be non-zero for adjustment.")
+
+    branch = None
+    if branch_id not in (None, ""):
+        try:
+            branch_id = int(branch_id)
+        except (TypeError, ValueError, OverflowError):
+            return api_validation_error("Please select a valid branch before adjusting stock.")
+
+        from users.models import Branch
+        branch = Branch.objects.filter(pk=branch_id).first()
         if not branch:
             return api_error(
-                ApiErrorCode.NO_ACTIVE_BRANCH,
-                "Please select which branch you are working at before adjusting stock.",
+                ApiErrorCode.PRODUCT_NOT_FOUND,
+                "The selected branch could not be found.",
+                details={"branch_id": branch_id},
             )
+    else:
+        branch = request.user.branch
 
-        try:
-            quantity = int(quantity)
-        except Exception:
-            return api_validation_error("Quantity must be a whole number.")
+    if not branch:
+        return api_error(
+            ApiErrorCode.NO_ACTIVE_BRANCH,
+            "Please select which branch you are working at before adjusting stock.",
+        )
 
-        if quantity == 0:
-            return api_validation_error("Quantity must be non-zero for adjustment.")
-
+    with transaction.atomic():
         branch_stock, _ = BranchStock.objects.get_or_create(
             product=product,
             branch=branch,
