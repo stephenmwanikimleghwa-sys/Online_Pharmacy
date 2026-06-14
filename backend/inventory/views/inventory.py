@@ -56,7 +56,6 @@ def inventory_list(request):
             Product.objects.filter(is_active=True)
             .select_related("pharmacy", "pricing_tier")
             .prefetch_related("branch_stocks__branch")
-            .annotate(next_batch_expiry=Min("batches__expiry_date"))
             .order_by("name")
         )
 
@@ -150,26 +149,23 @@ def inventory_list(request):
 
         # Next expiry logic
         today = timezone.now().date()
-        next_expiry_by_id = {
-            p.id: getattr(p, "next_batch_expiry", None) for p in products_page
-        }
         for product in serialized_products:
             if product.get("expiry_date"):
-                continue
-            next_expiry = next_expiry_by_id.get(product.get("id"))
-            if not next_expiry:
-                continue
-            product["expiry_date"] = str(next_expiry)
-            days = (next_expiry - today).days
-            product["days_until_expiry"] = days
-            if days < 0:
-                product["expiry_status"] = "expired"
-            elif days <= 30:
-                product["expiry_status"] = "expiring_soon"
-            elif days <= 90:
-                product["expiry_status"] = "near_expiry"
-            else:
-                product["expiry_status"] = "valid"
+                expiry_str = product["expiry_date"]
+                try:
+                    expiry = timezone.datetime.strptime(expiry_str, "%Y-%m-%d").date()
+                    days = (expiry - today).days
+                    product["days_until_expiry"] = days
+                    if days < 0:
+                        product["expiry_status"] = "expired"
+                    elif days <= 30:
+                        product["expiry_status"] = "expiring_soon"
+                    elif days <= 90:
+                        product["expiry_status"] = "near_expiry"
+                    else:
+                        product["expiry_status"] = "valid"
+                except Exception:
+                    pass
         
         # Build response - handle both paginated and non-paginated responses
         if paginator is None:
@@ -327,28 +323,33 @@ def restock_inventory(request, pk):
             "Please select which branch you are working at before adjusting stock.",
         )
 
-    with transaction.atomic():
-        branch_stock, _ = BranchStock.objects.get_or_create(
-            product=product,
-            branch=branch,
-            defaults={'quantity': 0}
-        )
-        previous_quantity = branch_stock.quantity
-        branch_stock.quantity += quantity
-        branch_stock.save()
+    try:
+        with transaction.atomic():
+            branch_stock, _ = BranchStock.objects.get_or_create(
+                product=product,
+                branch=branch,
+                defaults={'quantity': 0}
+            )
+            previous_quantity = branch_stock.quantity
+            branch_stock.quantity += quantity
+            branch_stock.save()
 
-        StockLog.objects.create(
-            product=product,
-            branch=branch,
-            previous_quantity=previous_quantity,
-            new_quantity=branch_stock.quantity,
-            change_amount=quantity,
-            change_type="restock",
-            reason=reason,
-            logged_by=request.user,
-        )
+            StockLog.objects.create(
+                product=product,
+                branch=branch,
+                previous_quantity=previous_quantity,
+                new_quantity=branch_stock.quantity,
+                change_amount=quantity,
+                change_type="restock",
+                reason=reason,
+                logged_by=request.user,
+            )
 
-    return Response(ProductSerializer(product).data)
+    except Exception as e:
+        import traceback
+        return Response({"success": False, "error": {"code": "SYSTEM_ERROR", "message": f"Server crash: {str(e)}", "details": {"trace": traceback.format_exc()}}}, status=500)
+
+    return Response(ProductSerializer(product, context={'request': request}).data)
 
 @api_view(["POST"])
 @permission_classes([IsPharmacistOrAdmin])
