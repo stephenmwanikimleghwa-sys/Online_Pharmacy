@@ -20,7 +20,7 @@ export const AddMedicineModal = ({
 
   return (
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="modal-card rounded-[2.5rem] shadow-premium max-w-3xl w-full overflow-hidden flex flex-col md:flex-row transition-all">
+      <div className="modal-card bg-white opacity-100 scale-100 rounded-[2.5rem] shadow-premium max-w-3xl w-full overflow-hidden flex flex-col md:flex-row transition-all">
         {/* Visual Panel */}
         <div className="md:w-1/3 p-10 text-white flex flex-col justify-between relative overflow-hidden" style={{background:'var(--btn-gradient)'}}>
           <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
