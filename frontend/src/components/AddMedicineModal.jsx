@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
-import { PlusIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { PlusIcon, PencilSquareIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { createPortal } from 'react-dom';
+import api from '../services/api';
+
+// Debounce helper
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 export const AddMedicineModal = ({
   isOpen,
@@ -14,10 +25,77 @@ export const AddMedicineModal = ({
 }) => {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
+  // ── Name autocomplete state ──────────────────────────────────────────────────
+  const [nameSuggestions, setNameSuggestions]   = useState([]);
+  const [showSuggestions, setShowSuggestions]   = useState(false);
+  const [duplicateMatch, setDuplicateMatch]     = useState(null); // exact match found
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const nameInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
+  const debouncedName = useDebounce(form.name, 300);
+
+  // Fetch suggestions whenever the debounced name changes
+  useEffect(() => {
+    if (!isOpen || isEditMode) return;
+    const query = debouncedName?.trim();
+    if (!query || query.length < 2) {
+      setNameSuggestions([]);
+      setDuplicateMatch(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingSuggestions(true);
+    api.get('/products/', { params: { context: 'inventory', search: query, page_size: 8 } })
+      .then(res => {
+        if (cancelled) return;
+        const results = res.data?.data ?? res.data?.results ?? res.data ?? [];
+        setNameSuggestions(Array.isArray(results) ? results.slice(0, 8) : []);
+
+        // Exact duplicate check (case-insensitive)
+        const exact = results.find(p => p.name?.toLowerCase() === query.toLowerCase());
+        setDuplicateMatch(exact ?? null);
+        setShowSuggestions(results.length > 0);
+      })
+      .catch(() => { if (!cancelled) setNameSuggestions([]); })
+      .finally(() => { if (!cancelled) setLoadingSuggestions(false); });
+
+    return () => { cancelled = true; };
+  }, [debouncedName, isOpen, isEditMode]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        nameInputRef.current && !nameInputRef.current.contains(e.target) &&
+        suggestionsRef.current && !suggestionsRef.current.contains(e.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   if (!isOpen) return null;
 
   const inputBase = (hasError) =>
     `form-input ${hasError ? 'border-rose-300 ring-4 ring-rose-500/5 border-rose-400' : ''}`;
+
+  // When user picks a suggestion — prefill fields and warn
+  const selectSuggestion = (product) => {
+    setForm(prev => ({
+      ...prev,
+      name: product.name,
+      category: product.category || prev.category,
+      dosage_form: product.dosage_form || prev.dosage_form,
+      manufacturer: product.manufacturer || prev.manufacturer,
+      description: product.description || prev.description,
+    }));
+    setDuplicateMatch(product);
+    setShowSuggestions(false);
+  };
 
   return createPortal(
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -48,16 +126,88 @@ export const AddMedicineModal = ({
         {/* Form Panel */}
         <form onSubmit={onSubmit} className="md:w-2/3 p-10 overflow-y-auto max-h-[85vh]" style={{background:'var(--bg-field)'}}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name — full width */}
+            {/* Name — full width with autocomplete */}
             <div className="md:col-span-2">
               <label className="form-label">Medicine Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Amoxicillin 500mg"
-                className={inputBase(formErrors.name)}
-              />
+              <div className="relative">
+                <input
+                  ref={nameInputRef}
+                  name="name"
+                  value={form.name}
+                  onChange={(e) => {
+                    setForm({ ...form, name: e.target.value });
+                    setDuplicateMatch(null);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => { if (nameSuggestions.length > 0) setShowSuggestions(true); }}
+                  placeholder="e.g. Amoxicillin 500mg"
+                  className={inputBase(formErrors.name)}
+                  autoComplete="off"
+                />
+                {/* Loading spinner inside input */}
+                {loadingSuggestions && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+
+                {/* Suggestions dropdown */}
+                {showSuggestions && nameSuggestions.length > 0 && (
+                  <ul
+                    ref={suggestionsRef}
+                    className="absolute z-20 w-full bg-white border border-slate-200 mt-1 rounded-2xl shadow-xl max-h-56 overflow-y-auto overflow-x-hidden"
+                  >
+                    {nameSuggestions.map((product) => {
+                      const isExact = product.name?.toLowerCase() === form.name?.trim().toLowerCase();
+                      return (
+                        <li
+                          key={product.id}
+                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer text-sm transition-colors ${
+                            isExact
+                              ? 'bg-amber-50 hover:bg-amber-100'
+                              : 'hover:bg-slate-50'
+                          }`}
+                          onMouseDown={(e) => { e.preventDefault(); selectSuggestion(product); }}
+                        >
+                          {isExact
+                            ? <ExclamationTriangleIcon className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                            : <CheckCircleIcon className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                          }
+                          <div className="min-w-0 flex-1">
+                            <p className={`font-semibold truncate ${isExact ? 'text-amber-700' : 'text-slate-800'}`}>
+                              {product.name}
+                            </p>
+                            <p className="text-[11px] text-slate-400 truncate">
+                              {[product.category, product.dosage_form, product.manufacturer].filter(Boolean).join(' · ')}
+                            </p>
+                          </div>
+                          {isExact && (
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                              Exists
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {/* Duplicate warning banner */}
+              {duplicateMatch && !isEditMode && (
+                <div className="mt-3 flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-amber-700">
+                      "{duplicateMatch.name}" already exists in the system.
+                    </p>
+                    <p className="text-[11px] text-amber-600 mt-0.5">
+                      Adding again may create a duplicate. Consider using <span className="font-bold">Restock</span> or <span className="font-bold">Edit</span> instead. Fields have been pre-filled from the existing record.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {formErrors.name && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.name}</p>}
             </div>
 
