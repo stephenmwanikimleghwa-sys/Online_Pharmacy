@@ -41,6 +41,14 @@ const UserActivityLogs = () => {
         return `Target user: ${d.target_user}`;
       case 'PERMISSION_CHANGED':
         return `Updated permissions for ${d.target_user}`;
+      case 'PRODUCT_CREATED':
+        return `Added product: ${d.product_name || d.product_id}`;
+      case 'PRODUCT_EDITED':
+        return `Edited product: ${d.product_name || d.product_id}`;
+      case 'PRODUCT_DELETED':
+        return `Deleted product: ${d.product_name || d.product_id}`;
+      case 'PRODUCT_RESTOCKED':
+        return `Restocked ${d.product_name} (${d.quantity_received} units from ${d.supplier})`;
       case 'BRANCH_SWITCHED':
         return d.action || 'Switched branch';
       default:

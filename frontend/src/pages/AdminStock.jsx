@@ -4,6 +4,7 @@ import api from '../services/api';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { AddMedicineModal } from '../components/AddMedicineModal';
 import BulkAddMedicineModal from '../components/BulkAddMedicineModal';
+import StockLogsModal from '../components/StockLogsModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
@@ -246,6 +247,29 @@ if (searchQuery) params.append('search', searchQuery);
 		setIsModalOpen(true);
 	};
 
+	const openDuplicateModal = (item) => {
+		setIsEditMode(false);
+		setEditingItem(null);
+		setForm({
+			name: item.name || '',
+			category: item.category || '',
+			buying_price: item.pricing_tier?.buying_price || '',
+			use_legacy_prices: item.pricing_tier?.use_legacy_prices || false,
+			wholesale_price: item.pricing_tier?.wholesale_price || '',
+			retail_price: item.pricing_tier?.retail_price || '',
+			stock_quantity: item.stock_quantity || 0,
+			dosage_form: item.dosage_form || 'other',
+			strength: item.strength || '',
+			shelf_location: item.shelf_location || '',
+			expiry_date: item.expiry_date || '',
+			supplier: item.supplier || '',
+			description: item.description || '',
+			reorder_threshold: item.reorder_threshold ?? 10,
+			image: item.image || null,
+		});
+		setIsModalOpen(true);
+	};
+
 	const handleDelete = async (item) => {
 		if (!window.confirm(`Delete ${item.name}? This will remove it from inventory.`)) return;
 		try {
@@ -406,16 +430,8 @@ if (searchQuery) params.append('search', searchQuery);
 		}
 	};
 
-	const openLogs = async (item) => {
+	const openLogs = (item) => {
 		setSelectedItemForLogs(item);
-		try {
-			const res = await api.get(`/inventory/logs/?product_id=${item.id}`);
-			setLogEntries(res.data || []);
-		} catch (err) {
-
-			console.error(err);
-			setError('Failed to load logs');
-		}
 	};
 
 	const handleAdjust = async (item) => {
@@ -616,8 +632,9 @@ if (searchQuery) params.append('search', searchQuery);
 											</span>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="flex items-center gap-1.5">
+											<div className="flex flex-wrap items-center gap-1.5">
 												<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
+												<button onClick={() => openDuplicateModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all">Duplicate</button>
 												<button onClick={() => openLogs(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all">Logs</button>
 											</div>
 										</td>
@@ -651,6 +668,13 @@ if (searchQuery) params.append('search', searchQuery);
 				onSuccess={() => fetchItems()}
 				categories={categories}
 			/>
+
+			{selectedItemForLogs && (
+				<StockLogsModal 
+					item={selectedItemForLogs} 
+					onClose={() => setSelectedItemForLogs(null)} 
+				/>
+			)}
 		</div>
 
 	);

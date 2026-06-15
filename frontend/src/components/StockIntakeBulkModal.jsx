@@ -78,6 +78,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [supplierHistory, setSupplierHistory] = useState({});
 
   // Form State
   const [supplierId, setSupplierId] = useState('');
@@ -163,6 +164,15 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
           selling_price: product.pricing_tier?.retail_price || product.price || '',
           wholesale_price: product.pricing_tier?.wholesale_price || ''
         } : r));
+      }
+
+      // Fetch supplier history
+      if (!supplierHistory[value]) {
+        api.get(`/inventory/stock-intake/supplier_history/?product_id=${value}`)
+          .then(res => {
+            setSupplierHistory(prev => ({ ...prev, [value]: res.data || [] }));
+          })
+          .catch(err => console.error("Could not fetch supplier history", err));
       }
     }
   };
@@ -346,6 +356,17 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                             onChange={(val) => updateRow(row.id, 'product_id', val)}
                             products={products}
                           />
+                          {row.product_id && supplierHistory[row.product_id] && supplierHistory[row.product_id].length > 0 && (
+                            <div className="mt-2 flex flex-col gap-1 max-h-24 overflow-y-auto custom-scrollbar bg-slate-50 border border-slate-100 rounded-lg p-2 shadow-inner">
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Past Suppliers</span>
+                              {supplierHistory[row.product_id].slice(0, 3).map((hist, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-[10px]">
+                                  <span className="text-slate-600 truncate max-w-[120px]" title={hist.supplier_name}>{hist.supplier_name}</span>
+                                  <span className={`font-bold ${idx === 0 ? 'text-emerald-600' : 'text-slate-500'}`}>KES {hist.unit_cost}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-2">
                           <input type="number" min="1" value={row.quantity_received} onChange={(e) => updateRow(row.id, 'quantity_received', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0" />

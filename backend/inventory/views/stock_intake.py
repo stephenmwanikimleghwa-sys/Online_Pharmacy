@@ -8,6 +8,7 @@ from django.utils import timezone
 from ..models.stock_intake import StockIntake
 from ..serializers.stock_intake import StockIntakeSerializer, StockIntakeDetailSerializer
 from config.api_responses import ApiErrorCode, api_error, api_success
+from users.utils import log_activity
 
 
 class StockIntakeViewSet(viewsets.ModelViewSet):
@@ -213,6 +214,22 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                     intake._skip_credit = True
                     intake.save()
                     intake_records.append(intake.id)
+                    
+                    # Log activity
+                    log_activity(
+                        user=request.user,
+                        event_type='PRODUCT_RESTOCKED',
+                        branch=branch,
+                        ip_address=request.META.get('REMOTE_ADDR'),
+                        details_dict={
+                            'product_id': product.id,
+                            'product_name': product.name,
+                            'quantity_received': quantity_received,
+                            'supplier': supplier.name,
+                            'invoice_number': invoice_number,
+                            'intake_id': intake.id
+                        }
+                    )
 
                 # Single credit update
                 if payment_status in ['CREDIT', 'PARTIAL'] and total_invoice_cost > 0:
@@ -241,6 +258,38 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                 ApiErrorCode.VALIDATION_ERROR,
                 str(e) or "Stock intake could not be completed.",
             )
+
+    @action(detail=False, methods=['get'])
+    def supplier_history(self, request):
+        """Get supplier history and prices for a specific product."""
+        product_id = request.query_params.get('product_id')
+        if not product_id:
+            return Response([])
+
+        queryset = self.get_queryset().filter(product_id=product_id)
+        
+        # Group by supplier and get the most recent price and date
+        history = {}
+        for record in queryset:
+            supplier_id = record.supplier.id if record.supplier else None
+            supplier_name = record.supplier.name if record.supplier else "Unknown"
+            
+            if not supplier_id:
+                continue
+
+            if supplier_id not in history or record.received_date > history[supplier_id]['last_received_date']:
+                history[supplier_id] = {
+                    'supplier_id': supplier_id,
+                    'supplier_name': supplier_name,
+                    'unit_cost': float(record.unit_cost),
+                    'last_received_date': record.received_date,
+                    'quantity': record.quantity_received
+                }
+
+        # Sort by most recent first
+        history_list = list(history.values())
+        history_list.sort(key=lambda x: x['last_received_date'], reverse=True)
+        return Response(history_list)
 
     @action(detail=False, methods=['get'])
     def by_supplier(self, request):

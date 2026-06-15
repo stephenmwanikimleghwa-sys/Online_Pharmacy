@@ -537,7 +537,12 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
               >
                 <div className="flex justify-between gap-2">
                   <span className="font-semibold text-sm">{product.name}</span>
-                  <span className="text-sm font-bold text-primary">{fmt(price)}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-bold text-primary">{fmt(price)}</span>
+                    {(user?.role === 'admin' || user?.role === 'pharmacist' || user?.is_superuser) && product.wholesale_price && (
+                      <span className="text-[10px] text-slate-400 font-medium">WSP: {fmt(product.wholesale_price)}</span>
+                    )}
+                  </div>
                 </div>
                 <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
                   Stock: {qty}

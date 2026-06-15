@@ -20,6 +20,7 @@ from django.db.models.query import QuerySet
 from typing import List, Any
 import logging
 from utils.response import api_response
+from users.utils import log_activity
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,19 @@ class ProductListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        
+        # Log activity
+        log_activity(
+            user=request.user,
+            event_type='PRODUCT_CREATED',
+            branch=getattr(request.user, 'branch', None),
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={
+                'product_id': serializer.instance.id,
+                'product_name': serializer.instance.name
+            }
+        )
+
         headers = self.get_success_headers(serializer.data)
         return api_response(
             data=serializer.data, 
@@ -129,10 +143,36 @@ class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        
+        # Log activity
+        log_activity(
+            user=request.user,
+            event_type='PRODUCT_EDITED',
+            branch=getattr(request.user, 'branch', None),
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={
+                'product_id': instance.id,
+                'product_name': instance.name
+            }
+        )
+
         return api_response(data=serializer.data, message="Product updated successfully")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Log activity
+        log_activity(
+            user=request.user,
+            event_type='PRODUCT_DELETED',
+            branch=getattr(request.user, 'branch', None),
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={
+                'product_id': instance.id,
+                'product_name': instance.name
+            }
+        )
+
         self.perform_destroy(instance)
         return api_response(message="Product deleted successfully", status_code=status.HTTP_204_NO_CONTENT)
 
