@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
-import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const DOSAGE_FORMS = [
   { value: 'tablet', label: 'Tablet' },
@@ -31,6 +31,148 @@ const EMPTY_ROW = () => ({
   expiry_date: '',
   manufacturer: '',
 });
+
+// Debounce helper
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = React.useState(value);
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+const NameAutocompleteCell = ({ row, updateRow, hasError, errorMsg }) => {
+  const [nameSuggestions, setNameSuggestions] = React.useState([]);
+  const [showSuggestions, setShowSuggestions] = React.useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = React.useState(false);
+  const [duplicateMatch, setDuplicateMatch] = React.useState(null);
+  
+  const inputRef = React.useRef(null);
+  const suggestionsRef = React.useRef(null);
+  
+  const debouncedName = useDebounce(row.name, 300);
+
+  React.useEffect(() => {
+    const query = debouncedName?.trim();
+    if (!query || query.length < 2) {
+      setNameSuggestions([]);
+      setDuplicateMatch(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingSuggestions(true);
+    api.get('/products/', { params: { context: 'inventory', search: query, page_size: 8 } })
+      .then(res => {
+        if (cancelled) return;
+        const results = res.data?.data ?? res.data?.results ?? res.data ?? [];
+        setNameSuggestions(Array.isArray(results) ? results.slice(0, 8) : []);
+
+        const exact = results.find(p => p.name?.toLowerCase() === query.toLowerCase());
+        setDuplicateMatch(exact ?? null);
+        setShowSuggestions(results.length > 0);
+      })
+      .catch(() => { if (!cancelled) setNameSuggestions([]); })
+      .finally(() => { if (!cancelled) setLoadingSuggestions(false); });
+
+    return () => { cancelled = true; };
+  }, [debouncedName]);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (
+        inputRef.current && !inputRef.current.contains(e.target) &&
+        suggestionsRef.current && !suggestionsRef.current.contains(e.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selectSuggestion = (product) => {
+    updateRow(row.id, 'name', product.name);
+    if (!row.category && product.category) updateRow(row.id, 'category', product.category);
+    if (!row.dosage_form && product.dosage_form) updateRow(row.id, 'dosage_form', product.dosage_form);
+    if (!row.manufacturer && product.manufacturer) updateRow(row.id, 'manufacturer', product.manufacturer);
+    setDuplicateMatch(product);
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="relative pb-4">
+      <input
+        ref={inputRef}
+        type="text"
+        value={row.name}
+        onChange={(e) => {
+          updateRow(row.id, 'name', e.target.value);
+          setDuplicateMatch(null);
+          setShowSuggestions(true);
+        }}
+        onFocus={() => { if (nameSuggestions.length > 0) setShowSuggestions(true); }}
+        placeholder="e.g. Paracetamol 500mg"
+        autoComplete="off"
+        className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all ${
+          hasError
+            ? 'border-rose-400 bg-rose-50 ring-rose-500/20 focus:ring-rose-500/30'
+            : duplicateMatch 
+              ? 'border-amber-400 bg-amber-50 ring-amber-500/20 focus:ring-amber-500/30 text-amber-900'
+              : 'border-slate-200 bg-white focus:ring-primary/20 focus:border-indigo-400'
+        }`}
+        title={errorMsg ?? undefined}
+      />
+      {loadingSuggestions && (
+        <div className="absolute right-3 top-[18px] -translate-y-1/2">
+          <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {showSuggestions && nameSuggestions.length > 0 && (
+        <ul
+          ref={suggestionsRef}
+          className="absolute z-[60] left-0 top-[40px] mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto overflow-x-hidden"
+        >
+          {nameSuggestions.map((product) => {
+            const isExact = product.name?.toLowerCase() === row.name?.trim().toLowerCase();
+            return (
+              <li
+                key={product.id}
+                className={`flex flex-col px-3 py-2 cursor-pointer text-xs transition-colors ${
+                  isExact ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-slate-50'
+                }`}
+                onMouseDown={(e) => { e.preventDefault(); selectSuggestion(product); }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`font-semibold truncate ${isExact ? 'text-amber-700' : 'text-slate-800'}`}>
+                    {product.name}
+                  </span>
+                  {isExact && (
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-sm flex-shrink-0">
+                      Exists
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-400 truncate mt-0.5">
+                  {[product.category, product.dosage_form].filter(Boolean).join(' · ')}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {duplicateMatch && (
+        <div className="absolute left-1 bottom-0 text-[9px] font-bold text-amber-600 flex items-center gap-1 whitespace-nowrap">
+          <ExclamationTriangleIcon className="w-3 h-3" /> Already exists
+        </div>
+      )}
+      {hasError && !duplicateMatch && (
+        <p className="text-rose-500 text-[10px] font-bold absolute left-1 bottom-0">{errorMsg}</p>
+      )}
+    </div>
+  );
+};
 
 const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) => {
   const { notify } = useNotification();
@@ -230,16 +372,13 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                     {rows.map((row) => (
                       <tr key={row.id} className="bg-white hover:bg-slate-50/50 transition-colors">
                         {/* Name */}
-                        <td className="px-3 py-2">
-                          {cellInput(row.id, 'name', {
-                            type: 'text',
-                            value: row.name,
-                            onChange: e => updateRow(row.id, 'name', e.target.value),
-                            placeholder: 'e.g. Paracetamol 500mg',
-                          })}
-                          {rowErrors[row.id]?.name && (
-                            <p className="text-rose-500 text-[10px] mt-0.5 font-bold">{rowErrors[row.id].name}</p>
-                          )}
+                        <td className="px-3 py-2 align-top">
+                          <NameAutocompleteCell
+                            row={row}
+                            updateRow={updateRow}
+                            hasError={!!rowErrors[row.id]?.name}
+                            errorMsg={rowErrors[row.id]?.name}
+                          />
                         </td>
 
                         {/* Category */}
