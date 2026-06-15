@@ -11,12 +11,19 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   if (!order) return null;
 
   const items = order.items || [];
+  
   const subtotal = items.reduce(
-    (s, it) => s + Number(it.unit_price) * Number(it.quantity),
+    (s, it) => s + (Number(it.unit_price) || 0) * (Number(it.quantity) || 0),
     0
   );
-  const total = Number(order.total_amount ?? subtotal);
-  const discount = subtotal - total > 0 ? subtotal - total : 0;
+  
+  const totalQuantity = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+  
+  // Total amount from backend or calculated subtotal
+  const total = Number(order.total_amount) || subtotal;
+  
+  // Discount is calculated or from backend
+  const discount = order.discount_amount ? Number(order.discount_amount) : (subtotal - total > 0 ? subtotal - total : 0);
 
   const dateObj = order.created_at ? new Date(order.created_at) : new Date();
   const dateStr = dateObj.toLocaleDateString("en-KE", {
@@ -48,9 +55,9 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
 
   const renderItemRow = (item, idx) => {
     const name = item.product_details?.name || item.product_name || item.name || "Item";
-    const qty = String(item.quantity);
-    const price = fmt(item.unit_price);
-    const tot = fmt(Number(item.unit_price) * Number(item.quantity));
+    const qty = String(Number(item.quantity) || 0);
+    const price = fmt(Number(item.unit_price) || 0);
+    const tot = fmt((Number(item.unit_price) || 0) * (Number(item.quantity) || 0));
     const numCol = String(idx + 1) + ".";
 
     // Right portion: "QTY  PRICE   TOT"
@@ -104,22 +111,18 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
               Branch: {order.branch_name}
             </div>
           )}
-          {(pharmacy?.contact_phone) && (
-            <div className="r-center r-small">
-              Cell: {pharmacy.contact_phone}
-            </div>
-          )}
-          {(pharmacy?.email) && (
-            <div className="r-center r-small">
-              Email: {pharmacy.email}
-            </div>
-          )}
-          {(pharmacy?.address) && (
-            <div className="r-center r-small">{pharmacy.address}</div>
-          )}
-          {(pharmacy?.tagline) && (
-            <div className="r-center r-small">{pharmacy.tagline}</div>
-          )}
+          <div className="r-center r-small">
+            Cell: {pharmacy?.contact_phone || "+254720246981"}
+          </div>
+          <div className="r-center r-small">
+            Email: {pharmacy?.email || "transcountypharm@yahoo.com"}
+          </div>
+          <div className="r-center r-small">
+            {pharmacy?.address || "Modern Building Laini Moja"}
+          </div>
+          <div className="r-center r-small">
+            {pharmacy?.tagline || "Dealers in Human Drugs & Surgical products"}
+          </div>
           <div className="r-dash-solid" />
         </>
       )}
@@ -161,7 +164,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       <div className="r-row r-small">
         <span />
         <span>
-          SUBTOTALS:{" "}
+          SUBTOTAL:{" "}
           <strong>KES {fmt(subtotal)}</strong>
         </span>
       </div>
@@ -180,6 +183,11 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
         </span>
       </div>
       <div className="r-dash" />
+      <div className="r-row r-small" style={{ fontWeight: 700 }}>
+        <span>Total Items Sold:</span>
+        <span>{totalQuantity}</span>
+      </div>
+      <div className="r-dash" />
 
       {/* ── FOOTER ── */}
       <div className="r-row r-small">
@@ -187,6 +195,9 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
         <span>Time: {timeStr}</span>
       </div>
       <div className="r-spacer" />
+      <div className="r-center r-small" style={{ fontStyle: 'italic', marginTop: '4px', marginBottom: '4px' }}>
+        The amount is in KSHS. and VAT inclusive where applicable.
+      </div>
       <div className="r-center r-bold r-small">We Value Your Health</div>
       <div className="r-spacer" />
       <div className="r-center r-small">

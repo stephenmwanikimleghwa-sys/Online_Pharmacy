@@ -66,11 +66,12 @@ const ReceiptModal = ({ order, onClose }) => {
               }
               body {
                 margin: 0;
-                padding: 4mm 3mm;
+                padding: 8mm 3mm 4mm 3mm; /* increased top padding to prevent cutoff */
                 background: #fff;
-                color: #000;
+                color: #000 !important;
                 font-family: 'Courier New', Courier, monospace;
                 font-size: 11px;
+                font-weight: 600; /* Bolder text for clearer thermal print */
                 line-height: 1.4;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;

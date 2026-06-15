@@ -14,7 +14,7 @@ const DispensingLogs = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [reprintOrder, setReprintOrder] = useState(null);
   const [reprintLoading, setReprintLoading] = useState(null); // orderId being loaded
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   useEffect(() => { fetchLogs(); }, [currentPage, searchTerm, dateFilter]);
 
@@ -162,14 +162,16 @@ const DispensingLogs = () => {
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3 items-center">
-                        <button
-                          className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1 disabled:opacity-50"
-                          disabled={reprintLoading === log.id}
-                          onClick={() => handleReprint(log.id)}
-                        >
-                          <PrinterIcon className="w-4 h-4" />
-                          {reprintLoading === log.id ? 'Loading...' : 'Reprint'}
-                        </button>
+                        {user?.role === 'admin' && (
+                          <button
+                            className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1 disabled:opacity-50"
+                            disabled={reprintLoading === log.id}
+                            onClick={() => handleReprint(log.id)}
+                          >
+                            <PrinterIcon className="w-4 h-4" />
+                            {reprintLoading === log.id ? 'Loading...' : 'Reprint'}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
