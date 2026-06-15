@@ -13,7 +13,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   const items = order.items || [];
   
   const subtotal = items.reduce(
-    (s, it) => s + (Number(it.unit_price) || 0) * (Number(it.quantity) || 0),
+    (s, it) => s + (Number(it.price_per_unit || it.unit_price || it.unitPrice) || 0) * (Number(it.quantity) || 0),
     0
   );
   
@@ -25,7 +25,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   // Discount is calculated or from backend
   const discount = order.discount_amount ? Number(order.discount_amount) : (subtotal - total > 0 ? subtotal - total : 0);
 
-  const dateObj = order.created_at ? new Date(order.created_at) : new Date();
+  const dateObj = order.created_at || order.dispensed_at ? new Date(order.created_at || order.dispensed_at) : new Date();
   const dateStr = dateObj.toLocaleDateString("en-KE", {
     day: "2-digit",
     month: "short",
@@ -56,8 +56,9 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   const renderItemRow = (item, idx) => {
     const name = item.product_details?.name || item.product_name || item.name || "Item";
     const qty = String(Number(item.quantity) || 0);
-    const price = fmt(Number(item.unit_price) || 0);
-    const tot = fmt((Number(item.unit_price) || 0) * (Number(item.quantity) || 0));
+    const unitPrice = Number(item.price_per_unit || item.unit_price || item.unitPrice) || 0;
+    const price = fmt(unitPrice);
+    const tot = fmt(unitPrice * (Number(item.quantity) || 0));
     const numCol = String(idx + 1) + ".";
 
     // Right portion: "QTY  PRICE   TOT"

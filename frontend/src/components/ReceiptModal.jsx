@@ -55,10 +55,14 @@ const ReceiptModal = ({ order, onClose }) => {
 
       const doc = iframe.contentWindow.document;
       doc.open();
+      const safeBranch = (order.branch_name || pharmacy?.name || 'Pharmacy').replace(/[^a-zA-Z0-9]/g, '_');
+      const safeDate = new Date(order.created_at || order.dispensed_at || Date.now()).toISOString().split('T')[0];
+      const receiptTitle = `${safeBranch}_Receipt_${order.id || 'NEW'}_${safeDate}`;
+      
       doc.write(`
         <html>
           <head>
-            <title>Receipt - Order #${order.id || ''}</title>
+            <title>${receiptTitle}</title>
             <style>
               @page {
                 size: 80mm auto;

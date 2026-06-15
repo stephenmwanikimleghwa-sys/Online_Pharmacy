@@ -195,7 +195,8 @@ def dispense_otc(request):
                     ApiErrorCode.VALIDATION_ERROR,
                     "A customer is required for credit sales.",
                 )
-            if float(customer.credit_balance) + total_amount > float(customer.credit_limit):
+            credit_limit = getattr(customer, 'credit_limit', float('inf'))
+            if float(customer.credit_balance) + total_amount > float(credit_limit):
                 customer_name = getattr(customer, 'username', None) or str(customer)
                 return api_error(
                     ApiErrorCode.CREDIT_LIMIT_EXCEEDED,
@@ -203,7 +204,7 @@ def dispense_otc(request):
                     details={
                         "customer_name": customer_name,
                         "balance": float(customer.credit_balance),
-                        "credit_limit": float(customer.credit_limit),
+                        "credit_limit": float(credit_limit),
                         "requested_total": total_amount,
                     },
                 )
