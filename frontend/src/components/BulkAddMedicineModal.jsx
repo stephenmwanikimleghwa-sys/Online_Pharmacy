@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
@@ -157,7 +158,7 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
     );
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-6xl bg-white rounded-[2rem] shadow-premium overflow-hidden flex flex-col max-h-[90vh]">
@@ -395,7 +396,8 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

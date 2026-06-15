@@ -634,18 +634,16 @@ if (searchQuery) params.append('search', searchQuery);
 
 
 
-			<ErrorBoundary>
-				<AddMedicineModal
-					isOpen={isModalOpen}
-					onClose={() => setIsModalOpen(false)}
-					isEditMode={isEditMode}
-					form={form}
-					setForm={setForm}
-					formErrors={formErrors}
-					onSubmit={handleSubmit}
-					categories={categories}
-				/>
-			</ErrorBoundary>
+			<AddMedicineModal
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				isEditMode={isEditMode}
+				form={form}
+				setForm={setForm}
+				formErrors={formErrors}
+				onSubmit={handleSubmit}
+				categories={categories}
+			/>
 
 			<BulkAddMedicineModal
 				isOpen={isBulkModalOpen}

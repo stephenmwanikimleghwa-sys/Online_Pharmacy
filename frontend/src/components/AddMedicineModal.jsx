@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PlusIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { createPortal } from 'react-dom';
 
 export const AddMedicineModal = ({
   isOpen,
@@ -7,7 +8,7 @@ export const AddMedicineModal = ({
   isEditMode,
   form,
   setForm,
-  formErrors,
+  formErrors = {},
   onSubmit,
   categories = []
 }) => {
@@ -18,7 +19,7 @@ export const AddMedicineModal = ({
   const inputBase = (hasError) =>
     `form-input ${hasError ? 'border-rose-300 ring-4 ring-rose-500/5 border-rose-400' : ''}`;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="modal-card bg-white opacity-100 scale-100 rounded-[2.5rem] shadow-premium max-w-3xl w-full overflow-hidden flex flex-col md:flex-row transition-all">
         {/* Visual Panel */}
@@ -319,6 +320,7 @@ export const AddMedicineModal = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
