@@ -355,9 +355,9 @@ const InventoryManagement = () => {
             ) : (
               <div className="overflow-auto max-h-[70vh]">
                 <table className="min-w-full text-sm">
-                  <thead className="sticky top-0 z-20" style={{ background: 'var(--bg-card)' }}>
+                  <thead className="sticky top-0 z-20" style={{ background: 'var(--bg-primary)' }}>
                     <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                      <th className="text-left px-3 py-3 font-bold sticky left-0 z-30" style={{ background: 'var(--bg-card)' }}>Product</th>
+                      <th className="text-left px-3 py-3 font-bold sticky left-0 z-30" style={{ background: 'var(--bg-primary)' }}>Product</th>
                       <th className="text-left px-3 py-3 font-bold text-xs">Category</th>
                       <th className="text-left px-3 py-3 font-bold text-xs">Dept</th>
                       <th className="text-right px-3 py-3 font-bold text-xs">BP</th>
@@ -382,7 +382,7 @@ const InventoryManagement = () => {
                       const expSoon = item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry';
                       return (
                         <tr key={item.id} className="border-b hover:bg-primary/5 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
-                          <td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors ${out ? 'text-slate-400' : ''}`} style={{ background: 'var(--bg-card)' }}>
+                          <td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors ${out ? 'text-slate-400' : ''}`} style={{ background: 'var(--bg-primary)' }}>
                             {item.name}
                           </td>
                           <td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">
