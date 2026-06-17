@@ -403,8 +403,9 @@ class BranchStock(models.Model):
         max_digits=15,
         decimal_places=2,
         default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
         verbose_name="Stock Quantity",
-        help_text="Current stock level at this branch"
+        help_text="Current stock level at this branch (cannot be negative)"
     )
     reorder_level = models.DecimalField(
         max_digits=15,
@@ -424,6 +425,16 @@ class BranchStock(models.Model):
             models.Index(fields=['product', 'branch']),
             models.Index(fields=['quantity']),
         ]
+
+    def save(self, *args, **kwargs):
+        """Enforce non-negative stock quantity."""
+        from decimal import Decimal
+        if self.quantity < Decimal('0'):
+            raise ValueError(
+                f"Stock for '{self.product.name}' at '{self.branch.name}' cannot go below 0. "
+                f"Attempted to set quantity to {self.quantity}."
+            )
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product.name} @ {self.branch.name}: {self.quantity}"

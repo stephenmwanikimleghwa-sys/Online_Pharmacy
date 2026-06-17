@@ -51,6 +51,12 @@ class InterBranchTransfer(models.Model):
                     branch=self.source_branch,
                     defaults={'quantity': 0}
                 )
+                if source_stock.quantity < self.quantity:
+                    raise ValueError(
+                        f"Insufficient stock at {self.source_branch.name}: "
+                        f"only {source_stock.quantity} units available, "
+                        f"{self.quantity} requested."
+                    )
                 prev_source = source_stock.quantity
                 source_stock.quantity -= self.quantity
                 source_stock.save()
