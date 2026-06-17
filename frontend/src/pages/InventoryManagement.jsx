@@ -107,7 +107,12 @@ const InventoryManagement = () => {
   });
 
   const getBranchQty = (item, branchName) => {
-    const match = (item.branch_stocks || []).find((b) => b.branch_name === branchName);
+    if (!branchName) return 0;
+    const normalizedTarget = branchName.toUpperCase().replace(/\s+/g, '_');
+    const match = (item.branch_stocks || []).find((b) => {
+      if (!b || !b.branch_name) return false;
+      return b.branch_name.toUpperCase().replace(/\s+/g, '_') === normalizedTarget;
+    });
     return match ? Number(match.quantity || 0) : 0;
   };
 

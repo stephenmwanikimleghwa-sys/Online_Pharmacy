@@ -224,8 +224,8 @@ class StockLog(models.Model):
         related_name="stock_logs",
         verbose_name="Product",
     )
-    previous_quantity = models.PositiveIntegerField(verbose_name="Previous Quantity")
-    new_quantity = models.PositiveIntegerField(verbose_name="New Quantity")
+    previous_quantity = models.IntegerField(verbose_name="Previous Quantity")
+    new_quantity = models.IntegerField(verbose_name="New Quantity")
     change_amount = models.IntegerField(
         verbose_name="Change Amount"
     )  # Positive for add, negative for deduct

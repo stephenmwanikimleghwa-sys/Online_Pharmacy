@@ -32,7 +32,7 @@ export const inventoryService = {
       // Make the request to the inventory list endpoint using the shared api client
       console.log('[Inventory Service] Fetching inventory from list endpoint');
       const response = await api.get('/inventory/list/', {
-        params,
+        params: { ...params, _t: new Date().getTime() },
         skipGlobalErrorNotification: true,
       });
 

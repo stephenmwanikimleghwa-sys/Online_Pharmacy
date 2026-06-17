@@ -17,7 +17,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
   useEffect(() => {
     const loadBranches = async () => {
       try {
-        const res = await api.get('/users/branches/');
+        const res = await api.get('/auth/branches/');
         const data = res.data;
         const list = Array.isArray(data) ? data : (data.results || data.branches || []);
         setBranches(list);
