@@ -147,6 +147,17 @@ class Dispensation(models.Model):
             }
         super().save(*args, **kwargs)
 
+    class Meta:
+        verbose_name = 'Dispensation'
+        verbose_name_plural = 'Dispensations'
+        indexes = [
+            # Used by dashboard: filter(branch=..., dispensed_at__date=today)
+            models.Index(fields=['branch', 'dispensed_at'], name='disp_branch_date_idx'),
+            # Used by date-range reports
+            models.Index(fields=['dispensed_at'], name='disp_date_idx'),
+            # Used by customer history lookups
+            models.Index(fields=['customer'], name='disp_customer_idx'),
+        ]
 class DispensationItem(models.Model):
     dispensation = models.ForeignKey(
         Dispensation,

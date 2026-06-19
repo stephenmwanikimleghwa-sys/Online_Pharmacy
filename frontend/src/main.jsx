@@ -20,3 +20,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </QueryClientProvider>
   </React.StrictMode>,
 );
+
+// Remove the splash screen once React has mounted
+document.getElementById('splash')?.remove();

@@ -13,12 +13,11 @@ class Migration(migrations.Migration):
         ('products', '0022_allow_negative_stock_log_quantities'),
     ]
 
+def drop_pg_constraints(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute("ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_previous_quantity_check;")
+        schema_editor.execute("ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_new_quantity_check;")
+
     operations = [
-        migrations.RunSQL(
-            sql=[
-                "ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_previous_quantity_check;",
-                "ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_new_quantity_check;",
-            ],
-            reverse_sql=migrations.RunSQL.noop,
-        ),
+        migrations.RunPython(drop_pg_constraints, reverse_code=migrations.RunPython.noop),
     ]

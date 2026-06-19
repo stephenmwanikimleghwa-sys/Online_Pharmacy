@@ -3,6 +3,11 @@
 from django.db import migrations, models
 
 
+def drop_pg_constraints(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute("ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_previous_quantity_check;")
+        schema_editor.execute("ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_new_quantity_check;")
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,13 +17,7 @@ class Migration(migrations.Migration):
     operations = [
         # Explicitly drop the PostgreSQL check constraints first
         # (PositiveIntegerField adds a CHECK (value >= 0) constraint that must be dropped manually)
-        migrations.RunSQL(
-            sql=[
-                "ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_previous_quantity_check;",
-                "ALTER TABLE stock_logs DROP CONSTRAINT IF EXISTS stock_logs_new_quantity_check;",
-            ],
-            reverse_sql=migrations.RunSQL.noop,
-        ),
+        migrations.RunPython(drop_pg_constraints, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
             model_name='stocklog',
             name='new_quantity',

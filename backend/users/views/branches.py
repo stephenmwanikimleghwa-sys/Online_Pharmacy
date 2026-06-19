@@ -21,7 +21,12 @@ from config.api_responses import (
 from products.models import Product
 from inventory.models import InterBranchTransfer
 
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+from django.utils.decorators import method_decorator
 
+@method_decorator(cache_page(60 * 15), name='get')
+@method_decorator(vary_on_headers('Authorization'), name='get')
 class BranchListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/users/branches/       — List all branches (admin sees all; staff sees their own)

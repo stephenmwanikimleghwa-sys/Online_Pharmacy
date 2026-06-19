@@ -187,6 +187,8 @@ def verify_pharmacist(request, user_id):
 
 @api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
+@cache_page(60 * 15)  # Cache for 15 minutes
+@vary_on_headers('Authorization')  # CRITICAL: Prevent cross-user data leakage
 def profile(request):
     """
     Get or update the authenticated user's profile.

@@ -3,13 +3,14 @@ Dashboard aggregation helpers.
 """
 from datetime import timedelta
 
-from django.db.models import F, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
 from inventory.models import Dispensation, InterBranchTransfer
+from orders.models import Order
 from products.models import BranchStock, Product
 from users.branch_auth import get_allowed_branches
-from users.models import Branch
+from users.models import Branch, User
 
 
 def _branches_for_admin(user):
@@ -22,59 +23,86 @@ def _branches_for_admin(user):
 
 def build_global_overview(user):
     today = timezone.now().date()
+    branches_qs = list(_branches_for_admin(user))
+    branch_ids = [b.id for b in branches_qs]
+
+    # Single bulk query: today's dispensation count + revenue per branch
+    disp_map = {
+        d['branch_id']: d
+        for d in Dispensation.objects
+        .filter(branch_id__in=branch_ids, dispensed_at__date=today)
+        .values('branch_id')
+        .annotate(count=Count('id'), revenue=Sum('total_amount'))
+    }
+
+    # Single bulk query: today's order count + revenue per branch
+    order_map = {
+        o['branch_id']: o
+        for o in Order.objects
+        .filter(branch_id__in=branch_ids, created_at__date=today)
+        .values('branch_id')
+        .annotate(count=Count('id'), revenue=Sum('total_amount'))
+    }
+
+    # Single bulk query: low stock count per branch
+    low_stock_map = {
+        ls['branch_id']: ls['count']
+        for ls in BranchStock.objects
+        .filter(branch_id__in=branch_ids, quantity__lte=F('reorder_level'), quantity__gt=0)
+        .values('branch_id')
+        .annotate(count=Count('id'))
+    }
+
+    # Single bulk query: products-in-stock count per branch
+    products_map = {
+        p['branch_id']: p['count']
+        for p in BranchStock.objects
+        .filter(branch_id__in=branch_ids, quantity__gt=0)
+        .values('branch_id')
+        .annotate(count=Count('id'))
+    }
+
     branches = []
     total_revenue = 0.0
     total_sales = 0
     total_low_stock = 0
 
-    for branch in _branches_for_admin(user):
-        dispensations = Dispensation.objects.filter(branch=branch)
-        today_disp_qs = dispensations.filter(dispensed_at__date=today)
-        
-        from orders.models import Order
-        orders = Order.objects.filter(branch=branch)
-        today_orders_qs = orders.filter(created_at__date=today)
-        
-        sales_count = today_disp_qs.count() + today_orders_qs.count()
-        
-        disp_rev = today_disp_qs.aggregate(total=Sum("total_amount"))["total"] or 0
-        order_rev = today_orders_qs.aggregate(total=Sum("total_amount"))["total"] or 0
-        revenue = disp_rev + order_rev
-        low_stock = BranchStock.objects.filter(
-            branch=branch,
-            quantity__lte=F("reorder_level"),
-            quantity__gt=0,
-        ).count()
-        products_count = BranchStock.objects.filter(branch=branch, quantity__gt=0).count()
+    for branch in branches_qs:
+        bid = branch.id
+        d = disp_map.get(bid, {})
+        o = order_map.get(bid, {})
+        sales_count = (d.get('count') or 0) + (o.get('count') or 0)
+        revenue_f = float(d.get('revenue') or 0) + float(o.get('revenue') or 0)
+        low_stock = low_stock_map.get(bid, 0)
+        products_count = products_map.get(bid, 0)
 
-        revenue_f = float(revenue)
-        branches.append(
-            {
-                "id": branch.id,
-                "name": branch.name,
-                "type": branch.branch_type,
-                "products_count": products_count,
-                "low_stock_count": low_stock,
-                "today_sales_count": sales_count,
-                "today_revenue": revenue_f,
-            }
-        )
+        branches.append({
+            "id": bid,
+            "name": branch.name,
+            "type": branch.branch_type,
+            "products_count": products_count,
+            "low_stock_count": low_stock,
+            "today_sales_count": sales_count,
+            "today_revenue": revenue_f,
+        })
         total_revenue += revenue_f
         total_sales += sales_count
         total_low_stock += low_stock
 
-    from users.models import User
-    from datetime import timedelta
-    active_users = []
+    # Single query for recently active users
     threshold = timezone.now() - timedelta(minutes=15)
-    for u in User.objects.filter(is_active=True, last_activity__gte=threshold).select_related('branch'):
-        active_users.append({
+    active_users = [
+        {
             "id": u.id,
             "username": u.username,
             "role": u.role,
             "branch": u.branch.name if u.branch else None,
             "last_activity": u.last_activity.isoformat() if u.last_activity else None,
-        })
+        }
+        for u in User.objects
+        .filter(is_active=True, last_activity__gte=threshold)
+        .select_related('branch')
+    ]
 
     return {
         "branches": branches,

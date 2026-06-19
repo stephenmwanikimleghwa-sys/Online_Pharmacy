@@ -38,12 +38,17 @@ export default defineConfig(({ mode }) => {
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
+    chunkSizeWarningLimit: 300,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@headlessui/react', '@heroicons/react'],
+          charts: ['recharts'],
+          excel: ['xlsx'],
+          query: ['@tanstack/react-query'],
+          icons: ['@heroicons/react'],
+          ui: ['@headlessui/react'],
           utils: ['axios', 'date-fns']
         }
       }

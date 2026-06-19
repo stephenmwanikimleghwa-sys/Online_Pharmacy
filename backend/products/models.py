@@ -424,6 +424,14 @@ class BranchStock(models.Model):
         indexes = [
             models.Index(fields=['product', 'branch']),
             models.Index(fields=['quantity']),
+            # Used by low-stock dashboard queries: filter(branch=..., quantity__lte=reorder_level)
+            models.Index(fields=['branch', 'quantity'], name='bs_branch_qty_idx'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(quantity__gte=0),
+                name='branch_stock_quantity_non_negative',
+            ),
         ]
 
     def save(self, *args, **kwargs):

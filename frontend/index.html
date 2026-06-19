@@ -15,6 +15,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <div id="splash" style="position:fixed; inset:0; background:var(--bg-gradient, #f5e6ff); display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:sans-serif; z-index:9999;">
+      <div style="width:48px; height:48px; background:linear-gradient(135deg, #7c3aed, #c026d3); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:16px; margin-bottom:16px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);">
+        TP
+      </div>
+      <p style="color:#4a0e72; font-size:14px; margin:0 0 16px; font-weight: 500;">
+        Transcounty Pharmacy
+      </p>
+      <div style="width:120px; height:3px; background:rgba(124, 58, 237, 0.1); border-radius:2px; overflow:hidden;">
+        <div id="splash-bar" style="height:100%; width:30%; background:#7c3aed; border-radius:2px; animation:splashload 1.5s ease-in-out infinite;"></div>
+      </div>
+    </div>
+    <style>
+      @keyframes splashload {
+        0%{transform:translateX(-200%)}
+        100%{transform:translateX(400%)}
+      }
+    </style>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
