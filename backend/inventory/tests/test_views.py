@@ -7,6 +7,7 @@ from products.models import Product
 from inventory.models.restock import RestockRequest
 from inventory.models.stock_intake import StockIntake
 from inventory.models.dispensing import Prescription
+from inventory.models.batch import Batch
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
@@ -69,6 +70,42 @@ class InventoryViewTest(TestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Insufficient stock', str(response.data.get('error', '')))
+
+    def test_dispense_otc_uses_earliest_expiry_batch_first(self):
+        supplier = Supplier.objects.create(name="Batch Supplier", email="batch@supplier.com")
+        earlier_date = (timezone.now().date() + timedelta(days=10))
+        later_date = (timezone.now().date() + timedelta(days=30))
+
+        batch_1 = Batch.objects.create(
+            product=self.product,
+            batch_number="BATCH-001",
+            supplier=supplier,
+            quantity=5,
+            expiry_date=earlier_date,
+        )
+        batch_2 = Batch.objects.create(
+            product=self.product,
+            batch_number="BATCH-002",
+            supplier=supplier,
+            quantity=7,
+            expiry_date=later_date,
+        )
+
+        self.client.force_authenticate(user=self.pharmacist)
+        url = reverse('inventory:dispense-otc')
+        data = {
+            'items': [
+                {'product_id': self.product.id, 'quantity': 9}
+            ]
+        }
+
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        batch_1.refresh_from_db()
+        batch_2.refresh_from_db()
+        self.assertEqual(batch_1.quantity, 0)
+        self.assertEqual(batch_2.quantity, 3)
 
     def test_restock_request_flow(self):
         """Test creating, approving, and completing a restock request"""

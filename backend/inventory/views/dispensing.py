@@ -16,7 +16,8 @@ from ..models.dispensing import (
     Dispensation,
     DispensationItem
 )
-from products.models import Product
+from ..models.batch import Batch
+from products.models import Product, BranchStock
 
 from ..serializers.dispensing import (
     PrescriptionSerializer,
@@ -151,40 +152,78 @@ def dispense_otc(request):
         if customer_id:
             customer = get_object_or_404(User, pk=customer_id)
             
-        from products.models import BranchStock, StockLog
+        from products.models import BranchStock
         from inventory.models.finance import CashFlow
         
         total_amount = 0
         products_to_dispense = []
         
-        # Pre-check stock and calculate total
+        # Pre-check stock and calculate total.
+        # Prefer batch-level FEFO availability when batch records exist,
+        # but fall back to aggregate branch stock for legacy data.
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
             branch_stock, _ = BranchStock.objects.get_or_create(
                 product=product, branch=active_branch, defaults={'quantity': 0, 'reorder_level': 0}
             )
-            available = branch_stock.quantity
-            if available < item['quantity']:
-                return api_error(
-                    ApiErrorCode.INSUFFICIENT_STOCK,
-                    f"{product.name} only has {available} units available at {active_branch.name}.",
-                    details={
-                        "product_name": product.name,
-                        "available": available,
-                        "requested": item['quantity'],
-                        "branch": active_branch.name,
-                    },
-                )
-            
+
+            requested_quantity = item['quantity']
+            batch_allocations = []
+            batch_queryset = Batch.objects.filter(
+                product=product,
+                is_active=True,
+                quantity__gt=0,
+            ).order_by('expiry_date', 'id')
+
+            if batch_queryset.exists():
+                remaining = requested_quantity
+                for batch in batch_queryset:
+                    if remaining <= 0:
+                        break
+                    if batch.quantity <= 0:
+                        continue
+                    consume_qty = min(batch.quantity, remaining)
+                    batch_allocations.append({
+                        'batch': batch,
+                        'quantity': consume_qty,
+                    })
+                    remaining -= consume_qty
+
+                if remaining > 0:
+                    return api_error(
+                        ApiErrorCode.INSUFFICIENT_STOCK,
+                        f"{product.name} does not have enough stock available by expiry date at {active_branch.name}.",
+                        details={
+                            "product_name": product.name,
+                            "requested": requested_quantity,
+                            "branch": active_branch.name,
+                        },
+                    )
+                available = requested_quantity
+            else:
+                available = branch_stock.quantity
+                if available < requested_quantity:
+                    return api_error(
+                        ApiErrorCode.INSUFFICIENT_STOCK,
+                        f"{product.name} only has {available} units available at {active_branch.name}.",
+                        details={
+                            "product_name": product.name,
+                            "available": available,
+                            "requested": requested_quantity,
+                            "branch": active_branch.name,
+                        },
+                    )
+
             price = product.wholesale_price if pricing_tier == 'WHOLESALE' and product.wholesale_price else product.price
-            item_total = float(price) * item['quantity']
+            item_total = float(price) * requested_quantity
             total_amount += item_total
             products_to_dispense.append({
                 'product': product,
                 'branch_stock': branch_stock,
-                'quantity': item['quantity'],
+                'quantity': requested_quantity,
                 'price': price,
-                'item_total': item_total
+                'item_total': item_total,
+                'batch_allocations': batch_allocations,
             })
 
         total_amount -= float(discount)
@@ -225,31 +264,34 @@ def dispense_otc(request):
         for p_data in products_to_dispense:
             product = p_data['product']
             quantity = p_data['quantity']
-            branch_stock = p_data['branch_stock']
-            
-            DispensationItem.objects.create(
-                dispensation=dispensation,
-                product=product,
-                quantity=quantity,
-                price_per_unit=p_data['price'],
-                total_price=p_data['item_total'],
-                expiry_date=product.expiry_date
-            )
-            
-            prev_qty = branch_stock.quantity
-            branch_stock.quantity -= quantity
-            branch_stock.save(update_fields=['quantity'])
-            
-            StockLog.objects.create(
-                product=product,
-                branch=active_branch,
-                logged_by=request.user,
-                change_type='sale',
-                change_amount=-quantity,
-                previous_quantity=prev_qty,
-                new_quantity=branch_stock.quantity,
-                reason=f"Dispensation #{dispensation.id}"
-            )
+            batch_allocations = p_data.get('batch_allocations', [])
+
+            if batch_allocations:
+                for batch_info in batch_allocations:
+                    batch = batch_info['batch']
+                    batch_quantity = batch_info['quantity']
+                    if batch_quantity <= 0:
+                        continue
+                    DispensationItem.objects.create(
+                        dispensation=dispensation,
+                        product=product,
+                        quantity=batch_quantity,
+                        price_per_unit=p_data['price'],
+                        total_price=float(p_data['price']) * batch_quantity,
+                        batch_number=batch.batch_number,
+                        expiry_date=batch.expiry_date,
+                    )
+                    batch.quantity -= batch_quantity
+                    batch.save(update_fields=['quantity'])
+            else:
+                DispensationItem.objects.create(
+                    dispensation=dispensation,
+                    product=product,
+                    quantity=quantity,
+                    price_per_unit=p_data['price'],
+                    total_price=p_data['item_total'],
+                    expiry_date=product.expiry_date,
+                )
 
         if payment_mode == 'CREDIT':
             from users.models import CustomerDebtTransaction
