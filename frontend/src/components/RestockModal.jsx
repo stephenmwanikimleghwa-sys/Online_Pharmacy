@@ -11,6 +11,9 @@ const RestockModal = ({ item, onClose, onRestock }) => {
   const [reason, setReason] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [branches, setBranches] = useState([]);
+  const [supplierId, setSupplierId] = useState('');
+  const [suppliers, setSuppliers] = useState([]);
+  const [expiryDate, setExpiryDate] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Load branches from API
@@ -39,7 +42,20 @@ const RestockModal = ({ item, onClose, onRestock }) => {
         if (user?.branch?.id) setSelectedBranch(String(user.branch.id));
       }
     };
+
+    const loadSuppliers = async () => {
+      try {
+        const res = await api.get('/inventory/suppliers/');
+        const data = res.data;
+        const list = Array.isArray(data) ? data : (data.results || data.suppliers || []);
+        setSuppliers(list);
+      } catch (err) {
+        setSuppliers([]);
+      }
+    };
+
     loadBranches();
+    loadSuppliers();
   }, [user]);
 
   const handleSubmit = async (e) => {
@@ -56,7 +72,16 @@ const RestockModal = ({ item, onClose, onRestock }) => {
 
     setLoading(true);
     try {
-      await onRestock(item.id, qty, reason, parseInt(selectedBranch, 10));
+      await onRestock(
+        item.id,
+        qty,
+        reason,
+        parseInt(selectedBranch, 10),
+        {
+          supplier_id: supplierId || undefined,
+          expiry_date: expiryDate || undefined,
+        }
+      );
       onClose();
     } catch (error) {
       console.error('Error restocking item:', error);
@@ -92,6 +117,36 @@ const RestockModal = ({ item, onClose, onRestock }) => {
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
+          </div>
+
+          {/* Supplier */}
+          <div className="mb-6">
+            <label className="form-label">
+              Supplier (optional)
+            </label>
+            <select
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              className="form-input"
+            >
+              <option value="">Select Supplier</option>
+              {suppliers.map(supplier => (
+                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Expiry Date */}
+          <div className="mb-6">
+            <label className="form-label">
+              Expiry date (optional)
+            </label>
+            <input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              className="form-input"
+            />
           </div>
 
           {/* Quantity */}

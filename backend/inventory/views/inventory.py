@@ -15,6 +15,7 @@ from users.models import Branch
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
 from config.api_responses import ApiErrorCode, api_error, api_validation_error
+from ..models.stock_intake import StockIntake
 
 @api_view(["GET"])
 @permission_classes([IsPharmacistOrAdmin])
@@ -290,6 +291,8 @@ def restock_inventory(request, pk):
     quantity_raw = request.data.get("quantity")
     reason = request.data.get("reason", "Restock")
     branch_id = request.data.get("branch_id")
+    supplier_id_raw = request.data.get("supplier_id")
+    expiry_date_raw = request.data.get("expiry_date")
 
     try:
         quantity = int(quantity_raw)
@@ -306,7 +309,6 @@ def restock_inventory(request, pk):
         except (TypeError, ValueError, OverflowError):
             return api_validation_error("Please select a valid branch before adjusting stock.")
 
-        from users.models import Branch
         branch = Branch.objects.filter(pk=branch_id).first()
         if not branch:
             return api_error(
@@ -323,27 +325,71 @@ def restock_inventory(request, pk):
             "Please select which branch you are working at before adjusting stock.",
         )
 
+    supplier = None
+    if supplier_id_raw not in (None, ""):
+        try:
+            supplier_id = int(supplier_id_raw)
+        except (TypeError, ValueError, OverflowError):
+            return api_validation_error("Please select a valid supplier before adjusting stock.")
+        from inventory.models.supplier import Supplier
+        supplier = Supplier.objects.filter(pk=supplier_id).first()
+        if not supplier:
+            return api_error(
+                ApiErrorCode.SUPPLIER_NOT_FOUND,
+                "The selected supplier could not be found.",
+                details={"supplier_id": supplier_id},
+            )
+
     try:
         with transaction.atomic():
-            branch_stock, _ = BranchStock.objects.get_or_create(
-                product=product,
-                branch=branch,
-                defaults={'quantity': 0}
-            )
-            previous_quantity = branch_stock.quantity
-            branch_stock.quantity += quantity
-            branch_stock.save()
+            expiry_date = None
+            if expiry_date_raw:
+                from datetime import datetime
+                try:
+                    expiry_date = datetime.strptime(expiry_date_raw, "%Y-%m-%d").date()
+                except (TypeError, ValueError):
+                    return api_validation_error("Please provide a valid expiry date.")
 
-            StockLog.objects.create(
-                product=product,
-                branch=branch,
-                previous_quantity=previous_quantity,
-                new_quantity=branch_stock.quantity,
-                change_amount=quantity,
-                change_type="restock",
-                reason=reason,
-                logged_by=request.user,
-            )
+            if supplier is not None:
+                intake = StockIntake(
+                    product=product,
+                    branch=branch,
+                    supplier=supplier,
+                    quantity_received=quantity,
+                    unit_cost=0,
+                    expiry_date=expiry_date,
+                    received_by=request.user,
+                    notes=reason,
+                    payment_status='PAID'
+                )
+                intake._skip_credit = True
+                intake.save()
+            else:
+                branch_stock, _ = BranchStock.objects.get_or_create(
+                    product=product,
+                    branch=branch,
+                    defaults={'quantity': 0}
+                )
+                previous_quantity = branch_stock.quantity
+                branch_stock.quantity += quantity
+                branch_stock.save()
+
+                if expiry_date and (
+                    product.expiry_date is None or expiry_date < product.expiry_date
+                ):
+                    product.expiry_date = expiry_date
+                    product.save(update_fields=['expiry_date'])
+
+                StockLog.objects.create(
+                    product=product,
+                    branch=branch,
+                    previous_quantity=previous_quantity,
+                    new_quantity=branch_stock.quantity,
+                    change_amount=quantity,
+                    change_type="restock",
+                    reason=reason,
+                    logged_by=request.user,
+                )
 
     except Exception as e:
         import traceback

@@ -80,9 +80,9 @@ const InventoryManagement = () => {
     }
   };
 
-  const handleRestock = async (itemId, quantity, reason, branchId) => {
+  const handleRestock = async (itemId, quantity, reason, branchId, options = {}) => {
     try {
-      await inventoryService.restockInventory(itemId, quantity, reason, branchId);
+      await inventoryService.restockInventory(itemId, quantity, reason, branchId, options);
       notify.success('Stock Updated', 'Inventory levels have been updated for this product.');
       fetchInventory();
     } catch (error) {

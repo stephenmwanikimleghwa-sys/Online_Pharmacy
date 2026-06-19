@@ -88,8 +88,12 @@ export const inventoryService = {
   },
 
   // Restock inventory
-  restockInventory: (itemId, quantity, reason = "Restock", branchId = null) => {
-    const payload = { quantity, reason };
+  restockInventory: (itemId, quantity, reason = "Restock", branchId = null, options = {}) => {
+    const payload = {
+      quantity,
+      reason,
+      ...options,
+    };
     if (branchId) payload.branch_id = branchId;
     return api.post(`/inventory/${itemId}/restock/`, payload);
   },
