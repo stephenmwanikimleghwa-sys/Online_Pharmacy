@@ -4,6 +4,16 @@ import { XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import ReceiptPrintout from "./ReceiptPrintout";
 import api from "../services/api";
 
+const normalizePharmacyData = (payload) => {
+  if (Array.isArray(payload)) return payload[0] || null;
+  if (payload?.results && Array.isArray(payload.results)) return payload.results[0] || null;
+  if (payload?.data && Array.isArray(payload.data)) return payload.data[0] || null;
+  if (payload?.data && payload.data && typeof payload.data === "object") {
+    return payload.data;
+  }
+  return payload && typeof payload === "object" ? payload : null;
+};
+
 /**
  * ReceiptModal
  * Shows a receipt preview with two print buttons:
@@ -23,10 +33,8 @@ const ReceiptModal = ({ order, onClose }) => {
     api
       .get("/auth/pharmacies/")
       .then((res) => {
-        const d = res.data;
-        setPharmacy(
-          Array.isArray(d) ? d[0] : d?.results?.[0] ?? d
-        );
+        const normalized = normalizePharmacyData(res.data);
+        setPharmacy(normalized && typeof normalized === "object" ? normalized : null);
       })
       .catch(() => setPharmacy(null));
   }, []);
@@ -55,7 +63,7 @@ const ReceiptModal = ({ order, onClose }) => {
 
       const doc = iframe.contentWindow.document;
       doc.open();
-      const safeBranch = (order.branch_name || pharmacy?.name || 'Pharmacy').replace(/[^a-zA-Z0-9]/g, '_');
+      const safeBranch = (order.branch_name || 'Transcounty Main').replace(/[^a-zA-Z0-9]/g, '_');
       const safeDate = new Date(order.created_at || order.dispensed_at || Date.now()).toISOString().split('T')[0];
       const receiptTitle = `${safeBranch}_Receipt_${order.id || 'NEW'}_${safeDate}`;
       

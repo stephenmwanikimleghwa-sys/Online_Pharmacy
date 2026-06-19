@@ -5,6 +5,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from products.models import Product
 from orders.models import Order, OrderItem, OrderStatusChoices
+from users.models import Pharmacy, Branch
 from decimal import Decimal
 
 User = get_user_model()
@@ -111,6 +112,39 @@ class OrderViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(Order.objects.first().total_amount, Decimal("10.00"))
+
+    def test_receipt_filename_uses_branch_receipt_and_date(self):
+        """Receipt downloads should use a descriptive branch-based filename."""
+        pharmacy = Pharmacy.objects.create(
+            name="Transcounty Pharmacy",
+            address="Modern Building - Laini Moja Kitale",
+            contact_phone="+254726246981",
+            license_number="LIC-001"
+        )
+        branch = Branch.objects.create(
+            pharmacy=pharmacy,
+            name="Transcounty Main",
+            address="Modern Building - Laini Moja Kitale",
+            contact_phone="+254726246981",
+            license_number="BR-001",
+            is_headquarters=True,
+        )
+        order = Order.objects.create(
+            user=self.pharmacist,
+            branch=branch,
+            total_amount=Decimal("25.00")
+        )
+
+        self.client.force_authenticate(user=self.pharmacist)
+        url = reverse('orders:receipt_pdf', args=[order.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected_filename = (
+            f"transcounty_main_receipt_{order.id}_"
+            f"{order.created_at.strftime('%Y%m%d')}.pdf"
+        )
+        self.assertIn(expected_filename, response['Content-Disposition'])
 
     def test_update_order_status(self):
         """Test updating order status by pharmacist"""

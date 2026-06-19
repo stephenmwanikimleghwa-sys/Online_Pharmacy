@@ -93,16 +93,19 @@ class PDFGenerator:
         elements = []
 
         # Header
-        elements.append(Paragraph("TRANSCOUNTY PHARMACY", self.styles['ThermalHeader']))
-        
-        # Branch could be fetched if DispensingLog exists, but fallback to generic
-        branch_name = "Main Branch"
-        if hasattr(order, 'dispensing_logs') and order.dispensing_logs.exists():
-            # Attempt to pull branch from related stock log or assume from context
-            branch_name = "Pharmacy Branch"
-            
-        elements.append(Paragraph(branch_name, self.styles['ThermalSubHeader']))
-        elements.append(Paragraph(f"Receipt #{order.id}", self.styles['ThermalSubHeader']))
+        branch = getattr(order, 'branch', None)
+        branch_name = branch.name if branch and branch.name else "Transcounty Main"
+        branch_phone = getattr(branch, 'contact_phone', None) or "+254726246981"
+        branch_address = getattr(branch, 'address', None) or "Modern Building - Laini Moja Kitale"
+
+        if "transcounty" in branch_name.lower() and "main" in branch_name.lower():
+            branch_phone = "+254726246981"
+            branch_address = "Modern Building - Laini Moja Kitale"
+
+        elements.append(Paragraph(branch_name.upper(), self.styles['ThermalHeader']))
+        elements.append(Paragraph(branch_address, self.styles['ThermalSubHeader']))
+        elements.append(Paragraph(f"Cell: {branch_phone}", self.styles['ThermalSubHeader']))
+        elements.append(Paragraph(f"Receipt No: {order.id}", self.styles['ThermalSubHeader']))
         elements.append(Paragraph("-" * 40, self.styles['ThermalCenter']))
 
         # Meta

@@ -15,6 +15,7 @@ from payments.models import PaymentMethodChoices
 import stripe
 from django.conf import settings
 from django.utils import timezone
+from django.utils.text import slugify
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -730,8 +731,13 @@ def get_receipt_pdf(request, pk):
     
     generator = PDFGenerator()
     pdf_buffer = generator.generate_receipt(order)
-    
-    filename = f"receipt_order_{order.id}.pdf"
+
+    branch_name = order.branch.name if order.branch and order.branch.name else "Transcounty Main"
+    safe_branch_name = slugify(branch_name).replace('-', '_')
+    filename = (
+        f"{safe_branch_name}_receipt_{order.id}_"
+        f"{order.created_at.strftime('%Y%m%d')}.pdf"
+    )
     return FileResponse(
         pdf_buffer,
         as_attachment=True,

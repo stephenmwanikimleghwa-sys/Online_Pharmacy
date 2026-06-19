@@ -10,7 +10,45 @@ import React from "react";
 const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   if (!order) return null;
 
+  const DEFAULT_RECEIPT_DETAILS = {
+    name: "Transcounty Main",
+    phone: "+254726246981",
+    email: "transcountypharm@yahoo.com",
+    address: "Modern Building - Laini Moja Kitale",
+    tagline: "Dealers in Human Drugs & Surgical products",
+  };
+
+  const normalizeText = (value, fallback = "") => {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      return trimmed || fallback;
+    }
+    return value || fallback;
+  };
+
   const items = order.items || [];
+  const displayPharmacy = {
+    name: normalizeText(
+      order?.branch_name || pharmacy?.name,
+      DEFAULT_RECEIPT_DETAILS.name
+    ),
+    phone: normalizeText(
+      order?.branch_contact_phone || pharmacy?.contact_phone,
+      DEFAULT_RECEIPT_DETAILS.phone
+    ),
+    email: normalizeText(
+      order?.branch_email || pharmacy?.email,
+      DEFAULT_RECEIPT_DETAILS.email
+    ),
+    address: normalizeText(
+      order?.branch_address || pharmacy?.address,
+      DEFAULT_RECEIPT_DETAILS.address
+    ),
+    tagline: normalizeText(
+      order?.branch_tagline || pharmacy?.tagline,
+      DEFAULT_RECEIPT_DETAILS.tagline
+    ),
+  };
   
   const subtotal = items.reduce(
     (s, it) => s + (Number(it.price_per_unit || it.unit_price || it.unitPrice) || 0) * (Number(it.quantity) || 0),
@@ -105,24 +143,24 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       {withHeader && (
         <>
           <div className="r-center r-bold" style={{ fontSize: 13 }}>
-            {pharmacy?.name || "TRANSCOUNTY PHARMACY"}
+            {displayPharmacy.name}
           </div>
-          {order?.branch_name && order.branch_name !== pharmacy?.name && (
+          {order?.branch_name && order.branch_name !== displayPharmacy.name && (
             <div className="r-center r-bold" style={{ fontSize: 11, marginTop: '2px' }}>
               Branch: {order.branch_name}
             </div>
           )}
           <div className="r-center r-small">
-            Cell: {pharmacy?.contact_phone || "+254720246981"}
+            Cell: {displayPharmacy.phone}
           </div>
           <div className="r-center r-small">
-            Email: {pharmacy?.email || "transcountypharm@yahoo.com"}
+            Email: {displayPharmacy.email}
           </div>
           <div className="r-center r-small">
-            {pharmacy?.address || "Modern Building Laini Moja"}
+            {displayPharmacy.address}
           </div>
           <div className="r-center r-small">
-            {pharmacy?.tagline || "Dealers in Human Drugs & Surgical products"}
+            {displayPharmacy.tagline}
           </div>
           <div className="r-dash-solid" />
         </>

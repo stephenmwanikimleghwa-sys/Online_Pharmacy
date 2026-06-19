@@ -86,10 +86,16 @@ const reportService = {
             const response = await api.get(`/orders/${orderId}/receipt/`, {
                 responseType: 'blob'
             });
+
+            const contentDisposition = response.headers?.['content-disposition'] ||
+                response.headers?.get?.('content-disposition');
+            const filenameMatch = contentDisposition?.match(/filename="?([^";]+)"?/i);
+            const filename = filenameMatch?.[1] || `receipt_${orderId}.pdf`;
+
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `receipt_order_${orderId}.pdf`);
+            link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
