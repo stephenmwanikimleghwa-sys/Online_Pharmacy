@@ -49,6 +49,8 @@ const ClinicalDashboard = lazy(() => import('./pages/clinical/ClinicalDashboard'
 const ConsultationWorkflow = lazy(() => import('./pages/clinical/ConsultationWorkflow'));
 const ReturnsDashboard = lazy(() => import('./pages/inventory/ReturnsDashboard'));
 import BottomNav from "./components/BottomNav";
+import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
 import Sidebar from "./components/navbar/Sidebar";
 import ScrollToTop from "./components/ScrollToTop";
 import "./App.css";
