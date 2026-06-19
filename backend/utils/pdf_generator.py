@@ -95,14 +95,24 @@ class PDFGenerator:
         # Header
         branch = getattr(order, 'branch', None)
         branch_name = branch.name if branch and branch.name else "Transcounty Main"
+        branch_name_lower = (branch_name or "").lower()
+        is_main_branch_alias = (
+            "transcounty" in branch_name_lower
+            or "st main" in branch_name_lower
+            or "main branch" in branch_name_lower
+            or branch_name_lower == "main"
+            or branch_name_lower.endswith(" main")
+        )
+
+        receipt_branch_name = "TRANSCOUNTY MAIN" if is_main_branch_alias else branch_name.upper()
         branch_phone = getattr(branch, 'contact_phone', None) or "+254726246981"
         branch_address = getattr(branch, 'address', None) or "Modern Building - Laini Moja Kitale"
 
-        if "transcounty" in branch_name.lower() and "main" in branch_name.lower():
+        if is_main_branch_alias:
             branch_phone = "+254726246981"
             branch_address = "Modern Building - Laini Moja Kitale"
 
-        elements.append(Paragraph(branch_name.upper(), self.styles['ThermalHeader']))
+        elements.append(Paragraph(receipt_branch_name, self.styles['ThermalHeader']))
         elements.append(Paragraph(branch_address, self.styles['ThermalSubHeader']))
         elements.append(Paragraph(f"Cell: {branch_phone}", self.styles['ThermalSubHeader']))
         elements.append(Paragraph(f"Receipt No: {order.id}", self.styles['ThermalSubHeader']))

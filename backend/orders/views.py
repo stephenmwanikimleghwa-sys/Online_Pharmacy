@@ -233,9 +233,18 @@ def quick_sale(request):
                 "Sale could not be recorded. Please try again.",
             )
 
+        branch = active_branch
+        pharmacy = getattr(branch, 'pharmacy', None)
         payload = {
             "id": order.id,
             "total_amount": float(total_amount),
+            "created_at": order.created_at.isoformat(),
+            "branch_name": getattr(branch, 'name', None) or "Transcounty Main",
+            "branch_contact_phone": getattr(branch, 'contact_phone', None) or "+254726246981",
+            "branch_address": getattr(branch, 'address', None) or "Modern Building - Laini Moja Kitale",
+            "branch_email": getattr(pharmacy, 'email', None) or "transcountypharm@yahoo.com",
+            "branch_tagline": getattr(pharmacy, 'tagline', None) or "Dealers in Human Drugs & Surgical products",
+            "user_full_name": request.user.get_full_name() or request.user.username,
             "items": [
                 {
                     "product_id": oi.product.id,

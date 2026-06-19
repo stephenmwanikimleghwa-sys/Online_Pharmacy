@@ -41,6 +41,18 @@ class OrderSerializer(serializers.ModelSerializer):
 
     user = serializers.StringRelatedField(read_only=True)
     branch_name = serializers.CharField(source='branch.name', read_only=True)
+    branch_contact_phone = serializers.CharField(
+        source='branch.contact_phone', read_only=True, allow_null=True
+    )
+    branch_address = serializers.CharField(
+        source='branch.address', read_only=True, allow_null=True
+    )
+    branch_email = serializers.CharField(
+        source='branch.pharmacy.email', read_only=True, allow_null=True
+    )
+    branch_tagline = serializers.CharField(
+        source='branch.pharmacy.tagline', read_only=True, allow_null=True
+    )
     payment = serializers.StringRelatedField(read_only=True)
     items = OrderItemSerializer(many=True, read_only=True)
 
@@ -50,6 +62,10 @@ class OrderSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "branch_name",
+            "branch_contact_phone",
+            "branch_address",
+            "branch_email",
+            "branch_tagline",
             "items",
             "total_amount",
             "status",

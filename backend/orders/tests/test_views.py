@@ -5,6 +5,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from products.models import Product
 from orders.models import Order, OrderItem, OrderStatusChoices
+from orders.serializers import OrderSerializer
 from users.models import Pharmacy, Branch
 from decimal import Decimal
 
@@ -145,6 +146,38 @@ class OrderViewTest(TestCase):
             f"{order.created_at.strftime('%Y%m%d')}.pdf"
         )
         self.assertIn(expected_filename, response['Content-Disposition'])
+
+    def test_order_serializer_includes_branch_receipt_details(self):
+        """Order payloads should expose branch receipt metadata for the preview."""
+        pharmacy = Pharmacy.objects.create(
+            name="Transcounty Pharmacy",
+            address="Modern Building - Laini Moja Kitale",
+            contact_phone="+254726246981",
+            email="transcountypharm@yahoo.com",
+            tagline="Dealers in Human Drugs & Surgical products",
+            license_number="LIC-001"
+        )
+        branch = Branch.objects.create(
+            pharmacy=pharmacy,
+            name="ST MAIN",
+            address="Old Address",
+            contact_phone="+254111111111",
+            license_number="BR-001",
+            is_headquarters=True,
+        )
+        order = Order.objects.create(
+            user=self.pharmacist,
+            branch=branch,
+            total_amount=Decimal("25.00")
+        )
+
+        serializer_data = OrderSerializer(order).data
+
+        self.assertEqual(serializer_data['branch_name'], 'ST MAIN')
+        self.assertEqual(serializer_data['branch_contact_phone'], '+254111111111')
+        self.assertEqual(serializer_data['branch_address'], 'Old Address')
+        self.assertEqual(serializer_data['branch_email'], 'transcountypharm@yahoo.com')
+        self.assertEqual(serializer_data['branch_tagline'], 'Dealers in Human Drugs & Surgical products')
 
     def test_update_order_status(self):
         """Test updating order status by pharmacist"""
