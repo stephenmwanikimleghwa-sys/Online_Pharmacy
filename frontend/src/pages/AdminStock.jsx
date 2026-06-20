@@ -133,15 +133,16 @@ const AdminStock = () => {
 			setError('');
 
 			// Build query params - load ALL products (no pagination)
-			const params = new URLSearchParams({
+			const params = {
 				per_page: 99999, // Load all products without pagination limit
-			});
+			};
 
 			// Add filters
-			if (filters.lowStock) params.append('low_stock', 'true');
-			if (filters.outOfStock) params.append('out_of_stock', 'true');
-			if (filters.category) params.append('category', filters.category);
-if (searchQuery) params.append('search', searchQuery);
+			if (filters.lowStock) params.low_stock = 'true';
+			if (filters.outOfStock) params.out_of_stock = 'true';
+			if (filters.category) params.category = filters.category;
+			const trimmedSearchQuery = searchQuery.trim();
+			if (trimmedSearchQuery) params.search = trimmedSearchQuery;
 
 			let products = [];
 			let totalPagesCount = 1;

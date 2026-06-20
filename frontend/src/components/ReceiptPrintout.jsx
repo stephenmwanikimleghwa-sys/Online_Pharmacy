@@ -121,6 +121,10 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     }
     if (currentLine) nameLines.push(currentLine);
 
+    const batch = item.batch_number || item.batch || item.batchNumber || "";
+    const expiryRaw = item.expiry_date || item.expiry || item.expiryDate || null;
+    const expiryFmt = expiryRaw ? new Date(expiryRaw).toLocaleDateString("en-KE", { day: '2-digit', month: 'short', year: 'numeric' }) : "";
+
     return (
       <div key={item.id || idx} style={{ marginBottom: 1 }}>
         {/* First line: No + first name line + QTY PRICE TOT */}
@@ -137,6 +141,13 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
             {l}
           </div>
         ))}
+        {/* Batch and Expiry info line */}
+        <div className="r-row r-small" style={{ marginTop: 2 }}>
+          <span style={{ whiteSpace: "pre" }}>
+            {`Batch: ${batch || '-'}  Exp: ${expiryFmt || '-'}`}
+          </span>
+          <span style={{ whiteSpace: "pre", flexShrink: 0 }} />
+        </div>
       </div>
     );
   };
@@ -190,6 +201,10 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       <div className="r-row" style={{ fontWeight: 700 }}>
         <span style={{ whiteSpace: "pre" }}>{"No. NAME                  "}</span>
         <span style={{ whiteSpace: "pre", flexShrink: 0 }}>{"QTY    PRICE      TOT"}</span>
+      </div>
+      <div className="r-row r-small" style={{ fontWeight: 700 }}>
+        <span style={{ whiteSpace: "pre" }}>{"(Batch / Expiry shown per item)"}</span>
+        <span style={{ whiteSpace: "pre", flexShrink: 0 }} />
       </div>
       <div className="r-dash" />
 

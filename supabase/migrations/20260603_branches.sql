@@ -8,6 +8,6 @@ WHERE NOT EXISTS (SELECT 1 FROM public.pharmacies WHERE name = 'Transcounty');
 INSERT INTO public.branches (pharmacy_id, name, branch_type, address, contact_phone, license_number, is_active, is_headquarters, created_at, updated_at)
 VALUES
   (1, 'TRANSCOUNTY_MAIN', 'CHEMIST', 'Kitale, Laini Moja', '+254720246981', 'BRANCH-MAIN-001', true, true, NOW(), NOW()),
-  (1, 'TRANSCOUNTY_ANNEX', 'CHEMIST', 'Kitale, Bamila Building', '+254720246981', 'BRANCH-ANNEX-001', true, false, NOW(), NOW()),
+  (1, 'TRANSCOUNTY_ANNEX', 'CHEMIST', 'Bamila Building Opp. Total, Kitale', '+254720246981', 'BRANCH-ANNEX-001', true, false, NOW(), NOW()),
   (1, 'PEAKFARM', 'AGROVET', 'Peakfarm, Kitale', '+254720246981', 'BRANCH-PEAK-001', true, false, NOW(), NOW())
 ON CONFLICT(name) DO NOTHING;

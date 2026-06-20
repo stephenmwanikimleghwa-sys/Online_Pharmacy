@@ -29,10 +29,15 @@ export const inventoryService = {
         throw err;
       }
 
+      const normalizedParams =
+        params instanceof URLSearchParams
+          ? Object.fromEntries(params.entries())
+          : params || {};
+
       // Make the request to the inventory list endpoint using the shared api client
       console.log('[Inventory Service] Fetching inventory from list endpoint');
       const response = await api.get('/inventory/list/', {
-        params: { ...params, _t: new Date().getTime() },
+        params: { ...normalizedParams, _t: new Date().getTime() },
         skipGlobalErrorNotification: true,
       });
 

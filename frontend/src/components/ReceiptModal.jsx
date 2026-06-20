@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import ReceiptPrintout from "./ReceiptPrintout";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
 const normalizePharmacyData = (payload) => {
@@ -27,6 +28,17 @@ const ReceiptModal = ({ order, onClose }) => {
   const [pharmacy, setPharmacy] = useState(null);
   const [withHeader, setWithHeader] = useState(true);
   const printRef = useRef(null);
+  const { user } = useAuth();
+  const [printedOnce, setPrintedOnce] = useState(false);
+
+  useEffect(() => {
+    try {
+      const payload = JSON.parse(localStorage.getItem('printed_receipts') || '{}');
+      setPrintedOnce(Boolean(payload[String(order?.id)]));
+    } catch (e) {
+      setPrintedOnce(false);
+    }
+  }, [order]);
 
   /* Fetch pharmacy profile once */
   useEffect(() => {
@@ -47,6 +59,12 @@ const ReceiptModal = ({ order, onClose }) => {
 
   /* ----- print handler ----- */
   const handlePrint = (includeHeader) => {
+    const allowedRoles = ["admin", "pharmacist", "cashier"];
+    const isPrivileged = user && allowedRoles.includes(user.role);
+    if (!isPrivileged && printedOnce) {
+      window.alert('Printing restricted: receipt has already been printed once.');
+      return;
+    }
     setWithHeader(includeHeader);
 
     /* Give React one tick to re-render the hidden printout with correct header */
@@ -113,6 +131,18 @@ const ReceiptModal = ({ order, onClose }) => {
       // Wait for iframe layout then trigger print
       setTimeout(() => {
         iframe.contentWindow.print();
+        // Mark as printed for non-privileged users
+        try {
+          const allowedPrint = (user && ["admin","pharmacist","cashier"].includes(user.role));
+          if (!allowedPrint) {
+            const key = 'printed_receipts';
+            const payload = JSON.parse(localStorage.getItem(key) || "{}");
+            payload[String(order.id)] = true;
+            localStorage.setItem(key, JSON.stringify(payload));
+            setPrintedOnce(true);
+          }
+        } catch (e) {}
+
         setTimeout(() => {
           document.body.removeChild(iframe);
         }, 1000);
@@ -218,24 +248,32 @@ const ReceiptModal = ({ order, onClose }) => {
         <div className="p-4 pt-2 flex flex-col gap-2">
           <button
             onClick={() => handlePrint(true)}
+            disabled={user && !["admin","pharmacist","cashier"].includes(user.role) && printedOnce}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white transition-all"
-            style={{ background: "linear-gradient(135deg,#7c3aed,#c026d3)" }}
+            style={{ background: "linear-gradient(135deg,#7c3aed,#c026d3)", opacity: (user && !["admin","pharmacist","cashier"].includes(user.role) && printedOnce) ? 0.5 : 1 }}
           >
             <PrinterIcon className="h-4 w-4" />
             Print with pharmacy name
           </button>
           <button
             onClick={() => handlePrint(false)}
+            disabled={user && !["admin","pharmacist","cashier"].includes(user.role) && printedOnce}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold border transition-colors text-sm"
             style={{
               borderColor: "var(--border-primary)",
               color: "var(--text-primary)",
               background: "var(--bg-field)",
+              opacity: (user && !["admin","pharmacist","cashier"].includes(user.role) && printedOnce) ? 0.5 : 1
             }}
           >
             <PrinterIcon className="h-4 w-4" />
             Print without pharmacy name
           </button>
+          {user && !["admin","pharmacist","cashier"].includes(user.role) && printedOnce && (
+            <div className="text-xs text-center text-red-600" style={{ marginTop: 6 }}>
+              Receipt already printed once — printing disabled for this user.
+            </div>
+          )}
           <button
             onClick={onClose}
             className="w-full text-xs text-center py-2 rounded-xl transition-colors"
