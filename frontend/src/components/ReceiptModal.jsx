@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import ReceiptPrintout from "./ReceiptPrintout";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 const normalizePharmacyData = (payload) => {

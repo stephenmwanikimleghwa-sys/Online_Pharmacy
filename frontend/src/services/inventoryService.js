@@ -12,7 +12,7 @@ export const inventoryService = {
   },
 
   // Get all inventory items with pagination and filtering
-  getInventory: async (params = {}) => {
+  getInventory: async (params = {}, requestConfig = {}) => {
     try {
       // Check authentication state
       const token = localStorage.getItem("access_token");
@@ -37,6 +37,7 @@ export const inventoryService = {
       // Make the request to the inventory list endpoint using the shared api client
       console.log('[Inventory Service] Fetching inventory from list endpoint');
       const response = await api.get('/inventory/list/', {
+        ...requestConfig,
         params: { ...normalizedParams, _t: new Date().getTime() },
         skipGlobalErrorNotification: true,
       });

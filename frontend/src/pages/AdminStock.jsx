@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -67,6 +67,7 @@ const AdminStock = () => {
 
 	// Removed debounce - instant search as user types
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
+	const requestIdRef = useRef(0);
 
 	const [form, setForm] = useState({
 		name: '',
@@ -124,6 +125,7 @@ const AdminStock = () => {
 	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category]);
 
 	const fetchItems = async (signal) => {
+		const currentRequestId = ++requestIdRef.current;
 		try {
 			// Only show loading spinner on initial page load, not on search/filter
 			if (isInitialLoad) {
@@ -151,7 +153,9 @@ const AdminStock = () => {
 			// Always use the inventory endpoint to get branch-scoped stock
 			try {
 				console.log('[Fetch Debug] Trying inventory endpoint...');
-				const inventoryRes = await inventoryService.getInventory(params);
+				const inventoryRes = await inventoryService.getInventory(params, { signal });
+				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
+
 				const data = inventoryRes.data || {};
 				const payload = data.data || data;
 				
@@ -166,10 +170,12 @@ const AdminStock = () => {
 				}
 				console.log('[Fetch Debug] Inventory endpoint success - Products loaded:', { count: totalItemsCount });
 			} catch (inventoryErr) {
+				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
 				console.error('[Fetch Debug] Inventory endpoint failed:', inventoryErr);
 				throw inventoryErr;
 			}
 
+			if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
 			setItems(products.map(sanitizeItem));
 
 			// Extract unique categories
@@ -177,7 +183,7 @@ const AdminStock = () => {
 			setCategories(uniqueCategories.sort());
 
 		} catch (err) {
-			if (err.name === 'AbortError') return; // Ignore aborted requests
+			if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
 			console.error(err);
 			if (err.response?.status === 401) {
 				setError('Please log in to view inventory');
@@ -188,8 +194,9 @@ const AdminStock = () => {
 				console.error('Inventory fetch failed:', err);
 			}
 		} finally {
-			// Always reset loading state
-			setLoading(false);
+			if (requestIdRef.current === currentRequestId) {
+				setLoading(false);
+			}
 		}
 	};
 
