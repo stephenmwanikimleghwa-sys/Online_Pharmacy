@@ -26,21 +26,45 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     return value || fallback;
   };
 
+  const isPlaceholderValue = (value) => {
+    const text = String(normalizeText(value, "")).toLowerCase();
+    if (!text) return true;
+    return [
+      "123 main st",
+      "123 health street",
+      "123 health street, nairobi",
+      "123 health street, nairobi, kenya",
+      "sample address",
+      "demo address",
+      "placeholder",
+      "n/a",
+      "unknown",
+    ].some((placeholder) => text.includes(placeholder));
+  };
+
+  const safeText = (value, fallback = "") => {
+    const text = normalizeText(value, fallback);
+    if (isPlaceholderValue(text)) {
+      return fallback;
+    }
+    return text || fallback;
+  };
+
   const items = order.items || [];
   const branchName = normalizeText(order?.branch_name, "");
-  const branchAddress = normalizeText(
+  const branchAddress = safeText(
     order?.branch_address || order?.branch?.address || order?.location?.address,
     pharmacy?.address || ""
   );
-  const branchPhone = normalizeText(
+  const branchPhone = safeText(
     order?.branch_contact_phone || order?.branch?.contact_phone || order?.contact_phone,
     pharmacy?.contact_phone || ""
   );
-  const branchEmail = normalizeText(
+  const branchEmail = safeText(
     order?.branch_email || order?.branch?.email || order?.email,
     pharmacy?.email || ""
   );
-  const branchTagline = normalizeText(
+  const branchTagline = safeText(
     order?.branch_tagline || order?.branch?.tagline,
     pharmacy?.tagline || ""
   );

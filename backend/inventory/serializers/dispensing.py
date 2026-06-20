@@ -62,6 +62,24 @@ class DispensationSerializer(serializers.ModelSerializer):
         source='branch.name',
         read_only=True
     )
+    branch_address = serializers.CharField(
+        source='branch.address',
+        read_only=True
+    )
+    branch_contact_phone = serializers.CharField(
+        source='branch.contact_phone',
+        read_only=True
+    )
+    branch_email = serializers.EmailField(
+        source='branch.pharmacy.email',
+        read_only=True,
+        allow_null=True
+    )
+    branch_tagline = serializers.CharField(
+        source='branch.pharmacy.tagline',
+        read_only=True,
+        allow_null=True
+    )
     
     def get_dispensed_by_name(self, obj):
         user = obj.dispensed_by
@@ -80,7 +98,9 @@ class DispensationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dispensation
         fields = [
-            'id', 'sale_type', 'prescription', 'branch_name', 'patient_name', 'customer', 'customer_name',
+            'id', 'sale_type', 'prescription', 'branch_name', 'branch_address',
+            'branch_contact_phone', 'branch_email', 'branch_tagline',
+            'patient_name', 'customer', 'customer_name',
             'dispensed_by', 'dispensed_by_name', 'dispensed_at',
             'total_amount', 'payment_mode', 'pricing_tier', 'discount', 
             'notes', 'shift_info', 'items'
