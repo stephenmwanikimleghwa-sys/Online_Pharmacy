@@ -355,21 +355,26 @@ const InventoryManagement = () => {
               </div>
             ) : (
               <div className="overflow-auto max-h-[70vh]">
-                <table className="min-w-full text-sm">
+                <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
                   <thead className="sticky top-0 z-20" style={{ background: 'var(--bg-primary)' }}>
                     <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                      <th className="text-left px-3 py-3 font-bold sticky left-0 z-30" style={{ background: 'var(--bg-primary)' }}>Product</th>
-                      <th className="text-left px-3 py-3 font-bold text-xs">Category</th>
-                      <th className="text-left px-3 py-3 font-bold text-xs">Dept</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">BP</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">SP</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">WP</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">MAIN</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">ANNEX</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">PEAK</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">Total</th>
-                      <th className="text-left px-3 py-3 font-bold text-xs">Status</th>
-                      <th className="text-right px-3 py-3 font-bold text-xs">Actions</th>
+                      <th
+                        className="text-left px-2 py-2 font-bold text-xs sticky left-0 z-30 whitespace-nowrap"
+                        style={{ background: 'var(--bg-primary)', width: '240px', minWidth: '240px' }}
+                      >
+                        Product
+                      </th>
+                      <th className="text-left px-2 py-2 font-bold text-[11px] whitespace-nowrap">Category</th>
+                      <th className="text-left px-2 py-2 font-bold text-[11px] whitespace-nowrap">Dept</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">BP</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">SP</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">WP</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">MAIN</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">ANNEX</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">PEAK</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">Total</th>
+                      <th className="text-left px-2 py-2 font-bold text-[11px] whitespace-nowrap">Status</th>
+                      <th className="text-right px-2 py-2 font-bold text-[11px] whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -383,38 +388,42 @@ const InventoryManagement = () => {
                       const expSoon = item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry';
                       return (
                         <tr key={item.id} className="border-b hover:bg-primary/5 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
-                          <td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors ${out ? 'text-slate-400' : ''}`} style={{ background: 'var(--bg-primary)' }}>
+                          <td
+                            className={`px-2 py-2 font-semibold text-xs sticky left-0 z-10 group-hover:bg-primary/5 transition-colors truncate ${out ? 'text-slate-400' : ''}`}
+                            style={{ background: 'var(--bg-primary)', width: '240px', minWidth: '240px' }}
+                            title={item.name}
+                          >
                             {item.name}
                           </td>
-                          <td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">
+                          <td className="px-2 py-2 text-[11px] text-slate-600 truncate">
                             {item.category || '—'}
                           </td>
-                          <td className="px-3 py-3 text-xs font-semibold">
-                            <span className={`px-2 py-1 rounded-md text-white text-[10px] font-bold ${item.department === 'CHEMIST' ? 'bg-blue-600' : item.department === 'AGROVET' ? 'bg-green-600' : 'bg-slate-600'}`}>
+                          <td className="px-2 py-2 text-[11px] font-semibold">
+                            <span className={`px-1.5 py-0.5 rounded-md text-white text-[10px] font-bold ${item.department === 'CHEMIST' ? 'bg-blue-600' : item.department === 'AGROVET' ? 'bg-green-600' : 'bg-slate-600'}`}>
                               {item.department || '—'}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                          <td className="px-2 py-2 text-right text-[11px] font-semibold text-slate-700">
                             {item.buying_price ? `${item.buying_price}` : '—'}
                           </td>
-                          <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                          <td className="px-2 py-2 text-right text-[11px] font-semibold text-slate-700">
                             {item.selling_price ? `${item.selling_price}` : '—'}
                           </td>
-                          <td className="px-3 py-3 text-right text-xs font-semibold text-slate-700">
+                          <td className="px-2 py-2 text-right text-[11px] font-semibold text-slate-700">
                             {item.wholesale_price ? `${item.wholesale_price}` : '—'}
                           </td>
-                          <td className="px-3 py-3 text-right font-semibold">{main}</td>
-                          <td className="px-3 py-3 text-right font-semibold">{annex}</td>
-                          <td className="px-3 py-3 text-right font-semibold">{peakfarm}</td>
-                          <td className="px-3 py-3 text-right font-bold">{total}</td>
-                          <td className="px-3 py-3">
+                          <td className="px-2 py-2 text-right text-[11px] font-semibold">{main}</td>
+                          <td className="px-2 py-2 text-right text-[11px] font-semibold">{annex}</td>
+                          <td className="px-2 py-2 text-right text-[11px] font-semibold">{peakfarm}</td>
+                          <td className="px-2 py-2 text-right text-[11px] font-bold">{total}</td>
+                          <td className="px-2 py-2">
                             <div className="flex flex-wrap gap-1">
-                              {out && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 whitespace-nowrap">Out</span>}
-                              {low && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">Low</span>}
-                              {expSoon && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 whitespace-nowrap">Exp</span>}
+                              {out && <span className="text-[9px] px-1 py-0.5 rounded bg-slate-200 text-slate-700 whitespace-nowrap">Out</span>}
+                              {low && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">Low</span>}
+                              {expSoon && <span className="text-[9px] px-1 py-0.5 rounded bg-rose-100 text-rose-700 whitespace-nowrap">Exp</span>}
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-right">
+                          <td className="px-2 py-2 text-right">
                             <div className="flex gap-1 justify-end">
                               {user?.role !== 'auditor' && (
                                 <button
@@ -422,21 +431,21 @@ const InventoryManagement = () => {
                                     setSelectedItem(item);
                                     setShowRestockModal(true);
                                   }}
-                                  className="btn-primary px-2 py-1 rounded-lg text-xs font-bold"
+                                  className="btn-primary px-1.5 py-1 rounded-lg text-[10px] font-bold"
                                 >
                                   Restock
                                 </button>
                               )}
                               <button
                                 onClick={() => navigate('/otc-sales')}
-                                className="px-2 py-1 rounded-lg border text-xs font-bold"
+                                className="px-1.5 py-1 rounded-lg border text-[10px] font-bold"
                                 style={{ borderColor: 'var(--border-primary)' }}
                               >
                                 Quick Sale
                               </button>
                               <button
                                 onClick={() => handleViewLogs(item)}
-                                className="px-2 py-1 rounded-lg border text-xs font-bold"
+                                className="px-1.5 py-1 rounded-lg border text-[10px] font-bold"
                                 style={{ borderColor: 'var(--border-primary)' }}
                               >
                                 Logs
