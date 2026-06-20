@@ -14,6 +14,7 @@ const BranchTransfers = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [approvingTransfer, setApprovingTransfer] = useState(null);
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [form, setForm] = useState({
@@ -105,6 +106,7 @@ const BranchTransfers = () => {
   const handleApprove = async (id) => {
     try {
       await inventoryService.approveTransfer(id);
+      setApprovingTransfer(null);
       notify.success('Transfer Approved', 'Stock has been moved and branch levels have been updated.');
       void loadTransfers();
     } catch (err) {
@@ -237,7 +239,7 @@ const BranchTransfers = () => {
                         {canApprove(t) && (
                           <button
                             type="button"
-                            onClick={() => handleApprove(t.id)}
+                            onClick={() => setApprovingTransfer(t)}
                             className="text-xs font-bold text-indigo-600 hover:underline"
                           >
                             Approve
@@ -261,10 +263,46 @@ const BranchTransfers = () => {
           )}
         </div>
 
+        {approvingTransfer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Confirm action</p>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Approve transfer</h3>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Approved</span>
+              </div>
+              <div className="text-sm space-y-1 mb-4" style={{ color: 'var(--text-secondary)' }}>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Product:</span> {approvingTransfer.product_name}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Quantity:</span> {approvingTransfer.quantity}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>From:</span> {approvingTransfer.source_branch_name}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>To:</span> {approvingTransfer.destination_branch_name}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Requested by:</span> {approvingTransfer.requested_by || 'Unknown'}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Requested at:</span> {new Date(approvingTransfer.created_at).toLocaleString()}</p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" className="form-cancel-btn px-4 py-2 rounded-xl" onClick={() => setApprovingTransfer(null)}>
+                  Cancel
+                </button>
+                <LoadingButton type="button" onClick={() => handleApprove(approvingTransfer.id)} className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold">
+                  Approve
+                </LoadingButton>
+              </div>
+            </div>
+          </div>
+        )}
+
         {rejectingId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-            <div className="w-full max-w-md rounded-2xl p-6 shadow-xl" style={{ background: 'var(--bg-card)' }}>
-              <h3 className="text-lg font-bold mb-2">Reject transfer</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Confirm action</p>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Reject transfer</h3>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">Rejected</span>
+              </div>
               <textarea
                 className="form-input w-full mb-4"
                 rows={3}

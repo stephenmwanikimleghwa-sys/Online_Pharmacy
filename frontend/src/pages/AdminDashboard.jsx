@@ -34,6 +34,7 @@ const AdminDashboard = () => {
   const [loadingOps, setLoadingOps] = useState(false);
   const [error, setError] = useState('');
   const [showStockIntake, setShowStockIntake] = useState(false);
+  const [approveModal, setApproveModal] = useState(null);
   const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const { notify } = useNotification();
@@ -41,6 +42,7 @@ const AdminDashboard = () => {
   const handleApproveTransfer = async (id) => {
     try {
       await approveTransfer(id);
+      setApproveModal(null);
       notify.success('Approved', 'Transfer approved. Stock levels updated.');
       fetchBranchOps();
     } catch {
@@ -417,7 +419,7 @@ const AdminDashboard = () => {
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" className="text-xs font-bold text-green-700 px-2 py-1 rounded bg-green-50" onClick={() => handleApproveTransfer(t.id)}>Approve</button>
+                        <button type="button" className="text-xs font-bold text-green-700 px-2 py-1 rounded bg-green-50" onClick={() => setApproveModal(t)}>Approve</button>
                         <button type="button" className="text-xs font-bold text-red-700 px-2 py-1 rounded bg-red-50" onClick={() => setRejectModal(t.id)}>Reject</button>
                       </div>
                     </li>
@@ -431,14 +433,46 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {approveModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Confirm action</p>
+                  <h4 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Approve transfer</h4>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Approved</span>
+              </div>
+              <div className="text-sm space-y-1.5" style={{ color: 'var(--text-secondary)' }}>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Product:</span> {approveModal.product_name}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Quantity:</span> {approveModal.quantity}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>From:</span> {approveModal.source_branch}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>To:</span> {approveModal.destination_branch}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Requested by:</span> {approveModal.requested_by}</p>
+                <p><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Requested at:</span> {new Date(approveModal.created_at).toLocaleString()}</p>
+              </div>
+              <div className="flex gap-2 justify-end mt-5">
+                <button type="button" className="btn-secondary px-3 py-2 rounded-xl" onClick={() => setApproveModal(null)}>Cancel</button>
+                <button type="button" className="btn-primary px-3 py-2 rounded-xl" onClick={() => handleApproveTransfer(approveModal.id)}>Approve</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {rejectModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="bg-white rounded-xl p-6 max-w-md w-full space-y-3">
-              <h4 className="font-bold">Reject transfer</h4>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Confirm action</p>
+                  <h4 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Reject transfer</h4>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">Rejected</span>
+              </div>
               <textarea className="form-input w-full" rows={3} placeholder="Reason for rejection" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
-              <div className="flex gap-2 justify-end">
-                <button type="button" className="btn-secondary px-3 py-1 rounded" onClick={() => setRejectModal(null)}>Cancel</button>
-                <button type="button" className="btn-primary px-3 py-1 rounded" onClick={handleRejectTransfer}>Reject</button>
+              <div className="flex gap-2 justify-end mt-4">
+                <button type="button" className="btn-secondary px-3 py-2 rounded-xl" onClick={() => setRejectModal(null)}>Cancel</button>
+                <button type="button" className="btn-primary px-3 py-2 rounded-xl" onClick={handleRejectTransfer}>Reject</button>
               </div>
             </div>
           </div>
