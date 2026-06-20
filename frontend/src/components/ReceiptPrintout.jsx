@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
  * ReceiptPrintout
@@ -69,12 +69,31 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     pharmacy?.tagline || ""
   );
 
+  // Persist the first-seen valid values so they aren't overwritten by later
+  // updates (e.g., when a pharmacy/profile refresh supplies placeholder data).
+  const persisted = useRef({});
+
+  useEffect(() => {
+    const trySet = (key, val, fallback) => {
+      const current = String(persisted.current[key] || "");
+      if (current && !isPlaceholderValue(current)) return; // keep good value
+      const candidate = normalizeText(val, fallback);
+      if (candidate && !isPlaceholderValue(candidate)) persisted.current[key] = candidate;
+    };
+
+    trySet("name", branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name);
+    trySet("phone", branchPhone || pharmacy?.contact_phone || pharmacy?.phone, DEFAULT_RECEIPT_DETAILS.phone);
+    trySet("email", branchEmail || pharmacy?.email, DEFAULT_RECEIPT_DETAILS.email);
+    trySet("address", branchAddress || pharmacy?.address, DEFAULT_RECEIPT_DETAILS.address);
+    trySet("tagline", branchTagline || pharmacy?.tagline, DEFAULT_RECEIPT_DETAILS.tagline);
+  }, [branchName, branchAddress, branchPhone, branchEmail, branchTagline, pharmacy]);
+
   const displayPharmacy = {
-    name: normalizeText(branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name),
-    phone: normalizeText(branchPhone, DEFAULT_RECEIPT_DETAILS.phone),
-    email: normalizeText(branchEmail, DEFAULT_RECEIPT_DETAILS.email),
-    address: normalizeText(branchAddress, DEFAULT_RECEIPT_DETAILS.address),
-    tagline: normalizeText(branchTagline, DEFAULT_RECEIPT_DETAILS.tagline),
+    name: normalizeText(persisted.current.name || branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name),
+    phone: normalizeText(persisted.current.phone || branchPhone || pharmacy?.contact_phone || pharmacy?.phone, DEFAULT_RECEIPT_DETAILS.phone),
+    email: normalizeText(persisted.current.email || branchEmail || pharmacy?.email, DEFAULT_RECEIPT_DETAILS.email),
+    address: normalizeText(persisted.current.address || branchAddress || pharmacy?.address, DEFAULT_RECEIPT_DETAILS.address),
+    tagline: normalizeText(persisted.current.tagline || branchTagline || pharmacy?.tagline, DEFAULT_RECEIPT_DETAILS.tagline),
   };
   
   const subtotal = items.reduce(
