@@ -574,28 +574,26 @@ const AdminStock = () => {
 			<ErrorBoundary>
 				<div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
 					<div className="overflow-auto max-h-[70vh]">
-						<table className="min-w-full divide-y divide-slate-100">
+						<table className="min-w-full text-sm">
 							<thead className="sticky top-0 z-20" style={{ background: 'var(--bg-primary)' }}>
 								<tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">#</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest sticky left-0 z-30" style={{ background: 'var(--bg-primary)' }}>Name</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Category</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Price</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Stock</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Expiry</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
+									<th className="text-left px-3 py-3 font-bold sticky left-0 z-30" style={{ background: 'var(--bg-primary)' }}>Name</th>
+									<th className="text-left px-3 py-3 font-bold text-xs">Category</th>
+									<th className="text-left px-3 py-3 font-bold text-xs">Price</th>
+									<th className="text-left px-3 py-3 font-bold text-xs">Stock</th>
+									<th className="text-left px-3 py-3 font-bold text-xs">Expiry</th>
+									<th className="text-left px-3 py-3 font-bold text-xs">Status</th>
+									<th className="text-right px-3 py-3 font-bold text-xs">Actions</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-slate-100">
 								{items.map((item, idx) => (
 								<tr key={String(item.id ?? `row-${idx}`)} className="hover:bg-slate-50/50 transition-colors">
-									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{idx + 1}</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800 sticky left-0 z-10" style={{ background: 'var(--bg-primary)' }}>{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{normalizeDisplayValue(item.category)}</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KES {normalizeDisplayValue(item.price, '0')}</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-700">{normalizeDisplayValue(item.stock_quantity, 0)}</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm">
+									<td className="px-3 py-3 whitespace-nowrap text-sm font-semibold text-slate-800 sticky left-0 z-10" style={{ background: 'var(--bg-primary)' }}>{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
+									<td className="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{normalizeDisplayValue(item.category)}</td>
+									<td className="px-3 py-3 whitespace-nowrap text-sm text-slate-500">KES {normalizeDisplayValue(item.price, '0')}</td>
+									<td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-700">{normalizeDisplayValue(item.stock_quantity, 0)}</td>
+									<td className="px-3 py-3 whitespace-nowrap text-sm">
 										{(() => {
 											if (!item.expiry_date) return <span className="text-gray-500">-</span>;
 											try {
@@ -633,14 +631,14 @@ const AdminStock = () => {
 											}
 										})()}
 									</td>
-									<td className="px-6 py-4 whitespace-nowrap text-sm">
+									<td className="px-3 py-3 whitespace-nowrap text-sm">
 										<span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.stock_quantity === 0 ? 'bg-red-100 text-red-800' : (item.stock_quantity <= (item.reorder_threshold ?? 10) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800')
 											}`}>
 											{item.stock_quantity === 0 ? 'Out' : (item.stock_quantity <= (item.reorder_threshold ?? 10) ? 'Low' : 'In Stock')}
 										</span>
 									</td>
-									<td className="px-6 py-4 whitespace-nowrap">
-										<div className="flex flex-wrap items-center gap-1.5">
+									<td className="px-3 py-3 whitespace-nowrap text-right">
+										<div className="flex flex-wrap items-center justify-end gap-1.5">
 											<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
 											<button onClick={() => openDuplicateModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all">Duplicate</button>
 											<button onClick={() => navigate('/otc-sales')} className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-all">Quick Sale</button>
