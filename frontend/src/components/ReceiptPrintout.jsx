@@ -26,32 +26,31 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     return value || fallback;
   };
 
-  const looksLikeMainBranch = (value) => {
-    const normalized = String(value || "").trim().toLowerCase();
-    return (
-      normalized.includes("transcounty") ||
-      normalized.includes("st main") ||
-      normalized === "main" ||
-      normalized.endsWith(" main") ||
-      normalized.includes("main branch")
-    );
-  };
-
   const items = order.items || [];
   const branchName = normalizeText(order?.branch_name, "");
-  const branchAddress = normalizeText(order?.branch_address, pharmacy?.address);
-  const branchPhone = normalizeText(order?.branch_contact_phone, pharmacy?.contact_phone);
-  const branchEmail = normalizeText(order?.branch_email, pharmacy?.email);
-  const branchTagline = normalizeText(order?.branch_tagline, pharmacy?.tagline);
+  const branchAddress = normalizeText(
+    order?.branch_address || order?.branch?.address || order?.location?.address,
+    pharmacy?.address || ""
+  );
+  const branchPhone = normalizeText(
+    order?.branch_contact_phone || order?.branch?.contact_phone || order?.contact_phone,
+    pharmacy?.contact_phone || ""
+  );
+  const branchEmail = normalizeText(
+    order?.branch_email || order?.branch?.email || order?.email,
+    pharmacy?.email || ""
+  );
+  const branchTagline = normalizeText(
+    order?.branch_tagline || order?.branch?.tagline,
+    pharmacy?.tagline || ""
+  );
 
   const displayPharmacy = {
-    name: looksLikeMainBranch(branchName)
-      ? DEFAULT_RECEIPT_DETAILS.name
-      : normalizeText(branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name),
-    phone: normalizeText(branchPhone || DEFAULT_RECEIPT_DETAILS.phone, DEFAULT_RECEIPT_DETAILS.phone),
-    email: normalizeText(branchEmail || DEFAULT_RECEIPT_DETAILS.email, DEFAULT_RECEIPT_DETAILS.email),
-    address: normalizeText(branchAddress || DEFAULT_RECEIPT_DETAILS.address, DEFAULT_RECEIPT_DETAILS.address),
-    tagline: normalizeText(branchTagline || DEFAULT_RECEIPT_DETAILS.tagline, DEFAULT_RECEIPT_DETAILS.tagline),
+    name: normalizeText(branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name),
+    phone: normalizeText(branchPhone, DEFAULT_RECEIPT_DETAILS.phone),
+    email: normalizeText(branchEmail, DEFAULT_RECEIPT_DETAILS.email),
+    address: normalizeText(branchAddress, DEFAULT_RECEIPT_DETAILS.address),
+    tagline: normalizeText(branchTagline, DEFAULT_RECEIPT_DETAILS.tagline),
   };
   
   const subtotal = items.reduce(
