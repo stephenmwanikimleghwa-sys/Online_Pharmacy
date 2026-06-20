@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
+import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import {
@@ -7,6 +9,7 @@ import {
   markPurchaseOrderSent,
   cancelPurchaseOrder,
 } from '../services/procurementService';
+import LoadingButton from '../components/LoadingButton';
 
 const statusColors = {
   DRAFT: 'bg-gray-200 text-gray-800',
@@ -22,6 +25,9 @@ const PurchaseOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [cancelCandidate, setCancelCandidate] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   const load = async () => {
     try {
@@ -53,15 +59,22 @@ const PurchaseOrders = () => {
     }
   };
 
-  const handleCancel = async (id) => {
-    const reason = window.prompt('Cancellation reason:');
-    if (!reason) return;
+  const confirmCancel = async () => {
+    if (!cancelCandidate || !cancelReason.trim()) {
+      notify.warning('Reason required', 'Please enter a cancellation reason.');
+      return;
+    }
+    setCancelling(true);
     try {
-      await cancelPurchaseOrder(id, reason);
+      await cancelPurchaseOrder(cancelCandidate.id, cancelReason.trim());
       notify.success('Cancelled', 'Purchase order cancelled.');
+      setCancelCandidate(null);
+      setCancelReason('');
       void load();
     } catch {
       notify.error('Failed', 'Could not cancel order.');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -102,7 +115,7 @@ const PurchaseOrders = () => {
                   <td>{po.items?.length || 0}</td>
                   <td>KES {Number(po.total_estimated_cost).toLocaleString()}</td>
                   <td>{po.expected_delivery || '—'}</td>
-                  <td className="space-x-2">
+                  <td className="space-x-2 whitespace-nowrap">
                     {po.status === 'DRAFT' && (
                       <button type="button" className="text-blue-600 text-xs font-semibold" onClick={() => handleSent(po.id)}>Mark Sent</button>
                     )}
@@ -110,7 +123,7 @@ const PurchaseOrders = () => {
                       <button type="button" className="text-green-600 text-xs font-semibold" onClick={() => navigate(`/purchase-orders/${po.id}/receive`)}>Receive Stock</button>
                     )}
                     {po.status !== 'RECEIVED' && po.status !== 'CANCELLED' && (
-                      <button type="button" className="text-red-600 text-xs font-semibold" onClick={() => handleCancel(po.id)}>Cancel</button>
+                      <button type="button" className="text-red-600 text-xs font-semibold" onClick={() => { setCancelReason(''); setCancelCandidate(po); }}>Cancel</button>
                     )}
                   </td>
                 </tr>
@@ -119,6 +132,50 @@ const PurchaseOrders = () => {
           </table>
         </div>
       )}
+
+      <Transition show={Boolean(cancelCandidate)} as={React.Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={() => !cancelling && setCancelCandidate(null)}>
+          <div className="min-h-screen flex items-center justify-center px-4">
+            <DialogBackdrop className="fixed inset-0 modal-overlay" />
+            <div className="relative z-10 w-full max-w-md modal-card p-6 border-t-4 border-red-500">
+              <h3 className="text-lg font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <XCircleIcon className="h-6 w-6 text-red-500" />
+                Cancel Purchase Order
+              </h3>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                Cancel <strong>{cancelCandidate?.order_number}</strong>? This cannot be undone.
+              </p>
+              <label className="form-label">Reason for cancellation</label>
+              <textarea
+                className="form-input w-full mb-6"
+                rows={3}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="e.g. Supplier out of stock, ordered elsewhere..."
+              />
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={cancelling}
+                  onClick={() => { setCancelCandidate(null); setCancelReason(''); }}
+                  className="form-cancel-btn px-4 py-2 rounded-xl"
+                >
+                  Keep Order
+                </button>
+                <LoadingButton
+                  type="button"
+                  loading={cancelling}
+                  loadingText="Cancelling..."
+                  onClick={confirmCancel}
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700"
+                >
+                  Cancel Order
+                </LoadingButton>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };

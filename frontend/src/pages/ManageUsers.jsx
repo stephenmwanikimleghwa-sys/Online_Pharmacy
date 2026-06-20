@@ -3,6 +3,22 @@ import api from '../services/api';
 import { UserIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 
+const DEFAULT_PERMISSION_FLAGS = {
+  can_manage_users: false,
+  can_manage_inventory: false,
+  can_view_reports: false,
+  can_edit_prices: false,
+  can_transfer_stock: false,
+};
+
+const PERMISSION_OPTIONS = [
+  { key: 'can_manage_users', label: 'Manage users' },
+  { key: 'can_manage_inventory', label: 'Manage inventory' },
+  { key: 'can_view_reports', label: 'View reports' },
+  { key: 'can_edit_prices', label: 'Edit prices' },
+  { key: 'can_transfer_stock', label: 'Transfer stock (see other-branch quantities)' },
+];
+
 const getRoleStyle = (role) => {
   if (role === 'admin') return { background: 'var(--brand-mist)', color: 'var(--color-primary)', borderColor: 'var(--brand-border-soft)' };
   if (role === 'pharmacist') return { background: 'rgba(16,185,129,0.08)', color: '#059669', borderColor: 'rgba(16,185,129,0.18)' };
@@ -25,12 +41,7 @@ const ManageUsers = () => {
   const [formData, setFormData] = useState({
     username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist', branch_id: ''
   });
-  const [permissionFlags, setPermissionFlags] = useState({
-    can_manage_users: false,
-    can_manage_inventory: false,
-    can_view_reports: false,
-    can_edit_prices: false,
-  });
+  const [permissionFlags, setPermissionFlags] = useState({ ...DEFAULT_PERMISSION_FLAGS });
 
   const fetchUsers = async () => {
     try {
@@ -96,7 +107,7 @@ const ManageUsers = () => {
       setIsModalOpen(false); setIsEditMode(false); setEditingUserId(null);
       await fetchUsers();
       setFormData({ username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist', branch_id: '' });
-      setPermissionFlags({ can_manage_users: false, can_manage_inventory: false, can_view_reports: false, can_edit_prices: false });
+      setPermissionFlags({ ...DEFAULT_PERMISSION_FLAGS });
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       const data = err.response?.data;
@@ -112,11 +123,12 @@ const ManageUsers = () => {
     setIsEditMode(true); setEditingUserId(user.id);
     setFormData({ username: user.username, password: '', email: user.email || '', full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim(), pharmacy_license: '', role: user.role || 'customer', branch_id: user.branch || '' });
     setPermissionFlags({
-      can_manage_users: Boolean(user.permission_flags?.can_manage_users),
-      can_manage_inventory: Boolean(user.permission_flags?.can_manage_inventory),
-      can_view_reports: Boolean(user.permission_flags?.can_view_reports),
-      can_edit_prices: Boolean(user.permission_flags?.can_edit_prices),
-      ...user.permission_flags,
+      ...DEFAULT_PERMISSION_FLAGS,
+      can_manage_users: Boolean(user.permission_flags?.can_manage_users ?? user.can_manage_users),
+      can_manage_inventory: Boolean(user.permission_flags?.can_manage_inventory ?? user.can_manage_inventory),
+      can_view_reports: Boolean(user.permission_flags?.can_view_reports ?? user.can_view_reports),
+      can_edit_prices: Boolean(user.permission_flags?.can_edit_prices ?? user.can_edit_prices),
+      can_transfer_stock: Boolean(user.permission_flags?.can_transfer_stock ?? user.can_transfer_stock),
     });
     setIsModalOpen(true);
   };
@@ -386,11 +398,11 @@ const ManageUsers = () => {
                   </div>
                   <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
                     <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: 'var(--text-secondary)' }}>Permission Flags</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {Object.entries(permissionFlags).map(([name, enabled]) => (
-                        <label key={name} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}>
-                          <span className="capitalize">{name.replace(/_/g, ' ')}</span>
-                          <input type="checkbox" checked={enabled} onChange={() => handlePermissionToggle(name)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {PERMISSION_OPTIONS.map(({ key, label }) => (
+                        <label key={key} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}>
+                          <span>{label}</span>
+                          <input type="checkbox" checked={Boolean(permissionFlags[key])} onChange={() => handlePermissionToggle(key)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                         </label>
                       ))}
                     </div>

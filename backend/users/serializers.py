@@ -69,7 +69,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 'full_name', 'is_active', 'is_verified',
             'must_change_password', 'can_process_sales', 'can_manage_inventory',
             'can_edit_prices', 'can_view_reports', 'can_manage_users',
-            'can_delete_records', 'can_view_audit_logs', 'permission_flags'
+            'can_delete_records', 'can_view_audit_logs', 'permission_flags',
+            'can_transfer_stock',
         ]
         read_only_fields = ['id', 'role', 'is_verified', 'full_name', 'branch_info']
 

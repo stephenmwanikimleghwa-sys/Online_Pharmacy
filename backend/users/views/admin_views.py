@@ -17,6 +17,16 @@ from config.api_responses import (
 )
 
 
+def _apply_permission_flags(user, permission_flags):
+    """Sync permission_flags JSON to model boolean fields used by the API."""
+    user.permission_flags = permission_flags
+    user.can_transfer_stock = bool(permission_flags.get("can_transfer_stock"))
+    user.can_manage_inventory = bool(permission_flags.get("can_manage_inventory"))
+    user.can_edit_prices = bool(permission_flags.get("can_edit_prices"))
+    user.can_view_reports = bool(permission_flags.get("can_view_reports"))
+    user.can_manage_users = bool(permission_flags.get("can_manage_users"))
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def admin_create_user(request):
@@ -63,7 +73,7 @@ def admin_create_user(request):
     user.last_name = last_name
     user.role = RoleChoices.ADMIN if role == 'admin' else RoleChoices.PHARMACIST
     user.branch = branch
-    user.permission_flags = permission_flags
+    _apply_permission_flags(user, permission_flags)
     user.is_active = True
     user.is_verified = True
     user.save()
@@ -279,7 +289,7 @@ def update_user(request, user_id):
         permission_flags = data.get('permission_flags')
         if not isinstance(permission_flags, dict):
             return api_validation_error("permission_flags must be an object.")
-        user.permission_flags = permission_flags
+        _apply_permission_flags(user, permission_flags)
     if 'is_verified' in data:
         user.is_verified = bool(data.get('is_verified'))
     if 'is_active' in data:
