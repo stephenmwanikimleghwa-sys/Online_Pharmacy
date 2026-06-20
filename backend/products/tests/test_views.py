@@ -1,13 +1,17 @@
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIRequestFactory
 from django.contrib.auth import get_user_model
-from products.models import Product
+from products.models import Product, BranchStock
+from products.views.products import search_products
+from users.models import Branch, Pharmacy
 
 User = get_user_model()
 
 class ProductTests(APITestCase):
     def setUp(self):
+        self.factory = APIRequestFactory()
+
         # Create users
         self.admin = User.objects.create_superuser(
             username='admin', email='admin@test.com', password='password123', role='admin'
@@ -73,6 +77,52 @@ class ProductTests(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_search_products_inventory_context_ignores_active_branch_filter(self):
+        """Inventory searches should include products available elsewhere even when current branch is out of stock."""
+        pharmacy = Pharmacy.objects.create(
+            name="Test Pharmacy",
+            address="123 Test Street",
+            contact_phone="0700000000",
+            email="pharmacy@test.com",
+            license_number="LIC-001"
+        )
+        main_branch = Branch.objects.create(
+            pharmacy=pharmacy,
+            name="Main",
+            address="Main address",
+            contact_phone="0700000001",
+            license_number="BR-001"
+        )
+        annex_branch = Branch.objects.create(
+            pharmacy=pharmacy,
+            name="Annex",
+            address="Annex address",
+            contact_phone="0700000002",
+            license_number="BR-002"
+        )
+
+        product = Product.objects.create(
+            name="Aceclofenac And Paracetamol_Ace P",
+            category="pain_relief",
+            price=120.00,
+            stock_quantity=0,
+            pharmacy=pharmacy,
+        )
+        BranchStock.objects.create(product=product, branch=main_branch, quantity=0)
+        BranchStock.objects.create(product=product, branch=annex_branch, quantity=5)
+
+        request = self.factory.get(
+            reverse('products:search'),
+            {"q": "Aceclofenac", "context": "inventory"},
+        )
+        request.active_branch = main_branch
+
+        response = search_products(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data.get('data', [])
+        self.assertTrue(any(item['id'] == product.id for item in data))
 
     def test_create_product_unauthenticated_denied(self):
         """Ensure unauthenticated user cannot create products."""

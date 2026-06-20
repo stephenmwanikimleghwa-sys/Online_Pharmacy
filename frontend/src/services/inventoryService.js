@@ -14,15 +14,8 @@ export const inventoryService = {
   // Get all inventory items with pagination and filtering
   getInventory: async (params = {}, requestConfig = {}) => {
     try {
-      // Check authentication state
       const token = localStorage.getItem("access_token");
-      console.log('[Inventory Service] Auth check:', {
-        hasToken: !!token,
-        tokenStart: token ? token.substring(0, 10) + '...' : 'none'
-      });
-
       if (!token) {
-        console.error('[Inventory Service] No auth token found');
         // Let the shared api/interceptor handle redirect; still throw so callers can react
         const err = new Error('Authentication required');
         err.response = { status: 401 };
@@ -34,36 +27,14 @@ export const inventoryService = {
           ? Object.fromEntries(params.entries())
           : params || {};
 
-      // Make the request to the inventory list endpoint using the shared api client
-      console.log('[Inventory Service] Fetching inventory from list endpoint');
       const response = await api.get('/inventory/list/', {
         ...requestConfig,
-        params: { ...normalizedParams, _t: new Date().getTime() },
+        params: normalizedParams,
         skipGlobalErrorNotification: true,
-      });
-
-      // Log successful response
-      console.log('[Inventory Service] Inventory fetched successfully:', {
-        status: response.status,
-        itemCount: response.data?.products?.length || 0,
-        totalItems: response.data?.totalItems || 0
       });
 
       return response;
     } catch (error) {
-      // Enhanced error logging
-      console.error('[Inventory Service] Failed to fetch inventory:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        stack: error.stack
-      });
-
-      // If unauthorized, log and rethrow so callers can stop polling or redirect
-      if (error.response?.status === 401) {
-        console.warn('[Inventory Service] Auth token invalid or expired');
-      }
-
       throw error;
     }
   },
@@ -189,6 +160,10 @@ export const inventoryService = {
 
   completeTransfer: (id) => {
     return api.post(`/inventory/transfers/${id}/complete/`);
+  },
+
+  rejectTransfer: (id, reason) => {
+    return api.post(`/inventory/transfers/${id}/reject/`, { reason });
   },
 };
 

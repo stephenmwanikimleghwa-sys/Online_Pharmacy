@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from users.permissions import IsPharmacistOrAdmin
 from users.active_branch import get_active_branch, require_active_branch
+from users.branch_auth import user_may_access_branch
 from config.api_responses import api_invalid_transfer, api_success, api_validation_error
 from ..models import InterBranchTransfer
 from ..serializers.transfer import InterBranchTransferSerializer
@@ -45,10 +46,16 @@ class InterBranchTransferViewSet(viewsets.ModelViewSet):
             return denied
         active = get_active_branch(request)
         data = request.data.copy()
-        if not data.get("destination_branch"):
+        if not data.get("destination_branch") and active:
             data["destination_branch"] = active.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
+        source_id = serializer.validated_data["source_branch"].id
+        dest_id = serializer.validated_data["destination_branch"].id
+        if not user_may_access_branch(request.user, source_id) or not user_may_access_branch(
+            request.user, dest_id
+        ):
+            return api_validation_error("You do not have access to one or both branches.")
         transfer = serializer.save(requested_by=request.user)
         log_activity(
             user=request.user,
@@ -72,6 +79,13 @@ class InterBranchTransferViewSet(viewsets.ModelViewSet):
                 "Only pending transfers can be approved.",
                 details={"status": transfer.status},
             )
+        active = get_active_branch(request)
+        is_admin = request.user.is_superuser or getattr(request.user, "role", None) == "admin"
+        if not is_admin:
+            if not active or transfer.destination_branch_id != active.id:
+                return api_validation_error(
+                    "Only administrators or staff at the receiving branch can approve transfers."
+                )
         transfer.status = "completed"
         transfer.approved_by = request.user
         try:

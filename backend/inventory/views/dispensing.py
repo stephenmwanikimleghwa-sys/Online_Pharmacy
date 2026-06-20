@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
-from users.active_branch import get_active_branch, require_active_branch
+from users.active_branch import get_active_branch, require_active_branch, resolve_request_branch, filter_queryset_for_branch
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, Q, F
@@ -67,18 +67,12 @@ class DispensationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         qs = (
             Dispensation.objects
-            .select_related('dispensed_by', 'customer')
+            .select_related('dispensed_by', 'customer', 'branch')
             .prefetch_related('items', 'items__product')
             .all()
             .order_by('-dispensed_at')
         )
-        is_admin = user.is_superuser or getattr(user, 'role', None) == 'admin'
-        branch_param = self.request.query_params.get('branch')
-        if is_admin and branch_param and branch_param != 'all':
-            qs = qs.filter(branch_id=branch_param)
-        elif not is_admin and getattr(user, 'branch', None):
-            qs = qs.filter(branch=user.branch)
-        # If non-admin has no branch, they still see all (pharmacist/cashier without branch assignment)
+        qs = filter_queryset_for_branch(self.request, qs, branch_field='branch')
             
         search = self.request.query_params.get('search')
         if search:
@@ -127,19 +121,13 @@ def dispense_otc(request):
 
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    active_branch = get_active_branch(request)
-    
-    # Allow explicit branch_id override for admin/pharmacists making sales across branches
-    req_branch_id = request.data.get('branch_id')
-    if req_branch_id:
-        from users.models import Branch
-        try:
-            active_branch = Branch.objects.get(pk=req_branch_id, is_active=True)
-        except Branch.DoesNotExist:
-            pass
-            
+    active_branch = resolve_request_branch(request, request.data.get('branch_id'))
     if not active_branch:
-        active_branch = getattr(request.user, 'branch', None)
+        return api_error(
+            ApiErrorCode.BRANCH_ACCESS_DENIED,
+            "A valid active branch is required to complete this sale.",
+            http_status=403,
+        )
 
     with transaction.atomic():
         items_data = request.data.get('items', [])
@@ -347,14 +335,8 @@ def dispensing_stats(request):
     thirty_days_ago = today - timedelta(days=30)
 
     user = request.user
-    is_admin = user.is_superuser or user.role == 'admin'
-    branch_param = request.query_params.get('branch')
-
     qs = Dispensation.objects.all()
-    if is_admin and branch_param and branch_param != 'all':
-        qs = qs.filter(branch_id=branch_param)
-    elif not is_admin and user.branch:
-        qs = qs.filter(branch=user.branch)
+    qs = filter_queryset_for_branch(request, qs, branch_field='branch')
 
     today_stats = qs.filter(dispensed_at__date=today).aggregate(
         total_sales=Count('id'),
@@ -382,10 +364,7 @@ def dispensing_stats(request):
         product__expiry_date__lt=today,
         quantity__gt=0
     )
-    if is_admin and branch_param and branch_param != 'all':
-        expired_qs = expired_qs.filter(branch_id=branch_param)
-    elif not is_admin and user.branch:
-        expired_qs = expired_qs.filter(branch=user.branch)
+    expired_qs = filter_queryset_for_branch(request, expired_qs, branch_field='branch')
         
     expired_stock = expired_qs.aggregate(
         total_items=Count('product', distinct=True),

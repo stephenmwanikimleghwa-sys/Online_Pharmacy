@@ -78,7 +78,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           alternatives: data.other_branches || [],
           availableElsewhere: data.available_elsewhere,
           message: data.message,
-          canSeeDetails: Boolean(data.other_branches?.length),
+          canSeeDetails: Array.isArray(data.other_branches),
         });
       } catch {
         setOutOfStockHint({
@@ -559,7 +559,9 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                   </div>
                 </>
               ) : outOfStockHint.availableElsewhere ? (
-                <p>{outOfStockHint.message || "Available at other branches. Contact your administrator."}</p>
+                <p>{outOfStockHint.canSeeDetails ? "Available at other branches." : "Available elsewhere, ask admin."}</p>
+              ) : outOfStockHint.canSeeDetails ? (
+                <p>Not available in other branches.</p>
               ) : (
                 <p>Not available at any branch.</p>
               )}
@@ -569,7 +571,6 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             const qty = getProductBranchQuantity(product, branchId, activeBranch?.name);
             const price = getProductDisplayPrice(product);
             const outHere = qty <= 0;
-            const elsewhereNote = product.available_elsewhere;
             return (
               <div
                 key={product.id}
@@ -587,17 +588,13 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                     <span className="inline-block mt-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
                       Out of Stock at {activeBranch?.name}
                     </span>
-                    {elsewhereNote ? (
-                      <button
-                        type="button"
-                        className="block text-xs text-indigo-600 mt-1 underline"
-                        onClick={() => void showAvailabilityHint(product)}
-                      >
-                        Available at other branch(es) — tap for details
-                      </button>
-                    ) : (
-                      <span className="text-xs text-gray-500 block mt-1">Not available at any branch</span>
-                    )}
+                    <button
+                      type="button"
+                      className="block text-xs text-indigo-600 mt-1 underline"
+                      onClick={() => void showAvailabilityHint(product)}
+                    >
+                      Check other branch availability
+                    </button>
                   </>
                 ) : (
                   <>

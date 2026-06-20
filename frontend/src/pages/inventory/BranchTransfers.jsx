@@ -8,11 +8,14 @@ import inventoryService from '../../services/inventoryService';
 
 const BranchTransfers = () => {
   const { notify } = useNotification();
-  const { activeBranch, allowedBranches } = useAuth();
+  const { user, activeBranch, allowedBranches } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.is_admin;
   const [transfers, setTransfers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [rejectingId, setRejectingId] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [form, setForm] = useState({
     product: '',
     destination_branch: '',
@@ -28,9 +31,7 @@ const BranchTransfers = () => {
     if (!activeBranch?.id) return;
     try {
       setLoading(true);
-      const res = await inventoryService.getTransfers({
-        source_branch: activeBranch.id,
-      });
+      const res = await inventoryService.getTransfers({ status: undefined });
       const list = res.data?.results ?? res.data ?? [];
       setTransfers(Array.isArray(list) ? list : []);
     } catch (err) {
@@ -40,16 +41,16 @@ const BranchTransfers = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeBranch?.id]);
+  }, [activeBranch?.id, notify]);
 
   useEffect(() => {
-    loadTransfers();
+    void loadTransfers();
   }, [loadTransfers]);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const res = await inventoryService.getInventory({ per_page: 500 });
+        const res = await inventoryService.getInventory({ per_page: 5000 });
         const data = res.data || {};
         const list = Array.isArray(data) ? data : (data.products || data.results || []);
         setProducts(Array.isArray(list) ? list : []);
@@ -57,8 +58,14 @@ const BranchTransfers = () => {
         setProducts([]);
       }
     };
-    loadProducts();
+    void loadProducts();
   }, [activeBranch?.id]);
+
+  const canApprove = (transfer) => {
+    if (transfer.status !== 'pending') return false;
+    if (isAdmin) return true;
+    return Number(transfer.destination_branch) === Number(activeBranch?.id);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,7 +94,7 @@ const BranchTransfers = () => {
         `Stock transfer from ${activeBranch.name} to ${dest?.name || 'the selected branch'} has been submitted for approval.`,
       );
       setForm({ product: '', destination_branch: '', quantity: '', notes: '' });
-      loadTransfers();
+      void loadTransfers();
     } catch (err) {
       notifyApiError(notify, err, 'Transfer Failed', 'The transfer request could not be created.');
     } finally {
@@ -99,9 +106,25 @@ const BranchTransfers = () => {
     try {
       await inventoryService.approveTransfer(id);
       notify.success('Transfer Approved', 'Stock has been moved and branch levels have been updated.');
-      loadTransfers();
+      void loadTransfers();
     } catch (err) {
       notifyApiError(notify, err, 'Approval Failed', 'Could not approve this transfer.');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectingId || !rejectReason.trim()) {
+      notify.warning('Reason required', 'Enter a rejection reason.');
+      return;
+    }
+    try {
+      await inventoryService.rejectTransfer(rejectingId, rejectReason.trim());
+      notify.success('Transfer Rejected', 'The transfer request was rejected.');
+      setRejectingId(null);
+      setRejectReason('');
+      void loadTransfers();
+    } catch (err) {
+      notifyApiError(notify, err, 'Rejection Failed', 'Could not reject this transfer.');
     }
   };
 
@@ -113,7 +136,7 @@ const BranchTransfers = () => {
             New stock transfer
           </h2>
           <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-            From <strong>{activeBranch?.name}</strong> to another branch. Stock is moved when the transfer is completed.
+            From <strong>{activeBranch?.name}</strong> to another branch. Stock is moved when the transfer is approved.
           </p>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -170,20 +193,20 @@ const BranchTransfers = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={submitting}
-                className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm disabled:opacity-60"
+                loading={submitting}
+                className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm"
               >
-                {submitting ? 'Submitting…' : 'Request transfer'}
-              </button>
+                Request transfer
+              </LoadingButton>
             </div>
           </form>
         </div>
 
         <div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
           <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            Transfers from {activeBranch?.name}
+            Transfers for {activeBranch?.name}
           </h2>
           {loading ? (
             <p className="text-sm text-gray-500">Loading…</p>
@@ -195,6 +218,7 @@ const BranchTransfers = () => {
                 <thead>
                   <tr className="text-left border-b" style={{ borderColor: 'var(--border-primary)' }}>
                     <th className="pb-2 pr-4">Product</th>
+                    <th className="pb-2 pr-4">From</th>
                     <th className="pb-2 pr-4">To</th>
                     <th className="pb-2 pr-4">Qty</th>
                     <th className="pb-2 pr-4">Status</th>
@@ -205,17 +229,27 @@ const BranchTransfers = () => {
                   {transfers.map((t) => (
                     <tr key={t.id} className="border-b border-gray-100 dark:border-gray-800">
                       <td className="py-3 pr-4">{t.product_name}</td>
+                      <td className="py-3 pr-4">{t.source_branch_name}</td>
                       <td className="py-3 pr-4">{t.destination_branch_name}</td>
                       <td className="py-3 pr-4">{t.quantity}</td>
                       <td className="py-3 pr-4 capitalize">{t.status}</td>
-                      <td className="py-3">
-                        {t.status === 'pending' && (
+                      <td className="py-3 space-x-2 whitespace-nowrap">
+                        {canApprove(t) && (
                           <button
                             type="button"
                             onClick={() => handleApprove(t.id)}
                             className="text-xs font-bold text-indigo-600 hover:underline"
                           >
                             Approve
+                          </button>
+                        )}
+                        {t.status === 'pending' && isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => { setRejectingId(t.id); setRejectReason(''); }}
+                            className="text-xs font-bold text-red-600 hover:underline"
+                          >
+                            Reject
                           </button>
                         )}
                       </td>
@@ -226,6 +260,29 @@ const BranchTransfers = () => {
             </div>
           )}
         </div>
+
+        {rejectingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+            <div className="w-full max-w-md rounded-2xl p-6 shadow-xl" style={{ background: 'var(--bg-card)' }}>
+              <h3 className="text-lg font-bold mb-2">Reject transfer</h3>
+              <textarea
+                className="form-input w-full mb-4"
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Reason for rejection..."
+              />
+              <div className="flex justify-end gap-2">
+                <button type="button" className="form-cancel-btn px-4 py-2 rounded-xl" onClick={() => setRejectingId(null)}>
+                  Cancel
+                </button>
+                <LoadingButton type="button" onClick={handleReject} className="px-4 py-2 rounded-xl bg-red-600 text-white font-semibold">
+                  Reject
+                </LoadingButton>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ActiveBranchGuard>
   );

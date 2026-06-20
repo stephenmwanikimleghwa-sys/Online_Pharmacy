@@ -43,18 +43,20 @@ const ProductListings = () => {
   const fetchAvailability = async (productId) => {
     try {
       const response = await api.get(`/products/${productId}/availability/`);
+      const data = response.data?.data ?? response.data;
       setAvailabilityMap(prev => ({
         ...prev,
-        [productId]: response.data
+        [productId]: data
       }));
       
-      // Show available branches if product is out of stock locally
-      const availableBranches = response.data.branches
-        .filter(b => b.quantity > 0 && !b.is_active_branch);
+      const availableBranches = (data.other_branches || [])
+        .filter(b => b.quantity > 0);
       
       if (availableBranches.length > 0) {
-        const branches = availableBranches.map(b => `${b.branch} (${b.quantity} units)`).join(', ');
+        const branches = availableBranches.map(b => `${b.branch_name} (${b.quantity} units)`).join(', ');
         notify.info('Available at', `This product is available at: ${branches}`);
+      } else if (data.available_elsewhere) {
+        notify.info('Available elsewhere', data.message || 'Available at other branches. Contact your administrator.');
       }
     } catch (err) {
       console.error('Error fetching availability:', err);

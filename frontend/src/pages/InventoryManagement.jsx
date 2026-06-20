@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, lazy, useMemo, useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
@@ -7,10 +7,10 @@ import inventoryService from '../services/inventoryService';
 import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
 import RestockModal from '../components/RestockModal';
 import StockLogsModal from '../components/StockLogsModal';
-import SupplierList from './inventory/SupplierList';
-import BatchList from './inventory/BatchList';
-import StockIntakeLog from './StockIntakeLog';
-import BranchTransfers from './inventory/BranchTransfers';
+const SupplierList = lazy(() => import('./inventory/SupplierList'));
+const BatchList = lazy(() => import('./inventory/BatchList'));
+const StockIntakeLog = lazy(() => import('./StockIntakeLog'));
+const BranchTransfers = lazy(() => import('./inventory/BranchTransfers'));
 
 const InventoryManagement = () => {
   const { notify } = useNotification();
@@ -96,16 +96,45 @@ const InventoryManagement = () => {
     setShowLogsModal(true);
   };
 
-  const filteredInventory = inventory.filter(item => {
-    const name = (item.name || '').toLowerCase();
-    const matchesSearch = name.includes(debouncedSearchTerm.toLowerCase());
-    const matchesFilter =
-      filter === 'all' ? true :
-        filter === 'low' ? (item.is_low_stock && item.stock_quantity > 0) :
-          filter === 'out' ? (item.stock_quantity === 0) :
-            filter === 'expiring' ? (item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry') : true;
-    return matchesSearch && matchesFilter;
-  });
+  const inventoryMetrics = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let lowStockCount = 0;
+    const expired = [];
+    const expiringSoon = [];
+
+    const withDerived = inventory.map((item) => {
+      if (item.is_low_stock && item.stock_quantity > 0) lowStockCount += 1;
+
+      let daysLeft = null;
+      if (item.expiry_date) {
+        const exp = new Date(item.expiry_date);
+        exp.setHours(0, 0, 0, 0);
+        daysLeft = Math.ceil((exp - today) / (24 * 60 * 60 * 1000));
+        if (daysLeft < 0) expired.push(item);
+        else if (daysLeft <= 30) expiringSoon.push({ ...item, _daysLeft: daysLeft });
+      }
+
+      return { ...item, _daysLeft: daysLeft };
+    });
+
+    return { withDerived, lowStockCount, expired, expiringSoon };
+  }, [inventory]);
+
+  const filteredInventory = useMemo(() => {
+    const loweredSearch = debouncedSearchTerm.toLowerCase();
+    return inventoryMetrics.withDerived.filter((item) => {
+      const name = (item.name || '').toLowerCase();
+      const matchesSearch = name.includes(loweredSearch);
+      const matchesFilter =
+        filter === 'all' ? true :
+          filter === 'low' ? (item.is_low_stock && item.stock_quantity > 0) :
+            filter === 'out' ? (item.stock_quantity === 0) :
+              filter === 'expiring' ? (item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry') : true;
+      return matchesSearch && matchesFilter;
+    });
+  }, [inventoryMetrics.withDerived, debouncedSearchTerm, filter]);
 
   const getBranchQty = (item, branchName) => {
     if (!branchName) return 0;
@@ -159,13 +188,29 @@ const InventoryManagement = () => {
       </div>
 
       {activeTab === 'suppliers' ? (
-        <div className="animate-fade-in"><SupplierList /></div>
+        <div className="animate-fade-in">
+          <Suspense fallback={<div className="p-6"><InventoryItemCardSkeleton /></div>}>
+            <SupplierList />
+          </Suspense>
+        </div>
       ) : activeTab === 'batches' ? (
-        <div className="animate-fade-in"><BatchList /></div>
+        <div className="animate-fade-in">
+          <Suspense fallback={<div className="p-6"><InventoryItemCardSkeleton /></div>}>
+            <BatchList />
+          </Suspense>
+        </div>
       ) : activeTab === 'intake' ? (
-        <div className="animate-fade-in"><StockIntakeLog /></div>
+        <div className="animate-fade-in">
+          <Suspense fallback={<div className="p-6"><InventoryItemCardSkeleton /></div>}>
+            <StockIntakeLog />
+          </Suspense>
+        </div>
       ) : activeTab === 'transfers' ? (
-        <div className="animate-fade-in"><BranchTransfers /></div>
+        <div className="animate-fade-in">
+          <Suspense fallback={<div className="p-6"><InventoryItemCardSkeleton /></div>}>
+            <BranchTransfers />
+          </Suspense>
+        </div>
       ) : (
         <div className="animate-fade-in">
           {/* Filters and Search Bento Section */}
@@ -226,12 +271,12 @@ const InventoryManagement = () => {
                 <div className="mb-2">
                   <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-muted mb-1">
                     <span>Stock Health</span>
-                    <span>{inventory.length > 0 ? Math.round(((inventory.length - inventory.filter(i => i.is_low_stock && i.stock_quantity > 0).length) / inventory.length) * 100) : 0}%</span>
+                    <span>{inventory.length > 0 ? Math.round(((inventory.length - inventoryMetrics.lowStockCount) / inventory.length) * 100) : 0}%</span>
                   </div>
                   <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000" 
-                      style={{ width: `${inventory.length > 0 ? Math.round(((inventory.length - inventory.filter(i => i.is_low_stock && i.stock_quantity > 0).length) / inventory.length) * 100) : 0}%` }}
+                      style={{ width: `${inventory.length > 0 ? Math.round(((inventory.length - inventoryMetrics.lowStockCount) / inventory.length) * 100) : 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -243,7 +288,7 @@ const InventoryManagement = () => {
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all group/stat">
                   <span className="text-rose-600 text-xs font-bold uppercase tracking-widest">Need restock</span>
                   <span className="font-display font-bold text-2xl text-rose-600 group-hover:scale-110 transition-transform">
-                    {inventory.filter(item => item.is_low_stock && item.stock_quantity > 0).length}
+                    {inventoryMetrics.lowStockCount}
                   </span>
                 </div>
               </div>
@@ -252,22 +297,7 @@ const InventoryManagement = () => {
 
           {/* Expiring medicines alert */}
           {(() => {
-            const getDaysLeft = (expiryDate) => {
-              if (!expiryDate) return null;
-              const exp = new Date(expiryDate);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              exp.setHours(0, 0, 0, 0);
-              return Math.ceil((exp - today) / (24 * 60 * 60 * 1000));
-            };
-            const expired = inventory.filter(i => {
-              const days = getDaysLeft(i.expiry_date);
-              return days !== null && days < 0;
-            });
-            const expiringSoon = inventory.filter(i => {
-              const days = getDaysLeft(i.expiry_date);
-              return days !== null && days >= 0 && days <= 30;
-            });
+            const { expired, expiringSoon } = inventoryMetrics;
             if (expired.length === 0 && expiringSoon.length === 0) return null;
             return (
               <div className="mb-10 space-y-4">
@@ -297,7 +327,7 @@ const InventoryManagement = () => {
                     <p className="text-sm text-amber-800 mb-4 font-medium">These medicines expire within 30 days. Use or replace them before they expire.</p>
                     <div className="flex flex-wrap gap-2">
                       {expiringSoon.slice(0, 12).map(item => {
-                        const days = getDaysLeft(item.expiry_date);
+                        const days = item._daysLeft;
                         return (
                           <span key={item.id} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-amber-200 text-amber-900">
                             {item.name}: {days === 0 ? 'Expires today' : `${days} day${days === 1 ? '' : 's'} left`}

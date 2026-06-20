@@ -154,7 +154,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [allowedBranches, setAllowedBranches] = useState<BranchInfo[]>([]);
   const [requiresBranchSelection, setRequiresBranchSelection] = useState(false);
   const navigate = useNavigate();
-  /** Skip duplicate profile fetch when login() just set the token (React StrictMode runs effects twice). */
+  /** Skip duplicate profile fetch when login() or switchBranch() just set the token. */
   const skipVerifyAfterLoginRef = useRef(0);
 
   const applyBranchSession = useCallback((session: BranchSessionPayload) => {
@@ -289,8 +289,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         { skipGlobalErrorNotification: true },
       );
       const payload = response.data?.data ?? response.data;
-      const { active_branch: branch, tokens } = payload || {};
+      const { active_branch: branch, tokens, requires_branch_selection: reqSelection } = payload || {};
       if (tokens?.access) {
+        skipVerifyAfterLoginRef.current = 2;
         setToken(tokens.access);
         localStorage.setItem("access_token", tokens.access);
       }
@@ -304,7 +305,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           `You are now working at ${branch.name}. All transactions will be recorded here.`,
         );
       }
-      setRequiresBranchSelection(false);
+      if (payload?.allowed_branches) {
+        setAllowedBranches(payload.allowed_branches);
+      }
+      setRequiresBranchSelection(Boolean(reqSelection));
       return { success: true };
     } catch (error: unknown) {
       logAuthError('Switch branch', error);

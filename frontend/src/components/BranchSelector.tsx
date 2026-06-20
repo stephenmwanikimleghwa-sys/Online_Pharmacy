@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, BranchInfo } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 
@@ -13,6 +13,7 @@ const BranchSelector: React.FC = () => {
   } = useAuth();
   const { notify } = useNotification();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [pendingBranch, setPendingBranch] = useState<BranchInfo | null>(null);
   const [switching, setSwitching] = useState(false);
@@ -51,15 +52,17 @@ const BranchSelector: React.FC = () => {
 
   const handleConfirmSwitch = async () => {
     if (!pendingBranch) return;
+    const selectedBranch = pendingBranch;
     setSwitching(true);
-    const result = await switchBranch(pendingBranch.id);
+    const result = await switchBranch(selectedBranch.id);
     setSwitching(false);
     setPendingBranch(null);
     setOpen(false);
     if (result.success) {
-      window.location.reload();
+      // Keep this client-side; avoid hard reload that can 404 on deep routes.
+      navigate(`${location.pathname}${location.search}`, { replace: true });
     } else {
-      notify.error('Branch Switch Failed', `Could not switch to ${pendingBranch.name}. Please try again.`);
+      notify.error('Branch Switch Failed', `Could not switch to ${selectedBranch.name}. Please try again.`);
     }
   };
 

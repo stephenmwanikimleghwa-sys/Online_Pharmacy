@@ -10,7 +10,6 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
-from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from users.serializers import (
     UserLoginSerializer,
@@ -189,7 +188,6 @@ def verify_pharmacist(request, user_id):
 
 @api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
-@cache_page(60 * 15)  # Cache for 15 minutes
 @vary_on_headers('Authorization')  # CRITICAL: Prevent cross-user data leakage
 def profile(request):
     """

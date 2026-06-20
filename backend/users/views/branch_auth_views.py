@@ -82,11 +82,13 @@ class SwitchBranchView(APIView):
             f"You are now working at {branch.name}.",
             data={
                 "active_branch": branch_to_dict(branch, include_type=True),
+                "allowed_branches": session["allowed_branches"],
                 "requires_branch_selection": session["requires_branch_selection"],
                 "tokens": tokens,
             },
             extra={
                 "active_branch": branch_to_dict(branch, include_type=True),
+                "allowed_branches": session["allowed_branches"],
                 "requires_branch_selection": session["requires_branch_selection"],
                 "tokens": tokens,
             },

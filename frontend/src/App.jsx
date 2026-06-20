@@ -50,6 +50,7 @@ const QuotationsDashboard = lazy(() => import("./pages/finance/QuotationsDashboa
 const ClinicalDashboard = lazy(() => import('./pages/clinical/ClinicalDashboard'));
 const ConsultationWorkflow = lazy(() => import('./pages/clinical/ConsultationWorkflow'));
 const ReturnsDashboard = lazy(() => import('./pages/inventory/ReturnsDashboard'));
+import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
@@ -259,8 +260,8 @@ function AppLayout() {
                     element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
                   />
 
-                  {/* Catch-all redirect */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  {/* Catch-all — stay in SPA instead of redirecting to home */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>
