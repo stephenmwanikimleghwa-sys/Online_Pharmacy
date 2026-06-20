@@ -71,7 +71,7 @@ const BatchList = () => {
                                         {batch.supplier_name || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                                        {batch.quantity}
+                                        {batch.quantity_remaining ?? batch.quantity}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                                         {new Date(batch.expiry_date).toLocaleDateString()}

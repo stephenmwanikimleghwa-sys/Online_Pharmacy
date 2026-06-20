@@ -4,7 +4,8 @@ import reportsHubService from '../services/reportsHubService';
 import { useAuth } from '../context/AuthContext';
 import BranchSelector from '../components/BranchSelector';
 import { utils, writeFile } from 'xlsx';
-import { DocumentTextIcon, ChartBarIcon, CurrencyDollarIcon, UserGroupIcon, CalendarDaysIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ChartBarIcon, CurrencyDollarIcon, UserGroupIcon, CalendarDaysIcon, ArrowDownTrayIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ReportsDashboard = () => {
   const { user } = useAuth();
@@ -52,6 +53,12 @@ const ReportsDashboard = () => {
     enabled: activeReport === 'staff'
   });
 
+  const { data: procurementData, isLoading: loadingProcurement, error: procurementError, refetch: refetchProcurement } = useQuery({
+    queryKey: ['procurementAnalytics'],
+    queryFn: () => reportsHubService.getProcurementAnalytics(),
+    enabled: activeReport === 'procurement'
+  });
+
   const handleExportCSV = () => {
     let dataToExport = [];
     let filename = 'report.xlsx';
@@ -68,6 +75,9 @@ const ReportsDashboard = () => {
     } else if (activeReport === 'staff') {
       dataToExport = staffData?.activity || [];
       filename = `staff_activity_${filters.startDate}_to_${filters.endDate}.xlsx`;
+    } else if (activeReport === 'procurement') {
+      dataToExport = procurementData?.potential_savings || [];
+      filename = 'procurement_savings.xlsx';
     }
 
     const ws = utils.json_to_sheet(dataToExport);
@@ -80,6 +90,7 @@ const ReportsDashboard = () => {
     { id: 'sales', label: 'Sales Report', icon: ChartBarIcon },
     { id: 'valuation', label: 'Stock Valuation', icon: CurrencyDollarIcon },
     { id: 'expiry', label: 'Expiry Report', icon: CalendarDaysIcon },
+    { id: 'procurement', label: 'Procurement Analytics', icon: ShoppingCartIcon },
     { id: 'staff', label: 'Staff Activity', icon: UserGroupIcon },
   ];
   const valuationRows = valuationData?.valuation || [];
@@ -312,6 +323,70 @@ const ReportsDashboard = () => {
                   )}
                 </tbody>
               </table>
+            )
+          )}
+
+          {activeReport === 'procurement' && (
+            procurementError ? (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-6 text-center">
+                <p className="text-rose-700 font-semibold">Failed to load procurement analytics</p>
+                <button onClick={() => refetchProcurement()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
+              </div>
+            ) : loadingProcurement ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+              <div className="space-y-8">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 font-semibold">
+                  Switching to best-price suppliers could save KES {Number(procurementData?.total_annual_savings || 0).toLocaleString()} per year
+                </div>
+                {procurementData?.dependency_alerts?.map((a) => (
+                  <div key={a.supplier_id} className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm">
+                    ⚠️ High dependency on {a.supplier_name} — {a.pct}% of your products.
+                  </div>
+                ))}
+                <div className="h-64">
+                  <h3 className="font-bold mb-2">Spending by Supplier (12 months)</h3>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={procurementData?.spending_by_supplier || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="supplier_name" tick={{ fontSize: 10 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="total_spent" fill="#6366f1" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="h-64">
+                  <h3 className="font-bold mb-2">Average Cost Trend</h3>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={procurementData?.price_trend || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="avg_price" stroke="#16a34a" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] uppercase text-slate-400">
+                      <th className="px-3 py-2">Product</th>
+                      <th className="px-3 py-2">Current</th>
+                      <th className="px-3 py-2">Cheapest</th>
+                      <th className="px-3 py-2 text-right">Annual Saving</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(procurementData?.potential_savings || []).slice(0, 20).map((row) => (
+                      <tr key={row.product_id} className="border-b">
+                        <td className="px-3 py-2">{row.product_name}</td>
+                        <td className="px-3 py-2">{row.current_supplier} @ {row.current_price}</td>
+                        <td className="px-3 py-2">{row.cheapest_supplier} @ {row.cheapest_price}</td>
+                        <td className="px-3 py-2 text-right font-bold">KES {row.annual_saving?.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )
           )}
 

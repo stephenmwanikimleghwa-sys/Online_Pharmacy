@@ -20,11 +20,17 @@ const getStaffActivity = async (params = {}) => {
   return response.data;
 };
 
+const getProcurementAnalytics = async () => {
+  const response = await api.get('/inventory/suppliers/procurement-analytics/');
+  return response.data;
+};
+
 const reportsHubService = {
   getSalesReport,
   getStockValuation,
   getExpiryReport,
   getStaffActivity,
+  getProcurementAnalytics,
 };
 
 export default reportsHubService;

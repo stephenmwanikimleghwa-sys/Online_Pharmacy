@@ -8,6 +8,7 @@ from .finance import CashFlow, LegacyLedgerEntry
 from .services import ClinicalService, SoldService
 from .returns import ProductReturn
 from .transfer import InterBranchTransfer
+from .purchase_order import PurchaseOrder, PurchaseOrderItem
 
 __all__ = [
     'Prescription',
@@ -25,6 +26,6 @@ __all__ = [
     'SoldService',
     'ProductReturn',
     'InterBranchTransfer',
+    'PurchaseOrder',
+    'PurchaseOrderItem',
 ]
-from .services import ClinicalService, SoldService
-from .returns import ProductReturn

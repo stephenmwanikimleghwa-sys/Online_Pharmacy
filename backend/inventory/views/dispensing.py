@@ -171,8 +171,10 @@ def dispense_otc(request):
             batch_allocations = []
             batch_queryset = Batch.objects.filter(
                 product=product,
+                branch=active_branch,
                 is_active=True,
-                quantity__gt=0,
+                quantity_remaining__gt=0,
+                expiry_date__gte=timezone.now().date(),
             ).order_by('expiry_date', 'id')
 
             if batch_queryset.exists():
@@ -180,9 +182,10 @@ def dispense_otc(request):
                 for batch in batch_queryset:
                     if remaining <= 0:
                         break
-                    if batch.quantity <= 0:
+                    available_qty = int(batch.quantity_remaining)
+                    if available_qty <= 0:
                         continue
-                    consume_qty = min(batch.quantity, remaining)
+                    consume_qty = min(available_qty, remaining)
                     batch_allocations.append({
                         'batch': batch,
                         'quantity': consume_qty,
@@ -281,8 +284,8 @@ def dispense_otc(request):
                         batch_number=batch.batch_number,
                         expiry_date=batch.expiry_date,
                     )
-                    batch.quantity -= batch_quantity
-                    batch.save(update_fields=['quantity'])
+                    batch.quantity_remaining -= batch_quantity
+                    batch.save(update_fields=['quantity_remaining'])
             else:
                 DispensationItem.objects.create(
                     dispensation=dispensation,

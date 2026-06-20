@@ -78,16 +78,20 @@ class InventoryViewTest(TestCase):
 
         batch_1 = Batch.objects.create(
             product=self.product,
+            branch=self.branch,
             batch_number="BATCH-001",
             supplier=supplier,
-            quantity=5,
+            quantity_received=Decimal("5"),
+            quantity_remaining=Decimal("5"),
             expiry_date=earlier_date,
         )
         batch_2 = Batch.objects.create(
             product=self.product,
+            branch=self.branch,
             batch_number="BATCH-002",
             supplier=supplier,
-            quantity=7,
+            quantity_received=Decimal("7"),
+            quantity_remaining=Decimal("7"),
             expiry_date=later_date,
         )
 
@@ -104,8 +108,8 @@ class InventoryViewTest(TestCase):
 
         batch_1.refresh_from_db()
         batch_2.refresh_from_db()
-        self.assertEqual(batch_1.quantity, 0)
-        self.assertEqual(batch_2.quantity, 3)
+        self.assertEqual(batch_1.quantity_remaining, Decimal("0"))
+        self.assertEqual(batch_2.quantity_remaining, Decimal("3"))
 
     def test_restock_request_flow(self):
         """Test creating, approving, and completing a restock request"""

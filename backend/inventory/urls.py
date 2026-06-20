@@ -16,6 +16,13 @@ from .views.sales_returns import SaleReturnViewSet
 from .views.document import DocumentViewSet
 from .views.supplier import SupplierViewSet
 from .views.batch import BatchViewSet
+from .views.purchase_order import PurchaseOrderViewSet
+from .views.expiry import (
+    expiry_summary_view,
+    mark_batch_removed,
+    set_batch_clearance,
+    batch_expiry_check,
+)
 
 router = DefaultRouter()
 router.register(r'suppliers', SupplierViewSet, basename='supplier')
@@ -30,6 +37,7 @@ router.register(r'sales-returns', SaleReturnViewSet, basename='sales-return')
 router.register(r'prescriptions', PrescriptionViewSet, basename='prescription')
 router.register(r'dispensations', DispensationViewSet, basename='dispensation')
 router.register(r'documents', DocumentViewSet, basename='document')
+router.register(r'purchase-orders', PurchaseOrderViewSet, basename='purchaseorder')
 
 app_name = 'inventory'
 
@@ -60,4 +68,8 @@ urlpatterns = [
     path('export/inventory/', export_inventory, name='export-inventory'),
     path('export/stock-logs/', export_stock_logs, name='export-stock-logs'),
     path('export/restock-requests/', export_restock_requests, name='export-restock-requests'),
+    path('expiry/summary/', expiry_summary_view, name='expiry-summary'),
+    path('expiry/batches/<int:batch_id>/remove/', mark_batch_removed, name='batch-remove'),
+    path('expiry/batches/<int:batch_id>/clearance/', set_batch_clearance, name='batch-clearance'),
+    path('expiry/check/<int:product_id>/', batch_expiry_check, name='batch-expiry-check'),
 ]

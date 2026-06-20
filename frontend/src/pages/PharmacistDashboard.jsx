@@ -10,6 +10,7 @@ import PrescriptionCard from "../components/PrescriptionCard";
 import InventorySummaryCard from "../components/InventorySummaryCard";
 import QuickActions from "../components/QuickActions";
 import QuickSale from "../components/QuickSale";
+import ExpiryAlertsWidget from "../components/ExpiryAlertsWidget";
 
 const PharmacistDashboard = () => {
   const [isQuickSaleOpen, setIsQuickSaleOpen] = useState(false);
@@ -227,6 +228,10 @@ const PharmacistDashboard = () => {
             )}
           </div>
 
+        </div>
+
+        <div className="mt-8">
+          <ExpiryAlertsWidget compact />
         </div>
       </div>
 

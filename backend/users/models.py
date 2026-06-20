@@ -126,6 +126,11 @@ class User(AbstractUser):
     can_manage_users = models.BooleanField(default=False, verbose_name="Can Manage Users")
     can_delete_records = models.BooleanField(default=False, verbose_name="Can Delete Records")
     can_view_audit_logs = models.BooleanField(default=False, verbose_name="Can View Audit Logs")
+    can_transfer_stock = models.BooleanField(
+        default=False,
+        verbose_name="Can Transfer Stock",
+        help_text="Can view other-branch stock quantities and request transfers.",
+    )
     permission_flags = models.JSONField(default=dict, blank=True, verbose_name="Permission Flags", help_text="Granular permission flags for the frontend and admin dashboard.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

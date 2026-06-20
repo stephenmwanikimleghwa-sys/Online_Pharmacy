@@ -34,6 +34,8 @@ const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const UserAccount = lazy(() => import("./pages/UserAccount"));
 const PasswordResetRequest = lazy(() => import("./pages/PasswordResetRequest"));
 const PasswordResetConfirm = lazy(() => import("./pages/PasswordResetConfirm"));
+const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders"));
+const PurchaseOrderCreate = lazy(() => import("./pages/PurchaseOrderCreate"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminStock = lazy(() => import("./pages/AdminStock"));
 const BranchesOverview = lazy(() => import("./pages/BranchesOverview"));
@@ -178,6 +180,27 @@ function AppLayout() {
                     element={
                       <ProtectedRoute
                         element={StockIntakeLog}
+                        allowedRoles={['pharmacist', 'admin']}
+                        requiresActiveBranch
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/purchase-orders"
+                    element={
+                      <ProtectedRoute
+                        element={PurchaseOrders}
+                        allowedRoles={['pharmacist', 'admin']}
+                        requiresActiveBranch
+                      />
+                    }
+                  />
+                  <Route
+                    path="/purchase-orders/new"
+                    element={
+                      <ProtectedRoute
+                        element={PurchaseOrderCreate}
                         allowedRoles={['pharmacist', 'admin']}
                         requiresActiveBranch
                       />

@@ -88,6 +88,7 @@ urlpatterns += [
     path("api/prescriptions/", include("prescriptions.urls")),
     path("api/reviews/", include("reviews.urls")),
     path("api/inventory/", include("inventory.urls")),
+    path("api/purchase-orders/", include("inventory.purchase_order_urls")),
     path("api/finance/", include("finance.urls")),
     path("api/clinical/", include("clinical.urls")),
     # path("api/dispensing-logs/", include("dispensing_logs.urls")), # Deprecated in favor of products.StockLog

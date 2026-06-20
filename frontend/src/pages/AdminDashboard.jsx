@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { approveTransfer, rejectTransfer } from '../services/procurementService';
 import {
   BuildingOffice2Icon,
   ExclamationTriangleIcon,
@@ -13,6 +14,8 @@ import {
 } from '@heroicons/react/24/outline';
 import WelcomeBanner from '../components/WelcomeBanner';
 import NewStockIntake from '../components/NewStockIntake';
+import ExpiryAlertsWidget from '../components/ExpiryAlertsWidget';
+import { useNotification } from '../context/NotificationContext';
 
 const formatMoney = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
 const formatBranchType = (type, name) => {
@@ -31,6 +34,32 @@ const AdminDashboard = () => {
   const [loadingOps, setLoadingOps] = useState(false);
   const [error, setError] = useState('');
   const [showStockIntake, setShowStockIntake] = useState(false);
+  const [rejectModal, setRejectModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const { notify } = useNotification();
+
+  const handleApproveTransfer = async (id) => {
+    try {
+      await approveTransfer(id);
+      notify.success('Approved', 'Transfer approved. Stock levels updated.');
+      fetchBranchOps();
+    } catch {
+      notify.error('Failed', 'Could not approve transfer.');
+    }
+  };
+
+  const handleRejectTransfer = async () => {
+    if (!rejectModal || !rejectReason.trim()) return;
+    try {
+      await rejectTransfer(rejectModal, rejectReason);
+      notify.success('Rejected', 'Transfer request rejected.');
+      setRejectModal(null);
+      setRejectReason('');
+      fetchBranchOps();
+    } catch {
+      notify.error('Failed', 'Could not reject transfer.');
+    }
+  };
 
   const fetchGlobal = useCallback(async () => {
     try {
@@ -380,17 +409,37 @@ const AdminDashboard = () => {
               {branchOps.pending_transfers?.length ? (
                 <ul className="space-y-3">
                   {branchOps.pending_transfers.map((t) => (
-                    <li key={t.id} className="flex flex-wrap justify-between gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 text-sm">
-                      <span className="font-medium">{t.product_name} × {t.quantity}</span>
-                      <span className="text-gray-500">
-                        {t.source_branch} → {t.destination_branch}
-                      </span>
+                    <li key={t.id} className="flex flex-wrap justify-between gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 text-sm items-center">
+                      <div>
+                        <span className="font-medium block">{t.product_name} × {t.quantity}</span>
+                        <span className="text-gray-500 text-xs">
+                          {t.source_branch} → {t.destination_branch} · {t.requested_by} · {new Date(t.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" className="text-xs font-bold text-green-700 px-2 py-1 rounded bg-green-50" onClick={() => handleApproveTransfer(t.id)}>Approve</button>
+                        <button type="button" className="text-xs font-bold text-red-700 px-2 py-1 rounded bg-red-50" onClick={() => setRejectModal(t.id)}>Reject</button>
+                      </div>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <p className="text-sm text-gray-500">No pending transfers.</p>
               )}
+            </div>
+            <ExpiryAlertsWidget />
+          </div>
+        )}
+
+        {rejectModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+            <div className="bg-white rounded-xl p-6 max-w-md w-full space-y-3">
+              <h4 className="font-bold">Reject transfer</h4>
+              <textarea className="form-input w-full" rows={3} placeholder="Reason for rejection" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
+              <div className="flex gap-2 justify-end">
+                <button type="button" className="btn-secondary px-3 py-1 rounded" onClick={() => setRejectModal(null)}>Cancel</button>
+                <button type="button" className="btn-primary px-3 py-1 rounded" onClick={handleRejectTransfer}>Reject</button>
+              </div>
             </div>
           </div>
         )}

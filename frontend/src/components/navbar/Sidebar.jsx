@@ -39,6 +39,7 @@ const getNavGroups = (user) => {
       { to: "/inventory/control", label: "Inventory Control", icon: ClipboardDocumentListIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
+      { to: "/purchase-orders", label: "Purchase Orders", icon: DocumentPlusIcon },
       { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
       { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },

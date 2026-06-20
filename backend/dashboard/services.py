@@ -140,23 +140,26 @@ def build_branch_operations(branch):
         )
 
     expiry_items = []
-    for product in (
-        Product.objects.filter(
-            expiry_date__lte=sixty_days,
-            expiry_date__gte=today,
-            branch_stocks__branch=branch,
-            branch_stocks__quantity__gt=0,
-        )
-        .distinct()
-        .order_by("expiry_date")[:20]
-    ):
-        expiry_items.append(
-            {
-                "product_id": product.id,
-                "product_name": product.name,
-                "expiry_date": product.expiry_date.isoformat() if product.expiry_date else None,
-            }
-        )
+    expiry_summary = {"expired": 0, "critical": 0, "warning": 0, "caution": 0}
+    try:
+        from inventory.services.expiry import get_expiry_summary, get_expiry_batches
+
+        expiry_summary = get_expiry_summary(branch.id)
+        for row in get_expiry_batches(branch.id)[:30]:
+            if row["status"] in ("EXPIRED", "CRITICAL", "WARNING"):
+                expiry_items.append(
+                    {
+                        "batch_id": row["id"],
+                        "product_id": row["product_id"],
+                        "product_name": row["product_name"],
+                        "expiry_date": row["expiry_date"],
+                        "days_left": row["days_left"],
+                        "status": row["status"],
+                        "quantity": row["quantity_remaining"],
+                    }
+                )
+    except Exception:
+        pass
 
     recent_transactions = []
     
@@ -206,8 +209,12 @@ def build_branch_operations(branch):
     pending_transfers = []
     for transfer in (
         InterBranchTransfer.objects.filter(status="pending")
-        .filter(Q(source_branch=branch) | Q(destination_branch=branch))
-        .select_related("product", "source_branch", "destination_branch")
+        .select_related(
+            "product",
+            "source_branch",
+            "destination_branch",
+            "requested_by",
+        )
         .order_by("-created_at")[:10]
     ):
         pending_transfers.append(
@@ -217,6 +224,12 @@ def build_branch_operations(branch):
                 "quantity": transfer.quantity,
                 "source_branch": transfer.source_branch.name,
                 "destination_branch": transfer.destination_branch.name,
+                "requested_by": (
+                    transfer.requested_by.get_full_name()
+                    or transfer.requested_by.username
+                    if transfer.requested_by
+                    else None
+                ),
                 "status": transfer.status,
                 "created_at": transfer.created_at.isoformat(),
             }
@@ -228,6 +241,7 @@ def build_branch_operations(branch):
         "low_stock_count": len(low_stock_items),
         "expiry_alerts": expiry_items,
         "expiry_count": len(expiry_items),
+        "expiry_summary": expiry_summary,
         "recent_transactions": recent_transactions,
         "pending_transfers": pending_transfers,
         "pending_transfers_count": len(pending_transfers),

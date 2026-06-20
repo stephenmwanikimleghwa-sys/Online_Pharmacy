@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
-import LoadingButton from './LoadingButton';
+import { getLastPrice } from '../services/procurementService';
 import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const SearchableProductSelect = ({ value, onChange, products }) => {
@@ -86,7 +86,8 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('PAID');
   const [notes, setNotes] = useState('');
-  const [rows, setRows] = useState([]);
+  const [rowPriceHints, setRowPriceHints] = useState({});
+  const [expiryConfirm, setExpiryConfirm] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -153,7 +154,6 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
   const updateRow = (id, field, value) => {
     setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r));
     
-    // Auto-fill prices if product is selected
     if (field === 'product_id' && value) {
       const product = products.find(p => p.id === parseInt(value));
       if (product) {
@@ -166,7 +166,6 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
         } : r));
       }
 
-      // Fetch supplier history
       if (!supplierHistory[value]) {
         api.get(`/inventory/stock-intake/supplier_history/?product_id=${value}`)
           .then(res => {
@@ -175,10 +174,38 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
           .catch(err => console.error("Could not fetch supplier history", err));
       }
     }
+
+    const row = rows.find((r) => r.id === id);
+    const pid = field === 'product_id' ? value : row?.product_id;
+    if ((field === 'product_id' || field === 'cost_price') && pid && supplierId) {
+      getLastPrice(pid, supplierId).then((res) => {
+        setRowPriceHints((prev) => ({ ...prev, [id]: res.data }));
+      }).catch(() => {});
+    }
+  };
+
+  const validateExpiryAndSubmit = async (e) => {
+    e.preventDefault();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const row of rows.filter((r) => r.product_id && r.quantity_received > 0)) {
+      if (!row.expiry_date) continue;
+      const exp = new Date(row.expiry_date);
+      const days = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+      if (days < 0) {
+        notify.error('Expired stock', `Cannot receive expired stock. Expiry ${row.expiry_date} has passed.`);
+        return;
+      }
+      if (days <= 30 && !expiryConfirm) {
+        setExpiryConfirm({ row, days });
+        return;
+      }
+    }
+    await handleSubmit(e);
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     
     const missing = [];
     if (!supplierId) missing.push('Supplier');
@@ -264,7 +291,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
 
         {/* Form Body */}
         <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
-          <form id="bulkIntakeForm" onSubmit={handleSubmit}>
+          <form id="bulkIntakeForm" onSubmit={validateExpiryAndSubmit}>
             
             {/* Invoice Meta Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 pb-8 border-b border-slate-100">
@@ -373,6 +400,18 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                         </td>
                         <td className="px-4 py-2">
                           <input type="number" min="0" step="0.01" value={row.cost_price} onChange={(e) => updateRow(row.id, 'cost_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
+                          {rowPriceHints[row.id] && (
+                            <div className="mt-1 text-[10px] leading-snug">
+                              <p>Last from supplier: KES {rowPriceHints[row.id].last_price ?? '—'}</p>
+                              <p>Best ever ({rowPriceHints[row.id].best_supplier}): KES {rowPriceHints[row.id].best_price ?? '—'}</p>
+                              {row.cost_price && rowPriceHints[row.id].last_price && parseFloat(row.cost_price) > rowPriceHints[row.id].last_price && (
+                                <p className="text-amber-600">⚠️ Price increased vs last order</p>
+                              )}
+                              {row.cost_price && rowPriceHints[row.id].last_price && parseFloat(row.cost_price) < rowPriceHints[row.id].last_price && (
+                                <p className="text-emerald-600">✅ Price decreased vs last order</p>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-2">
                           <input type="number" min="0" step="0.01" value={row.selling_price} onChange={(e) => updateRow(row.id, 'selling_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
@@ -437,6 +476,18 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
         </div>
 
       </div>
+      {expiryConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-xl p-6 max-w-md w-full space-y-3">
+            <h4 className="font-bold text-amber-700">⚠️ Short Expiry Warning</h4>
+            <p className="text-sm">This stock expires in {expiryConfirm.days} days ({expiryConfirm.row.expiry_date}). Are you sure you want to receive it?</p>
+            <div className="flex gap-2 justify-end">
+              <button type="button" className="btn-secondary px-3 py-1 rounded" onClick={() => setExpiryConfirm(null)}>Cancel</button>
+              <button type="button" className="btn-primary px-3 py-1 rounded" onClick={() => { setExpiryConfirm(null); handleSubmit(); }}>Yes, Receive Stock</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { unwrapList } from "../utils/parseApiData";
 export interface ProductSearchOptions {
   branchId?: number | string | null;
   perPage?: number;
+  context?: "sales" | "inventory" | "store";
 }
 
 /**
@@ -51,6 +52,14 @@ export async function searchProducts(
     items = (invRes.data as { products?: unknown[] })?.products ?? [];
   }
 
+  if (items.length === 0 && q.length >= 2 && options.context === "inventory") {
+    const broadRes = await api.get("/products/", {
+      params: { context: "inventory", search: q, page_size: perPage },
+      skipGlobalErrorNotification: true,
+    });
+    items = unwrapList(broadRes.data);
+  }
+
   return items;
 }
 
@@ -63,7 +72,7 @@ export async function fetchBranchCatalog(options: ProductSearchOptions = {}) {
   while (hasNext) {
     const invRes = await api.get("/products/", {
       params: {
-        context: "sales",
+        context: options.context || "sales",
         page_size: perPage,
         page,
       },

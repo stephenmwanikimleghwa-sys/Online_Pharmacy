@@ -274,28 +274,41 @@ class ReportsHubViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def expiry_report(self, request):
-        from products.models import Product
-        
+        from inventory.services.expiry import get_expiry_batches, get_expiry_summary
+        from users.active_branch import get_active_branch
+
         days, err = parse_days_param(request, default=90)
         if err:
             return err
-        target_date = timezone.now().date() + timedelta(days=days)
-        
-        qs = Product.objects.filter(expiry_date__isnull=False, expiry_date__lte=target_date).order_by('expiry_date')
-        
-        data = []
-        for product in qs:
-            days_until = (product.expiry_date - timezone.now().date()).days
-            status = 'Expired' if days_until < 0 else f'Expires in {days_until} days'
-            data.append({
-                'product': product.name,
-                'category': product.category,
-                'expiry_date': product.expiry_date.strftime('%Y-%m-%d'),
-                'days_until': days_until,
-                'status': status
-            })
-            
-        return Response({'expiry': data})
+        status_filter = request.query_params.get('status', 'ALL')
+        branch_param = request.query_params.get('branch_id')
+        user = request.user
+        is_admin = user.is_superuser or getattr(user, 'role', None) == 'admin'
+        branch_id = branch_param
+        if not branch_id and not is_admin:
+            active = get_active_branch(request) or getattr(user, 'branch', None)
+            branch_id = active.id if active else None
+
+        batches = get_expiry_batches(
+            branch_id=int(branch_id) if branch_id else None,
+            status_filter=status_filter if status_filter != 'ALL' else None,
+            window_days=days,
+        )
+        summary = get_expiry_summary(int(branch_id) if branch_id else None)
+
+        data = [
+            {
+                'product': b['product_name'],
+                'batch_number': b['batch_number'],
+                'branch': b['branch_name'],
+                'quantity_remaining': b['quantity_remaining'],
+                'expiry_date': b['expiry_date'],
+                'days_until': b['days_left'],
+                'status': b['status'],
+            }
+            for b in batches
+        ]
+        return Response({'expiry': data, 'summary': summary})
         
     @action(detail=False, methods=['get'])
     def staff_activity(self, request):

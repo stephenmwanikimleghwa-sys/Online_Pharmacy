@@ -13,6 +13,9 @@ import { fetchBranchCatalog, searchProducts } from "../services/productService";
 import { getProductDisplayPrice, getProductBranchQuantity } from "../utils/parseApiData";
 import LoadingButton from "./LoadingButton";
 import ReceiptModal from "./ReceiptModal";
+import TransferRequestModal from "./TransferRequestModal";
+import ExpiryWarningModal from "./ExpiryWarningModal";
+import { getProductAvailability, checkProductExpiry } from "../services/procurementService";
 
 /**
  * Shared OTC quick-sale UI (same flow as pharmacist QuickSale modal).
@@ -32,6 +35,9 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [outOfStockHint, setOutOfStockHint] = useState(null);
   const [catalog, setCatalog] = useState([]);
+  const [transferModal, setTransferModal] = useState(null);
+  const [expiryWarning, setExpiryWarning] = useState(null);
+  const [pendingProduct, setPendingProduct] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   // Setup Phase State
@@ -63,22 +69,24 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const showAvailabilityHint = useCallback(
     async (product) => {
       try {
-        const availability = await api.get(`/products/${product.id}/availability/`, {
-          skipGlobalErrorNotification: true,
-        });
-        const branches = availability.data?.branches || [];
-        const alternatives = branches.filter((b) => Number(b.quantity) > 0 && !b.is_active_branch);
+        const res = await getProductAvailability(product.id);
+        const data = res.data;
         setOutOfStockHint({
-          productName: product.name,
-          activeBranchName:
-            branches.find((b) => b.is_active_branch)?.branch || activeBranch?.name || "your branch",
-          alternatives,
+          product,
+          productName: data.product_name || product.name,
+          activeBranchName: data.active_branch?.branch_name || activeBranch?.name || "your branch",
+          alternatives: data.other_branches || [],
+          availableElsewhere: data.available_elsewhere,
+          message: data.message,
+          canSeeDetails: Boolean(data.other_branches?.length),
         });
       } catch {
         setOutOfStockHint({
+          product,
           productName: product.name,
           activeBranchName: activeBranch?.name || "your branch",
           alternatives: [],
+          availableElsewhere: false,
         });
       }
     },
@@ -95,7 +103,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       }
       setSearching(true);
       try {
-        const products = await searchProducts(q, { branchId, perPage: 80 });
+        const products = await searchProducts(q, { branchId, perPage: 80, context: "inventory" });
         setSearchResults(sortForOTC(products));
         setOutOfStockHint(null);
         if (products.length === 0) {
@@ -120,7 +128,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
   const loadCatalog = useCallback(async () => {
     try {
-      const products = await fetchBranchCatalog({ branchId, perPage: 500 });
+      const products = await fetchBranchCatalog({ branchId, perPage: 500, context: "inventory" });
       const sorted = sortForOTC(products);
       setCatalog(sorted);
       if (!searchTerm.trim()) {
@@ -161,17 +169,9 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     return () => clearTimeout(t);
   }, [searchTerm, runSearch]);
 
-  const addToSale = (product) => {
-    const qtyAvail = getProductBranchQuantity(product, branchId, activeBranch?.name);
-    if (qtyAvail <= 0) {
-      notify.warning(
-        "Out of Stock",
-        `${product.name} is out of stock at ${activeBranch?.name || "your branch"}.`,
-      );
-      void showAvailabilityHint(product);
-      return;
-    }
+  const confirmAddToSale = (product) => {
     const existing = selectedItems.find((item) => item.id === product.id);
+    const qtyAvail = getProductBranchQuantity(product, branchId, activeBranch?.name);
     if (existing) {
       if (existing.quantity >= qtyAvail) {
         notify.warning("Insufficient Stock", `Only ${qtyAvail} units available.`);
@@ -187,10 +187,44 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       if (setup.pricingTier === 'wholesale' && product.pricing_tier?.wholesale_price) {
         unitPrice = Number(product.pricing_tier.wholesale_price);
       }
+      if (product.is_clearance && product.clearance_price) {
+        unitPrice = Number(product.clearance_price);
+      }
       setSelectedItems([
         ...selectedItems,
-        { ...product, quantity: 1, unitPrice },
+        { ...product, quantity: 1, unitPrice, expiryBadge: product.expiryBadge },
       ]);
+    }
+    setExpiryWarning(null);
+    setPendingProduct(null);
+  };
+
+  const addToSale = async (product) => {
+    const qtyAvail = getProductBranchQuantity(product, branchId, activeBranch?.name);
+    if (qtyAvail <= 0) {
+      void showAvailabilityHint(product);
+      return;
+    }
+    try {
+      const res = await checkProductExpiry(product.id);
+      const w = res.data;
+      if (w.level === 'CRITICAL') {
+        setExpiryWarning(w);
+        setPendingProduct(product);
+        return;
+      }
+      if (w.level === 'WARNING') {
+        notify.warning(
+          'Expiry notice',
+          `This batch expires on ${w.expiry_date} (${w.days_to_expiry} days). Inform the customer.`,
+        );
+      }
+      const withBadge = w.level === 'CAUTION'
+        ? { ...product, expiryBadge: w.expiry_date }
+        : product;
+      confirmAddToSale(withBadge);
+    } catch {
+      confirmAddToSale(product);
     }
   };
 
@@ -493,62 +527,92 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           )}
           {!searching && searchTerm.length >= 2 && searchResults.length === 0 && (
             <div className="text-sm text-center py-4 space-y-2" style={{ color: "var(--text-secondary)" }}>
-              <p>No products found at this branch.</p>
-              {outOfStockHint && (
-                <div className="text-left bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs space-y-2">
-                  <p>
-                    <strong>{outOfStockHint.productName}</strong> is out of stock at{" "}
-                    <strong>{outOfStockHint.activeBranchName || activeBranch?.name || "your branch"}</strong>.
-                  </p>
-                  {outOfStockHint.alternatives?.length > 0 && (
-                    <div>
-                      <p className="font-semibold mb-1">Available at:</p>
-                      {outOfStockHint.alternatives.map((alt) => (
-                        <div key={alt.branch} className="flex items-center justify-between">
-                          <span>{alt.branch} ({alt.quantity} units)</span>
-                          <button
-                            type="button"
-                            className="text-[11px] underline font-semibold"
-                            onClick={() => {
-                              notify.info("Transfer Request", "Opening branch transfers.");
-                              window.location.href = "/inventory?tab=transfers";
-                            }}
-                          >
-                            Request Transfer
-                          </button>
-                        </div>
-                      ))}
+              <p>No product matching &apos;{searchTerm}&apos; found. Try a different spelling or check the product catalog.</p>
+            </div>
+          )}
+          {outOfStockHint && (
+            <div className="text-left bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs space-y-2 mb-2">
+              <p className="text-red-700 font-semibold">
+                ❌ Out of stock at {outOfStockHint.activeBranchName}
+              </p>
+              {outOfStockHint.canSeeDetails && outOfStockHint.alternatives?.length > 0 ? (
+                <>
+                  <p className="font-semibold">Available at other branches:</p>
+                  {outOfStockHint.alternatives.map((alt) => (
+                    <div key={alt.branch_id} className="flex items-center justify-between">
+                      <span>✅ {alt.branch_name} — {alt.quantity} units</span>
                     </div>
-                  )}
-                </div>
+                  ))}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      className="text-[11px] font-semibold px-2 py-1 rounded bg-indigo-600 text-white"
+                      onClick={() => setTransferModal({ product: outOfStockHint.product, availability: {
+                        other_branches: outOfStockHint.alternatives,
+                      }})}
+                    >
+                      Request Transfer
+                    </button>
+                    <button type="button" className="text-[11px] underline" onClick={() => setOutOfStockHint(null)}>
+                      Dismiss
+                    </button>
+                  </div>
+                </>
+              ) : outOfStockHint.availableElsewhere ? (
+                <p>{outOfStockHint.message || "Available at other branches. Contact your administrator."}</p>
+              ) : (
+                <p>Not available at any branch.</p>
               )}
             </div>
           )}
           {searchResults.map((product) => {
             const qty = getProductBranchQuantity(product, branchId, activeBranch?.name);
             const price = getProductDisplayPrice(product);
+            const outHere = qty <= 0;
+            const elsewhereNote = product.available_elsewhere;
             return (
-              <button
+              <div
                 key={product.id}
-                type="button"
-                onClick={() => addToSale(product)}
-                className={`w-full text-left p-3 rounded-xl border transition-colors ${qty <= 0 ? "opacity-80 bg-amber-50" : ""}`}
+                className={`w-full text-left p-3 rounded-xl border transition-colors ${outHere ? "opacity-60 bg-gray-50" : ""}`}
                 style={{ borderColor: "var(--border-primary)" }}
               >
                 <div className="flex justify-between gap-2">
                   <span className="font-semibold text-sm">{product.name}</span>
                   <div className="flex flex-col items-end">
                     <span className="text-sm font-bold text-primary">{fmt(price)}</span>
-                    {(user?.role === 'admin' || user?.role === 'pharmacist' || user?.is_superuser) && product.wholesale_price && (
-                      <span className="text-[10px] text-slate-400 font-medium">WSP: {fmt(product.wholesale_price)}</span>
-                    )}
                   </div>
                 </div>
-                <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  Stock: {qty}
-                </span>
-                <div className="mt-1">{stockBadge(qty)}</div>
-              </button>
+                {outHere ? (
+                  <>
+                    <span className="inline-block mt-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                      Out of Stock at {activeBranch?.name}
+                    </span>
+                    {elsewhereNote ? (
+                      <button
+                        type="button"
+                        className="block text-xs text-indigo-600 mt-1 underline"
+                        onClick={() => void showAvailabilityHint(product)}
+                      >
+                        Available at other branch(es) — tap for details
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-500 block mt-1">Not available at any branch</span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs text-emerald-700">Available: {qty} units</span>
+                    <div className="mt-1">{stockBadge(qty)}</div>
+                    <button
+                      type="button"
+                      onClick={() => void addToSale(product)}
+                      className="mt-2 text-xs font-semibold text-indigo-600"
+                    >
+                      + Add to cart
+                    </button>
+                  </>
+                )}
+              </div>
             );
           })}
         </div>
@@ -634,6 +698,19 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           </LoadingButton>
         </div>
       </div>
+      {transferModal && (
+        <TransferRequestModal
+          product={transferModal.product}
+          availability={transferModal.availability}
+          activeBranch={activeBranch}
+          onClose={() => setTransferModal(null)}
+        />
+      )}
+      <ExpiryWarningModal
+        warning={expiryWarning}
+        onAddAnyway={() => pendingProduct && confirmAddToSale(pendingProduct)}
+        onRemove={() => { setExpiryWarning(null); setPendingProduct(null); }}
+      />
     </div>
   );
 };

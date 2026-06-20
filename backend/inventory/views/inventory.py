@@ -232,9 +232,21 @@ def low_stock_items(request):
         qs = qs.filter(branch=user.branch)
     
     data = []
+    from inventory.views.supplier import low_stock_reorder_suggestion
+    branch_id = None
+    if is_admin and branch_param and branch_param != 'all':
+        branch_id = int(branch_param)
+    elif not is_admin and user.branch:
+        branch_id = user.branch.id
+
     for bs in qs:
         prod_data = ProductSerializer(bs.product).data
         prod_data['stock_quantity'] = float(bs.quantity)
+        prod_data['reorder_level'] = float(bs.reorder_level)
+        if request.query_params.get('with_suggestions', 'true').lower() != 'false':
+            prod_data['reorder_intelligence'] = low_stock_reorder_suggestion(
+                bs.product_id, branch_id or bs.branch_id
+            )
         data.append(prod_data)
         
     return Response(data)

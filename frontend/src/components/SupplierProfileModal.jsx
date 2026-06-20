@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import inventoryService from '../services/inventoryService';
 import api from '../services/api';
+import SupplierPriceComparison from './SupplierPriceComparison';
+import { getSupplierProducts, getSupplierScorecard, compareSupplierPrices } from '../services/procurementService';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { XMarkIcon, BanknotesIcon, PencilIcon, TrashIcon, ReceiptRefundIcon } from '@heroicons/react/24/outline';
@@ -9,7 +11,12 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
   const { notify } = useNotification();
   const [loading, setLoading] = useState(true);
   const [ledgerData, setLedgerData] = useState({ debt_transactions: [], purchase_history: [] });
-  const [activeTab, setActiveTab] = useState('debt'); // 'debt', 'purchases'
+  const [activeTab, setActiveTab] = useState('debt');
+  const [productsSupplied, setProductsSupplied] = useState([]);
+  const [scorecard, setScorecard] = useState(null);
+  const [compareProduct, setCompareProduct] = useState(null);
+  const [compareData, setCompareData] = useState(null);
+  const [historyProduct, setHistoryProduct] = useState(null);
 
   // Payment Form State
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -24,7 +31,17 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
 
   useEffect(() => {
     fetchLedger();
+    getSupplierProducts(supplier.id).then((res) => setProductsSupplied(res.data || [])).catch(() => setProductsSupplied([]));
   }, [supplier.id]);
+
+  useEffect(() => {
+    if (activeTab === 'products') {
+      getSupplierProducts(supplier.id).then((res) => setProductsSupplied(res.data || [])).catch(() => setProductsSupplied([]));
+    }
+    if (activeTab === 'scorecard') {
+      getSupplierScorecard(supplier.id).then((res) => setScorecard(res.data)).catch(() => setScorecard(null));
+    }
+  }, [activeTab, supplier.id]);
 
   const fetchLedger = async () => {
     try {
@@ -212,11 +229,17 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
               >
                 Credit Ledger
               </button>
-              <button 
-                onClick={() => setActiveTab('purchases')} 
-                className={`pb-4 px-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'purchases' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-              >
-                Purchase History
+              <button onClick={() => setActiveTab('purchases')} className={`pb-4 px-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'purchases' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                Transactions
+              </button>
+              <button onClick={() => setActiveTab('products')} className={`pb-4 px-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'products' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                Products
+              </button>
+              <button onClick={() => setActiveTab('compare')} className={`pb-4 px-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'compare' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                Compare
+              </button>
+              <button onClick={() => setActiveTab('scorecard')} className={`pb-4 px-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'scorecard' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                Scorecard
               </button>
             </div>
 
@@ -258,7 +281,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                     </tbody>
                   </table>
                 )
-              ) : (
+              ) : activeTab === 'purchases' ? (
                 ledgerData.purchase_history.length === 0 ? (
                   <div className="text-center py-10 text-slate-400">No purchases found.</div>
                 ) : (
@@ -290,6 +313,60 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                     </tbody>
                   </table>
                 )
+              ) : activeTab === 'products' ? (
+                productsSupplied.length === 0 ? (
+                  <div className="text-center py-10 text-slate-400">No products supplied yet.</div>
+                ) : (
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="bg-slate-50 text-[10px] uppercase text-slate-400">
+                        <th className="px-3 py-2">Product</th><th className="px-3 py-2">Last Price</th><th className="px-3 py-2">Last Date</th>
+                        <th className="px-3 py-2">Times</th><th className="px-3 py-2">Avg</th><th className="px-3 py-2">Trend</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productsSupplied.map((row) => (
+                        <tr key={row.product_id} className="border-b hover:bg-slate-50 cursor-pointer" onClick={() => setHistoryProduct(row)}>
+                          <td className="px-3 py-2 font-medium">{row.product_name}</td>
+                          <td className="px-3 py-2">KES {row.last_price}</td>
+                          <td className="px-3 py-2">{row.last_date}</td>
+                          <td className="px-3 py-2">{row.times_bought}</td>
+                          <td className="px-3 py-2">KES {row.avg_price}</td>
+                          <td className="px-3 py-2">{row.trend === 'RISING' ? '↑' : row.trend === 'FALLING' ? '↓' : '→'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              ) : activeTab === 'compare' ? (
+                <div className="space-y-4">
+                  <select className="form-input w-full" value={compareProduct || ''} onChange={async (e) => {
+                    const pid = e.target.value; setCompareProduct(pid);
+                    if (pid) { const res = await compareSupplierPrices(pid); setCompareData(res.data); }
+                  }}>
+                    <option value="">Select product to compare suppliers</option>
+                    {productsSupplied.map((p) => <option key={p.product_id} value={p.product_id}>{p.product_name}</option>)}
+                  </select>
+                  {compareData && <SupplierPriceComparison data={compareData} />}
+                </div>
+              ) : activeTab === 'scorecard' && scorecard ? (
+                <div className="space-y-4 text-sm">
+                  <p className="text-2xl font-bold">Overall: {scorecard.overall_score}/100</p>
+                  <p>Cheapest on {scorecard.products_cheapest} products · Potential monthly savings KES {Number(scorecard.potential_monthly_savings).toLocaleString()}</p>
+                </div>
+              ) : (
+                <div className="text-center py-10 text-slate-400">Select a tab.</div>
+              )}
+              {historyProduct && (
+                <div className="mt-4 p-4 bg-slate-50 rounded-xl text-sm">
+                  <h4 className="font-bold mb-2">Price history — {historyProduct.product_name}</h4>
+                  <ul className="space-y-1">
+                    {(historyProduct.price_history || []).map((h, i) => (
+                      <li key={i}>{h.date}: KES {h.price}</li>
+                    ))}
+                  </ul>
+                  <button type="button" className="mt-2 text-xs underline" onClick={() => setHistoryProduct(null)}>Close</button>
+                </div>
               )}
             </div>
 

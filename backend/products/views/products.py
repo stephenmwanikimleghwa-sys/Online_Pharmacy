@@ -443,8 +443,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='availability')
     def availability(self, request: Request, pk=None) -> Response:
         """
-        RULE 8: Returns stock availability for a product across all branches.
+        Cross-branch stock availability for a product.
         """
+        from inventory.views.supplier import _user_can_see_transfer_details
+
         product = self.get_object()
         active_branch = _branch_for_request(request)
         stocks = (
@@ -452,21 +454,56 @@ class ProductViewSet(viewsets.ModelViewSet):
             .select_related("branch")
             .order_by("branch__name")
         )
-        branches = [
-            {
-                "branch": bs.branch.name,
-                "quantity": float(bs.quantity),
-                "is_active_branch": bool(active_branch and bs.branch_id == active_branch.id),
-            }
-            for bs in stocks
-        ]
-        return Response(
-            {
-                "product_id": product.id,
-                "product_name": product.name,
-                "branches": branches,
-            }
+
+        active_qty = 0
+        active_status = "OUT_OF_STOCK"
+        other_branches = []
+        available_elsewhere = False
+
+        can_see_details = (
+            request.user.is_authenticated
+            and _user_can_see_transfer_details(request.user)
         )
+
+        for bs in stocks:
+            qty = float(bs.quantity)
+            status_label = "IN_STOCK" if qty > 0 else "OUT_OF_STOCK"
+            is_active = bool(active_branch and bs.branch_id == active_branch.id)
+            if is_active:
+                active_qty = qty
+                active_status = status_label
+            elif qty > 0:
+                available_elsewhere = True
+                if can_see_details:
+                    other_branches.append(
+                        {
+                            "branch_id": bs.branch_id,
+                            "branch_name": bs.branch.name,
+                            "quantity": qty,
+                            "status": status_label,
+                        }
+                    )
+
+        payload = {
+            "product_id": product.id,
+            "product_name": product.name,
+            "active_branch": {
+                "branch_id": active_branch.id if active_branch else None,
+                "branch_name": active_branch.name if active_branch else None,
+                "quantity": active_qty,
+                "status": active_status,
+            },
+            "available_elsewhere": available_elsewhere,
+        }
+        if can_see_details:
+            payload["other_branches"] = other_branches
+        else:
+            payload["message"] = (
+                "This product is available at other branches. Contact your administrator."
+                if available_elsewhere
+                else None
+            )
+        return Response(payload)
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request: Request) -> Response:
