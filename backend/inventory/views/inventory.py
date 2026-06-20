@@ -15,6 +15,7 @@ from users.models import Branch
 from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
 from config.api_responses import ApiErrorCode, api_error, api_validation_error
+from users.utils import log_activity
 from ..models.stock_intake import StockIntake
 
 @api_view(["GET"])
@@ -364,6 +365,22 @@ def restock_inventory(request, pk):
                 )
                 intake._skip_credit = True
                 intake.save()
+
+                log_activity(
+                    user=request.user,
+                    event_type='PRODUCT_RESTOCKED',
+                    branch=branch,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    details_dict={
+                        'product_id': product.id,
+                        'product_name': product.name,
+                        'branch_name': branch.name,
+                        'quantity_received': quantity,
+                        'reason': reason,
+                        'supplier': supplier.name,
+                        'source': 'stock_intake_restock'
+                    }
+                )
             else:
                 branch_stock, _ = BranchStock.objects.get_or_create(
                     product=product,
@@ -389,6 +406,23 @@ def restock_inventory(request, pk):
                     change_type="restock",
                     reason=reason,
                     logged_by=request.user,
+                )
+
+                log_activity(
+                    user=request.user,
+                    event_type='PRODUCT_RESTOCKED',
+                    branch=branch,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    details_dict={
+                        'product_id': product.id,
+                        'product_name': product.name,
+                        'branch_name': branch.name,
+                        'quantity_added': quantity,
+                        'reason': reason,
+                        'previous_quantity': previous_quantity,
+                        'new_quantity': branch_stock.quantity,
+                        'source': 'manual_restock'
+                    }
                 )
 
     except Exception as e:

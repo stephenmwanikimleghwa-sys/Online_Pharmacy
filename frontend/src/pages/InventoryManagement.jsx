@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,7 @@ const InventoryManagement = () => {
   const { notify } = useNotification();
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('inventory');
   const [inventory, setInventory] = useState([]);
   const [totalInventoryItems, setTotalInventoryItems] = useState(0);
@@ -426,6 +427,13 @@ const InventoryManagement = () => {
                                   Restock
                                 </button>
                               )}
+                              <button
+                                onClick={() => navigate('/otc-sales')}
+                                className="px-2 py-1 rounded-lg border text-xs font-bold"
+                                style={{ borderColor: 'var(--border-primary)' }}
+                              >
+                                Quick Sale
+                              </button>
                               <button
                                 onClick={() => handleViewLogs(item)}
                                 className="px-2 py-1 rounded-lg border text-xs font-bold"

@@ -167,9 +167,9 @@ function AppLayout() {
                     element={
                       <ProtectedRoute 
                         element={InventoryManagement} 
-                        allowedRoles={['admin', 'auditor']}
+                        allowedRoles={['admin', 'pharmacist', 'auditor']}
                         deniedTitle="Access Denied"
-                        deniedMessage="Access Denied — Inventory Management is only available to administrators. You can manage your branch inventory in Inventory Control."
+                        deniedMessage="Access Denied — Inventory Management is only available to administrators, pharmacists, and auditors."
                       />
                     }
                   />

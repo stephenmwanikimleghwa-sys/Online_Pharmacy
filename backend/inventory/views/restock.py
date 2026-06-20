@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsPharmacistOrAdmin
 from users.models import RoleChoices
 from django.db.models import Q
+from users.utils import log_activity
 from ..models import RestockRequest
 from ..serializers.restock import RestockRequestSerializer
 
@@ -145,6 +146,23 @@ class RestockRequestViewSet(viewsets.ModelViewSet):
             change_type='restock',
             reason=f'Restock request #{restock_request.id} fulfilled',
             logged_by=request.user
+        )
+
+        log_activity(
+            user=request.user,
+            event_type='PRODUCT_RESTOCKED',
+            branch=branch,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={
+                'product_id': restock_request.product.id,
+                'product_name': restock_request.product.name,
+                'branch_name': branch.name,
+                'quantity_added': restock_request.requested_quantity,
+                'restock_request_id': restock_request.id,
+                'previous_quantity': previous_quantity,
+                'new_quantity': branch_stock.quantity,
+                'source': 'restock_request_completion'
+            }
         )
 
         serializer = self.get_serializer(restock_request)

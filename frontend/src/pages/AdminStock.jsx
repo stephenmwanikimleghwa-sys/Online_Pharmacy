@@ -573,12 +573,12 @@ const AdminStock = () => {
 
 			<ErrorBoundary>
 				<div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
-					<div className="overflow-x-auto">
+					<div className="overflow-auto max-h-[70vh]">
 						<table className="min-w-full divide-y divide-slate-100">
-							<thead className="bg-slate-50/50">
-								<tr>
+							<thead className="sticky top-0 z-20" style={{ background: 'var(--bg-primary)' }}>
+								<tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
 									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">#</th>
-									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Name</th>
+									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest sticky left-0 z-30" style={{ background: 'var(--bg-primary)' }}>Name</th>
 									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Category</th>
 									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Price</th>
 									<th className="px-6 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Stock</th>
@@ -591,61 +591,62 @@ const AdminStock = () => {
 								{items.map((item, idx) => (
 								<tr key={String(item.id ?? `row-${idx}`)} className="hover:bg-slate-50/50 transition-colors">
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{idx + 1}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{normalizeDisplayValue(item.category)}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KES {normalizeDisplayValue(item.price, '0')}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-700">{normalizeDisplayValue(item.stock_quantity, 0)}</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm">
-											{(() => {
-												if (!item.expiry_date) return <span className="text-gray-500">-</span>;
-												try {
-													const exp = new Date(item.expiry_date);
-													const today = new Date();
-													exp.setHours(0, 0, 0, 0);
-													today.setHours(0, 0, 0, 0);
-													const diffMs = exp - today;
-													const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-													let text = '';
-													let classes = 'text-gray-700';
-													if (diffDays > 30) {
-														text = `${diffDays} days left`;
-														classes = 'text-green-800 bg-green-50';
-													} else if (diffDays > 7) {
-														text = `${diffDays} days left`;
-														classes = 'text-yellow-800 bg-yellow-50';
-													} else if (diffDays > 0) {
-														text = `${diffDays} day${diffDays === 1 ? '' : 's'} left`;
-														classes = 'text-orange-800 bg-orange-50';
-													} else if (diffDays === 0) {
-														text = 'Expires today';
-														classes = 'text-red-800 bg-red-100';
-													} else {
-														text = `Expired ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'} ago`;
-														classes = 'text-white bg-red-600';
-													}
-													return (
-														<span className={`inline-block px-2 py-1 rounded ${classes}`}>
-															{text}
-														</span>
-													);
-												} catch (e) {
-													return <span className="text-gray-500">{normalizeDisplayValue(item.expiry_date, '-')}</span>;
+									<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800 sticky left-0 z-10" style={{ background: 'var(--bg-primary)' }}>{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}</td>
+									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{normalizeDisplayValue(item.category)}</td>
+									<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">KES {normalizeDisplayValue(item.price, '0')}</td>
+									<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-700">{normalizeDisplayValue(item.stock_quantity, 0)}</td>
+									<td className="px-6 py-4 whitespace-nowrap text-sm">
+										{(() => {
+											if (!item.expiry_date) return <span className="text-gray-500">-</span>;
+											try {
+												const exp = new Date(item.expiry_date);
+												const today = new Date();
+												exp.setHours(0, 0, 0, 0);
+												today.setHours(0, 0, 0, 0);
+												const diffMs = exp - today;
+												const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+												let text = '';
+												let classes = 'text-gray-700';
+												if (diffDays > 30) {
+													text = `${diffDays} days left`;
+													classes = 'text-green-800 bg-green-50';
+												} else if (diffDays > 7) {
+													text = `${diffDays} days left`;
+													classes = 'text-yellow-800 bg-yellow-50';
+												} else if (diffDays > 0) {
+													text = `${diffDays} day${diffDays === 1 ? '' : 's'} left`;
+													classes = 'text-orange-800 bg-orange-50';
+												} else if (diffDays === 0) {
+													text = 'Expires today';
+													classes = 'text-red-800 bg-red-100';
+												} else {
+													text = `Expired ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'} ago`;
+													classes = 'text-white bg-red-600';
 												}
-											})()}
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm">
-											<span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.stock_quantity === 0 ? 'bg-red-100 text-red-800' : (item.stock_quantity <= (item.reorder_threshold ?? 10) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800')
-												}`}>
-												{item.stock_quantity === 0 ? 'Out' : (item.stock_quantity <= (item.reorder_threshold ?? 10) ? 'Low' : 'In Stock')}
-											</span>
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="flex flex-wrap items-center gap-1.5">
-												<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
-												<button onClick={() => openDuplicateModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all">Duplicate</button>
-												<button onClick={() => openLogs(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all">Logs</button>
-											</div>
-										</td>
+												return (
+													<span className={`inline-block px-2 py-1 rounded ${classes}`}>
+														{text}
+													</span>
+												);
+											} catch (e) {
+												return <span className="text-gray-500">{normalizeDisplayValue(item.expiry_date, '-')}</span>;
+											}
+										})()}
+									</td>
+									<td className="px-6 py-4 whitespace-nowrap text-sm">
+										<span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.stock_quantity === 0 ? 'bg-red-100 text-red-800' : (item.stock_quantity <= (item.reorder_threshold ?? 10) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800')
+											}`}>
+											{item.stock_quantity === 0 ? 'Out' : (item.stock_quantity <= (item.reorder_threshold ?? 10) ? 'Low' : 'In Stock')}
+										</span>
+									</td>
+									<td className="px-6 py-4 whitespace-nowrap">
+										<div className="flex flex-wrap items-center gap-1.5">
+											<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
+											<button onClick={() => openDuplicateModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all">Duplicate</button>
+											<button onClick={() => navigate('/otc-sales')} className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-all">Quick Sale</button>
+											<button onClick={() => openLogs(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all">Logs</button>
+										</div>
+									</td>
 									</tr>
 								))}
 							</tbody>

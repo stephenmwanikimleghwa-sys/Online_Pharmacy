@@ -19,6 +19,7 @@ from rest_framework.request import Request
 from django.db.models.query import QuerySet
 from typing import List, Any
 import logging
+from decimal import Decimal
 from utils.response import api_response
 from users.utils import log_activity
 
@@ -130,19 +131,39 @@ class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        previous_values = {}
+        changed_fields = []
+
+        for field_name, new_value in request.data.items():
+            if field_name in instance.__dict__:
+                previous_value = getattr(instance, field_name)
+                previous_values[field_name] = str(previous_value) if isinstance(previous_value, (Decimal,)) else previous_value
+                if previous_value != new_value:
+                    changed_fields.append(field_name)
+
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        
-        # Log activity
+
+        updated_instance = serializer.instance
+        new_values = {}
+        for field_name in changed_fields:
+            new_value = getattr(updated_instance, field_name, None)
+            new_values[field_name] = str(new_value) if isinstance(new_value, (Decimal,)) else new_value
+
+        # Log activity with the exact fields that changed
         log_activity(
             user=request.user,
             event_type='PRODUCT_EDITED',
             branch=getattr(request.user, 'branch', None),
             ip_address=request.META.get('REMOTE_ADDR'),
             details_dict={
-                'product_id': instance.id,
-                'product_name': instance.name
+                'product_id': updated_instance.id,
+                'product_name': updated_instance.name,
+                'changed_fields': changed_fields,
+                'previous_values': previous_values,
+                'new_values': new_values,
+                'is_partial_update': partial,
             }
         )
 
