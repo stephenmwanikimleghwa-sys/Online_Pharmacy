@@ -7,6 +7,7 @@ from products.models import Product
 from orders.models import Order, OrderItem, OrderStatusChoices
 from orders.serializers import OrderSerializer
 from users.models import Pharmacy, Branch
+from payments.models import Payment
 from decimal import Decimal
 
 User = get_user_model()
@@ -135,6 +136,13 @@ class OrderViewTest(TestCase):
             branch=branch,
             total_amount=Decimal("25.00")
         )
+        Payment.objects.create(
+            order=order,
+            method="mpesa",
+            status="completed",
+            amount=Decimal("25.00"),
+            reference="REF-001",
+        )
 
         self.client.force_authenticate(user=self.pharmacist)
         url = reverse('orders:receipt_pdf', args=[order.id])
@@ -142,7 +150,7 @@ class OrderViewTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_filename = (
-            f"transcounty_main_receipt_{order.id}_"
+            f"transcounty_main_receipt_{order.id}_mpesa_"
             f"{order.created_at.strftime('%Y%m%d')}.pdf"
         )
         self.assertIn(expected_filename, response['Content-Disposition'])

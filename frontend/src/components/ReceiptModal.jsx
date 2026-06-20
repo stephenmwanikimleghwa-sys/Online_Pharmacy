@@ -81,9 +81,26 @@ const ReceiptModal = ({ order, onClose }) => {
 
       const doc = iframe.contentWindow.document;
       doc.open();
-      const safeBranch = (order.branch_name || 'Transcounty Main').replace(/[^a-zA-Z0-9]/g, '_');
-      const safeDate = new Date(order.created_at || order.dispensed_at || Date.now()).toISOString().split('T')[0];
-      const receiptTitle = `${safeBranch}_Receipt_${order.id || 'NEW'}_${safeDate}`;
+      const normalizeForFile = (value, fallback = 'unknown') => {
+        const text = String(value || fallback)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '');
+        return text || fallback;
+      };
+      const safeBranch = normalizeForFile(order?.branch_name || 'Transcounty Main');
+      const safeDate = new Date(order?.created_at || order?.dispensed_at || Date.now())
+        .toISOString()
+        .slice(0, 10)
+        .replace(/-/g, '');
+      const paymentMethod = (
+        order?.payment_mode ||
+        order?.payment_method ||
+        order?.payment?.method ||
+        order?.payment?.payment_mode ||
+        'unknown'
+      );
+      const receiptTitle = `${safeBranch}_receipt_${order?.id || 'NEW'}_${normalizeForFile(paymentMethod)}_${safeDate}.pdf`;
       
       doc.write(`
         <html>
