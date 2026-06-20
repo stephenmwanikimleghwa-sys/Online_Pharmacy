@@ -428,13 +428,6 @@ const InventoryManagement = () => {
                                 </button>
                               )}
                               <button
-                                onClick={() => navigate('/otc-sales')}
-                                className="px-2 py-1 rounded-lg border text-xs font-bold"
-                                style={{ borderColor: 'var(--border-primary)' }}
-                              >
-                                Quick Sale
-                              </button>
-                              <button
                                 onClick={() => handleViewLogs(item)}
                                 className="px-2 py-1 rounded-lg border text-xs font-bold"
                                 style={{ borderColor: 'var(--border-primary)' }}
