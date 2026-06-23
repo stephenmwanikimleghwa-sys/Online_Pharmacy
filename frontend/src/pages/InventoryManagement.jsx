@@ -5,7 +5,7 @@ import { notifyApiError } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
 import inventoryService from '../services/inventoryService';
 import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
-import RestockModal from '../components/RestockModal';
+import ManageItemModal from '../components/ManageItemModal';
 import StockLogsModal from '../components/StockLogsModal';
 const SupplierList = lazy(() => import('./inventory/SupplierList'));
 const BatchList = lazy(() => import('./inventory/BatchList'));
@@ -25,7 +25,7 @@ const InventoryManagement = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
   const BRANCH_COLUMNS = ['Transcounty Main', 'Transcounty Annex', 'Peakfarm'];
 
@@ -450,11 +450,14 @@ const InventoryManagement = () => {
                                 <button
                                   onClick={() => {
                                     setSelectedItem(item);
-                                    setShowRestockModal(true);
+                                    setShowManageModal(true);
                                   }}
-                                  className="btn-primary px-2 py-1 rounded-lg text-xs font-bold"
+                                  className="btn-primary px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1"
                                 >
-                                  Restock
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                  </svg>
+                                  Manage
                                 </button>
                               )}
                               <button
@@ -476,14 +479,16 @@ const InventoryManagement = () => {
           </div>
 
           {/* Modals with Premium Styling */}
-          {showRestockModal && selectedItem && (
-            <RestockModal
+          {showManageModal && selectedItem && (
+            <ManageItemModal
               item={selectedItem}
               onClose={() => {
-                setShowRestockModal(false);
+                setShowManageModal(false);
                 setSelectedItem(null);
               }}
               onRestock={handleRestock}
+              onEdit={fetchInventory}
+              onDelete={fetchInventory}
             />
           )}
 
