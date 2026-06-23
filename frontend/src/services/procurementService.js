@@ -38,8 +38,10 @@ export const getPurchaseOrderReceivePrefill = (id) =>
 export const receivePurchaseOrder = (id, data) =>
   api.post(`/purchase-orders/${id}/receive/`, data);
 
-export const getExpirySummary = () =>
-  api.get('/inventory/expiry/summary/');
+export const getExpirySummary = (branchId) =>
+  api.get('/inventory/expiry/summary/', {
+    params: branchId ? { branch: branchId } : {},
+  });
 
 export const checkProductExpiry = (productId) =>
   api.get(`/inventory/expiry/check/${productId}/`);

@@ -216,7 +216,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
 
   return createPortal(
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="modal-card max-w-lg w-full overflow-hidden animate-scale-up rounded-[2rem] flex flex-col">
+      <div className="modal-card max-w-lg w-full max-h-[90vh] overflow-hidden animate-scale-up rounded-[2rem] flex flex-col">
 
         {/* ── Header ── */}
         <div className="modal-header flex-shrink-0">

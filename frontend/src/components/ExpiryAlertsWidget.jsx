@@ -19,9 +19,19 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await getExpirySummary();
-      setData(res.data);
-    } catch {
+      const res = await getExpirySummary(activeBranch?.id);
+      setData(
+        res.data || {
+          summary: {},
+          expired: [],
+          critical: [],
+          warning: [],
+          caution: [],
+          caution_count: 0,
+        },
+      );
+    } catch (err) {
+      console.error('Failed to load expiry data:', err);
       setData(null);
     } finally {
       setLoading(false);
@@ -56,7 +66,20 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
   };
 
   if (loading) return <p className="text-sm text-gray-500">Loading expiry alerts…</p>;
-  if (!data) return <p className="text-sm text-gray-500">Could not load expiry data.</p>;
+  if (!data) {
+    return (
+      <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500">
+        <p>Could not load expiry data.</p>
+        <button
+          type="button"
+          className="mt-2 text-indigo-600 font-semibold hover:underline"
+          onClick={() => void load()}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   const summary = data.summary || {};
   const branchLabel = activeBranch?.name || 'your branch';
