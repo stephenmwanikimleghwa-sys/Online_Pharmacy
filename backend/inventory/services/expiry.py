@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, timedelta
 
-from django.db.models import Count, F, IntegerField, Q
+from django.db.models import Count, F, DurationField, Q
 from django.db.models.expressions import ExpressionWrapper
 
 from inventory.models.batch import Batch
@@ -13,16 +13,16 @@ def get_expiry_summary(branch_id=None):
         qs = qs.filter(branch_id=branch_id)
 
     annotated = qs.annotate(
-        days=ExpressionWrapper(
+        duration=ExpressionWrapper(
             F("expiry_date") - today,
-            output_field=IntegerField(),
+            output_field=DurationField(),
         )
     )
     summary = annotated.aggregate(
-        expired=Count("id", filter=Q(days__lt=0)),
-        critical=Count("id", filter=Q(days__gte=0, days__lte=7)),
-        warning=Count("id", filter=Q(days__gt=7, days__lte=30)),
-        caution=Count("id", filter=Q(days__gt=30, days__lte=90)),
+        expired=Count("id", filter=Q(duration__lt=timedelta(days=0))),
+        critical=Count("id", filter=Q(duration__gte=timedelta(days=0), duration__lte=timedelta(days=7))),
+        warning=Count("id", filter=Q(duration__gt=timedelta(days=7), duration__lte=timedelta(days=30))),
+        caution=Count("id", filter=Q(duration__gt=timedelta(days=30), duration__lte=timedelta(days=90))),
     )
     return summary
 
