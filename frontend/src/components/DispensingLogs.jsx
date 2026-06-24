@@ -10,13 +10,14 @@ const DispensingLogs = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [branchFilter, setBranchFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [reprintOrder, setReprintOrder] = useState(null);
   const [reprintLoading, setReprintLoading] = useState(null); // orderId being loaded
-  const { token, user } = useAuth();
+  const { token, user, allowedBranches, activeBranch } = useAuth();
 
-  useEffect(() => { fetchLogs(); }, [currentPage, searchTerm, dateFilter]);
+  useEffect(() => { fetchLogs(); }, [currentPage, searchTerm, dateFilter, branchFilter]);
 
   const fetchLogs = async () => {
     try {
@@ -24,6 +25,7 @@ const DispensingLogs = () => {
       const params = {};
       if (searchTerm) params.search = searchTerm;
       if (dateFilter) params.date = dateFilter;
+      if (branchFilter && user?.role === 'admin') params.branch = branchFilter;
       if (currentPage > 1) params.page = currentPage;
       const response = await api.get('/inventory/dispensations/', { params, skipGlobalErrorNotification: true });
       const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
@@ -52,6 +54,7 @@ const DispensingLogs = () => {
 
   const handleSearch = (e) => { setSearchTerm(e.target.value); setCurrentPage(1); };
   const handleDateFilter = (e) => { setDateFilter(e.target.value); setCurrentPage(1); };
+  const handleBranchFilter = (e) => { setBranchFilter(e.target.value); setCurrentPage(1); };
 
   const headers = ["Ref No", "Date", "Branch", "Staff", "Customer", "Items", "Total", "Payment Mode", "Actions"];
 
@@ -86,6 +89,18 @@ const DispensingLogs = () => {
             onChange={handleDateFilter}
             className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 focus:outline-none focus:ring-2 /30 focus:border-indigo-400 transition-all"
           />
+          {user?.role === 'admin' && (
+            <select
+              value={branchFilter}
+              onChange={handleBranchFilter}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 focus:outline-none focus:ring-2 /30 focus:border-indigo-400 transition-all"
+            >
+              <option value="all">All Branches</option>
+              {allowedBranches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -107,7 +122,7 @@ const DispensingLogs = () => {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center">
+                  <td colSpan={headers.length} className="py-16 text-center">
                     <div className="flex justify-center">
                       <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                     </div>
@@ -115,7 +130,7 @@ const DispensingLogs = () => {
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-slate-400 text-sm">No dispensing logs found.</td>
+                  <td colSpan={headers.length} className="py-16 text-center text-slate-400 text-sm">No dispensing logs found.</td>
                 </tr>
               ) : (
                 logs.map((log) => (

@@ -47,7 +47,9 @@ def filter_queryset_for_branch(
     active = get_active_branch(request)
     param = request.query_params.get(branch_param)
 
-    if is_admin and param and param != "all":
+    if is_admin and param:
+        if param == "all":
+            return queryset
         return queryset.filter(**{f"{branch_field}_id": param})
     if active:
         return queryset.filter(**{branch_field: active})
