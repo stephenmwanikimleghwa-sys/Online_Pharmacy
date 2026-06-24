@@ -326,6 +326,23 @@ redis-cli ping
 - 📖 Documentation: [Wiki](https://github.com/StephenNafula/pharmacy-aggregator/wiki)
 - 🐛 Issues: [GitHub Issues](https://github.com/StephenNafula/pharmacy-aggregator/issues)
 
+## Caching strategy
+
+### Frontend (React Query)
+- Shared `queryClient` with 5 min default stale time, 30 min GC
+- Session persistence via `sessionStorage` (`TRANSCOUNTY_QUERY_CACHE`)
+- Bump `VITE_APP_VERSION` on each production deploy to bust stale cache
+- Prefetch on login / branch selection and sidebar hover for hot routes
+- See `frontend/src/lib/queryKeys.ts` and `frontend/src/hooks/` for hook inventory
+
+### Backend (Django)
+- LocMem cache by default (`transcounty-cache`); Redis when `REDIS_URL` is set
+- Dashboard endpoints cached 60s; invalidated on stock intake, dispensation, supplier save
+- `backend/utils/cached_view.py` for additional endpoint caching
+
+Full cleanup details: [CLEANUP_REPORT.md](./CLEANUP_REPORT.md)  
+Outstanding work: [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md)
+
 ## 🎯 Roadmap
 
 ### Phase 1 (Completed)

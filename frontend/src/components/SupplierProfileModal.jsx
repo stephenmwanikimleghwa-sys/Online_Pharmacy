@@ -49,7 +49,6 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
       const res = await api.get(`/inventory/suppliers/${supplier.id}/ledger/`);
       setLedgerData(res.data);
     } catch (err) {
-      console.error("Error fetching ledger", err);
       notify.error("Could Not Load Ledger", "Supplier account history could not be loaded.");
     } finally {
       setLoading(false);
@@ -86,7 +85,6 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
       onRefresh();
       
     } catch (err) {
-      console.error(err);
       notifyApiError(notify, err, "Payment Failed", "Could not record this payment.");
     } finally {
       setPaymentLoading(false);

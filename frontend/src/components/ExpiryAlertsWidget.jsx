@@ -1,52 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  getExpirySummary,
   markBatchRemoved,
   setBatchClearance,
 } from '../services/procurementService';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { useExpiryAlerts } from '../hooks/useExpiryAlerts';
+
+const EMPTY_EXPIRY = {
+  summary: {},
+  expired: [],
+  critical: [],
+  warning: [],
+  caution: [],
+  caution_count: 0,
+};
 
 const ExpiryAlertsWidget = ({ compact = false }) => {
   const { notify } = useNotification();
   const { activeBranch } = useAuth();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, error, refetch } = useExpiryAlerts(activeBranch?.id);
   const [clearanceModal, setClearanceModal] = useState(null);
   const [clearancePrice, setClearancePrice] = useState('');
-
-  const load = async () => {
-    try {
-      setLoading(true);
-      const res = await getExpirySummary(activeBranch?.id);
-      setData(
-        res.data || {
-          summary: {},
-          expired: [],
-          critical: [],
-          warning: [],
-          caution: [],
-          caution_count: 0,
-        },
-      );
-    } catch (err) {
-      console.error('Failed to load expiry data:', err);
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, [activeBranch?.id]);
 
   const handleRemove = async (batchId) => {
     try {
       await markBatchRemoved(batchId);
       notify.success('Removed', 'Expired stock removed from shelf.');
-      void load();
+      void refetch();
     } catch {
       notify.error('Failed', 'Could not mark batch as removed.');
     }
@@ -59,21 +41,21 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
       notify.success('Clearance', 'Batch marked for clearance pricing.');
       setClearanceModal(null);
       setClearancePrice('');
-      void load();
+      void refetch();
     } catch {
       notify.error('Failed', 'Could not set clearance price.');
     }
   };
 
-  if (loading) return <p className="text-sm text-gray-500">Loading expiry alerts…</p>;
-  if (!data) {
+  if (isLoading) return <p className="text-sm text-gray-500">Loading expiry alerts…</p>;
+  if (error) {
     return (
       <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500">
         <p>Could not load expiry data.</p>
         <button
           type="button"
           className="mt-2 text-indigo-600 font-semibold hover:underline"
-          onClick={() => void load()}
+          onClick={() => void refetch()}
         >
           Retry
         </button>
@@ -81,7 +63,8 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
     );
   }
 
-  const summary = data.summary || {};
+  const displayData = data || EMPTY_EXPIRY;
+  const summary = displayData.summary || {};
   const branchLabel = activeBranch?.name || 'your branch';
 
   return (
@@ -94,11 +77,11 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
         {summary.warning || 0} warning · {summary.caution || 0} caution
       </p>
 
-      {data.expired?.length > 0 && (
+      {displayData.expired?.length > 0 && (
         <section className="mb-4">
           <h4 className="text-sm font-bold text-red-700 mb-2">EXPIRED</h4>
           <ul className="space-y-2">
-            {data.expired.map((item) => (
+            {displayData.expired.map((item) => (
               <li key={item.id} className="flex flex-wrap justify-between gap-2 text-sm border-b pb-2">
                 <span>
                   {item.product_name} — expired {Math.abs(item.days_left)}d ago ({item.quantity_remaining} units)
@@ -112,11 +95,11 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
         </section>
       )}
 
-      {data.critical?.length > 0 && (
+      {displayData.critical?.length > 0 && (
         <section className="mb-4">
           <h4 className="text-sm font-bold text-orange-700 mb-2">CRITICAL (≤7 days)</h4>
           <ul className="space-y-2">
-            {data.critical.map((item) => (
+            {displayData.critical.map((item) => (
               <li key={item.id} className="flex flex-wrap justify-between gap-2 text-sm border-b pb-2">
                 <span>
                   {item.product_name} — expires in {item.days_left}d ({item.quantity_remaining} units)
@@ -133,11 +116,11 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
         </section>
       )}
 
-      {data.warning?.length > 0 && (
+      {displayData.warning?.length > 0 && (
         <section className="mb-4">
           <h4 className="text-sm font-bold text-yellow-700 mb-2">WARNING (8–30 days)</h4>
           <ul className="space-y-1 text-sm">
-            {data.warning.slice(0, 5).map((item) => (
+            {displayData.warning.slice(0, 5).map((item) => (
               <li key={item.id}>
                 {item.product_name} — {item.days_left}d left ({item.quantity_remaining} units)
               </li>
@@ -146,9 +129,9 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
         </section>
       )}
 
-      {(data.caution_count > 0 || data.caution?.length > 0) && (
+      {(displayData.caution_count > 0 || displayData.caution?.length > 0) && (
         <p className="text-sm text-gray-600">
-          CAUTION: {data.caution_count || data.caution?.length} products within 90 days.{' '}
+          CAUTION: {displayData.caution_count || displayData.caution?.length} products within 90 days.{' '}
           <Link to="/reports" className="text-indigo-600 font-semibold">View all</Link>
         </p>
       )}

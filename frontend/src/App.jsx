@@ -8,10 +8,7 @@
 
 import React, { useEffect, Suspense, lazy } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
-import { CartProvider } from "./context/CartContext";
-import { NotificationProvider } from "./context/NotificationContext";
+import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -275,17 +272,7 @@ function AppLayout() {
 }
 
 function App() {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <NotificationProvider>
-            <AppLayout />
-          </NotificationProvider>
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  );
+  return <AppLayout />;
 }
 
 export default App;

@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from dashboard.permissions import IsAdminRole
 from dashboard.services import build_branch_operations, build_global_overview
 from users.active_branch import active_branch_required_response, get_active_branch
+from utils.cached_view import cached_view
 
 
 class GlobalOverviewView(APIView):
@@ -17,7 +18,12 @@ class GlobalOverviewView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
-        return Response(build_global_overview(request.user))
+        data = cached_view(
+            "dashboard_global",
+            lambda: build_global_overview(request.user),
+            timeout=60,
+        )
+        return Response(data)
 
 
 class BranchOperationsView(APIView):
@@ -32,4 +38,10 @@ class BranchOperationsView(APIView):
         branch = get_active_branch(request)
         if branch is None:
             return active_branch_required_response()
-        return Response(build_branch_operations(branch))
+        cache_key = f"dashboard_branch_{branch.id}"
+        data = cached_view(
+            cache_key,
+            lambda: build_branch_operations(branch),
+            timeout=60,
+        )
+        return Response(data)

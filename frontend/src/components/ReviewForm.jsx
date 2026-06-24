@@ -38,7 +38,6 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
       onReviewSubmitted(response.data); // Callback to refresh reviews
       notify.success('Review Submitted', 'Thank you for your feedback.');
     } catch (error) {
-      console.error('Error submitting review:', error);
       notify.error('Submit Failed', 'Your review could not be submitted. Please try again.');
     } finally {
       setIsSubmitting(false);

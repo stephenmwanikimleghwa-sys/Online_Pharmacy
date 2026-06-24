@@ -26,8 +26,7 @@ const CashierDashboard = () => {
             );
             setRecentSales(filtered);
         } catch (error) {
-            console.error("Error fetching recent sales:", error);
-        } finally {
+            } finally {
             setLoading(false);
         }
     };

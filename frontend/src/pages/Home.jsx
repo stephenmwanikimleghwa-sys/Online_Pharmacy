@@ -59,26 +59,10 @@ const Home = () => {
             return;
           }
         } catch (fallbackError) {
-          if (import.meta.env.DEV) {
-            console.error('[Home Debug] Fallback products request failed:', {
-              message: fallbackError.message,
-              status: fallbackError.response?.status,
-              url: fallbackError.config?.url,
-              response: fallbackError.response?.data,
-            });
-          }
+          
         }
 
-        if (import.meta.env.DEV) {
-          console.error('[Home Debug] Error fetching featured data:', {
-            message: error.message,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            url: error.config?.url,
-            baseURL: api.defaults.baseURL,
-            response: error.response?.data,
-          });
-        }
+        
 
         const status = error.response?.status;
         const serviceDown = [500, 502, 503, 504].includes(status);

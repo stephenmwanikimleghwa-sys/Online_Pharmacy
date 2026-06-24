@@ -48,7 +48,6 @@ const ForcePasswordChange: React.FC = () => {
 
             navigate(getDashboardPath());
         } catch (err: any) {
-            console.error("Password change failed:", err);
             const serverError = err.response?.data;
             if (typeof serverError === "string") {
                 setError(serverError);

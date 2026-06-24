@@ -113,8 +113,7 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
         const bData = bRes.data?.results || bRes.data?.data || bRes.data || [];
         setBranches(Array.isArray(bData) ? bData : []);
       } catch (e) {
-        console.error(e);
-      } finally {
+        } finally {
         setLoadingInit(false);
       }
     };

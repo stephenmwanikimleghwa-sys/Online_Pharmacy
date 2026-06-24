@@ -503,7 +503,9 @@ else:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "unique-snowflake",
+            "LOCATION": "transcounty-cache",
+            "TIMEOUT": 300,
+            "OPTIONS": {"MAX_ENTRIES": 1000},
         }
     }
 

@@ -17,8 +17,7 @@ const StockLogsModal = ({ item, onClose }) => {
       setLogs(response.data || []);
     } catch (err) {
       setError('Failed to fetch stock logs');
-      console.error('Error fetching stock logs:', err);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

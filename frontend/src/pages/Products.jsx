@@ -60,7 +60,6 @@ const Products = () => {
 
         setProducts(unwrapList(response.data));
       } catch (err) {
-        console.error('Error fetching products:', err);
         setError(err?.response?.data?.message || err.message || 'Failed to fetch products');
         setProducts([]);
       } finally {

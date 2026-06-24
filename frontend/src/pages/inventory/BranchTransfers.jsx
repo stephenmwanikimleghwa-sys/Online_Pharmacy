@@ -36,7 +36,6 @@ const BranchTransfers = () => {
       const list = res.data?.results ?? res.data ?? [];
       setTransfers(Array.isArray(list) ? list : []);
     } catch (err) {
-      console.error(err);
       notify.error('Could Not Load Transfers', 'Transfer history could not be loaded. Please refresh.');
       setTransfers([]);
     } finally {

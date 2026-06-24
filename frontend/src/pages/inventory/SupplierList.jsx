@@ -1,16 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import inventoryService from '../../services/inventoryService';
 import SupplierProfileModal from '../../components/SupplierProfileModal';
 import { MagnifyingGlassIcon, TruckIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 import { useNotification } from '../../context/NotificationContext';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { useSuppliers } from '../../hooks/useSuppliers';
+import RefreshIndicator from '../../components/ui/RefreshIndicator';
+import { queryClient } from '../../lib/queryClient';
+import { QUERY_KEYS } from '../../lib/queryKeys';
+import { unwrapList } from '../../utils/parseApiData';
 
 const SupplierList = () => {
   const { notify } = useNotification();
-  const [suppliers, setSuppliers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: suppliersRaw,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useSuppliers();
+  const suppliers = unwrapList(suppliersRaw);
   
   const [search, setSearch] = useState('');
   const [filterDebt, setFilterDebt] = useState('all'); // 'all', 'debt', 'cleared'
@@ -23,22 +32,9 @@ const SupplierList = () => {
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [formData, setFormData] = useState({ name: '', contact_person: '', email: '', phone: '', address: '' });
 
-  const fetchSuppliers = async () => {
-    try {
-      setLoading(true);
-      const res = await inventoryService.getSuppliers();
-      setSuppliers(Array.isArray(res.data) ? res.data : res.data.results || []);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load suppliers');
-    } finally {
-      setLoading(false);
-    }
+  const invalidateSuppliers = () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.suppliers });
   };
-
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
 
   const filteredSuppliers = suppliers.filter(s => {
     const term = search.toLowerCase();
@@ -76,15 +72,14 @@ const SupplierList = () => {
       setIsFormModalOpen(false);
       setEditingSupplier(null);
       setFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
-      fetchSuppliers();
+      invalidateSuppliers();
       
       // If we were editing while profile modal was open, refresh the selected supplier data
       if (selectedSupplier && editingSupplier && selectedSupplier.id === editingSupplier.id) {
           setSelectedSupplier({...selectedSupplier, ...formData});
       }
-    } catch (err) {
+    } catch {
       notify.error('Save Failed', 'The supplier could not be saved. Please try again.');
-      console.error(err);
     }
   };
 
@@ -108,14 +103,13 @@ const SupplierList = () => {
     if (!deleteCandidateId) return;
     try {
       await inventoryService.deleteSupplier(deleteCandidateId);
-      fetchSuppliers();
+      invalidateSuppliers();
       if (selectedSupplier && selectedSupplier.id === deleteCandidateId) {
         setSelectedSupplier(null);
       }
       setDeleteCandidateId(null);
-    } catch (err) {
+    } catch {
       notify.error('Delete Failed', 'The supplier could not be removed.');
-      console.error(err);
     }
   };
 
@@ -127,6 +121,7 @@ const SupplierList = () => {
           <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight flex items-center gap-3">
             <TruckIcon className="w-8 h-8 text-primary" />
             Suppliers & Accounts Payable
+            <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
           </h1>
           <p className="text-slate-500 mt-1 text-sm font-medium">Manage distributors, view payables ledger, and record credit payments.</p>
         </div>
@@ -202,12 +197,17 @@ const SupplierList = () => {
       </div>
 
       {/* Grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-20">
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : error ? (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center font-semibold">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">
+          <p className="font-semibold mb-3">Failed to load suppliers.</p>
+          <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredSuppliers.map(supplier => {
@@ -267,7 +267,7 @@ const SupplierList = () => {
         <SupplierProfileModal
           supplier={selectedSupplier}
           onClose={() => setSelectedSupplier(null)}
-          onRefresh={() => fetchSuppliers()}
+          onRefresh={() => invalidateSuppliers()}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

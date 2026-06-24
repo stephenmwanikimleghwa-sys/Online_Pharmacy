@@ -64,7 +64,6 @@ const ExportModal = ({
       
       onClose();
     } catch (err) {
-      console.error('Export failed:', err);
       setError('Failed to export data. Please try again.');
     } finally {
       setLoading(false);

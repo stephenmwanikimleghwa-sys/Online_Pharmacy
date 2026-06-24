@@ -83,15 +83,6 @@ api.interceptors.response.use(
     const onAuthFlow = isAuthFlowPath();
     const status = error.response?.status;
 
-    if (import.meta.env.DEV && config) {
-      console.error("[API] Request failed", {
-        message: error.message,
-        method: config.method,
-        url: config.url,
-        status,
-      });
-    }
-
     if (status === 401) {
       if (!onAuthFlow) {
         clearSession();

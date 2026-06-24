@@ -5,7 +5,6 @@ const getQuotations = async (params = {}) => {
     const response = await api.get('/finance/quotations/', { params });
     return response.data;
   } catch (err) {
-    console.error('[QuotationService] Failed to fetch quotations', err);
     // Return a safe empty structure so UI that maps over results doesn't crash
     return { results: [], count: 0 };
   }

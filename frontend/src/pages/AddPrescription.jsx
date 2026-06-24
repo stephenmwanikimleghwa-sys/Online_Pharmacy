@@ -86,7 +86,6 @@ const AddPrescription = () => {
       await prescriptionService.addPrescription(formData);
       navigate('/pharmacist/dashboard');
     } catch (error) {
-      console.error('Error adding prescription:', error);
       notify.error('Save Failed', 'The prescription could not be saved. Please try again.');
     } finally {
       setLoading(false);

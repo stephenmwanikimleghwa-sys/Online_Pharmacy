@@ -272,8 +272,6 @@ export const AddMedicineModal = ({
               </select>
             </div>
 
-
-
             {/* Buying Price (BP) */}
             <div>
               <label className="form-label">Buying Price / B.P (KES)</label>
@@ -364,7 +362,6 @@ export const AddMedicineModal = ({
               />
               {formErrors.reorder_threshold && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.reorder_threshold}</p>}
             </div>
-
 
             {/* Strength */}
             <div>

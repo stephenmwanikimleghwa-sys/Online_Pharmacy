@@ -151,7 +151,6 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       const data = res.data?.results || res.data?.data || res.data || [];
       setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
       setCustomers([]);
     } finally {
       setLoadingCustomers(false);

@@ -92,7 +92,6 @@ export const prescriptionService = {
       }));
       return { data: mappedData };
     } catch (error) {
-      console.error("Error fetching dispensed medicines:", error);
       return { data: [] };
     }
   },

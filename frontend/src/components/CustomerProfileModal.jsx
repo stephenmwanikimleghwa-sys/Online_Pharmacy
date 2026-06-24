@@ -31,7 +31,6 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
       const res = await api.get(`/auth/customers/${customer.id}/ledger/`);
       setLedgerData(res.data);
     } catch (err) {
-      console.error("Error fetching ledger", err);
       notify.error("Could Not Load Ledger", "Customer account history could not be loaded.");
     } finally {
       setLoading(false);
@@ -70,7 +69,6 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
       onRefresh();
       
     } catch (err) {
-      console.error(err);
       notifyApiError(notify, err, "Payment Failed", "Could not record this payment.");
     } finally {
       setPaymentLoading(false);

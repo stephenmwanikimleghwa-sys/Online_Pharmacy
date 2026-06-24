@@ -4,6 +4,7 @@ import { useAuth, BranchInfo } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNotification } from "../context/NotificationContext";
 import { mapBusinessErrorCode, extractStructuredError } from "../utils/apiErrorDisplay";
+import { prefetchOnLogin } from "../lib/prefetchOnLogin";
 import { getBranchIcon, getBranchSubtitle } from "../utils/branchDisplay";
 
 const timeGreeting = (): string => {
@@ -26,6 +27,11 @@ const BranchSelectionScreen: React.FC = () => {
     requiresBranchSelection || (isAdmin && !activeBranch?.id && allowedBranches.length > 1);
 
   useEffect(() => {
+    if (loading || !mustPickBranch) return;
+    void prefetchOnLogin();
+  }, [loading, mustPickBranch]);
+
+  useEffect(() => {
     if (loading) return;
     if (!token) {
       navigate("/login", { replace: true });
@@ -45,6 +51,7 @@ const BranchSelectionScreen: React.FC = () => {
     const result = await switchBranch(branch.id);
     setSelectingId(null);
     if (result.success) {
+      void prefetchOnLogin(branch.id);
       navigate(isAdmin ? "/admin/dashboard" : "/branch/dashboard", { replace: true });
     } else {
       const structured = extractStructuredError(result.error);

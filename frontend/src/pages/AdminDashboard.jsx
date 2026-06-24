@@ -1,21 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
 import { approveTransfer, rejectTransfer } from '../services/procurementService';
 import {
   BuildingOffice2Icon,
   ExclamationTriangleIcon,
   TruckIcon,
   ClockIcon,
-  CurrencyDollarIcon,
   ShoppingBagIcon,
-  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import WelcomeBanner from '../components/WelcomeBanner';
 import NewStockIntake from '../components/NewStockIntake';
 import ExpiryAlertsWidget from '../components/ExpiryAlertsWidget';
 import { useNotification } from '../context/NotificationContext';
+import { useDashboardGlobal, useDashboardBranch } from '../hooks/useDashboard';
+import { useLowStockAlerts } from '../hooks/useProducts';
+import { useExpiryAlerts } from '../hooks/useExpiryAlerts';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import RefreshIndicator from '../components/ui/RefreshIndicator';
+import { queryClient } from '../lib/queryClient';
+import { unwrapList } from '../utils/parseApiData';
 
 const formatMoney = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
 const formatBranchType = (type, name) => {
@@ -25,26 +29,84 @@ const formatBranchType = (type, name) => {
   return type;
 };
 
+const invalidateDashboard = () => {
+  void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  void queryClient.invalidateQueries({ queryKey: ['stock', 'alerts'] });
+  void queryClient.invalidateQueries({ queryKey: ['expiry'] });
+};
+
 const AdminDashboard = () => {
   const { user, activeBranch, requiresBranchSelection, allowedBranches } = useAuth();
   const navigate = useNavigate();
-  const [globalData, setGlobalData] = useState(null);
-  const [branchOps, setBranchOps] = useState(null);
-  const [loadingGlobal, setLoadingGlobal] = useState(true);
-  const [loadingOps, setLoadingOps] = useState(false);
-  const [error, setError] = useState('');
   const [showStockIntake, setShowStockIntake] = useState(false);
   const [approveModal, setApproveModal] = useState(null);
   const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const { notify } = useNotification();
 
+  useDocumentTitle('Admin Dashboard');
+
+  const {
+    data: globalData,
+    isLoading: loadingGlobal,
+    isFetching: fetchingGlobal,
+    error: globalError,
+    refetch: refetchGlobal,
+  } = useDashboardGlobal();
+
+  const {
+    data: branchOps,
+    isLoading: loadingOps,
+    isFetching: fetchingOps,
+    error: branchError,
+    refetch: refetchBranch,
+  } = useDashboardBranch(activeBranch?.id);
+
+  const {
+    data: lowStockData,
+    isLoading: loadingLowStock,
+    isFetching: fetchingLowStock,
+  } = useLowStockAlerts(activeBranch?.id);
+
+  const {
+    data: expiryData,
+    isLoading: loadingExpiry,
+    isFetching: fetchingExpiry,
+  } = useExpiryAlerts(activeBranch?.id);
+
+  const lowStockAlerts = unwrapList(lowStockData);
+  const expirySummary = expiryData?.summary || {};
+  const expiryAlertItems = [
+    ...(expiryData?.critical || []),
+    ...(expiryData?.warning || []),
+  ];
+  const expiryCount =
+    (expirySummary.expired ?? 0) +
+    (expirySummary.critical ?? 0) +
+    (expirySummary.warning ?? 0);
+
+  const isRefreshing =
+    (fetchingGlobal && !loadingGlobal) ||
+    (fetchingOps && !loadingOps) ||
+    (fetchingLowStock && !loadingLowStock) ||
+    (fetchingExpiry && !loadingExpiry);
+
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      navigate('/login', { replace: true });
+      return;
+    }
+    if (requiresBranchSelection || (!activeBranch?.id && allowedBranches.length > 1)) {
+      navigate('/branch/select', { replace: true });
+    }
+  }, [user, requiresBranchSelection, activeBranch, allowedBranches.length, navigate]);
+
   const handleApproveTransfer = async (id) => {
     try {
       await approveTransfer(id);
       setApproveModal(null);
       notify.success('Approved', 'Transfer approved. Stock levels updated.');
-      fetchBranchOps();
+      invalidateDashboard();
     } catch {
       notify.error('Failed', 'Could not approve transfer.');
     }
@@ -57,62 +119,27 @@ const AdminDashboard = () => {
       notify.success('Rejected', 'Transfer request rejected.');
       setRejectModal(null);
       setRejectReason('');
-      fetchBranchOps();
+      invalidateDashboard();
     } catch {
       notify.error('Failed', 'Could not reject transfer.');
     }
   };
 
-  const fetchGlobal = useCallback(async () => {
-    try {
-      setLoadingGlobal(true);
-      const res = await api.get('/dashboard/global-overview/');
-      setGlobalData(res.data);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load global overview.');
-    } finally {
-      setLoadingGlobal(false);
-    }
-  }, []);
-
-  const fetchBranchOps = useCallback(async () => {
-    if (!activeBranch?.id) {
-      setBranchOps(null);
-      return;
-    }
-    try {
-      setLoadingOps(true);
-      const res = await api.get('/dashboard/branch-operations/');
-      setBranchOps(res.data);
-    } catch (err) {
-      console.error(err);
-      setBranchOps(null);
-    } finally {
-      setLoadingOps(false);
-    }
-  }, [activeBranch?.id]);
-
-  useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login', { replace: true });
-      return;
-    }
-    if (requiresBranchSelection || (!activeBranch?.id && allowedBranches.length > 1)) {
-      navigate('/branch/select', { replace: true });
-      return;
-    }
-    fetchGlobal();
-  }, [user, requiresBranchSelection, activeBranch, allowedBranches.length, navigate, fetchGlobal]);
-
-  useEffect(() => {
-    fetchBranchOps();
-  }, [fetchBranchOps]);
-
   if (loadingGlobal && !globalData) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="w-10 h-10 border-[3px] border-t-transparent rounded-xl animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+      </div>
+    );
+  }
+
+  if (globalError && !globalData) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        <p className="text-sm font-medium text-red-600">Failed to load global overview.</p>
+        <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetchGlobal()}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -126,13 +153,6 @@ const AdminDashboard = () => {
         <WelcomeBanner />
       </div>
 
-      {error && (
-        <div className="mb-6 bg-red-50 text-red-700 rounded-xl p-4 flex items-center gap-3 border border-red-200">
-          <ExclamationTriangleIcon className="w-5 h-5 shrink-0" />
-          <p className="text-sm font-medium">{error}</p>
-        </div>
-      )}
-
       {/* SECTION A — Global Overview */}
       <section className="mb-12">
         <div className="flex items-center justify-between mb-4">
@@ -141,6 +161,7 @@ const AdminDashboard = () => {
             <span title="System is Operational" className="text-emerald-500 animate-[spin_4s_linear_infinite] flex items-center">
               ⚙️
             </span>
+            <RefreshIndicator isFetching={isRefreshing} isLoading={loadingGlobal} />
           </h2>
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">All branches</span>
         </div>
@@ -308,7 +329,7 @@ const AdminDashboard = () => {
               <div className="p-8">
                 <NewStockIntake
                   onClose={() => setShowStockIntake(false)}
-                  onSuccess={() => { fetchBranchOps(); }}
+                  onSuccess={() => invalidateDashboard()}
                 />
               </div>
             </div>
@@ -322,25 +343,38 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {activeBranch?.id && loadingOps && (
-          <div className="flex justify-center py-12">
-            <ArrowPathIcon className="w-8 h-8 animate-spin text-indigo-500" />
+        {activeBranch?.id && branchError && !branchOps && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm font-medium text-red-700 mb-3">Failed to load branch operations.</p>
+            <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetchBranch()}>
+              Retry
+            </button>
           </div>
         )}
 
-        {activeBranch?.id && !loadingOps && branchOps && (
+        {activeBranch?.id && loadingOps && !branchOps && (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-[3px] border-t-transparent rounded-xl animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+          </div>
+        )}
+
+        {activeBranch?.id && branchOps && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
               <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
-                Low stock ({branchOps.low_stock_count})
+                Low stock ({loadingLowStock ? '…' : lowStockAlerts.length})
               </h3>
-              {branchOps.low_stock_alerts?.length ? (
+              {loadingLowStock ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+                </div>
+              ) : lowStockAlerts.length ? (
                 <ul className="space-y-2 max-h-48 overflow-y-auto">
-                  {branchOps.low_stock_alerts.map((item) => (
-                    <li key={item.product_id} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{item.product_name}</span>
-                      <span className="text-rose-600 font-bold">{item.quantity} left</span>
+                  {lowStockAlerts.map((item) => (
+                    <li key={item.product_id ?? item.id} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                      <span className="font-medium text-gray-800 dark:text-gray-200">{item.product_name ?? item.name}</span>
+                      <span className="text-rose-600 font-bold">{item.quantity ?? item.stock_quantity} left</span>
                     </li>
                   ))}
                 </ul>
@@ -352,14 +386,18 @@ const AdminDashboard = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
               <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <ClockIcon className="w-5 h-5 text-rose-500" />
-                Expiry alerts ({branchOps.expiry_count})
+                Expiry alerts ({loadingExpiry ? '…' : expiryCount})
               </h3>
-              {branchOps.expiry_alerts?.length ? (
+              {loadingExpiry ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+                </div>
+              ) : expiryAlertItems.length ? (
                 <ul className="space-y-2 max-h-48 overflow-y-auto">
-                  {branchOps.expiry_alerts.map((item) => (
-                    <li key={item.product_id} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                  {expiryAlertItems.map((item) => (
+                    <li key={item.id} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
                       <span className="font-medium text-gray-800 dark:text-gray-200">{item.product_name}</span>
-                      <span className="text-gray-500">{item.expiry_date}</span>
+                      <span className="text-gray-500">{item.days_left}d left</span>
                     </li>
                   ))}
                 </ul>

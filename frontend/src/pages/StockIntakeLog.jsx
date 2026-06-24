@@ -31,8 +31,7 @@ const StockIntakeLog = () => {
       const response = await api.get('/auth/branches/');
       setBranches(Array.isArray(response.data) ? response.data : response.data.results || []);
     } catch (err) {
-      console.error('Error fetching branches:', err);
-    }
+      }
   };
 
   const fetchIntakeRecords = async () => {
@@ -44,25 +43,19 @@ const StockIntakeLog = () => {
       setIntakeRecords(Array.isArray(response.data) ? response.data : response.data.results || []);
       setError(null);
     } catch (err) {
-      console.error('Error fetching intake records:', err);
       setError('Could not load deliveries. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-
-
   const fetchSummary = async () => {
     try {
       const response = await api.get('/inventory/stock-intake/summary/', { params: branchParams });
       setSummary(response.data);
     } catch (err) {
-      console.error('Error fetching summary:', err);
-    }
+      }
   };
-
-
 
   if (!user || (user.role !== 'admin' && user.role !== 'pharmacist')) {
     return (

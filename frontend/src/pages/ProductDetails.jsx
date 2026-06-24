@@ -24,8 +24,7 @@ const ProductDetails = () => {
         setProduct(response.data);
       } catch (err) {
         setError('Failed to load product details');
-        console.error(err);
-      } finally {
+        } finally {
         setLoading(false);
       }
     };

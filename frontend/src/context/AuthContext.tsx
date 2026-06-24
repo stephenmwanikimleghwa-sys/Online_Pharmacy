@@ -11,6 +11,8 @@ import api from "../services/api";
 import { notifyError, notifySuccess } from "../services/notification";
 import { extractStructuredError } from "../utils/apiErrorDisplay";
 import { useNavigate } from "react-router-dom";
+import { prefetchOnLogin } from "../lib/prefetchOnLogin";
+import { queryClient } from "../lib/queryClient";
 
 export const ACTIVE_BRANCH_STORAGE_KEY = "active_branch";
 
@@ -93,25 +95,6 @@ export const useAuth = (): AuthContextType => {
 const isAuthRejection = (error: unknown): boolean => {
   const status = (error as { response?: { status?: number } })?.response?.status;
   return status === 401;
-};
-
-const logAuthError = (stage: string, error: unknown) => {
-  const err = error as {
-    response?: { status?: number; data?: unknown; headers?: unknown };
-    config?: unknown;
-    message?: string;
-    stack?: string;
-  };
-
-  console.error(`[Auth Debug] ${stage} failed`, {
-    message: err.message,
-    stack: err.stack,
-    status: err.response?.status,
-    data: err.response?.data,
-    headers: err.response?.headers,
-    config: err.config,
-    rawError: error,
-  });
 };
 
 const normalizeUserRole = (
@@ -252,7 +235,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           persistActiveBranch(null);
         }
       } catch (error) {
-        logAuthError("Token verification", error);
         if (isAuthRejection(error)) {
           notifyError(
             "Session Expired",
@@ -272,8 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem("user_role");
           localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
         } else {
-          console.warn("[Auth] Profile fetch failed; keeping existing session state.");
-        }
+          }
       }
       setLoading(false);
     };
@@ -304,6 +285,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "Branch Switched",
           `You are now working at ${branch.name}. All transactions will be recorded here.`,
         );
+        void prefetchOnLogin(branch.id);
       }
       if (payload?.allowed_branches) {
         setAllowedBranches(payload.allowed_branches);
@@ -311,7 +293,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRequiresBranchSelection(Boolean(reqSelection));
       return { success: true };
     } catch (error: unknown) {
-      logAuthError('Switch branch', error);
       const err = error as { response?: { data?: unknown } };
       return { success: false, error: err.response?.data || "Failed to switch branch" };
     }
@@ -404,11 +385,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           needsBranchSelection = false;
           setRequiresBranchSelection(false);
         }
-      } catch (err) {
-        logAuthError("Profile fetch after login", err);
-        if (!isAuthRejection(err)) {
-          console.warn("[Auth] Using login response; profile refresh failed.");
-        }
+      } catch {
       }
 
       // Admin with multiple branches must pick before dashboard (API is source of truth)
@@ -421,12 +398,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         persistActiveBranch(null);
       }
 
-      if (credentials.role && finalUser?.role && finalUser.role !== credentials.role) {
-        console.warn(
-          `Logged-in user role mismatch: requested=${credentials.role} returned=${finalUser.role}`,
-        );
-      }
-
       const branchLabel =
         resp.active_branch?.name || finalUser?.branch_info?.name || "your branch";
       notifySuccess(
@@ -434,13 +405,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         `You are now logged in at ${branchLabel}.`,
       );
 
+      const branchIdForPrefetch =
+        resp.active_branch?.id ??
+        finalUser?.branch_info?.id ??
+        (resp.allowed_branches?.length === 1 ? resp.allowed_branches[0]?.id : undefined);
+      if (branchIdForPrefetch && !needsBranchSelection) {
+        void prefetchOnLogin(branchIdForPrefetch);
+      }
+
       return {
         success: true,
         user: finalUser,
         requiresBranchSelection: needsBranchSelection,
       };
     } catch (error: unknown) {
-      logAuthError("Login", error);
       const err = error as { response?: { data?: unknown }; message?: string };
       const data = err.response?.data;
       const structured = extractStructuredError(data);
@@ -456,6 +434,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     notifySuccess("Logged Out", "You have been logged out safely.");
+    queryClient.clear();
     setToken(null);
     setUser(null);
     setActiveBranchState(null);
@@ -517,7 +496,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(response.data);
       return { success: true, user: response.data };
     } catch (error: unknown) {
-      console.error("Profile update failed:", error);
       const err = error as { response?: { data?: unknown } };
       return { success: false, error: err.response?.data || "Update failed" };
     }

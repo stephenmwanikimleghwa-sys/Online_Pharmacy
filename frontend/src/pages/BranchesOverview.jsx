@@ -160,8 +160,7 @@ const BranchesOverview = () => {
       setTotals(res.data?.totals || null);
     } catch (err) {
       setError('Failed to load branch overview. Please try again.');
-      console.error(err);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

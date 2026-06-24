@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
+import { useInventoryList } from '../hooks/useProducts';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import RefreshIndicator from '../components/ui/RefreshIndicator';
 import inventoryService from '../services/inventoryService';
 import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
 import ManageItemModal from '../components/ManageItemModal';
@@ -17,10 +20,17 @@ const InventoryManagement = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  useDocumentTitle('Inventory Management');
   const [activeTab, setActiveTab] = useState('inventory');
-  const [inventory, setInventory] = useState([]);
-  const [totalInventoryItems, setTotalInventoryItems] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: inventoryData,
+    isLoading: loading,
+    isFetching,
+    error: inventoryError,
+    refetch: refetchInventory,
+  } = useInventoryList();
+  const inventory = inventoryData?.products ?? [];
+  const totalInventoryItems = inventoryData?.totalItems ?? inventory.length;
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -28,7 +38,6 @@ const InventoryManagement = () => {
   const [showManageModal, setShowManageModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
   const BRANCH_COLUMNS = ['Transcounty Main', 'Transcounty Annex', 'Peakfarm'];
-
 
   const searchInputRef = useRef(null);
 
@@ -41,10 +50,10 @@ const InventoryManagement = () => {
   }, [location.search]);
 
   useEffect(() => {
-    if (activeTab === 'inventory') {
-      fetchInventory();
+    if (inventoryError) {
+      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please try again.');
     }
-  }, [activeTab]);
+  }, [inventoryError, notify]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -64,28 +73,11 @@ const InventoryManagement = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const fetchInventory = async () => {
-    try {
-      if (inventory.length === 0) setLoading(true);
-      const response = await inventoryService.getInventory({ per_page: 5000 });
-      const data = response.data || {};
-      const list = Array.isArray(data) ? data : (data.products || data.results || []);
-      setInventory(Array.isArray(list) ? list : []);
-      setTotalInventoryItems(data.totalItems || list.length);
-    } catch (error) {
-      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please try again.');
-      setInventory([]);
-      setTotalInventoryItems(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleRestock = async (itemId, quantity, reason, branchId, options = {}) => {
     try {
       await inventoryService.restockInventory(itemId, quantity, reason, branchId, options);
       notify.success('Stock Updated', 'Inventory levels have been updated for this product.');
-      fetchInventory();
+      refetchInventory();
     } catch (error) {
       notifyApiError(notify, error, 'Restock Failed', 'Could not update stock for this item.');
     }
@@ -155,6 +147,7 @@ const InventoryManagement = () => {
             <h1 className="text-5xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               Stock <span className="text-primary">management</span>
             </h1>
+            <RefreshIndicator isLoading={loading} isFetching={isFetching} />
             {user?.pharmacy_name && (
               <span className="brand-mist text-[10px] font-bold px-4 py-2 rounded-2xl uppercase tracking-[0.2em] shadow-sm">
                 {user.pharmacy_name}
@@ -487,8 +480,8 @@ const InventoryManagement = () => {
                 setSelectedItem(null);
               }}
               onRestock={handleRestock}
-              onEdit={fetchInventory}
-              onDelete={fetchInventory}
+              onEdit={refetchInventory}
+              onDelete={refetchInventory}
             />
           )}
 

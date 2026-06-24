@@ -65,5 +65,5 @@ def invalidate_cache(key_prefix):
             # but for "invalidate all analytics", clearing specific keys is hard.
             # We will assume Redis in production or short TTLs.
             pass 
-    except Exception as e:
-        print(f"Cache invalidation error: {e}")
+    except Exception:
+        pass

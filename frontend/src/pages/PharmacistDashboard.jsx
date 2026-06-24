@@ -3,24 +3,64 @@ import { useNavigate } from "react-router-dom";
 import prescriptionService from "../services/prescriptionService";
 import LoadingSpinner from "../components/LoadingSpinner";
 import WelcomeBanner from "../components/WelcomeBanner";
-import inventoryService from "../services/inventoryService";
 import { useAuth } from "../context/AuthContext";
-import { useBranchParam } from "../hooks/useBranchParam";
 import PrescriptionCard from "../components/PrescriptionCard";
 import InventorySummaryCard from "../components/InventorySummaryCard";
 import QuickActions from "../components/QuickActions";
 import QuickSale from "../components/QuickSale";
 import ExpiryAlertsWidget from "../components/ExpiryAlertsWidget";
+import { useDashboardBranch } from "../hooks/useDashboard";
+import { useLowStockAlerts, useInventoryList } from "../hooks/useProducts";
+import { useExpiryAlerts } from "../hooks/useExpiryAlerts";
+import { unwrapList, getProductBranchQuantity } from "../utils/parseApiData";
+
+const normalizeList = (res) => {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  if (res.data && Array.isArray(res.data)) return res.data;
+  if (res.results && Array.isArray(res.results)) return res.results;
+  return [];
+};
 
 const PharmacistDashboard = () => {
   const [isQuickSaleOpen, setIsQuickSaleOpen] = useState(false);
   const [pendingPrescriptions, setPendingPrescriptions] = useState([]);
   const [dispensedPrescriptions, setDispensedPrescriptions] = useState([]);
-  const [inventorySummary, setInventorySummary] = useState({});
-  const [loading, setLoading] = useState(true);
-  const { user, activeBranch, requiresBranchSelection, loading: authLoading } = useAuth();
-  const { branchParams } = useBranchParam();
+  const [rxLoading, setRxLoading] = useState(true);
+  const { user, activeBranch, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  const {
+    data: branchOps,
+    isLoading: branchLoading,
+  } = useDashboardBranch(activeBranch?.id);
+
+  const {
+    data: lowStockData,
+    isLoading: lowStockLoading,
+  } = useLowStockAlerts(activeBranch?.id);
+
+  const {
+    isLoading: expiryLoading,
+  } = useExpiryAlerts(activeBranch?.id);
+
+  const {
+    data: inventoryData,
+    isLoading: inventoryLoading,
+  } = useInventoryList();
+
+  const lowStockList = unwrapList(lowStockData);
+  const products = inventoryData?.products ?? [];
+  const inventorySummary = {
+    totalProducts: inventoryData?.totalItems ?? products.length,
+    lowStockItems: branchOps?.low_stock_count ?? lowStockList.length,
+    outOfStockItems: products.filter(
+      (p) => getProductBranchQuantity(p, activeBranch?.id) <= 0,
+    ).length,
+  };
+
+  const dashboardLoading =
+    branchLoading || lowStockLoading || expiryLoading || inventoryLoading;
 
   useEffect(() => {
     if (authLoading) return;
@@ -29,45 +69,24 @@ const PharmacistDashboard = () => {
       navigate("/admin/dashboard", { replace: true });
       return;
     }
-    fetchDashboardData();
+    const fetchPrescriptions = async () => {
+      try {
+        setRxLoading(true);
+        const [pending, dispensed] = await Promise.all([
+          prescriptionService.getPendingPrescriptions(),
+          prescriptionService.getDispensedPrescriptions(),
+        ]);
+        setPendingPrescriptions(normalizeList(pending));
+        setDispensedPrescriptions(normalizeList(dispensed));
+      } catch {
+        setPendingPrescriptions([]);
+        setDispensedPrescriptions([]);
+      } finally {
+        setRxLoading(false);
+      }
+    };
+    void fetchPrescriptions();
   }, [user, authLoading, navigate]);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const [pending, dispensed, inventory] = await Promise.all([
-        prescriptionService.getPendingPrescriptions(),
-        prescriptionService.getDispensedPrescriptions(),
-        inventoryService.getInventorySummary(branchParams),
-      ]);
-
-      // Normalize different API response shapes: some endpoints return axios responses
-      // ({ data: [...] }) while others may directly return arrays/objects.
-      const normalizeList = (res) => {
-        if (!res) return [];
-        if (Array.isArray(res)) return res;
-        if (res.data && Array.isArray(res.data)) return res.data;
-        // handle paginated { results: [...] }
-        if (res.results && Array.isArray(res.results)) return res.results;
-        return [];
-      };
-
-      const normalizeObject = (res) => {
-        if (!res) return {};
-        if (res.data && typeof res.data === 'object') return res.data;
-        if (typeof res === 'object') return res;
-        return {};
-      };
-
-      setPendingPrescriptions(normalizeList(pending));
-      setDispensedPrescriptions(normalizeList(dispensed));
-      setInventorySummary(normalizeObject(inventory));
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddPrescription = () => {
     navigate("/prescriptions/add");
@@ -85,7 +104,7 @@ const PharmacistDashboard = () => {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading || rxLoading || dashboardLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-4">
         <LoadingSpinner size="lg" />

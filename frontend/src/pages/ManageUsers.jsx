@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import api from '../services/api';
 import { UserIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
+import { useUsers } from '../hooks/useUsers';
+import { useBranches } from '../hooks/useBranches';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import RefreshIndicator from '../components/ui/RefreshIndicator';
+import { queryClient } from '../lib/queryClient';
+import { QUERY_KEYS } from '../lib/queryKeys';
+import { unwrapList } from '../utils/parseApiData';
 
 const DEFAULT_PERMISSION_FLAGS = {
   can_manage_users: false,
@@ -26,10 +33,16 @@ const getRoleStyle = (role) => {
 };
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const {
+    data: users = [],
+    isLoading,
+    isFetching,
+    error: usersError,
+    refetch,
+  } = useUsers();
+  const { data: branchesRaw } = useBranches();
+  const branches = unwrapList(branchesRaw?.results ?? branchesRaw);
+  const [actionError, setActionError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [resetCandidate, setResetCandidate] = useState(null);
@@ -43,34 +56,13 @@ const ManageUsers = () => {
   });
   const [permissionFlags, setPermissionFlags] = useState({ ...DEFAULT_PERMISSION_FLAGS });
 
-  const fetchUsers = async () => {
-    try {
-      const response = await api.get('/auth/admin/users/');
-      setUsers(response.data);
-    } catch (err) {
-      setError('Failed to load users');
-    }
+  useDocumentTitle('User Management');
+
+  const invalidateUsers = () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });
   };
 
-  const fetchBranches = async () => {
-    try {
-      const response = await api.get('/auth/branches/');
-      setBranches(response.data?.results || response.data || []);
-    } catch (err) {
-      console.error('Failed to load branches', err);
-    }
-  };
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      await Promise.all([fetchUsers(), fetchBranches()]);
-      setLoading(false);
-    };
-    load();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 opacity-40">
@@ -78,6 +70,17 @@ const ManageUsers = () => {
             style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
           <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (usersError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-sm font-medium text-red-600">Failed to load users.</p>
+        <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetch()}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -105,14 +108,14 @@ const ManageUsers = () => {
         setSuccessMessage(`${formData.role === 'admin' ? 'Admin' : 'Pharmacist'} created successfully`);
       }
       setIsModalOpen(false); setIsEditMode(false); setEditingUserId(null);
-      await fetchUsers();
+      invalidateUsers();
       setFormData({ username: '', password: '', email: '', full_name: '', pharmacy_license: '', role: 'pharmacist', branch_id: '' });
       setPermissionFlags({ ...DEFAULT_PERMISSION_FLAGS });
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       const data = err.response?.data;
       const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setError('Failed to save user: ' + (serverMsg || err.message));
+      setActionError('Failed to save user: ' + (serverMsg || err.message));
     }
   };
 
@@ -142,13 +145,13 @@ const ManageUsers = () => {
     try {
       await api.delete(`/auth/admin/users/${deleteCandidate.id}/delete/`);
       setSuccessMessage('User deleted successfully');
-      await fetchUsers();
+      invalidateUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
       setDeleteCandidate(null);
     } catch (err) {
       const data = err.response?.data;
       const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setError('Failed to delete user: ' + (serverMsg || err.message));
+      setActionError('Failed to delete user: ' + (serverMsg || err.message));
     }
   };
 
@@ -156,12 +159,12 @@ const ManageUsers = () => {
     try {
       await api.post(`/auth/admin/users/${user.id}/deactivate/`);
       setSuccessMessage('User reactivated successfully');
-      await fetchUsers();
+      invalidateUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       const data = err.response?.data;
       const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setError('Failed to update user status: ' + (serverMsg || err.message));
+      setActionError('Failed to update user status: ' + (serverMsg || err.message));
     }
   };
 
@@ -181,7 +184,7 @@ const ManageUsers = () => {
     } catch (err) {
       const data = err.response?.data;
       const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setError('Failed to reset password: ' + (serverMsg || err.message));
+      setActionError('Failed to reset password: ' + (serverMsg || err.message));
     }
   };
 
@@ -205,6 +208,7 @@ const ManageUsers = () => {
             <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               User <span style={{ color: 'var(--color-primary)' }}>Management</span>
             </h1>
+            <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
           </div>
           <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>View, create, and manage all system users and their roles.</p>
         </div>
@@ -217,13 +221,13 @@ const ManageUsers = () => {
         </button>
       </div>
 
-      {error && (
+      {actionError && (
         <div className="mb-8 p-4 rounded-2xl flex items-center gap-4 animate-shake"
           style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(244,63,94,0.12)', color: '#f43f5e' }}>
             <XCircleIcon className="w-5 h-5" />
           </div>
-          <p className="font-bold text-sm tracking-tight" style={{ color: '#be123c' }}>{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
+          <p className="font-bold text-sm tracking-tight" style={{ color: '#be123c' }}>{typeof actionError === 'string' ? actionError : (actionError?.message || JSON.stringify(actionError))}</p>
         </div>
       )}
 

@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
+import { usePrefetchOnHover } from "../../hooks/usePrefetchOnHover";
+import { QUERY_KEYS } from "../../lib/queryKeys";
+import { STALE_TIMES } from "../../lib/staleTimes";
+import { unwrapList } from "../../utils/parseApiData";
 import {
   SunIcon, MoonIcon, ArrowRightOnRectangleIcon, ChevronLeftIcon, ChevronRightIcon,
   HomeIcon, ShoppingBagIcon, ChartBarIcon, ClipboardDocumentListIcon, Squares2X2Icon,
@@ -86,9 +91,63 @@ const Sidebar = () => {
   const location  = useLocation();
   const navigate  = useNavigate();
   const { effectiveTheme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, activeBranch } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { mainLinks, operationsLinks, adminLinks } = getNavGroups(user ?? null);
+
+  const inventoryPrefetch = usePrefetchOnHover(
+    QUERY_KEYS.inventory(activeBranch?.id, { per_page: 5000 }),
+    async () => {
+      const res = await api.get('/inventory/list/', { params: { per_page: 5000 } });
+      const data = res.data || {};
+      return data.products || data.results || unwrapList(data);
+    },
+    STALE_TIMES.SLOW,
+  );
+  const suppliersPrefetch = usePrefetchOnHover(
+    QUERY_KEYS.suppliers,
+    () => api.get('/inventory/suppliers/').then((r) => r.data),
+    STALE_TIMES.SLOW,
+  );
+  const customersPrefetch = usePrefetchOnHover(
+    QUERY_KEYS.customers,
+    async () => {
+      const res = await api.get('/auth/customers/');
+      return unwrapList(res.data);
+    },
+    STALE_TIMES.SLOW,
+  );
+  const reportsPrefetch = usePrefetchOnHover(
+    QUERY_KEYS.dashboardGlobal,
+    () => api.get('/dashboard/global-overview/').then((r) => r.data),
+    STALE_TIMES.FAST,
+  );
+  const logsPrefetch = usePrefetchOnHover(
+    QUERY_KEYS.dispensingLogs({}),
+    async () => {
+      const res = await api.get('/inventory/dispensations/', { params: {} });
+      return unwrapList(res.data);
+    },
+    STALE_TIMES.MEDIUM,
+  );
+  const usersPrefetch = usePrefetchOnHover(
+    QUERY_KEYS.users,
+    async () => {
+      const res = await api.get('/auth/admin/users/');
+      return unwrapList(res.data);
+    },
+    STALE_TIMES.SLOW,
+  );
+
+  const getLinkPrefetch = (to) => {
+    if (to.includes('/inventory/management') || to.includes('/inventory/control')) return inventoryPrefetch;
+    if (to === '/customers') return customersPrefetch;
+    if (to === '/reports' || to.includes('/reports')) return reportsPrefetch;
+    if (to === '/dispensing-logs') return logsPrefetch;
+    if (to === '/admin/users') return usersPrefetch;
+    if (to.includes('supplier')) return suppliersPrefetch;
+    return {};
+  };
   const sections = [
     { title: "Main", links: mainLinks },
     { title: "Operations", links: operationsLinks },
@@ -166,11 +225,13 @@ const Sidebar = () => {
             )}
             {section.links.map(({ to, label, icon: Icon }) => {
               const active = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
+              const prefetchHandlers = getLinkPrefetch(to);
               return (
                 <Link
                   key={to}
                   to={to}
                   title={isCollapsed ? label : ""}
+                  {...prefetchHandlers}
                   className={`flex items-center ${isCollapsed ? 'justify-center p-3' : 'px-4 py-3'} rounded-xl text-sm font-semibold transition-all duration-200 group`}
                   style={
                     active

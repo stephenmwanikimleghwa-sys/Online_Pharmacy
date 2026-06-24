@@ -42,8 +42,7 @@ const UserAccount = () => {
         setError(null);
       } catch (err) {
         setError("Failed to load account data");
-        console.error(err);
-      } finally {
+        } finally {
         setLoading(false);
       }
     };
@@ -157,7 +156,6 @@ const UserAccount = () => {
                     notify.success("Profile Updated", "Your account details have been saved.");
                   })
                   .catch(error => {
-                    console.error("Profile update error:", error);
                     notifyApiError(notify, error, "Update Failed", "Could not update your profile. Please try again.");
                   });
                 }}

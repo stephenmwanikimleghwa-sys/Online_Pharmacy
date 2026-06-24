@@ -27,8 +27,7 @@ const DispensePrescription = () => {
       setPrescription(response.data);
       await checkInventory(response.data);
     } catch (error) {
-      console.error('Error fetching prescription:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -45,7 +44,6 @@ const DispensePrescription = () => {
           lowStock: inventoryResponse.data.stock_quantity <= inventoryResponse.data.reorder_threshold
         };
       } catch (error) {
-        console.error(`Error checking inventory for medicine ${medicine.id}:`, error);
         status[medicine.id] = { available: false, currentStock: 0, lowStock: false };
       }
     }
@@ -76,7 +74,6 @@ const DispensePrescription = () => {
 
       navigate('/pharmacist/dashboard');
     } catch (error) {
-      console.error('Error dispensing prescription:', error);
       notify.error('Dispense Failed', 'The prescription could not be dispensed. Please try again.');
     } finally {
       setDispensing(false);

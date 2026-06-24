@@ -20,10 +20,6 @@ const AdminStock = () => {
 	const [error, setError] = useState('');
 	const [selectedBranch, setSelectedBranch] = useState('all');
 
-	// Debug items state
-	useEffect(() => {
-		console.log('[Items Debug]', { items, isArray: Array.isArray(items) });
-	}, [items]);
 	const [formErrors, setFormErrors] = useState({});
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -95,11 +91,6 @@ const AdminStock = () => {
 	// Categories list (derived from items)
 	const [categories, setCategories] = useState([]);
 
-	// DEBUG: Log modal state changes
-	useEffect(() => {
-		console.log('[Modal Debug] State changed:', { isModalOpen, isEditMode });
-	}, [isModalOpen, isEditMode]);
-
 	// Check if user is logged in and has required role
 	useEffect(() => {
 		const token = localStorage.getItem('access_token');
@@ -152,7 +143,6 @@ const AdminStock = () => {
 
 			// Always use the inventory endpoint to get branch-scoped stock
 			try {
-				console.log('[Fetch Debug] Trying inventory endpoint...');
 				const inventoryRes = await inventoryService.getInventory(params, { signal });
 				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
 
@@ -168,10 +158,8 @@ const AdminStock = () => {
 					totalItemsCount = products.length;
 					totalPagesCount = 1;
 				}
-				console.log('[Fetch Debug] Inventory endpoint success - Products loaded:', { count: totalItemsCount });
-			} catch (inventoryErr) {
+				} catch (inventoryErr) {
 				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
-				console.error('[Fetch Debug] Inventory endpoint failed:', inventoryErr);
 				throw inventoryErr;
 			}
 
@@ -184,15 +172,13 @@ const AdminStock = () => {
 
 		} catch (err) {
 			if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
-			console.error(err);
 			if (err.response?.status === 401) {
 				setError('Please log in to view inventory');
 				navigate('/login');
 			} else {
 				// Show error state
 				setError('Failed to load inventory');
-				console.error('Inventory fetch failed:', err);
-			}
+				}
 		} finally {
 			if (requestIdRef.current === currentRequestId) {
 				setLoading(false);
@@ -200,9 +186,7 @@ const AdminStock = () => {
 		}
 	};
 
-
 	const openAddModal = () => {
-		console.log('openAddModal called');
 		setIsEditMode(false);
 		setEditingItem(null);
 		setForm({
@@ -222,13 +206,10 @@ const AdminStock = () => {
 			reorder_threshold: 10,
 			image: null,
 		});
-		console.log('[Modal Debug] About to set isModalOpen to true');
 		setIsModalOpen(true);
-		console.log('[Modal Debug] Set isModalOpen to true');
-	};
+		};
 
 	const handleRefresh = async () => {
-		console.log('[Refresh] manual refresh requested');
 		await fetchItems();
 	};
 
@@ -284,7 +265,6 @@ const AdminStock = () => {
 			await api.delete(`/products/${item.id}/`);
 			fetchItems();
 		} catch (err) {
-			console.error(err);
 			setError('Failed to delete item');
 		}
 	};
@@ -408,7 +388,6 @@ const AdminStock = () => {
 				setItems(prev => [optimisticItem, ...prev]);
 				try {
 					const response = await api.post('/products/', data, { headers });
-					console.log('Product created:', response.data);
 					// Replace optimistic item with server response immediately
 					setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
 					notify.success('Product Added', 'The product has been added to the system.');
@@ -426,9 +405,7 @@ const AdminStock = () => {
 			setFormErrors({});
 			// refresh authoritative data (fetch will replace optimistic entry)
 			await fetchItems();
-			console.log('Items refreshed');
-		} catch (err) {
-			console.error(err);
+			} catch (err) {
 			if (err.response?.data) {
 				// Handle validation errors from backend
 				setFormErrors(err.response.data);
@@ -460,7 +437,6 @@ const AdminStock = () => {
 			fetchItems();
 			openLogs(item);
 		} catch (err) {
-			console.error(err);
 			setError('Failed to adjust stock');
 		}
 	};
@@ -667,9 +643,6 @@ const AdminStock = () => {
 					{/* Removed pagination - all products loaded on single scrollable page */}
 				</div>
 			</ErrorBoundary>
-
-
-
 
 			<AddMedicineModal
 				isOpen={isModalOpen}

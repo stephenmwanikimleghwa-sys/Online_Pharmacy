@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import api from '../services/api';
 import CustomerProfileModal from '../components/CustomerProfileModal';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { MagnifyingGlassIcon, UserGroupIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { useCustomers } from '../hooks/useCustomers';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import RefreshIndicator from '../components/ui/RefreshIndicator';
+import { queryClient } from '../lib/queryClient';
+import { QUERY_KEYS } from '../lib/queryKeys';
 
 const Customers = () => {
   const { user } = useAuth();
   const { notify } = useNotification();
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: customers = [],
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useCustomers();
+
+  useDocumentTitle('Customers & Debt');
   
   const [search, setSearch] = useState('');
   const [filterDebt, setFilterDebt] = useState('all'); // 'all', 'debt', 'cleared'
@@ -21,17 +32,8 @@ const Customers = () => {
   const [createError, setCreateError] = useState('');
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '', credit_balance: '' });
 
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get('/auth/customers/');
-      setCustomers(Array.isArray(res.data) ? res.data : res.data.results || []);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load customers');
-    } finally {
-      setLoading(false);
-    }
+  const invalidateCustomers = () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.customers });
   };
 
   const resetCreateForm = () => {
@@ -58,10 +60,9 @@ const Customers = () => {
       });
       setShowCreateModal(false);
       resetCreateForm();
-      await fetchCustomers();
+      invalidateCustomers();
       notify.success('Customer Added', 'New customer was added successfully.');
     } catch (err) {
-      console.error(err);
       const data = err.response?.data;
       setCreateError(
         (data && typeof data === 'object' && (data.detail || data.message || JSON.stringify(data))) ||
@@ -71,10 +72,6 @@ const Customers = () => {
       setCreatingCustomer(false);
     }
   };
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
 
   const filteredCustomers = customers.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -114,6 +111,7 @@ const Customers = () => {
           <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight flex items-center gap-3">
             <UserGroupIcon className="w-8 h-8 text-primary" />
             Customers & Debt
+            <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
           </h1>
           <p className="text-slate-500 mt-1 text-sm font-medium">Manage credit clients, view transaction ledgers, and process debt payments.</p>
         </div>
@@ -189,12 +187,17 @@ const Customers = () => {
       </div>
 
       {/* Grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-20">
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : error ? (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center font-semibold">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</div>
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">
+          <p className="font-semibold mb-3">Failed to load customers.</p>
+          <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredCustomers.map(customer => {
@@ -254,7 +257,7 @@ const Customers = () => {
         <CustomerProfileModal
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
-          onRefresh={() => fetchCustomers()}
+          onRefresh={() => invalidateCustomers()}
         />
       )}
 

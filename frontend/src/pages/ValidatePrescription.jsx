@@ -26,8 +26,7 @@ const ValidatePrescription = () => {
       // Check inventory for prescribed medicines
       await checkInventory(response.data);
     } catch (error) {
-      console.error('Error fetching prescription:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -49,8 +48,7 @@ const ValidatePrescription = () => {
       await prescriptionService.validatePrescription(id, 'Prescription validated by pharmacist');
   navigate('/pharmacist/dashboard');
     } catch (error) {
-      console.error('Error validating prescription:', error);
-    } finally {
+      } finally {
       setValidating(false);
     }
   };
@@ -66,8 +64,7 @@ const ValidatePrescription = () => {
       await prescriptionService.rejectPrescription(id, rejectionReason);
   navigate('/pharmacist/dashboard');
     } catch (error) {
-      console.error('Error rejecting prescription:', error);
-    } finally {
+      } finally {
       setValidating(false);
     }
   };

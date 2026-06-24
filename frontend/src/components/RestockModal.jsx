@@ -84,7 +84,6 @@ const RestockModal = ({ item, onClose, onRestock }) => {
       );
       onClose();
     } catch (error) {
-      console.error('Error restocking item:', error);
       // error notification is handled by the parent's handleRestock via notifyApiError
     } finally {
       setLoading(false);

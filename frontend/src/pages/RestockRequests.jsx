@@ -51,7 +51,6 @@ const RestockRequests = () => {
       setRequests(response.data.results);
       setTotalPages(Math.ceil(response.data.count / 10));
     } catch (err) {
-      console.error('Failed to fetch restock requests:', err);
       setError('Failed to load restock requests');
     } finally {
       setLoading(false);
@@ -64,8 +63,7 @@ const RestockRequests = () => {
       const response = await api.get('/inventory/');
       setProducts(response.data.products || []);
     } catch (err) {
-      console.error('Failed to fetch products:', err);
-    }
+      }
   };
 
   useEffect(() => {
@@ -106,7 +104,6 @@ const RestockRequests = () => {
       });
       fetchRequests();
     } catch (err) {
-      console.error('Failed to create restock request:', err);
       setError('Failed to create restock request');
       if (err.response?.data) {
         setFormErrors(err.response.data);
@@ -121,7 +118,6 @@ const RestockRequests = () => {
       await api.post(`/inventory/restock-requests/${requestId}/${action}/`);
       fetchRequests();
     } catch (err) {
-      console.error(`Failed to ${action} request:`, err);
       setError(`Failed to ${action} request`);
     }
   };

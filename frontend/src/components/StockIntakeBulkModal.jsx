@@ -118,8 +118,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
       const response = await api.get('/inventory/suppliers/');
       setSuppliers(Array.isArray(response.data) ? response.data : response.data.results || []);
     } catch (err) {
-      console.error('Error fetching suppliers:', err);
-    }
+      }
   };
 
   const fetchProducts = async () => {
@@ -127,8 +126,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
       const response = await api.get('/products/');
       setProducts(Array.isArray(response.data) ? response.data : response.data.results || []);
     } catch (err) {
-      console.error('Error fetching products:', err);
-    }
+      }
   };
 
   const addRow = () => {
@@ -171,7 +169,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
           .then(res => {
             setSupplierHistory(prev => ({ ...prev, [value]: res.data || [] }));
           })
-          .catch(err => console.error("Could not fetch supplier history", err));
+          .catch(() => {});
       }
     }
 

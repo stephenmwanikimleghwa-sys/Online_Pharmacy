@@ -10,7 +10,6 @@ const reportService = {
             const response = await api.get(`/reports/analytics/inventory_trends/?days=${days}`);
             return response.data;
         } catch (error) {
-            console.error('Error fetching inventory trends:', error);
             throw error;
         }
     },
@@ -23,7 +22,6 @@ const reportService = {
             const response = await api.get('/reports/analytics/pharmacist_performance/');
             return response.data;
         } catch (error) {
-            console.error('Error fetching pharmacist performance:', error);
             throw error;
         }
     },
@@ -37,7 +35,6 @@ const reportService = {
             const response = await api.get(`/reports/analytics/top_selling_products/?days=${days}`);
             return response.data;
         } catch (error) {
-            console.error('Error fetching top selling products:', error);
             throw error;
         }
     },
@@ -50,7 +47,6 @@ const reportService = {
             const response = await api.get('/reports/analytics/low_stock_alerts/');
             return response.data;
         } catch (error) {
-            console.error('Error fetching low stock alerts:', error);
             throw error;
         }
     },
@@ -72,7 +68,6 @@ const reportService = {
             link.click();
             link.remove();
         } catch (error) {
-            console.error('Error exporting PDF:', error);
             throw error;
         }
     },
@@ -100,7 +95,6 @@ const reportService = {
             link.click();
             link.remove();
         } catch (error) {
-            console.error('Error downloading receipt:', error);
             throw error;
         }
     }
