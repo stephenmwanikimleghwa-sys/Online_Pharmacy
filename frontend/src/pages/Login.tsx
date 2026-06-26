@@ -373,6 +373,17 @@ const Login: React.FC = () => {
                   : <EyeIcon style={{ width: 18, height: 18 }} />}
               </button>
             </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', marginBottom: '16px' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/password-reset')}
+                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                Forgot password?
+              </button>
+            </div>
 
             {/* Error */}
             {error && (
