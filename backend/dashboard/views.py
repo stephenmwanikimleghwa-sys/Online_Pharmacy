@@ -32,7 +32,7 @@ class BranchOperationsView(APIView):
     Operational data for request.active_branch only.
     """
 
-    permission_classes = [IsAuthenticated, IsAdminRole]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         branch = get_active_branch(request)

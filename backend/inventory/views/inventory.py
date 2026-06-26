@@ -206,7 +206,7 @@ def inventory_list(request):
         )
 
 @api_view(["GET"])
-@permission_classes([IsAuditorOrAdmin])
+@permission_classes([IsPharmacistOrAdmin])
 def low_stock_items(request):
     """Get list of low stock items."""
     from django.db.models import Prefetch
@@ -252,7 +252,7 @@ def low_stock_items(request):
     return Response(data)
 
 @api_view(["GET"])
-@permission_classes([IsAuditorOrAdmin])
+@permission_classes([IsPharmacistOrAdmin])
 def out_of_stock_items(request):
     """Get list of out of stock items."""
     user = request.user
@@ -283,7 +283,7 @@ def out_of_stock_items(request):
     return Response(data)
 
 @api_view(["GET"])
-@permission_classes([IsAuditorOrAdmin])
+@permission_classes([IsPharmacistOrAdmin])
 def inventory_detail(request, pk):
     """Get detailed information about a specific inventory item."""
     product = get_object_or_404(Product, pk=pk, is_active=True)
