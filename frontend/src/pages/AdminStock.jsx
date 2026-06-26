@@ -204,6 +204,7 @@ const AdminStock = () => {
 			supplier: '',
 			description: '',
 			reorder_threshold: 10,
+			department: 'CHEMIST',
 			image: null,
 		});
 		setIsModalOpen(true);
@@ -231,6 +232,7 @@ const AdminStock = () => {
 			supplier: item.supplier || '',
 			description: item.description || '',
 			reorder_threshold: item.reorder_threshold ?? 10,
+			department: item.department || 'CHEMIST',
 			image: item.image || null,
 		});
 		setIsModalOpen(true);
@@ -254,6 +256,7 @@ const AdminStock = () => {
 			supplier: item.supplier || '',
 			description: item.description || '',
 			reorder_threshold: item.reorder_threshold ?? 10,
+			department: item.department || 'CHEMIST',
 			image: item.image || null,
 		});
 		setIsModalOpen(true);
@@ -342,6 +345,7 @@ const AdminStock = () => {
 
 				data.append('stock_quantity', Number(form.stock_quantity));
 				data.append('dosage_form', form.dosage_form);
+				data.append('department', form.department);
 				data.append('strength', form.strength?.trim() || '');
 				data.append('shelf_location', form.shelf_location?.trim() || '');
 				data.append('description', form.description?.trim() || '');
@@ -360,6 +364,7 @@ const AdminStock = () => {
 					...(form.use_legacy_prices && form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
 					stock_quantity: Number(form.stock_quantity),
 					dosage_form: form.dosage_form,
+					department: form.department,
 					strength: form.strength?.trim() || '',
 					shelf_location: form.shelf_location?.trim() || '',
 					description: form.description?.trim() || '',
@@ -380,6 +385,7 @@ const AdminStock = () => {
 					category: data instanceof FormData ? data.get('category') : data.category,
 					price: data instanceof FormData ? data.get('price') : data.price,
 					stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
+					department: data instanceof FormData ? data.get('department') : data.department,
 					expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
 					description: data instanceof FormData ? data.get('description') : data.description,
 					supplier: data instanceof FormData ? data.get('supplier') : data.supplier,

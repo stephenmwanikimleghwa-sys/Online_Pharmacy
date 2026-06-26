@@ -272,6 +272,21 @@ export const AddMedicineModal = ({
               </select>
             </div>
 
+            {/* Department */}
+            <div>
+              <label className="form-label">Department</label>
+              <select
+                name="department"
+                value={form.department || 'CHEMIST'}
+                onChange={(e) => setForm({ ...form, department: e.target.value })}
+                className={inputBase(formErrors.department)}
+              >
+                <option value="CHEMIST">Chemist</option>
+                <option value="AGROVET">Agrovet</option>
+              </select>
+              {formErrors.department && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.department}</p>}
+            </div>
+
             {/* Buying Price (BP) */}
             <div>
               <label className="form-label">Buying Price / B.P (KES)</label>

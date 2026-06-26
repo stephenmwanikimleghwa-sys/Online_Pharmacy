@@ -40,6 +40,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
     strength: item.strength || '',
     description: item.description || '',
     reorder_threshold: item.reorder_threshold ?? 10,
+    department: item.department || 'CHEMIST',
     expiry_date: item.expiry_date || '',
     supplier: item.supplier || '',
   });
@@ -139,6 +140,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
         name: form.name.trim(),
         category: form.category.trim(),
         dosage_form: form.dosage_form,
+        department: form.department,
         strength: form.strength?.trim() || '',
         description: form.description?.trim() || '',
         supplier: form.supplier?.trim() || null,
@@ -403,6 +405,22 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   <option value="powder">Powder</option>
                   <option value="other">Other</option>
                 </select>
+              </div>
+
+              {/* Department */}
+              <div>
+                <label className="form-label">Department</label>
+                <select
+                  value={form.department || 'CHEMIST'}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  className="form-input w-full"
+                >
+                  <option value="CHEMIST">Chemist</option>
+                  <option value="AGROVET">Agrovet</option>
+                </select>
+                {formErrors.department && (
+                  <p className="mt-1 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-1">{formErrors.department}</p>
+                )}
               </div>
 
               {/* Buying Price */}
