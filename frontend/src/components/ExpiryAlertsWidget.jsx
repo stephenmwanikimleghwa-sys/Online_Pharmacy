@@ -20,7 +20,7 @@ const EMPTY_EXPIRY = {
 const ExpiryAlertsWidget = ({ compact = false }) => {
   const { notify } = useNotification();
   const { activeBranch } = useAuth();
-  const { data, isLoading, error, refetch } = useExpiryAlerts(activeBranch?.id);
+  const { data, isLoading, error, isFetching, fetchStatus, refetch } = useExpiryAlerts(activeBranch?.id);
   const [clearanceModal, setClearanceModal] = useState(null);
   const [clearancePrice, setClearancePrice] = useState('');
 
@@ -47,8 +47,13 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
     }
   };
 
-  if (isLoading) return <p className="text-sm text-gray-500">Loading expiry alerts…</p>;
-  if (error) {
+  // Query is disabled when there is no active branch — don't render anything
+  if (!activeBranch?.id) return null;
+
+  if (isLoading || (isFetching && fetchStatus === 'fetching' && !data)) {
+    return <p className="text-sm text-gray-500">Loading expiry alerts…</p>;
+  }
+  if (error && !data) {
     return (
       <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500">
         <p>Could not load expiry data.</p>

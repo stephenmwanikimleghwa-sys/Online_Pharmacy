@@ -15,7 +15,12 @@ export function useDashboardGlobal() {
 export function useDashboardBranch(branchId?: number) {
   return useQuery({
     queryKey: QUERY_KEYS.dashboardBranch(branchId ?? 0),
-    queryFn: () => api.get('/dashboard/branch-operations/').then((r) => r.data),
+    queryFn: () =>
+      api
+        .get('/dashboard/branch-operations/', {
+          skipGlobalErrorNotification: true,
+        })
+        .then((r) => r.data),
     staleTime: STALE_TIMES.FAST,
     refetchInterval: 60 * 1000,
     enabled: !!branchId,

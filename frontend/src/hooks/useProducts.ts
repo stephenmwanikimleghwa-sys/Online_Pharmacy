@@ -79,6 +79,8 @@ export function useProductAvailability(id: number) {
   });
 }
 
+
+
 export function useLowStockAlerts(branchId?: number) {
   return useQuery({
     queryKey: QUERY_KEYS.lowStockAlerts(branchId ?? 0),
@@ -86,6 +88,7 @@ export function useLowStockAlerts(branchId?: number) {
       api
         .get('/inventory/low-stock/', {
           params: branchId ? { branch: branchId } : {},
+          skipGlobalErrorNotification: true,
         })
         .then((r) => r.data),
     staleTime: STALE_TIMES.MEDIUM,
