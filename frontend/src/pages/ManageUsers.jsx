@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
-import { UserIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { UserIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon, XCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 import { useUsers } from '../hooks/useUsers';
 import { useBranches } from '../hooks/useBranches';
@@ -47,6 +47,9 @@ const ManageUsers = () => {
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [resetCandidate, setResetCandidate] = useState(null);
   const [resetPassword, setResetPassword] = useState('');
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
@@ -171,16 +174,20 @@ const ManageUsers = () => {
   const handleResetPassword = (user) => {
     setResetCandidate(user);
     setResetPassword('');
+    setResetPasswordConfirm('');
+    setShowResetPassword(false);
+    setShowResetPasswordConfirm(false);
   };
 
   const confirmResetPassword = async () => {
-    if (!resetCandidate || !resetPassword.trim()) return;
+    if (!resetCandidate || !resetPassword.trim() || resetPassword !== resetPasswordConfirm) return;
     try {
       await api.post(`/auth/admin/users/${resetCandidate.id}/reset-password/`, { new_password: resetPassword.trim() });
       setSuccessMessage('Password reset successfully');
       setTimeout(() => setSuccessMessage(''), 4000);
       setResetCandidate(null);
       setResetPassword('');
+      setResetPasswordConfirm('');
     } catch (err) {
       const data = err.response?.data;
       const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
@@ -459,16 +466,69 @@ const ManageUsers = () => {
               <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                 Set a new password for <strong>{resetCandidate?.username}</strong>.
               </p>
-              <input
-                type="password"
-                value={resetPassword}
-                onChange={(e) => setResetPassword(e.target.value)}
-                className="form-input w-full mb-6"
-                placeholder="Enter new password"
-              />
+              
+              <div className="space-y-4 mb-6">
+                <div className="relative">
+                  <input
+                    type={showResetPassword ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                    className="form-input w-full pr-11"
+                    placeholder="Enter new password"
+                  />
+                  <button type="button" onClick={() => setShowResetPassword(prev => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center transition-colors"
+                    style={{ color: 'var(--text-secondary)' }}>
+                    {showResetPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+                  </button>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type={showResetPasswordConfirm ? "text" : "password"}
+                    value={resetPasswordConfirm}
+                    onChange={(e) => setResetPasswordConfirm(e.target.value)}
+                    className="form-input w-full pr-11"
+                    placeholder="Confirm new password"
+                  />
+                  <button type="button" onClick={() => setShowResetPasswordConfirm(prev => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center transition-colors"
+                    style={{ color: 'var(--text-secondary)' }}>
+                    {showResetPasswordConfirm ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password Requirements */}
+              <div className="mb-6 p-4 rounded-xl text-xs space-y-2 font-medium" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)' }}>
+                <p className="font-bold text-[10px] uppercase tracking-widest mb-3">Password Requirements</p>
+                <div className="flex items-center gap-2">
+                  {resetPassword.length >= 8 ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                  <span style={{ color: resetPassword.length >= 8 ? 'var(--text-primary)' : 'inherit' }}>At least 8 characters</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/[a-zA-Z]/.test(resetPassword) ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                  <span style={{ color: /[a-zA-Z]/.test(resetPassword) ? 'var(--text-primary)' : 'inherit' }}>Contains letters</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/[0-9]/.test(resetPassword) ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                  <span style={{ color: /[0-9]/.test(resetPassword) ? 'var(--text-primary)' : 'inherit' }}>Contains numbers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(resetPassword && resetPassword === resetPasswordConfirm) ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                  <span style={{ color: (resetPassword && resetPassword === resetPasswordConfirm) ? 'var(--text-primary)' : 'inherit' }}>Passwords match</span>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setResetCandidate(null)} className="form-cancel-btn px-4 py-2 rounded-xl">Cancel</button>
-                <button type="button" onClick={confirmResetPassword} className="btn-primary px-4 py-2 rounded-xl text-white font-semibold">Reset</button>
+                <button 
+                  type="button" 
+                  onClick={confirmResetPassword} 
+                  disabled={!(resetPassword.length >= 8 && /[a-zA-Z]/.test(resetPassword) && /[0-9]/.test(resetPassword) && resetPassword === resetPasswordConfirm)}
+                  className="btn-primary px-4 py-2 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                  Reset
+                </button>
               </div>
             </div>
           </div>
