@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, ShieldCheckIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 const ForcePasswordChange: React.FC = () => {
@@ -139,6 +139,27 @@ const ForcePasswordChange: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Password Requirements */}
+                        <div className="p-4 rounded-xl text-xs space-y-2 font-medium" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)' }}>
+                            <p className="font-bold text-[10px] uppercase tracking-widest mb-3">Password Requirements</p>
+                            <div className="flex items-center gap-2">
+                                {passwords.newPassword.length >= 8 ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                                <span style={{ color: passwords.newPassword.length >= 8 ? 'var(--text-primary)' : 'inherit' }}>At least 8 characters</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {/[a-zA-Z]/.test(passwords.newPassword) ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                                <span style={{ color: /[a-zA-Z]/.test(passwords.newPassword) ? 'var(--text-primary)' : 'inherit' }}>Contains letters</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {/[0-9]/.test(passwords.newPassword) ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                                <span style={{ color: /[0-9]/.test(passwords.newPassword) ? 'var(--text-primary)' : 'inherit' }}>Contains numbers</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {(passwords.newPassword && passwords.newPassword === passwords.confirmPassword) ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
+                                <span style={{ color: (passwords.newPassword && passwords.newPassword === passwords.confirmPassword) ? 'var(--text-primary)' : 'inherit' }}>Passwords match</span>
+                            </div>
+                        </div>
+
                         {error && (
                             <div className="alert-error">
                                 <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -149,8 +170,8 @@ const ForcePasswordChange: React.FC = () => {
                         <div className="flex flex-col gap-3">
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="btn-primary w-full py-3 px-4 rounded-xl text-white font-semibold text-sm transition-all"
+                                disabled={loading || !(passwords.newPassword.length >= 8 && /[a-zA-Z]/.test(passwords.newPassword) && /[0-9]/.test(passwords.newPassword) && passwords.newPassword === passwords.confirmPassword)}
+                                className="btn-primary w-full py-3 px-4 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Updating..." : "Update Password & Continue"}
                             </button>
