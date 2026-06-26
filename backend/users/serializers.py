@@ -122,8 +122,19 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
+    def validate_old_password(self, value):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            if not request.user.check_password(value):
+                raise serializers.ValidationError("Incorrect old password.")
+        return value
+
     def validate_new_password(self, value):
-        validate_password(value)
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
         return value
 
 class PasswordResetRequestSerializer(serializers.Serializer):
@@ -143,7 +154,11 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True)
 
     def validate_new_password(self, value):
-        validate_password(value)
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
         return value
 
 class StaffActivityLogSerializer(serializers.ModelSerializer):
