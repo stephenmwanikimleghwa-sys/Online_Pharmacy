@@ -12,17 +12,11 @@ def get_expiry_summary(branch_id=None):
     if branch_id:
         qs = qs.filter(branch_id=branch_id)
 
-    annotated = qs.annotate(
-        duration=ExpressionWrapper(
-            F("expiry_date") - today,
-            output_field=DurationField(),
-        )
-    )
-    summary = annotated.aggregate(
-        expired=Count("id", filter=Q(duration__lt=timedelta(days=0))),
-        critical=Count("id", filter=Q(duration__gte=timedelta(days=0), duration__lte=timedelta(days=7))),
-        warning=Count("id", filter=Q(duration__gt=timedelta(days=7), duration__lte=timedelta(days=30))),
-        caution=Count("id", filter=Q(duration__gt=timedelta(days=30), duration__lte=timedelta(days=90))),
+    summary = qs.aggregate(
+        expired=Count("id", filter=Q(expiry_date__lt=today)),
+        critical=Count("id", filter=Q(expiry_date__gte=today, expiry_date__lte=today + timedelta(days=7))),
+        warning=Count("id", filter=Q(expiry_date__gt=today + timedelta(days=7), expiry_date__lte=today + timedelta(days=30))),
+        caution=Count("id", filter=Q(expiry_date__gt=today + timedelta(days=30), expiry_date__lte=today + timedelta(days=90))),
     )
     return summary
 
