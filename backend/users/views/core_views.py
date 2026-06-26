@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.throttling import AnonRateThrottle
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
@@ -33,15 +34,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class LoginRateThrottle(AnonRateThrottle):
+    """Strict rate limit for the login endpoint: 5 attempts per minute per IP."""
+    scope = "login"
+
+
 # Registration views removed - only admin can create users
 
 
 class UserLoginView(APIView):
     """
     Login view to authenticate users and return JWT tokens.
+    Throttled to 5 requests/minute per IP to prevent brute-force attacks.
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         try:
@@ -287,3 +295,27 @@ class PasswordResetConfirmView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    """
+    Logout view that blacklists the refresh token, preventing reuse.
+    Requires the refresh token in the request body.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            from rest_framework_simplejwt.tokens import RefreshToken
+            from rest_framework_simplejwt.exceptions import TokenError
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            # Token already blacklisted or invalid — treat as successful logout
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as exc:
+            logger.warning("Logout error: %s", exc)
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)

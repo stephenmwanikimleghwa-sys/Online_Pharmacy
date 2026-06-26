@@ -278,7 +278,7 @@ export const AddMedicineModal = ({
               <input
                 name="buying_price"
                 type="number"
-                step="0.01"
+                step="0.01" inputMode="decimal"
                 value={form.buying_price}
                 onChange={(e) => setForm({ ...form, buying_price: e.target.value })}
                 placeholder="Cost from supplier, e.g. 100"
@@ -314,7 +314,7 @@ export const AddMedicineModal = ({
                     <input
                       name="wholesale_price"
                       type="number"
-                      step="0.01"
+                      step="0.01" inputMode="decimal"
                       value={form.wholesale_price || ''}
                       onChange={(e) => setForm({ ...form, wholesale_price: e.target.value })}
                       placeholder="e.g. 115"
@@ -326,7 +326,7 @@ export const AddMedicineModal = ({
                     <input
                       name="retail_price"
                       type="number"
-                      step="0.01"
+                      step="0.01" inputMode="decimal"
                       value={form.retail_price || ''}
                       onChange={(e) => setForm({ ...form, retail_price: e.target.value })}
                       placeholder="e.g. 133"

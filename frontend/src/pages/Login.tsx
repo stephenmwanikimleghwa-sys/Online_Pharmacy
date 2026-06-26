@@ -338,6 +338,7 @@ const Login: React.FC = () => {
                 name="username"
                 type="text"
                 required
+                autoComplete="username"
                 value={credentials.username}
                 onChange={handleChange}
                 placeholder="Username / Email Address"
@@ -354,6 +355,7 @@ const Login: React.FC = () => {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
+                autoComplete="current-password"
                 value={credentials.password}
                 onChange={handleChange}
                 placeholder="Password"
@@ -406,7 +408,7 @@ const Login: React.FC = () => {
 
       {/* Responsive tweak for small screens */}
       <style>{`
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
           .login-card-left { display: none !important; }
         }
         .login-input::placeholder {

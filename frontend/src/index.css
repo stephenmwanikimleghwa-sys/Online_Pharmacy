@@ -997,3 +997,279 @@ html {
 .receipt-paper .r-row-right { text-align: right; }
 .receipt-paper .r-small   { font-size: 10px; }
 .receipt-paper .r-spacer  { height: 4px; }
+/* ============================================================
+   MOBILE RESPONSIVENESS — Global Rules (< 768px)
+   ============================================================ */
+
+/* 1. Remove 300ms tap delay on mobile */
+* {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 2. Smooth momentum scrolling on iOS */
+.overflow-y-auto,
+.overflow-x-auto,
+[style*="overflow"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 3. Ensure no horizontal overflow at page level */
+body {
+  overflow-x: hidden;
+}
+
+/* 4. Table scroll wrappers — ensure tables scroll inside their container */
+.table-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+/* 5. Responsive heading scale using clamp() */
+.page-title {
+  font-size: clamp(1.25rem, 5vw, 2rem);
+}
+
+.section-title {
+  font-size: clamp(1rem, 4vw, 1.5rem);
+}
+
+/* 6. Mobile-only: prevent text from overflowing card bounds */
+@media (max-width: 768px) {
+  /* ---- Layout ---- */
+  .max-w-7xl {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* ---- Inputs: prevent iOS auto-zoom (must be ≥ 16px) ---- */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 48px;
+  }
+
+  /* ---- Buttons: minimum 44px tap target ---- */
+  button,
+  a[role="button"],
+  .btn-primary,
+  .form-cancel-btn,
+  .nav-cta-btn {
+    min-height: 44px;
+  }
+
+  /* ---- Forms: single-column on mobile ---- */
+  .form-grid-2,
+  .sm\:grid-cols-2,
+  .md\:grid-cols-2,
+  .lg\:grid-cols-3,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Pricing grid 2-col is ok on mobile */
+  .pricing-grid-mobile {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* ---- Modals: full screen on mobile ---- */
+  .modal-card {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    border-radius: 0 !important;
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Keep modal overlay full screen */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  /* Fixed bottom action bar inside full-screen modal */
+  .modal-actions-sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-card);
+    backdrop-filter: blur(18px);
+    padding: 1rem;
+    border-top: 1px solid var(--border-primary);
+    z-index: 10;
+  }
+
+  /* ---- Bottom Nav: add bottom padding so content isn't hidden ---- */
+  .main-content-with-bottom-nav {
+    padding-bottom: 72px !important;
+  }
+
+  /* ---- Page headings: reduce size on mobile ---- */
+  h1.text-4xl {
+    font-size: clamp(1.35rem, 6vw, 2rem) !important;
+  }
+
+  h1.text-3xl {
+    font-size: clamp(1.25rem, 5.5vw, 1.875rem) !important;
+  }
+
+  h2.text-2xl {
+    font-size: clamp(1.1rem, 4.5vw, 1.5rem) !important;
+  }
+
+  /* ---- Glass cards: reduce padding on small screens ---- */
+  .glass-card {
+    border-radius: 12px;
+  }
+
+  /* ---- Metric/stat cards: 2 per row on mobile (not 4) ---- */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ---- Tables: horizontal scroll wrapper for all tables ---- */
+  table {
+    min-width: 600px;
+  }
+
+  .overflow-x-auto table {
+    min-width: unset;
+  }
+
+  /* ---- Filters: stack vertically ---- */
+  .filters-row {
+    flex-direction: column !important;
+    gap: 0.75rem;
+  }
+
+  .filters-row > * {
+    width: 100% !important;
+  }
+
+  /* ---- Branch/date filter selects: full width ---- */
+  select,
+  input[type="date"] {
+    width: 100%;
+  }
+
+  /* ---- Small action buttons: ensure tap target ---- */
+  .action-btn-sm {
+    padding: 10px 12px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ---- Page subtitles ---- */
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+
+  /* ---- Hide lengthy sidebar labels shown on desktop ---- */
+  .desktop-only-label {
+    display: none !important;
+  }
+
+  /* ---- Pagination: larger tap targets ---- */
+  .pagination-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* ---- Charts: force responsive width ---- */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    width: 100% !important;
+  }
+
+  /* ---- FAB for add actions ---- */
+  .fab-add-btn {
+    position: fixed;
+    bottom: 80px; /* above bottom nav */
+    right: 1rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+  }
+
+  /* ---- OTC Sale: search full width ---- */
+  .otc-search-bar {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  /* ---- Cart slide-up panel ---- */
+  .cart-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 20px 20px 0 0;
+    z-index: 50;
+    max-height: 85dvh;
+    overflow-y: auto;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-primary);
+    padding: 1.5rem 1rem 5rem;
+  }
+
+  /* ---- Sidebar drawer on mobile ---- */
+  .sidebar-mobile-drawer {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px !important;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 55;
+    backdrop-filter: blur(2px);
+  }
+}
+
+/* ---- Tablet (768px - 1024px) ---- */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Sidebar icon-only on tablet if collapsed */
+  .sidebar-collapsed-tablet {
+    width: 64px !important;
+  }
+}
+
+/* ---- Input mode hints (applied via JS inputMode, listed here for docs) ----
+   Phone: inputMode="tel"
+   Price: inputMode="decimal"
+   Qty:   inputMode="numeric"
+   These are set in JSX components, not overrideable by CSS.
+*/
+
+/* ---- Viewport meta: ensure no auto-zoom ---- */
+/* This is enforced in index.html (viewport meta tag) */

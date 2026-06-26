@@ -83,8 +83,7 @@ const TransferRequestModal = ({
             <label className="form-label">Quantity</label>
             <input
               type="number"
-              min="1"
-              className="form-input w-full"
+              min="1" inputMode="numeric" className="form-input w-full"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required

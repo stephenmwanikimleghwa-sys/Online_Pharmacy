@@ -640,8 +640,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                   </button>
                   <input
                     type="number"
-                    min="1"
-                    value={item.quantity}
+                    min="1" inputMode="numeric" value={item.quantity}
                     onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                     onBlur={() => handleQuantityBlur(item.id)}
                     className="w-16 text-center font-bold text-sm border rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30"

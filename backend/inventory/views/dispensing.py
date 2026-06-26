@@ -60,6 +60,11 @@ class DispensationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsPharmacistOrAdmin]
     serializer_class = DispensationSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        from rest_framework.exceptions import MethodNotAllowed
+        raise MethodNotAllowed("DELETE", detail="Dispensation records cannot be deleted to preserve audit integrity.")
+
+
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Dispensation.objects.none()

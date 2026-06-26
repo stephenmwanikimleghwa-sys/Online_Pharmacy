@@ -298,25 +298,25 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
                 </div>
                 <div>
                   <label className="form-label text-xs">Qty *</label>
-                  <input type="number" min="1" className="form-input w-full text-sm" placeholder="0"
+                  <input type="number" min="1" inputMode="numeric" className="form-input w-full text-sm" placeholder="0"
                     value={item.quantity_received}
                     onChange={(e) => updateItem(item._key, { quantity_received: e.target.value })} />
                 </div>
                 <div>
                   <label className="form-label text-xs">Cost Price (KES)</label>
-                  <input type="number" step="0.01" min="0" className="form-input w-full text-sm" placeholder="0.00"
+                  <input type="number" step="0.01" inputMode="decimal" min="0" className="form-input w-full text-sm" placeholder="0.00"
                     value={item.cost_price}
                     onChange={(e) => updateItem(item._key, { cost_price: e.target.value })} />
                 </div>
                 <div>
                   <label className="form-label text-xs">Selling Price</label>
-                  <input type="number" step="0.01" min="0" className="form-input w-full text-sm" placeholder="0.00"
+                  <input type="number" step="0.01" inputMode="decimal" min="0" className="form-input w-full text-sm" placeholder="0.00"
                     value={item.selling_price}
                     onChange={(e) => updateItem(item._key, { selling_price: e.target.value })} />
                 </div>
                 <div>
                   <label className="form-label text-xs">Wholesale Price</label>
-                  <input type="number" step="0.01" min="0" className="form-input w-full text-sm" placeholder="0.00"
+                  <input type="number" step="0.01" inputMode="decimal" min="0" className="form-input w-full text-sm" placeholder="0.00"
                     value={item.wholesale_price}
                     onChange={(e) => updateItem(item._key, { wholesale_price: e.target.value })} />
                 </div>

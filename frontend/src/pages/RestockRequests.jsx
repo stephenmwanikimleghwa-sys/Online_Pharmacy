@@ -381,7 +381,7 @@ const RestockRequests = () => {
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Estimated Commitment</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="0.01" inputMode="decimal"
                         min="0"
                         value={formData.estimated_cost}
                         onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}

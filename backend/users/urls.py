@@ -10,6 +10,7 @@ from .views.core_views import (
     UserLoginView,
     UserProfileView,
     ChangePasswordView,
+    LogoutView,
     admin_user_list,
     verify_pharmacist,
     profile,
@@ -44,6 +45,7 @@ router.register(r'customers', CustomerViewSet, basename='customer')
 urlpatterns = [
     path('', include(router.urls)),
     path("login/", UserLoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
     path("switch-branch/", SwitchBranchView.as_view(), name="switch_branch"),
     # Profile management
     # Simple function-based profile endpoint returns the authenticated user's data

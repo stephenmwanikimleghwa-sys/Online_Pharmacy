@@ -433,6 +433,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
+    const refreshToken = localStorage.getItem("refresh_token");
+    // Fire-and-forget: blacklist token server-side (don't await so UI responds instantly)
+    if (refreshToken) {
+      api.post("/auth/logout/", { refresh: refreshToken }).catch(() => {
+        // Ignore errors — local cleanup still proceeds
+      });
+    }
+
     notifySuccess("Logged Out", "You have been logged out safely.");
     queryClient.clear();
     setToken(null);

@@ -394,10 +394,10 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                           )}
                         </td>
                         <td className="px-4 py-2">
-                          <input type="number" min="1" value={row.quantity_received} onChange={(e) => updateRow(row.id, 'quantity_received', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0" />
+                          <input type="number" min="1" inputMode="numeric" value={row.quantity_received} onChange={(e) => updateRow(row.id, 'quantity_received', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0" />
                         </td>
                         <td className="px-4 py-2">
-                          <input type="number" min="0" step="0.01" value={row.cost_price} onChange={(e) => updateRow(row.id, 'cost_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
+                          <input type="number" min="0" inputMode="numeric" step="0.01" inputMode="decimal" value={row.cost_price} onChange={(e) => updateRow(row.id, 'cost_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
                           {rowPriceHints[row.id] && (
                             <div className="mt-1 text-[10px] leading-snug">
                               <p>Last from supplier: KES {rowPriceHints[row.id].last_price ?? '—'}</p>
@@ -412,10 +412,10 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                           )}
                         </td>
                         <td className="px-4 py-2">
-                          <input type="number" min="0" step="0.01" value={row.selling_price} onChange={(e) => updateRow(row.id, 'selling_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
+                          <input type="number" min="0" inputMode="numeric" step="0.01" inputMode="decimal" value={row.selling_price} onChange={(e) => updateRow(row.id, 'selling_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
                         </td>
                         <td className="px-4 py-2">
-                          <input type="number" min="0" step="0.01" value={row.wholesale_price} onChange={(e) => updateRow(row.id, 'wholesale_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
+                          <input type="number" min="0" inputMode="numeric" step="0.01" inputMode="decimal" value={row.wholesale_price} onChange={(e) => updateRow(row.id, 'wholesale_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
                         </td>
                         <td className="px-4 py-2">
                           <input type="date" value={row.expiry_date} onChange={(e) => updateRow(row.id, 'expiry_date', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30 text-slate-600" />

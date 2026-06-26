@@ -21,7 +21,7 @@ env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY", default="your-secret-key-here-change-in-production")
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
@@ -318,6 +318,7 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
         "pharmacist": "5000/hour",
         "admin": "10000/hour",
+        "login": "5/minute",
     },
     "EXCEPTION_HANDLER": "config.exception_handlers.structured_exception_handler",
 }
@@ -328,6 +329,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,

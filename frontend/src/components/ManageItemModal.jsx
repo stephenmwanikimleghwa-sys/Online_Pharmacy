@@ -313,8 +313,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                 <label className="form-label">How many to add? *</label>
                 <input
                   type="number"
-                  min="1"
-                  value={quantity}
+                  min="1" inputMode="numeric" value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   required
                   className="form-input w-full"
@@ -411,7 +410,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                 <label className="form-label">Buying Price / B.P (KES)</label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="0.01" inputMode="decimal"
                   value={form.buying_price}
                   onChange={(e) => setForm({ ...form, buying_price: e.target.value })}
                   placeholder="e.g. 100"
@@ -441,7 +440,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                       <label className="form-label">Wholesale Price (KES)</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="0.01" inputMode="decimal"
                         value={form.wholesale_price}
                         onChange={(e) => setForm({ ...form, wholesale_price: e.target.value })}
                         placeholder="e.g. 115"
@@ -452,7 +451,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                       <label className="form-label">Retail / SP (KES)</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="0.01" inputMode="decimal"
                         value={form.retail_price}
                         onChange={(e) => setForm({ ...form, retail_price: e.target.value })}
                         placeholder="e.g. 133"
