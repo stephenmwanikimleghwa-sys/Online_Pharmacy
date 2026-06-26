@@ -190,8 +190,13 @@ const ManageUsers = () => {
       setResetPasswordConfirm('');
     } catch (err) {
       const data = err.response?.data;
-      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setActionError('Failed to reset password: ' + (serverMsg || err.message));
+      let serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null) || err.message;
+      
+      if (data?.details?.new_password && Array.isArray(data.details.new_password)) {
+        serverMsg += ' - ' + data.details.new_password.join(' ');
+      }
+      
+      setActionError('Failed to reset password: ' + serverMsg);
     }
   };
 
