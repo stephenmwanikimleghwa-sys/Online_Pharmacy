@@ -568,7 +568,7 @@ const AdminStock = () => {
 									const low = !out && item.stock_quantity <= (item.reorder_threshold ?? 10);
 									return (
 									<tr key={String(item.id ?? `row-${idx}`)} className="border-b hover:bg-primary/5 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
-										<td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors min-w-[12rem] ${out ? 'text-slate-400' : 'text-slate-800'}`} style={{ background: 'var(--bg-primary)' }}>
+										<td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors ${out ? 'text-slate-400' : 'text-slate-800'}`} style={{ background: 'var(--bg-primary)' }}>
 											{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}
 										</td>
 										<td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">

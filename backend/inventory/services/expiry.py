@@ -9,7 +9,7 @@ from inventory.models.batch import Batch
 def get_expiry_summary(branch_id=None):
     today = date.today()
     qs = Batch.objects.filter(is_active=True, quantity_remaining__gt=0)
-    if branch_id:
+    if branch_id and branch_id != "all":
         qs = qs.filter(branch_id=branch_id)
 
     summary = qs.aggregate(
@@ -28,7 +28,7 @@ def get_expiry_batches(branch_id=None, status_filter=None, window_days=None):
         .select_related("product", "branch")
         .order_by("expiry_date")
     )
-    if branch_id:
+    if branch_id and branch_id != "all":
         qs = qs.filter(branch_id=branch_id)
 
     rows = []

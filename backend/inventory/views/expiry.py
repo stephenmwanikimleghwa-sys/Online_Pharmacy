@@ -21,8 +21,9 @@ def expiry_summary_view(request):
     branch = get_active_branch(request) or getattr(request.user, "branch", None)
     branch_id = request.query_params.get("branch") or (branch.id if branch else None)
     is_admin = request.user.is_superuser or getattr(request.user, "role", None) == "admin"
-    if not is_admin and branch_id and request.user.branch_id != int(branch_id):
-        return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+    if not is_admin and branch_id:
+        if str(branch_id).lower() == "all" or request.user.branch_id != int(branch_id):
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
     summary = get_expiry_summary(branch_id)
     batches = get_expiry_batches(branch_id)
     grouped = {"EXPIRED": [], "CRITICAL": [], "WARNING": [], "CAUTION": []}
