@@ -36,6 +36,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "contact_person", "email", "phone"]
+    pagination_class = None
 
     @action(detail=False, methods=["get"], url_path="compare")
     def compare(self, request):
