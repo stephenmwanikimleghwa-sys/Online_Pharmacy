@@ -106,8 +106,10 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   // Total amount from backend or calculated subtotal
   const total = Number(order.total_amount) || subtotal;
   
-  // Discount is calculated or from backend
-  const discount = order.discount_amount ? Number(order.discount_amount) : (subtotal - total > 0 ? subtotal - total : 0);
+  // Discount is the absolute KES amount from backend
+  const discountKes = order.discount ? Number(order.discount) : (subtotal - total > 0 ? subtotal - total : 0);
+  // Compute percentage from the subtotal before discount
+  const discountPct = subtotal > 0 && discountKes > 0 ? ((discountKes / subtotal) * 100).toFixed(1) : null;
 
   const dateObj = order.created_at || order.dispensed_at ? new Date(order.created_at || order.dispensed_at) : new Date();
   const dateStr = dateObj.toLocaleDateString("en-KE", {
@@ -231,7 +233,7 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
 
       {/* ── BILL TO / REF / DATE ── */}
       <div className="r-small">
-        Bill To: Walk In Customer
+        Bill To: {order.customer_name || order.patient_name || 'Walk In Customer'}
       </div>
       <div className="r-row r-small">
         <span>Ref No: #{refNo}</span>
@@ -268,14 +270,15 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
           <strong>KES {fmt(subtotal)}</strong>
         </span>
       </div>
-      {discount > 0 && (
+      {discountKes > 0 && (
         <div className="r-row r-small">
           <span />
-          <span>
-            DISCOUNT: &nbsp;KES {fmt(discount)}
+          <span style={{ fontWeight: 700 }}>
+            DISCOUNT{discountPct ? ` (${discountPct}%)` : ''}:&nbsp;-KES {fmt(discountKes)}
           </span>
         </div>
       )}
+      <div className="r-dash" style={{ margin: '3px 0' }} />
       <div className="r-row" style={{ fontWeight: 700 }}>
         <span />
         <span>

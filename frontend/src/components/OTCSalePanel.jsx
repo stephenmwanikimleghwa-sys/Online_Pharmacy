@@ -39,6 +39,8 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [expiryWarning, setExpiryWarning] = useState(null);
   const [pendingProduct, setPendingProduct] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [discountKes, setDiscountKes] = useState("");
+  const [discountPct, setDiscountPct] = useState("");
 
   // Setup Phase State
   const [setup, setSetup] = useState({
@@ -270,8 +272,36 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     setSelectedItems(selectedItems.filter((item) => item.id !== productId));
   };
 
-  const calculateTotal = () =>
+  const calculateSubtotal = () =>
     selectedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+
+  const calculateTotal = () => {
+    const sub = calculateSubtotal();
+    const disc = parseFloat(discountKes) || 0;
+    return Math.max(0, sub - disc);
+  };
+
+  const handleDiscountKesChange = (val) => {
+    setDiscountKes(val);
+    const sub = calculateSubtotal();
+    const kes = parseFloat(val) || 0;
+    if (sub > 0 && kes >= 0) {
+      setDiscountPct(((kes / sub) * 100).toFixed(2));
+    } else {
+      setDiscountPct("");
+    }
+  };
+
+  const handleDiscountPctChange = (val) => {
+    setDiscountPct(val);
+    const sub = calculateSubtotal();
+    const pct = parseFloat(val) || 0;
+    if (sub > 0 && pct >= 0) {
+      setDiscountKes(((pct / 100) * sub).toFixed(2));
+    } else {
+      setDiscountKes("");
+    }
+  };
 
   const handleCompleteSale = async () => {
     setSaleError("");
@@ -316,7 +346,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           customer_id: setup.customerType === 'credit' ? setup.creditCustomerId : null,
           patient_name: setup.patientName,
           pricing_tier: setup.pricingTier.toUpperCase(),
-          discount: 0,
+          discount: parseFloat(discountKes) || 0,
           branch_id: branchId,
         },
         { skipGlobalErrorNotification: true },
@@ -678,6 +708,60 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
               <option value="other">Other</option>
             </select>
           </div>
+
+          {/* ── Discount Section ── */}
+          <div className="mb-4 p-3 rounded-xl border" style={{ borderColor: "var(--border-primary)", background: "var(--bg-field)" }}>
+            <label className="form-label text-xs mb-2 block">Discount (optional)</label>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-1">KES Amount</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.50"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={discountKes}
+                  onChange={(e) => handleDiscountKesChange(e.target.value)}
+                  className="form-input w-full text-sm"
+                />
+              </div>
+              <div className="text-slate-400 font-bold text-lg self-end pb-1">or</div>
+              <div className="flex-1">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-1">Percentage %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={discountPct}
+                  onChange={(e) => handleDiscountPctChange(e.target.value)}
+                  className="form-input w-full text-sm"
+                />
+              </div>
+            </div>
+            {(parseFloat(discountKes) > 0) && (
+              <p className="text-xs text-emerald-600 font-semibold mt-2">
+                Discount: KES {parseFloat(discountKes).toFixed(2)} ({parseFloat(discountPct || 0).toFixed(1)}% off)
+              </p>
+            )}
+          </div>
+
+          {/* ── Totals ── */}
+          {(parseFloat(discountKes) > 0) && (
+            <div className="flex justify-between mb-1 text-sm text-slate-500">
+              <span>Subtotal</span>
+              <span>{fmt(calculateSubtotal())}</span>
+            </div>
+          )}
+          {(parseFloat(discountKes) > 0) && (
+            <div className="flex justify-between mb-1 text-sm text-emerald-600 font-semibold">
+              <span>Discount ({parseFloat(discountPct || 0).toFixed(1)}%)</span>
+              <span>- {fmt(parseFloat(discountKes))}</span>
+            </div>
+          )}
           <div className="flex justify-between mb-4">
             <span className="font-bold">Total</span>
             <span className="text-xl font-bold text-primary">{fmt(calculateTotal())}</span>

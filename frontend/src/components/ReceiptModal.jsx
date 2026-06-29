@@ -57,6 +57,19 @@ const ReceiptModal = ({ order, onClose }) => {
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  const handleVoidSale = async () => {
+    if (!window.confirm(`Are you sure you want to void sale #${order?.id}? This will restore the stock and reverse any financials.`)) return;
+    try {
+      await api.post(`/inventory/dispensations/${order?.id}/void_sale/`);
+      alert(`Sale #${order?.id} voided successfully.`);
+      if (typeof onClose === 'function') onClose();
+      // Reload page to reflect changes if necessary
+      window.location.reload();
+    } catch (error) {
+      alert(`Could not void sale: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
   /* ----- print handler ----- */
   const handlePrint = (includeHeader) => {
     const allowedRoles = ["admin", "pharmacist", "cashier"];
@@ -291,6 +304,16 @@ const ReceiptModal = ({ order, onClose }) => {
               Receipt already printed once — printing disabled for this user.
             </div>
           )}
+          
+          {user?.role === 'admin' && (!order?.notes || !order?.notes?.includes('[VOIDED]')) && (
+            <button
+              onClick={handleVoidSale}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold border transition-colors text-sm border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300"
+            >
+              Void Sale
+            </button>
+          )}
+
           <button
             onClick={onClose}
             className="w-full text-xs text-center py-2 rounded-xl transition-colors"

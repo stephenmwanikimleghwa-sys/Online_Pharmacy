@@ -55,6 +55,17 @@ const DispensingLogs = () => {
   const handleDateFilter = (e) => { setDateFilter(e.target.value); setCurrentPage(1); };
   const handleBranchFilter = (e) => { setBranchFilter(e.target.value); setCurrentPage(1); };
 
+  const handleVoidSale = async (orderId) => {
+    if (!window.confirm(`Are you sure you want to void sale #${orderId}? This will restore the stock and reverse any financials.`)) return;
+    try {
+      await api.post(`/inventory/dispensations/${orderId}/void_sale/`);
+      alert(`Sale #${orderId} voided successfully.`);
+      fetchLogs();
+    } catch (error) {
+      alert(`Could not void sale: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
   const headers = ["Ref No", "Date", "Branch", "Staff", "Customer", "Items", "Total", "Payment Mode", "Actions"];
 
   return (
@@ -177,14 +188,24 @@ const DispensingLogs = () => {
                     <td className="px-5 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-3 items-center">
                         {user?.role === 'admin' && (
-                          <button
-                            className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1 disabled:opacity-50"
-                            disabled={reprintLoading === log.id}
-                            onClick={() => handleReprint(log.id)}
-                          >
-                            <PrinterIcon className="w-4 h-4" />
-                            {reprintLoading === log.id ? 'Loading...' : 'Reprint'}
-                          </button>
+                          <>
+                            <button
+                              className="text-primary hover:text-indigo-800 font-semibold transition-colors flex items-center gap-1 disabled:opacity-50"
+                              disabled={reprintLoading === log.id}
+                              onClick={() => handleReprint(log.id)}
+                            >
+                              <PrinterIcon className="w-4 h-4" />
+                              {reprintLoading === log.id ? 'Loading...' : 'Reprint'}
+                            </button>
+                            {(!log.notes || !log.notes.includes('[VOIDED]')) && (
+                              <button
+                                className="text-rose-500 hover:text-rose-700 font-semibold transition-colors text-xs ml-2"
+                                onClick={() => handleVoidSale(log.id)}
+                              >
+                                Void
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>

@@ -20,6 +20,7 @@ class PricingTierSerializer(serializers.ModelSerializer):
             'retail_price',
             'minimum_wholesale_quantity',
             'is_active',
+            'use_legacy_prices',
             'created_at',
             'updated_at',
         ]
@@ -27,6 +28,7 @@ class PricingTierSerializer(serializers.ModelSerializer):
             'id',
             'wholesale_price',
             'retail_price',
+            'use_legacy_prices',
             'created_at',
             'updated_at',
         ]

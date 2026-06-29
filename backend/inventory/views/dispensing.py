@@ -113,6 +113,98 @@ class DispensationViewSet(viewsets.ModelViewSet):
                 dispensation.prescription.status = 'dispensed'
                 dispensation.prescription.save()
 
+    @action(detail=True, methods=['post'])
+    def void_sale(self, request, pk=None):
+        """
+        Voids a dispensation, restoring stock and reversing financials.
+        """
+        dispensation = self.get_object()
+        
+        # We check notes or some flag to ensure it's not already voided
+        if dispensation.notes and '[VOIDED]' in dispensation.notes:
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                "This sale has already been voided.",
+            )
+
+        with transaction.atomic():
+            # 1. Restore stock to batches and branch stock
+            from products.models import BranchStock, StockLog
+            for item in dispensation.items.all():
+                if item.batch_number:
+                    from inventory.models import Batch
+                    try:
+                        batch = Batch.objects.get(
+                            batch_number=item.batch_number,
+                            product=item.product,
+                            branch=dispensation.branch
+                        )
+                        batch.quantity_remaining += item.quantity
+                        batch.save(update_fields=['quantity_remaining'])
+                    except Batch.DoesNotExist:
+                        pass  # Legacy or missing batch, fallback to just BranchStock
+                
+                branch_stock, _ = BranchStock.objects.get_or_create(
+                    product=item.product,
+                    branch=dispensation.branch,
+                    defaults={'quantity': 0}
+                )
+                prev_qty = branch_stock.quantity
+                new_qty = prev_qty + item.quantity
+                
+                StockLog.objects.create(
+                    product=item.product,
+                    branch=dispensation.branch,
+                    previous_quantity=prev_qty,
+                    new_quantity=new_qty,
+                    change_amount=item.quantity,
+                    change_type='return_in',
+                    reason=f"Sale #{dispensation.id} voided",
+                    logged_by=request.user
+                )
+                
+                branch_stock.quantity = new_qty
+                branch_stock.save()
+
+            # 2. Reverse financials
+            if dispensation.payment_mode == 'CREDIT' and dispensation.customer:
+                from users.models import CustomerDebtTransaction
+                customer = dispensation.customer
+                
+                # Lock for update
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                locked_customer = User.objects.select_for_update().get(id=customer.id)
+                
+                locked_customer.credit_balance = float(locked_customer.credit_balance) - float(dispensation.total_amount)
+                locked_customer.save(update_fields=['credit_balance'])
+                
+                CustomerDebtTransaction.objects.create(
+                    customer=locked_customer,
+                    transaction_type='ADJUSTMENT',
+                    amount=-float(dispensation.total_amount),
+                    balance_after=locked_customer.credit_balance,
+                    description=f"Voided Dispensation #{dispensation.id}",
+                    branch=dispensation.branch,
+                    created_by=request.user
+                )
+            else:
+                from inventory.models.finance import CashFlow
+                CashFlow.objects.create(
+                    netflow=-float(dispensation.total_amount),
+                    paymentmode=dispensation.payment_mode,
+                    explanation=f"Voided Dispensation #{dispensation.id}",
+                    branch=dispensation.branch,
+                    timestamp=timezone.now()
+                )
+            
+            # 3. Mark as voided
+            dispensation.notes = f"[VOIDED by {request.user.username}] " + (dispensation.notes or '')
+            dispensation.total_amount = 0
+            dispensation.save(update_fields=['notes', 'total_amount'])
+
+        return api_success("Sale voided successfully and stock restored.")
+
 @api_view(['POST'])
 @permission_classes([IsPharmacistOrAdmin])
 def dispense_otc(request):
