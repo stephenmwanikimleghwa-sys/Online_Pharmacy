@@ -352,7 +352,26 @@ def dispense_otc(request):
         for p_data in products_to_dispense:
             product = p_data['product']
             quantity = p_data['quantity']
+            branch_stock = p_data['branch_stock']
             batch_allocations = p_data.get('batch_allocations', [])
+
+            # Update overall branch stock
+            previous_quantity = branch_stock.quantity
+            branch_stock.quantity -= quantity
+            branch_stock.save(update_fields=['quantity'])
+
+            # Log the stock reduction
+            from products.models import StockLog
+            StockLog.objects.create(
+                product=product,
+                branch=active_branch,
+                previous_quantity=previous_quantity,
+                new_quantity=branch_stock.quantity,
+                change_amount=-quantity,
+                change_type="sale",
+                reason=f"Sale",
+                logged_by=request.user
+            )
 
             if batch_allocations:
                 for batch_info in batch_allocations:

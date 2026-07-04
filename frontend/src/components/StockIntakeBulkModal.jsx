@@ -81,6 +81,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
   const [supplierHistory, setSupplierHistory] = useState({});
 
   // Form State
+  const [rows, setRows] = useState([]);
   const [supplierId, setSupplierId] = useState('');
   const [branchId, setBranchId] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');

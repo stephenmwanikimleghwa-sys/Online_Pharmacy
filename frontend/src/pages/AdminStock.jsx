@@ -5,6 +5,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { AddMedicineModal } from '../components/AddMedicineModal';
 import BulkAddMedicineModal from '../components/BulkAddMedicineModal';
 import StockLogsModal from '../components/StockLogsModal';
+import AdjustStockModal from '../components/AdjustStockModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
@@ -25,6 +26,8 @@ const AdminStock = () => {
 	const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 	const [isEditMode, setIsEditMode] = useState(false);
 	const [editingItem, setEditingItem] = useState(null);
+	const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+	const [selectedItemForAdjust, setSelectedItemForAdjust] = useState(null);
 
 	const getCategoryLabel = (category) => {
 		if (!category && category !== 0) return '';
@@ -425,6 +428,11 @@ const AdminStock = () => {
 		setSelectedItemForLogs(item);
 	};
 
+	const openAdjustModal = (item) => {
+		setSelectedItemForAdjust(item);
+		setIsAdjustModalOpen(true);
+	};
+
 	const handleAdjust = async (item) => {
 		try {
 			const qty = parseInt(adjustQty, 10);
@@ -635,6 +643,7 @@ const AdminStock = () => {
 											<div className="flex flex-wrap items-center justify-end gap-1.5">
 												<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
 												<button onClick={() => openDuplicateModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all">Duplicate</button>
+												<button onClick={() => openAdjustModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100 transition-all">Adjust</button>
 												<button onClick={() => navigate('/otc-sales')} className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-all">Quick Sale</button>
 												<button onClick={() => openLogs(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all">Logs</button>
 											</div>
@@ -672,6 +681,17 @@ const AdminStock = () => {
 				<StockLogsModal 
 					item={selectedItemForLogs} 
 					onClose={() => setSelectedItemForLogs(null)} 
+				/>
+			)}
+
+			{isAdjustModalOpen && (
+				<AdjustStockModal
+					item={selectedItemForAdjust}
+					onClose={() => {
+						setIsAdjustModalOpen(false);
+						setSelectedItemForAdjust(null);
+					}}
+					onSuccess={() => fetchItems()}
 				/>
 			)}
 		</div>

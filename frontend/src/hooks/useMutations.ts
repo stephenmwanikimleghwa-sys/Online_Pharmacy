@@ -105,7 +105,7 @@ export function useRecordSupplierPayment() {
     }: {
       supplierId: number;
       paymentData: unknown;
-    }) => api.post(`/inventory/suppliers/${supplierId}/payments/`, paymentData),
+    }) => api.post(`/inventory/suppliers/${supplierId}/record_payment/`, paymentData),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.supplierDetail(variables.supplierId),
