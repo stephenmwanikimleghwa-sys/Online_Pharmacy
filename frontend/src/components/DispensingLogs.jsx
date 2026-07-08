@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import ReceiptModal from './ReceiptModal';
 
 const DispensingLogs = () => {
+  const { token, user, allowedBranches, activeBranch } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +16,6 @@ const DispensingLogs = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [reprintOrder, setReprintOrder] = useState(null);
   const [reprintLoading, setReprintLoading] = useState(null); // orderId being loaded
-  const { token, user, allowedBranches, activeBranch } = useAuth();
 
   useEffect(() => { fetchLogs(); }, [currentPage, searchTerm, dateFilter, branchFilter]);
 
