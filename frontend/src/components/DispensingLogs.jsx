@@ -32,7 +32,8 @@ const DispensingLogs = () => {
       setLogs(data);
       setTotalPages(Math.max(1, Math.ceil((response.data.count || data.length) / 20)));
     } catch (error) {
-      } finally {
+      console.error("Error fetching logs:", error, error.response?.data);
+    } finally {
       setLoading(false);
     }
   };
