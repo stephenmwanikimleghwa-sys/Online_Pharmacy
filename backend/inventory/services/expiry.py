@@ -4,13 +4,21 @@ from django.db.models import Count, F, DurationField, Q
 from django.db.models.expressions import ExpressionWrapper
 
 from inventory.models.batch import Batch
+from users.models import Branch
+from utils.filters import get_allowed_product_types
 
 
 def get_expiry_summary(branch_id=None):
     today = date.today()
     qs = Batch.objects.filter(is_active=True, quantity_remaining__gt=0)
+    target_branch = None
     if branch_id and branch_id != "all":
         qs = qs.filter(branch_id=branch_id)
+        target_branch = Branch.objects.filter(id=branch_id).first()
+
+    allowed_types = get_allowed_product_types(target_branch)
+    if allowed_types:
+        qs = qs.filter(product__product_type__in=allowed_types)
 
     summary = qs.aggregate(
         expired=Count("id", filter=Q(expiry_date__lt=today)),
@@ -28,8 +36,14 @@ def get_expiry_batches(branch_id=None, status_filter=None, window_days=None):
         .select_related("product", "branch")
         .order_by("expiry_date")
     )
+    target_branch = None
     if branch_id and branch_id != "all":
         qs = qs.filter(branch_id=branch_id)
+        target_branch = Branch.objects.filter(id=branch_id).first()
+
+    allowed_types = get_allowed_product_types(target_branch)
+    if allowed_types:
+        qs = qs.filter(product__product_type__in=allowed_types)
 
     rows = []
     for batch in qs:

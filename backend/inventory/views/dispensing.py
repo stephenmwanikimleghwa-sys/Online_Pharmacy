@@ -248,6 +248,18 @@ def dispense_otc(request):
         # but fall back to aggregate branch stock for legacy data.
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
+            
+            from utils.filters import validate_product_for_branch
+            from django.core.exceptions import ValidationError
+            try:
+                validate_product_for_branch(product, active_branch)
+            except ValidationError as e:
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    e.message,
+                    details={"product": product.name, "branch": active_branch.name}
+                )
+
             branch_stock, _ = BranchStock.objects.get_or_create(
                 product=product, branch=active_branch, defaults={'quantity': 0, 'reorder_level': 0}
             )

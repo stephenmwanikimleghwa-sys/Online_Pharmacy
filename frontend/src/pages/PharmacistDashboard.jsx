@@ -13,6 +13,7 @@ import { useDashboardBranch } from "../hooks/useDashboard";
 import { useLowStockAlerts, useInventoryList } from "../hooks/useProducts";
 import { useExpiryAlerts } from "../hooks/useExpiryAlerts";
 import { unwrapList, getProductBranchQuantity } from "../utils/parseApiData";
+import BranchTypeBanner from "../components/BranchTypeBanner";
 
 const normalizeList = (res) => {
   if (!res) return [];
@@ -117,6 +118,9 @@ const PharmacistDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
       {/* Welcome Banner */}
       <WelcomeBanner />
+
+      {/* Branch type isolation notice */}
+      <BranchTypeBanner context="are available at this branch" />
 
       {/* Inventory Summary immediately after greeting */}
       <div className="mb-10">

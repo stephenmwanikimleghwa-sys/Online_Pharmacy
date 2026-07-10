@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo, useState, useEffect, useRef } from 'react';
+import React, { Suspense, lazy, useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
@@ -10,6 +10,9 @@ import inventoryService from '../services/inventoryService';
 import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
 import ManageItemModal from '../components/ManageItemModal';
 import StockLogsModal from '../components/StockLogsModal';
+import BranchTypeBanner from '../components/BranchTypeBanner';
+import { queryClient } from '../lib/queryClient';
+import { QUERY_KEYS } from '../lib/queryKeys';
 const SupplierList = lazy(() => import('./inventory/SupplierList'));
 const BatchList = lazy(() => import('./inventory/BatchList'));
 const StockIntakeLog = lazy(() => import('./StockIntakeLog'));
@@ -22,6 +25,7 @@ const InventoryManagement = () => {
   const navigate = useNavigate();
   useDocumentTitle('Inventory Management');
   const [activeTab, setActiveTab] = useState('inventory');
+  const { activeBranch } = useAuth();
   const {
     data: inventoryData,
     isLoading: loading,
@@ -73,11 +77,27 @@ const InventoryManagement = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  /** Update a single item in the RQ cache without triggering a full refetch. */
+  const patchCachedItem = useCallback((updatedItem) => {
+    const params = { per_page: 5000 };
+    const queryKey = QUERY_KEYS.inventory(activeBranch?.id, params);
+    queryClient.setQueryData(queryKey, (old) => {
+      if (!old) return old;
+      const products = old.products.map((p) =>
+        p.id === updatedItem.id ? { ...p, ...updatedItem } : p
+      );
+      return { ...old, products };
+    });
+    // Kick off a background refetch so fresh data arrives silently
+    void refetchInventory();
+  }, [activeBranch?.id, refetchInventory]);
+
   const handleRestock = async (itemId, quantity, reason, branchId, options = {}) => {
     try {
       await inventoryService.restockInventory(itemId, quantity, reason, branchId, options);
       notify.success('Stock Updated', 'Inventory levels have been updated for this product.');
-      refetchInventory();
+      // Update the specific item's stock in-cache instantly
+      patchCachedItem({ id: itemId, _restocked: true });
     } catch (error) {
       notifyApiError(notify, error, 'Restock Failed', 'Could not update stock for this item.');
     }
@@ -206,6 +226,9 @@ const InventoryManagement = () => {
         </div>
       ) : (
         <div className="animate-fade-in">
+          {/* Branch type context banner — only for non-admin staff */}
+          {user?.role !== 'admin' && <BranchTypeBanner context="are shown in this list" />}
+
           {/* Filters and Search Bento Section */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
             <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">

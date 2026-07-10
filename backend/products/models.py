@@ -24,6 +24,13 @@ class DepartmentChoices(models.TextChoices):
     OTHER = "OTHER", "Other"
 
 
+class ProductTypeChoices(models.TextChoices):
+    """Determines which branch types can see and sell this product."""
+    CHEMIST = "CHEMIST", "Chemist/Pharmacy Product"
+    AGROVET = "AGROVET", "Agrovet Product"
+    UNIVERSAL = "UNIVERSAL", "Universal (both)"
+
+
 class PricingTierChoices(models.TextChoices):
     """Pricing tier options."""
     RETAIL = "retail", "Retail (1.33× markup)"
@@ -47,6 +54,13 @@ class Product(models.Model):
         default=DepartmentChoices.OTHER,
         verbose_name="Department",
         help_text="Pharmacy department: CHEMIST or AGROVET"
+    )
+    product_type = models.CharField(
+        max_length=20,
+        choices=ProductTypeChoices.choices,
+        default=ProductTypeChoices.CHEMIST,
+        db_index=True,
+        help_text="Determines which branch types can see and sell this product"
     )
     price = models.DecimalField(
         max_digits=10,

@@ -39,6 +39,7 @@ export function useInventoryList(filters: Record<string, unknown> = {}) {
       };
     },
     staleTime: STALE_TIMES.SLOW,
+    refetchOnWindowFocus: false,  // prevent spurious refetch when user alt-tabs
     enabled: !!activeBranch?.id,
   });
 }

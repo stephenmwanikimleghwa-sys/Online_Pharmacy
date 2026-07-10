@@ -171,6 +171,17 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                     if product_id:
                         try:
                             product = Product.objects.get(id=product_id)
+                            
+                            from utils.filters import validate_product_for_branch
+                            from django.core.exceptions import ValidationError
+                            try:
+                                validate_product_for_branch(product, branch)
+                            except ValidationError as e:
+                                return api_error(
+                                    ApiErrorCode.VALIDATION_ERROR,
+                                    e.message,
+                                    details={"product": product.name, "branch": branch.name}
+                                )
                         except Product.DoesNotExist:
                             continue
                     else:
@@ -178,10 +189,14 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                         product_name = p_data.get('product_name', '').strip()
                         if not product_name:
                             continue
+                            
+                        assigned_type = getattr(branch, 'branch_type', 'CHEMIST')
+                        
                         product = Product.objects.create(
                             name=product_name,
                             price=selling_price or cost_price or 0,
-                            created_by=request.user
+                            created_by=request.user,
+                            product_type=assigned_type
                         )
 
                     # Update pricing

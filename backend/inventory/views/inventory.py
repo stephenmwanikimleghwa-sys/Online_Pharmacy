@@ -17,6 +17,7 @@ from ..serializers import StockLogSerializer
 from config.api_responses import ApiErrorCode, api_error, api_validation_error
 from users.utils import log_activity
 from ..models.stock_intake import StockIntake
+from utils.filters import filter_products_by_branch_type, get_allowed_product_types
 
 @api_view(["GET"])
 @permission_classes([IsPharmacistOrAdmin])
@@ -34,6 +35,18 @@ def inventory_summary(request):
         qs = qs.filter(branch=active)
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
+        
+    target_branch = None
+    if is_admin and branch_param and branch_param != 'all':
+        target_branch = Branch.objects.filter(id=branch_param).first()
+    elif active:
+        target_branch = active
+    elif not is_admin and user.branch:
+        target_branch = user.branch
+
+    allowed_types = get_allowed_product_types(target_branch)
+    if allowed_types:
+        qs = qs.filter(product__product_type__in=allowed_types)
         
     total_products = qs.values('product_id').distinct().count()
     low_stock_items = qs.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count()
@@ -60,6 +73,18 @@ def inventory_list(request):
             .prefetch_related("branch_stocks__branch")
             .order_by("name")
         )
+
+        active_branch = get_active_branch(request)
+        target_branch = None
+        if is_admin and branch_param and branch_param != 'all':
+            target_branch = Branch.objects.filter(id=branch_param).first()
+        elif active_branch:
+            target_branch = active_branch
+        elif not is_admin and user.branch:
+            target_branch = user.branch
+            
+        if target_branch:
+            products = filter_products_by_branch_type(products, target_branch)
 
         search = request.GET.get("search", "").strip()
         if search:
@@ -234,10 +259,17 @@ def low_stock_items(request):
     data = []
     from inventory.views.supplier import low_stock_reorder_suggestion
     branch_id = None
+    target_branch = None
     if is_admin and branch_param and branch_param != 'all':
         branch_id = int(branch_param)
+        target_branch = Branch.objects.filter(id=branch_id).first()
     elif not is_admin and user.branch:
         branch_id = user.branch.id
+        target_branch = user.branch
+        
+    allowed_types = get_allowed_product_types(target_branch)
+    if allowed_types:
+        qs = qs.filter(product__product_type__in=allowed_types)
 
     for bs in qs:
         prod_data = ProductSerializer(bs.product).data
@@ -271,8 +303,16 @@ def out_of_stock_items(request):
     )
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
+        target_branch = Branch.objects.filter(id=branch_param).first()
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
+        target_branch = user.branch
+    else:
+        target_branch = None
+        
+    allowed_types = get_allowed_product_types(target_branch)
+    if allowed_types:
+        qs = qs.filter(product__product_type__in=allowed_types)
     
     data = []
     for bs in qs:
@@ -558,6 +598,9 @@ def branch_stock_view(request):
     product_id = request.query_params.get("product_id")
     if product_id:
         products_qs = products_qs.filter(id=product_id)
+        
+    if not is_admin:
+        products_qs = filter_products_by_branch_type(products_qs, active_branch)
 
     if is_admin:
         branches = list(Branch.objects.filter(is_active=True).order_by("name"))

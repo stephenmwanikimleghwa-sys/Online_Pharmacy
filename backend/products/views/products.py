@@ -22,6 +22,7 @@ import logging
 from decimal import Decimal
 from utils.response import api_response
 from users.utils import log_activity
+from utils.filters import filter_products_by_branch_type
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +53,15 @@ class ProductListCreateView(generics.ListCreateAPIView):
         Get the list of items for this view.
         Returns active products ordered by name.
         """
-        return (
+        qs = (
             Product.objects
             .filter(is_active=True)
             .select_related('pharmacy', 'pricing_tier')
             .prefetch_related('pricing_tier', 'branch_stocks', 'branch_stocks__branch')
             .order_by('name')
         )
+        active_branch = _branch_for_request(self.request)
+        return filter_products_by_branch_type(qs, active_branch)
 
     def get_permissions(self) -> List[Any]:
         """
@@ -220,6 +223,8 @@ def search_products(request: Request) -> Response:
             branch_stocks__branch=active_branch,
             branch_stocks__quantity__gt=0,
         ).distinct()
+    
+    products = filter_products_by_branch_type(products, active_branch)
 
     if query:
         products = products.filter(
@@ -351,6 +356,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 else:
                     queryset = queryset.none()
                     
+        queryset = filter_products_by_branch_type(queryset, active_branch)
         return queryset.order_by('name')
 
     def get_permissions(self) -> List[Any]:

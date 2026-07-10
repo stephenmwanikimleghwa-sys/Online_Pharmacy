@@ -381,39 +381,39 @@ const AdminStock = () => {
 				await api.patch(`/products/${editingItem.id}/`, data, { headers });
 			} else {
 				// Optimistic UI: append a temporary item so user sees the new product immediately
-				const optimisticId = `tmp-${Date.now()}`;
-				const optimisticItem = {
-					id: optimisticId,
-					name: data instanceof FormData ? data.get('name') : data.name,
-					category: data instanceof FormData ? data.get('category') : data.category,
-					price: data instanceof FormData ? data.get('price') : data.price,
-					stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
-					department: data instanceof FormData ? data.get('department') : data.department,
-					expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
-					description: data instanceof FormData ? data.get('description') : data.description,
-					supplier: data instanceof FormData ? data.get('supplier') : data.supplier,
-					optimistic: true,
-				};
-				setItems(prev => [optimisticItem, ...prev]);
-				try {
-					const response = await api.post('/products/', data, { headers });
-					// Replace optimistic item with server response immediately
-					setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
-					notify.success('Product Added', 'The product has been added to the system.');
-					// optionally fetch in background to refresh pagination/indices
-					fetchItems();
-				} catch (postErr) {
-					// Remove optimistic item on failure and show error toast
-					setItems(prev => prev.filter(i => i.id !== optimisticId));
-					notify.error('Add Failed', 'The product could not be added. Please try again.');
-					throw postErr;
+					const optimisticId = `tmp-${Date.now()}`;
+					const optimisticItem = {
+						id: optimisticId,
+						name: data instanceof FormData ? data.get('name') : data.name,
+						category: data instanceof FormData ? data.get('category') : data.category,
+						price: data instanceof FormData ? data.get('price') : data.price,
+						stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
+						department: data instanceof FormData ? data.get('department') : data.department,
+						expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
+						description: data instanceof FormData ? data.get('description') : data.description,
+						supplier: data instanceof FormData ? data.get('supplier') : data.supplier,
+						optimistic: true,
+					};
+					setItems(prev => [optimisticItem, ...prev]);
+					try {
+						const response = await api.post('/products/', data, { headers });
+						// Replace optimistic item with real server response
+						setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
+						notify.success('Product Added', 'The product has been added to the system.');
+						// Background refresh — does NOT trigger a loading spinner
+						void fetchItems();
+					} catch (postErr) {
+						// Remove optimistic item on failure
+						setItems(prev => prev.filter(i => i.id !== optimisticId));
+						notify.error('Add Failed', 'The product could not be added. Please try again.');
+						throw postErr;
+					}
 				}
-			}
 
-			setIsModalOpen(false);
-			setFormErrors({});
-			// refresh authoritative data (fetch will replace optimistic entry)
-			await fetchItems();
+				setIsModalOpen(false);
+				setFormErrors({});
+				// Edit path: refresh list after editing
+				if (isEditMode) await fetchItems();
 			} catch (err) {
 			if (err.response?.data) {
 				// Handle validation errors from backend

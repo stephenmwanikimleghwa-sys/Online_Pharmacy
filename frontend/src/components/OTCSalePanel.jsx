@@ -16,6 +16,7 @@ import ReceiptModal from "./ReceiptModal";
 import TransferRequestModal from "./TransferRequestModal";
 import ExpiryWarningModal from "./ExpiryWarningModal";
 import { getProductAvailability, checkProductExpiry } from "../services/procurementService";
+import BranchTypeBanner from "./BranchTypeBanner";
 
 /**
  * Shared OTC quick-sale UI (same flow as pharmacist QuickSale modal).
@@ -528,7 +529,9 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-0">
+      <BranchTypeBanner context="are available for sale" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="glass-card rounded-2xl p-6 border" style={{ borderColor: "var(--border-primary)" }}>
         <label className="form-label">Search product</label>
         <div className="relative mb-4">
@@ -790,6 +793,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         onAddAnyway={() => pendingProduct && confirmAddToSale(pendingProduct)}
         onRemove={() => { setExpiryWarning(null); setPendingProduct(null); }}
       />
+    </div>
     </div>
   );
 };
