@@ -1,7 +1,16 @@
 import os
 import django
+
+# IMPORTANT: Set DATABASE_URL in your environment before running this script.
+# Never hardcode database credentials in source files.
+# Example: DATABASE_URL=postgresql://... python check_stocks.py
+if not os.environ.get("DATABASE_URL"):
+    raise EnvironmentError(
+        "DATABASE_URL environment variable is required. "
+        "Run: DATABASE_URL=<your-url> python check_stocks.py"
+    )
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-os.environ['DATABASE_URL'] = 'postgresql://postgres:Nyashinski%40254@db.esqkftmnuaqkawewjniy.supabase.co:5432/postgres'
 django.setup()
 
 from products.models import Product

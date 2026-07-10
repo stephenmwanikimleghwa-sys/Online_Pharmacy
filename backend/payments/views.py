@@ -20,11 +20,15 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.core.cache import cache
 import base64
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from django_ratelimit.decorators import ratelimit
+from users.utils import log_activity
 
 logger = logging.getLogger(__name__)
 
-# Set Stripe key from settings
+# Set Stripe key and network retries globally
 stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.max_network_retries = 2
 
 # M-Pesa configuration from settings
 MPESA_CONSUMER_KEY = settings.MPESA_CONSUMER_KEY
@@ -35,7 +39,11 @@ MPESA_CALLBACK_URL = settings.MPESA_CALLBACK_URL
 MPESA_OAUTH_URL = settings.MPESA_OAUTH_URL
 MPESA_LIPA_URL = settings.MPESA_LIPA_URL
 
-
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=(retry_if_exception_type(requests.RequestException) | retry_if_exception_type(Exception))
+)
 def get_mpesa_access_token():
     """
     Get M-Pesa OAuth access token (cached for 1 hour).
@@ -82,6 +90,7 @@ def get_mpesa_access_token():
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@ratelimit(key='user', rate='5/m', block=True)
 def initiate_stripe_payment(request):
     """
     Initiate a Stripe payment for an order.
@@ -120,6 +129,14 @@ def initiate_stripe_payment(request):
             reference=intent.id,
         )
         payment.save()
+
+        log_activity(
+            user=request.user,
+            event_type='PAYMENT_INITIATED',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={'payment_method': 'stripe', 'order_id': order_id, 'amount': amount, 'payment_id': payment.id}
+        )
+
         logger.info(f"Stripe payment initiated: order_id={order_id}, payment_id={payment.id}")
 
         return Response(
@@ -139,6 +156,7 @@ def initiate_stripe_payment(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@ratelimit(key='user', rate='5/m', block=True)
 def initiate_mpesa_payment(request):
     """
     Initiate M-Pesa STK Push for an order.
@@ -196,8 +214,20 @@ def initiate_mpesa_payment(request):
         "Content-Type": "application/json",
     }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=5),
+        retry=retry_if_exception_type(requests.RequestException)
+    )
+    def _do_stk_push():
+        resp = requests.post(MPESA_LIPA_URL, json=payload, headers=headers, timeout=10)
+        # Force a RequestException if it's a 500 or 429, which triggers a retry
+        if resp.status_code == 429 or resp.status_code >= 500:
+            resp.raise_for_status()
+        return resp
+
     try:
-        response = requests.post(MPESA_LIPA_URL, json=payload, headers=headers, timeout=10)
+        response = _do_stk_push()
         response_data = response.json()
 
         if response.status_code == 200:
@@ -211,6 +241,13 @@ def initiate_mpesa_payment(request):
                 reference=checkout_request_id,
             )
             payment.save()
+
+            log_activity(
+                user=request.user,
+                event_type='PAYMENT_INITIATED',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                details_dict={'payment_method': 'mpesa', 'order_id': order_id, 'amount': amount, 'payment_id': payment.id}
+            )
 
             logger.info(f"M-Pesa payment initiated: order_id={order_id}, checkout_id={checkout_request_id}")
 

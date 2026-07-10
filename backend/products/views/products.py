@@ -277,7 +277,7 @@ def my_products(request: Request) -> Response:
 
 
 @api_view(["GET"])
-@permission_classes([permissions.AllowAny])
+@permission_classes([permissions.IsAuthenticated])
 def pricing_summary(request: Request) -> Response:
     """
     Return counts for pricing management UI:

@@ -21,6 +21,7 @@ from .serializers import (
 )
 from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 from users.models import User
+from users.utils import log_activity
 from django.http import HttpRequest
 
 
@@ -74,6 +75,15 @@ class PrescriptionListView(generics.ListAPIView):
             .order_by("-uploaded_at")
         )
 
+    def list(self, request, *args, **kwargs):
+        log_activity(
+            user=request.user,
+            event_type='PRESCRIPTION_ACCESSED',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={'action': 'list_own_prescriptions'}
+        )
+        return super().list(request, *args, **kwargs)
+
 
 class PrescriptionDetailView(generics.RetrieveUpdateAPIView):
     """
@@ -87,6 +97,24 @@ class PrescriptionDetailView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return Prescription.objects.select_related("user", "verified_by")
+
+    def retrieve(self, request, *args, **kwargs):
+        log_activity(
+            user=request.user,
+            event_type='PRESCRIPTION_ACCESSED',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={'action': 'view_detail', 'prescription_id': kwargs.get('pk')}
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        log_activity(
+            user=request.user,
+            event_type='PRESCRIPTION_MODIFIED',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={'action': 'update_prescription', 'prescription_id': kwargs.get('pk')}
+        )
+        return super().update(request, *args, **kwargs)
 
 
 @api_view(["POST"])
@@ -111,6 +139,13 @@ def verify_prescription(request, pk):
     prescription.verified_at = timezone.now()
     prescription.notes = notes
     prescription.save()
+
+    log_activity(
+        user=request.user,
+        event_type='PRESCRIPTION_VERIFIED',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        details_dict={'prescription_id': pk, 'status': status}
+    )
 
     serializer = PrescriptionSerializer(prescription)
     return Response(serializer.data)
@@ -143,6 +178,15 @@ class AdminPrescriptionListView(generics.ListAPIView):
         return Prescription.objects.select_related("user", "verified_by").order_by(
             "-uploaded_at"
         )
+
+    def list(self, request, *args, **kwargs):
+        log_activity(
+            user=request.user,
+            event_type='PRESCRIPTION_ACCESSED',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            details_dict={'action': 'list_all_prescriptions_admin'}
+        )
+        return super().list(request, *args, **kwargs)
 
 
 @api_view(["GET"])
@@ -177,6 +221,13 @@ def dispense_prescription(request, pk):
     prescription.fill_status = FillStatusChoices.FILLED
     prescription.dispensed_at = timezone.now()
     prescription.save()
+
+    log_activity(
+        user=request.user,
+        event_type='PRESCRIPTION_DISPENSED',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        details_dict={'prescription_id': pk}
+    )
 
     serializer = PrescriptionSerializer(prescription)
     return Response(serializer.data)
@@ -224,6 +275,12 @@ class ManualPrescriptionCreateView(generics.CreateAPIView):
             status=PrescriptionStatusChoices.PENDING,
             added_by=self.request.user
         )
+        log_activity(
+            user=self.request.user,
+            event_type='PRESCRIPTION_CREATED_MANUAL',
+            ip_address=self.request.META.get('REMOTE_ADDR'),
+            details_dict={'patient_name': serializer.validated_data.get('patient_name')}
+        )
 
 
 @api_view(["POST"])
@@ -245,6 +302,13 @@ def dispense_prescription_medicines(request: HttpRequest, pk: int):
     prescription.dispensed_by = request.user
     prescription.dispensed_at = timezone.now()
     prescription.save()
+
+    log_activity(
+        user=request.user,
+        event_type='PRESCRIPTION_MEDICINES_DISPENSED',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        details_dict={'prescription_id': pk}
+    )
 
     serializer = PrescriptionSerializer(prescription)
     return Response(serializer.data)

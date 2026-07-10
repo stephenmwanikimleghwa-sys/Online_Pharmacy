@@ -33,5 +33,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_default_pharmacy),
+        migrations.RunPython(create_default_pharmacy, reverse_code=migrations.RunPython.noop),
     ]

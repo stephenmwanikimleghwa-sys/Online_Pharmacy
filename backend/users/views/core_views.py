@@ -22,6 +22,7 @@ from users.serializers import (
 )
 from users.models import User, RoleChoices
 from users.permissions import IsAdminUser
+from users.utils import log_activity
 from users.branch_auth import (
     issue_tokens,
     login_user_payload,
@@ -222,6 +223,27 @@ def profile(request):
             serializer.save()
             return Response(UserProfileSerializer(request.user).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_my_account(request):
+    """
+    GDPR / Kenya DPA 2019 Right to Erasure.
+    Soft deletes the user account.
+    """
+    user = request.user
+    log_activity(
+        user=user,
+        event_type='ACCOUNT_DELETION_REQUESTED',
+        ip_address=request.META.get('REMOTE_ADDR'),
+        details_dict={'username': user.username}
+    )
+    user.is_active = False
+    user.save()
+    return api_success(
+        "Account deactivated successfully. Contact admin for full data erasure.",
+        http_status=status.HTTP_200_OK
+    )
 
 class PasswordResetRequestView(APIView):
     """

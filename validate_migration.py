@@ -5,8 +5,17 @@ Validate migration completion by checking Supabase product count
 
 import subprocess
 import json
+import os
 
-DB_URL = "postgresql://postgres:Nyashinski@254@db.esqkftmnuaqkawewjniy.supabase.co:5432/postgres"
+# IMPORTANT: Never hardcode database credentials in source files.
+# Set DATABASE_URL in your shell before running this script.
+# Example: DATABASE_URL=postgresql://... python validate_migration.py
+DB_URL = os.environ.get("DATABASE_URL")
+if not DB_URL:
+    raise EnvironmentError(
+        "DATABASE_URL environment variable is required.\n"
+        "Run: DATABASE_URL=<your-url> python validate_migration.py"
+    )
 
 # Query to count products
 query = """

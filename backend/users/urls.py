@@ -16,6 +16,7 @@ from .views.core_views import (
     profile,
     PasswordResetRequestView,
     PasswordResetConfirmView,
+    delete_my_account,
 )
 from .views.branch_auth_views import SwitchBranchView
 from .views.admin_views import (
@@ -50,6 +51,7 @@ urlpatterns = [
     # Profile management
     # Simple function-based profile endpoint returns the authenticated user's data
     path("profile/", profile, name="profile"),
+    path("profile/delete/", delete_my_account, name="delete_my_account"),
     path(
         "change-password/", ChangePasswordView.as_view(), name="change_password"
     ),

@@ -16,8 +16,13 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.views import exception_handler as drf_exception_handler
+from rest_framework.response import Response
+from django.db import OperationalError, DatabaseError
+import logging
 
 from config.api_responses import ApiErrorCode
+
+logger = logging.getLogger(__name__)
 
 
 def _first_message(data: Any) -> str:
@@ -53,6 +58,13 @@ def _flatten_details(data: Any) -> dict[str, Any]:
 
 
 def structured_exception_handler(exc, context):
+    if isinstance(exc, (OperationalError, DatabaseError)):
+        logger.critical("Database error: %s", exc)
+        return Response(
+            {"success": False, "error": {"code": "DB_ERROR", "message": "A database error occurred. Please try again."}},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+
     response = drf_exception_handler(exc, context)
     if response is None:
         return None

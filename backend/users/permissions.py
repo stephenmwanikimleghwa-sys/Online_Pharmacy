@@ -35,12 +35,16 @@ class IsPharmacistOrAdmin(permissions.BasePermission):
 class IsOwnerOrAdmin(permissions.BasePermission):
     """
     Allows access to the owner of the object or admins.
+    has_permission guards list views; has_object_permission guards detail views.
     """
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or 
-            request.user.role == RoleChoices.ADMIN or 
-            obj.user == request.user
+        return (
+            request.user.is_superuser
+            or request.user.role == RoleChoices.ADMIN
+            or obj.user == request.user
         )
 
 class IsAuditorOrAdmin(permissions.BasePermission):

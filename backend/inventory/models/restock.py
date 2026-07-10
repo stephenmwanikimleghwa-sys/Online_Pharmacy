@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from products.models import Product
 from django.utils import timezone
-from django.core.mail import send_mail
+from inventory.tasks import send_async_email
 from django.template.loader import render_to_string
 
 class RestockRequest(models.Model):
@@ -83,13 +83,12 @@ class RestockRequest(models.Model):
         
         # Send to requester
         if self.requested_by.email:
-            send_mail(
+            send_async_email.delay(
                 subject,
                 f'The status of your restock request for {self.product.name} has been updated to {self.get_status_display()}.',
                 None,  # Use default FROM email
                 [self.requested_by.email],
-                html_message=html_message,
-                fail_silently=True,
+                html_message=html_message
             )
         
         # Send to approver if request was just created
@@ -103,11 +102,10 @@ class RestockRequest(models.Model):
             ).values_list('email', flat=True)
             
             if admins:
-                send_mail(
+                send_async_email.delay(
                     'New Restock Request Requires Approval',
                     f'A new restock request for {self.product.name} requires your approval.',
                     None,
                     list(admins),
-                    html_message=html_message,
-                    fail_silently=True,
+                    html_message=html_message
                 )
