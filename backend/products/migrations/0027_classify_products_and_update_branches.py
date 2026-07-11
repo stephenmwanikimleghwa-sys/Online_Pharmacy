@@ -44,13 +44,10 @@ def update_branches_and_classify_products(apps, schema_editor):
         'mg', 'ml', 'mcg'
     ]
 
-    def has_stock(product, branch_ids):
-        if not branch_ids:
-            return False
-        if not isinstance(branch_ids, list):
-            branch_ids = [branch_ids]
-        return BranchStock.objects.filter(product=product, branch_id__in=branch_ids, quantity__gt=0).exists()
-        
+    # Prefetch product IDs that have stock in respective branches to avoid N+1 queries
+    peakfarm_stock_product_ids = set(BranchStock.objects.filter(branch_id=peakfarm_id, quantity__gt=0).values_list('product_id', flat=True)) if peakfarm_id else set()
+    main_stock_product_ids = set(BranchStock.objects.filter(branch_id__in=main_annex_ids, quantity__gt=0).values_list('product_id', flat=True)) if main_annex_ids else set()
+
     def check_keywords(text, keywords):
         if not text:
             return False
@@ -64,8 +61,8 @@ def update_branches_and_classify_products(apps, schema_editor):
     
     products_to_update = []
     for p in products:
-        has_peakfarm = has_stock(p, peakfarm_id)
-        has_main = has_stock(p, main_annex_ids)
+        has_peakfarm = p.id in peakfarm_stock_product_ids
+        has_main = p.id in main_stock_product_ids
         
         assigned_type = 'CHEMIST' # default
         
