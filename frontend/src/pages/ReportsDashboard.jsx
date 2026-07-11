@@ -53,10 +53,13 @@ const ReportsDashboard = () => {
     enabled: activeReport === 'staff'
   });
 
-  const { data: procurementData, isLoading: loadingProcurement, error: procurementError, refetch: refetchProcurement } = useQuery({
+  const { data: procurementData, isLoading: loadingProcurement, isFetching: fetchingProcurement, error: procurementError, refetch: refetchProcurement } = useQuery({
     queryKey: ['procurementAnalytics'],
     queryFn: () => reportsHubService.getProcurementAnalytics(),
-    enabled: activeReport === 'procurement'
+    enabled: activeReport === 'procurement',
+    staleTime: 1000 * 60 * 15,   // treat as fresh for 15 min (matches server cache TTL)
+    gcTime: 1000 * 60 * 20,      // keep in memory for 20 min
+    retry: 1,                    // only retry once — this is an expensive endpoint
   });
 
   const handleExportCSV = () => {
@@ -332,7 +335,13 @@ const ReportsDashboard = () => {
                 <p className="text-rose-700 font-semibold">Failed to load procurement analytics</p>
                 <button onClick={() => refetchProcurement()} className="btn-primary px-4 py-2 mt-4 rounded-lg text-sm">Retry</button>
               </div>
-            ) : loadingProcurement ? <div className="animate-pulse h-32 bg-slate-100 rounded-xl"></div> : (
+            ) : (loadingProcurement || fetchingProcurement) ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent"></div>
+                <p className="text-slate-500 text-sm font-medium">Crunching 12 months of procurement data…</p>
+                <p className="text-slate-400 text-xs">This may take up to 30 seconds on first load. Results are cached for 15 minutes.</p>
+              </div>
+            ) : (
               <div className="space-y-8">
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 font-semibold">
                   Switching to best-price suppliers could save KES {Number(procurementData?.total_annual_savings || 0).toLocaleString()} per year
