@@ -232,6 +232,12 @@ def dispense_otc(request):
         pricing_tier = request.data.get('pricing_tier', 'RETAIL')
         customer_id = request.data.get('customer_id')
         discount = request.data.get('discount', 0)
+        try:
+            discount = float(discount)
+        except (TypeError, ValueError):
+            discount = 0.0
+        if discount < 0:
+            discount = 0.0
         
         customer = None
         if customer_id:
@@ -326,7 +332,9 @@ def dispense_otc(request):
                 'batch_allocations': batch_allocations,
             })
 
-        total_amount -= float(discount)
+        # Clamp: discount cannot exceed the subtotal, and total cannot go below 0
+        discount = min(discount, total_amount)
+        total_amount = max(0.0, total_amount - discount)
         
         if payment_mode == 'CREDIT':
             if not customer:

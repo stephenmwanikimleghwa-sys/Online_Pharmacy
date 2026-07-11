@@ -103,11 +103,15 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   
   const totalQuantity = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
   
-  // Total amount from backend or calculated subtotal
-  const total = Number(order.total_amount) || subtotal;
+  // Use nullish coalescing — 0 is a valid total (e.g. 100% discount) and must not fall back to subtotal
+  const total = (order.total_amount !== null && order.total_amount !== undefined)
+    ? Number(order.total_amount)
+    : subtotal;
   
-  // Discount is the absolute KES amount from backend
-  const discountKes = order.discount ? Number(order.discount) : (subtotal - total > 0 ? subtotal - total : 0);
+  // Prefer the backend's stored discount field; fall back to inferring from subtotal vs total
+  const discountKes = (order.discount !== null && order.discount !== undefined && Number(order.discount) > 0)
+    ? Number(order.discount)
+    : (subtotal - total > 0 ? subtotal - total : 0);
   // Compute percentage from the subtotal before discount
   const discountPct = subtotal > 0 && discountKes > 0 ? ((discountKes / subtotal) * 100).toFixed(1) : null;
 

@@ -353,13 +353,16 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         { skipGlobalErrorNotification: true },
       );
       const order = response.data?.data ?? response.data;
+      // Capture total from backend response; fall back to our pre-submission calculation
+      // IMPORTANT: use ?? not || because 0 is a valid total (100% discount)
+      const finalTotal = order?.total_amount ?? calculateTotal();
       setLastOrder(order);
       setSelectedItems([]);
       setSearchTerm("");
       setSearchResults(catalog);
       void loadCatalog();
       notify.success(
-        `Sale recorded. Total: KES ${Number(order?.total_amount ?? calculateTotal()).toLocaleString()}.`,
+        `Sale recorded. Total: KES ${Number(finalTotal).toLocaleString()}.`,
         "success"
       );
       setShowReceipt(true);
