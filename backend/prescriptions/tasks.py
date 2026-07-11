@@ -4,6 +4,7 @@ from django.conf import settings
 from users.models import User, RoleChoices
 from .models import Prescription
 import logging
+from users.utils import sanitize_log_input
 
 logger = logging.getLogger(__name__)
 
@@ -56,5 +57,6 @@ def notify_pharmacist_new_prescription(self, prescription_id):
     except Prescription.DoesNotExist:
         logger.error(f"Prescription {prescription_id} not found for notification.")
     except Exception as exc:
-        logger.warning(f"Failed to send prescription notification, retrying... ({exc})")
+        safe_exc = sanitize_log_input(str(exc))
+        logger.warning(f"Failed to send prescription notification, retrying... ({safe_exc})")
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))

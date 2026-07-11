@@ -22,7 +22,7 @@ from django.core.cache import cache
 import base64
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from django_ratelimit.decorators import ratelimit
-from users.utils import log_activity
+from users.utils import log_activity, sanitize_log_input
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,8 @@ def get_mpesa_access_token():
         logger.error(f"M-Pesa token request failed: status={response.status_code}")
         raise Exception(f"Failed to get M-Pesa token: {response.status_code}")
     except requests.RequestException as e:
-        logger.error(f"M-Pesa token request error: {str(e)}")
+        safe_err = sanitize_log_input(str(e))
+        logger.error(f"M-Pesa token request error: {safe_err}")
         raise Exception(f"Failed to get M-Pesa token: {str(e)}")
 
 
@@ -147,7 +148,8 @@ def initiate_stripe_payment(request):
             status=status.HTTP_200_OK,
         )
     except stripe.error.StripeError as e:
-        logger.error(f"Stripe error for order {order_id}: {str(e)}")
+        safe_err = sanitize_log_input(str(e))
+        logger.error(f"Stripe error for order {order_id}: {safe_err}")
         return Response(
             {"error": "Payment processing failed. Please try again."},
             status=status.HTTP_400_BAD_REQUEST,
@@ -183,7 +185,8 @@ def initiate_mpesa_payment(request):
     try:
         access_token = get_mpesa_access_token()
     except Exception as e:
-        logger.error(f"M-Pesa authentication failed: {str(e)}")
+        safe_err = sanitize_log_input(str(e))
+        logger.error(f"M-Pesa authentication failed: {safe_err}")
         return Response(
             {"error": "Payment service temporarily unavailable."},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,

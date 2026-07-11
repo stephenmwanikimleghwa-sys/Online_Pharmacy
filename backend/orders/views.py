@@ -12,6 +12,7 @@ from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 from users.models import User
 from payments.models import Payment
 from payments.models import PaymentMethodChoices
+from users.utils import log_activity, sanitize_log_input
 import stripe
 from django.conf import settings
 from django.utils import timezone
@@ -634,7 +635,8 @@ def mpesa_callback(request):
                         payment.order.save()
                         logger.info(f"M-Pesa payment completed (deprecated endpoint): receipt={receipt}")
                     except Payment.DoesNotExist:
-                        logger.error(f"Payment not found for checkout_id {checkout_id}")
+                        safe_id = sanitize_log_input(checkout_id)
+                        logger.error(f"Payment not found for checkout_id {safe_id}")
 
                 else:
                     error_msg = callback_data["Body"]["stkCallback"].get("ResultDesc", "Payment failed")
@@ -643,13 +645,16 @@ def mpesa_callback(request):
                         payment = Payment.objects.get(reference=checkout_id, method="mpesa")
                         payment.status = "failed"
                         payment.save()
-                        logger.warning(f"M-Pesa payment failed: {error_msg}")
                     except Payment.DoesNotExist:
-                        logger.error(f"Payment not found for failed checkout_id {checkout_id}")
+                        safe_id = sanitize_log_input(checkout_id)
+                        safe_err = sanitize_log_input(error_msg)
+                        logger.warning(f"M-Pesa payment failed: {safe_err}")
+                        logger.error(f"Payment not found for failed checkout_id {safe_id}")
 
         return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
     except Exception as e:
-        logger.error(f"M-Pesa callback error (deprecated endpoint): {str(e)}", exc_info=True)
+        safe_err = sanitize_log_input(str(e))
+        logger.error(f"M-Pesa callback error (deprecated endpoint): {safe_err}", exc_info=True)
         return JsonResponse(
             {"ResultCode": 1, "ResultDesc": "Processing error"},
             status=500
@@ -674,10 +679,12 @@ def stripe_webhook(request):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
-        logger.warning(f"Invalid Stripe webhook payload: {str(e)}")
+        safe_err = sanitize_log_input(str(e))
+        logger.warning(f"Invalid Stripe webhook payload: {safe_err}")
         return JsonResponse({"error": "Invalid payload"}, status=400)
     except stripe.error.SignatureVerificationError as e:
-        logger.warning(f"Invalid Stripe webhook signature: {str(e)}")
+        safe_err = sanitize_log_input(str(e))
+        logger.warning(f"Invalid Stripe webhook signature: {safe_err}")
         return JsonResponse({"error": "Invalid signature"}, status=401)
 
     if event["type"] == "payment_intent.succeeded":
@@ -698,7 +705,8 @@ def stripe_webhook(request):
             logger.info(f"Stripe payment completed (deprecated endpoint): order_id={order_id}, reference={reference}")
 
         except Payment.DoesNotExist:
-            logger.error(f"Payment not found for Stripe reference {reference}")
+            safe_ref = sanitize_log_input(reference)
+            logger.error(f"Payment not found for Stripe reference {safe_ref}")
             return JsonResponse({"error": "Payment not found"}, status=404)
 
     return JsonResponse({"status": "success"}, status=200)
