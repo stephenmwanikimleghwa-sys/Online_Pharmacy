@@ -9,9 +9,9 @@ from django.views.decorators.http import require_POST
 import stripe
 import requests
 import json
-import logging
 import hmac
 import hashlib
+import structlog
 from datetime import datetime
 from .models import Payment
 from orders.models import Order
@@ -24,7 +24,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from django_ratelimit.decorators import ratelimit
 from users.utils import log_activity, sanitize_log_input
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Set Stripe key and network retries globally
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -79,13 +79,13 @@ def get_mpesa_access_token():
             token = data.get("access_token")
             if token:
                 cache.set(cache_key, token, 3600)  # Cache for 1 hour
-                logger.info("M-Pesa access token obtained successfully")
+                logger.info("mpesa_token_obtained_successfully")
                 return token
-        logger.error(f"M-Pesa token request failed: status={response.status_code}")
+        logger.error("mpesa_token_request_failed", status=response.status_code)
         raise Exception(f"Failed to get M-Pesa token: {response.status_code}")
     except requests.RequestException as e:
         safe_err = sanitize_log_input(str(e))
-        logger.error(f"M-Pesa token request error: {safe_err}")
+        logger.error("mpesa_token_request_error", error=safe_err)
         raise Exception(f"Failed to get M-Pesa token: {str(e)}")
 
 
@@ -138,7 +138,7 @@ def initiate_stripe_payment(request):
             details_dict={'payment_method': 'stripe', 'order_id': order_id, 'amount': amount, 'payment_id': payment.id}
         )
 
-        logger.info(f"Stripe payment initiated: order_id={order_id}, payment_id={payment.id}")
+        logger.info("stripe_payment_initiated", order_id=order_id, payment_id=payment.id)
 
         return Response(
             {
@@ -149,7 +149,7 @@ def initiate_stripe_payment(request):
         )
     except stripe.error.StripeError as e:
         safe_err = sanitize_log_input(str(e))
-        logger.error(f"Stripe error for order {order_id}: {safe_err}")
+        logger.error("stripe_error", order_id=order_id, error=safe_err)
         return Response(
             {"error": "Payment processing failed. Please try again."},
             status=status.HTTP_400_BAD_REQUEST,
@@ -186,7 +186,7 @@ def initiate_mpesa_payment(request):
         access_token = get_mpesa_access_token()
     except Exception as e:
         safe_err = sanitize_log_input(str(e))
-        logger.error(f"M-Pesa authentication failed: {safe_err}")
+        logger.error("mpesa_authentication_failed", error=safe_err)
         return Response(
             {"error": "Payment service temporarily unavailable."},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -252,7 +252,7 @@ def initiate_mpesa_payment(request):
                 details_dict={'payment_method': 'mpesa', 'order_id': order_id, 'amount': amount, 'payment_id': payment.id}
             )
 
-            logger.info(f"M-Pesa payment initiated: order_id={order_id}, checkout_id={checkout_request_id}")
+            logger.info("mpesa_payment_initiated", order_id=order_id, checkout_id=checkout_request_id)
 
             return Response(
                 {
@@ -263,13 +263,13 @@ def initiate_mpesa_payment(request):
                 status=status.HTTP_200_OK,
             )
         else:
-            logger.error(f"M-Pesa API error for order {order_id}: {response_data}")
+            logger.error("mpesa_api_error", order_id=order_id, response_data=response_data)
             return Response(
                 {"error": "Failed to initiate payment. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
     except requests.RequestException as e:
-        logger.error(f"M-Pesa request failed for order {order_id}: {str(e)}")
+        logger.error("mpesa_request_failed", order_id=order_id, error=str(e))
         return Response(
             {"error": "Payment service error. Please try again."},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -288,7 +288,7 @@ def _verify_mpesa_signature(request_body: bytes, signature: str) -> bool:
         True if signature is valid, False otherwise
     """
     if not MPESA_PASSKEY:
-        logger.warning("MPESA_PASSKEY not configured - cannot verify callback signature")
+        logger.warning("mpesa_passkey_missing")
         return False
 
     try:
@@ -303,7 +303,7 @@ def _verify_mpesa_signature(request_body: bytes, signature: str) -> bool:
         # Constant-time comparison to prevent timing attacks
         return hmac.compare_digest(expected_signature, signature)
     except Exception as e:
-        logger.error(f"Error verifying M-Pesa signature: {str(e)}")
+        logger.error("mpesa_signature_verification_error", error=str(e))
         return False
 
 
@@ -318,14 +318,14 @@ def mpesa_callback(request):
         # Verify signature from M-Pesa (try both header name variations)
         signature = request.headers.get('X-M-Pesa-Signature', '') or request.headers.get('X-MPesa-Signature', '')
         if not signature or not _verify_mpesa_signature(request.body, signature):
-            logger.warning("M-Pesa callback received with invalid signature")
+            logger.warning("mpesa_callback_invalid_signature")
             return JsonResponse(
                 {"ResultCode": 1, "ResultDesc": "Invalid signature"},
                 status=401
             )
 
         callback_data = json.loads(request.body)
-        logger.info("M-Pesa callback received and verified")
+        logger.info("mpesa_callback_verified")
 
         # Process each transaction
         callback_metadata = callback_data.get("Body", {}).get("stkCallback", {}).get("CallbackMetadata", [])
@@ -348,29 +348,29 @@ def mpesa_callback(request):
                         order.status = "paid"
                         order.save()
 
-                        logger.info(f"M-Pesa payment completed: order_id={order_id}, receipt={receipt}")
+                        logger.info("mpesa_payment_completed", order_id=order_id, receipt=receipt)
 
                     except Payment.DoesNotExist:
-                        logger.error(f"Payment not found for receipt {receipt}")
+                        logger.error("payment_not_found_for_receipt", receipt=receipt)
                 else:
                     error_code = result.get("ResultCode", "unknown")
                     error_desc = result.get("ResultDesc", "Unknown error")
-                    logger.warning(f"M-Pesa transaction failed: code={error_code}, desc={error_desc}")
+                    logger.warning("mpesa_transaction_failed", error_code=error_code, error_desc=error_desc)
 
             except Exception as e:
-                logger.error(f"Error processing M-Pesa transaction: {str(e)}", exc_info=True)
+                logger.exception("mpesa_transaction_processing_error", error=str(e))
                 continue
 
         return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
 
     except json.JSONDecodeError:
-        logger.error("Invalid JSON in M-Pesa callback")
+        logger.error("mpesa_callback_invalid_json")
         return JsonResponse(
             {"ResultCode": 1, "ResultDesc": "Invalid JSON"},
             status=400
         )
     except Exception as e:
-        logger.error(f"M-Pesa callback error: {str(e)}", exc_info=True)
+        logger.exception("mpesa_callback_error", error=str(e))
         return JsonResponse(
             {"ResultCode": 1, "ResultDesc": "Processing error"},
             status=500
@@ -389,7 +389,7 @@ def stripe_webhook(request):
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
     if not endpoint_secret:
-        logger.error("STRIPE_WEBHOOK_SECRET not configured")
+        logger.error("stripe_webhook_secret_missing")
         return JsonResponse({"error": "Webhook not configured"}, status=500)
 
     try:
@@ -410,21 +410,21 @@ def stripe_webhook(request):
                 order.status = "paid"
                 order.save()
 
-                logger.info(f"Stripe payment completed: order_id={order_id}, reference={reference}")
+                logger.info("stripe_payment_completed", order_id=order_id, reference=reference)
 
             except Payment.DoesNotExist:
-                logger.error(f"Payment not found for Stripe ID {reference}")
+                logger.error("stripe_payment_not_found", reference=reference)
 
         return JsonResponse({"status": "success"}, status=200)
 
     except stripe.error.SignatureVerificationError as e:
-        logger.warning(f"Invalid Stripe signature: {str(e)}")
+        logger.warning("stripe_invalid_signature", error=str(e))
         return JsonResponse({"error": "Invalid signature"}, status=401)
     except json.JSONDecodeError:
-        logger.error("Invalid JSON in Stripe webhook")
+        logger.error("stripe_invalid_json")
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
-        logger.error(f"Stripe webhook error: {str(e)}", exc_info=True)
+        logger.exception("stripe_webhook_error", error=str(e))
         return JsonResponse({"error": "Webhook processing error"}, status=500)
 
 

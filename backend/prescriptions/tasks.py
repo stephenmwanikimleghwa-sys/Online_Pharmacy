@@ -3,10 +3,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from users.models import User, RoleChoices
 from .models import Prescription
-import logging
+import structlog
 from users.utils import sanitize_log_input
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 @shared_task(
     bind=True,
@@ -29,7 +29,7 @@ def notify_pharmacist_new_prescription(self, prescription_id):
         ).exclude(email="").values_list("email", flat=True)
         
         if not recipients:
-            logger.warning(f"No valid pharmacist/admin emails found to notify for prescription {prescription_id}")
+            logger.warning("no_pharmacist_emails_found", prescription_id=prescription_id)
             return
             
         patient_info = prescription.get_patient_info()
@@ -52,11 +52,11 @@ def notify_pharmacist_new_prescription(self, prescription_id):
             list(recipients),
             fail_silently=False
         )
-        logger.info(f"New prescription notification sent for ID {prescription_id} to {len(recipients)} staff members.")
+        logger.info("prescription_notification_sent", prescription_id=prescription_id, recipient_count=len(recipients))
         
     except Prescription.DoesNotExist:
-        logger.error(f"Prescription {prescription_id} not found for notification.")
+        logger.error("prescription_not_found_for_notification", prescription_id=prescription_id)
     except Exception as exc:
         safe_exc = sanitize_log_input(str(exc))
-        logger.warning(f"Failed to send prescription notification, retrying... ({safe_exc})")
+        logger.warning("prescription_notification_failed_retrying", error=safe_exc)
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))

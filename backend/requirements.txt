@@ -48,3 +48,5 @@ charset-normalizer<3.4,>=2.0
 chardet<6
 reportlab
 tenacity==8.3.0
+structlog==24.4.0
+django-structlog==9.0.1

@@ -24,6 +24,9 @@ from users.models import User
 from users.utils import log_activity
 from django.http import HttpRequest
 from .tasks import notify_pharmacist_new_prescription
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 
 def parse_date_range(request):
@@ -57,6 +60,7 @@ class PrescriptionUploadView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         prescription = serializer.save(user=self.request.user)
+        logger.info("prescription_uploaded", prescription_id=prescription.id)
         # Trigger push notification to pharmacists
         notify_pharmacist_new_prescription.delay(prescription.id)
 
@@ -142,6 +146,7 @@ def verify_prescription(request, pk):
     prescription.verified_at = timezone.now()
     prescription.notes = notes
     prescription.save()
+    logger.info("prescription_verified", prescription_id=pk, status=status)
 
     log_activity(
         user=request.user,
@@ -224,6 +229,7 @@ def dispense_prescription(request, pk):
     prescription.fill_status = FillStatusChoices.FILLED
     prescription.dispensed_at = timezone.now()
     prescription.save()
+    logger.info("prescription_dispensed", prescription_id=pk)
 
     log_activity(
         user=request.user,

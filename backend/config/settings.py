@@ -7,12 +7,14 @@ License: MIT
 """
 
 import os
+import sys
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
 import environ
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
+import structlog
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -107,6 +109,7 @@ INSTALLED_APPS = [
     "django_filters",
     "storages",
     "drf_yasg",
+    "django_structlog",
     # Local apps (complete ones only)
     # Local apps
     "health",
@@ -135,6 +138,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -435,20 +439,19 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
+        "json_formatter": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.JSONRenderer(),
         },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
+        "plain_console": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer(colors=True),
         },
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "formatter": "json_formatter" if not DEBUG else "plain_console",
         },
     },
     "root": {
@@ -457,19 +460,35 @@ LOGGING = {
     },
 }
 
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
 if LOG_TO_FILE:
     logs_dir = BASE_DIR / "logs"
     try:
         logs_dir.mkdir(parents=True, exist_ok=True)
     except Exception:
-        # Fall back to console-only if directory cannot be created
         LOG_TO_FILE = False
     else:
         LOGGING["handlers"]["file"] = {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": str(logs_dir / "django.log"),
-            "formatter": "verbose",
+            "formatter": "json_formatter",
         }
         LOGGING["root"]["handlers"].append("file")
 
