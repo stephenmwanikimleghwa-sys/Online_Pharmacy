@@ -180,10 +180,14 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
             <p className="text-xs font-bold text-gray-500 uppercase mb-1">Total revenue today</p>
             <p className="text-2xl font-bold text-emerald-600">{formatMoney(totals.total_revenue_today)}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-rose-100 dark:border-rose-900 shadow-sm bg-rose-50/30">
+            <p className="text-xs font-bold text-rose-600 uppercase mb-1">Discounts given today</p>
+            <p className="text-2xl font-bold text-rose-700">{formatMoney(totals.total_discounts_today || 0)}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
             <p className="text-xs font-bold text-gray-500 uppercase mb-1">Total sales today</p>
@@ -191,7 +195,7 @@ const AdminDashboard = () => {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
             <p className="text-xs font-bold text-gray-500 uppercase mb-1">Low stock (all branches)</p>
-            <p className="text-2xl font-bold text-rose-600">{totals.total_low_stock ?? 0}</p>
+            <p className="text-2xl font-bold text-amber-500">{totals.total_low_stock ?? 0}</p>
           </div>
         </div>
 

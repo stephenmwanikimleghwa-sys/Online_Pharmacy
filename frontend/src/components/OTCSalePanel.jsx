@@ -311,6 +311,15 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       return;
     }
 
+    if (user?.role !== 'admin') {
+      const sub = calculateSubtotal();
+      const kes = parseFloat(discountKes) || 0;
+      if (kes > sub * 0.5) {
+        setSaleError("You are not authorized to give a discount greater than 50%.");
+        return;
+      }
+    }
+
     const cleanedItems = selectedItems.map(i => ({...i, quantity: parseInt(i.quantity) || 1}));
     const total = cleanedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
@@ -751,6 +760,11 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             {(parseFloat(discountKes) > 0) && (
               <p className="text-xs text-emerald-600 font-semibold mt-2">
                 Discount: KES {parseFloat(discountKes).toFixed(2)} ({parseFloat(discountPct || 0).toFixed(1)}% off)
+              </p>
+            )}
+            {user?.role !== 'admin' && parseFloat(discountPct) > 50 && (
+              <p className="text-xs text-rose-600 font-bold mt-1">
+                ⚠️ Non-admin discount is capped at 50%.
               </p>
             )}
           </div>

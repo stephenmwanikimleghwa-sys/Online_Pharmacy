@@ -332,6 +332,16 @@ def dispense_otc(request):
                 'batch_allocations': batch_allocations,
             })
 
+        # Cap discount at 50% for all non-admin staff
+        if request.user.role != 'admin' and total_amount > 0:
+            max_discount = total_amount * 0.50
+            if discount > max_discount:
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    f"You are not authorized to give a discount greater than 50% (Max allowed: KES {max_discount:.2f}).",
+                    http_status=403,
+                )
+
         # Clamp: discount cannot exceed the subtotal, and total cannot go below 0
         discount = min(discount, total_amount)
         total_amount = max(0.0, total_amount - discount)
@@ -477,6 +487,7 @@ def dispensing_stats(request):
     today_stats = qs.filter(dispensed_at__date=today).aggregate(
         total_sales=Count('id'),
         total_revenue=Sum('total_amount'),
+        total_discounts=Sum('discount'),
         otc_sales=Count('id', filter=Q(sale_type='otc')),
         prescription_sales=Count('id', filter=Q(sale_type='prescription'))
     )
@@ -484,6 +495,7 @@ def dispensing_stats(request):
     monthly_stats = qs.filter(dispensed_at__date__gte=thirty_days_ago).aggregate(
         total_sales=Count('id'),
         total_revenue=Sum('total_amount'),
+        total_discounts=Sum('discount'),
         otc_sales=Count('id', filter=Q(sale_type='otc')),
         prescription_sales=Count('id', filter=Q(sale_type='prescription'))
     )

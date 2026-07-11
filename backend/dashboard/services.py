@@ -32,7 +32,7 @@ def build_global_overview(user):
         for d in Dispensation.objects
         .filter(branch_id__in=branch_ids, dispensed_at__date=today)
         .values('branch_id')
-        .annotate(count=Count('id'), revenue=Sum('total_amount'))
+        .annotate(count=Count('id'), revenue=Sum('total_amount'), discounts=Sum('discount'))
     }
 
     # Single bulk query: today's order count + revenue per branch
@@ -64,6 +64,7 @@ def build_global_overview(user):
 
     branches = []
     total_revenue = 0.0
+    total_discounts = 0.0
     total_sales = 0
     total_low_stock = 0
 
@@ -73,6 +74,7 @@ def build_global_overview(user):
         o = order_map.get(bid, {})
         sales_count = (d.get('count') or 0) + (o.get('count') or 0)
         revenue_f = float(d.get('revenue') or 0) + float(o.get('revenue') or 0)
+        discounts_f = float(d.get('discounts') or 0)
         low_stock = low_stock_map.get(bid, 0)
         products_count = products_map.get(bid, 0)
 
@@ -86,6 +88,7 @@ def build_global_overview(user):
             "today_revenue": revenue_f,
         })
         total_revenue += revenue_f
+        total_discounts += discounts_f
         total_sales += sales_count
         total_low_stock += low_stock
 
@@ -109,6 +112,7 @@ def build_global_overview(user):
         "active_users": active_users,
         "totals": {
             "total_revenue_today": total_revenue,
+            "total_discounts_today": total_discounts,
             "total_sales_today": total_sales,
             "total_low_stock": total_low_stock,
         },
