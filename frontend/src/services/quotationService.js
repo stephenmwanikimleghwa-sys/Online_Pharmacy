@@ -41,7 +41,7 @@ const exportPDF = async (id) => {
   const url = window.URL.createObjectURL(new Blob([response.data]));
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', `quotation_${id}.pdf`);
+  link.setAttribute('download', `quotation_${id}_${Date.now()}.pdf`);
   document.body.appendChild(link);
   link.click();
   link.remove();

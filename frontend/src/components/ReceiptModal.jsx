@@ -113,7 +113,7 @@ const ReceiptModal = ({ order, onClose }) => {
         order?.payment?.payment_mode ||
         'unknown'
       );
-      const receiptTitle = `${safeBranch}_receipt_${order?.id || 'NEW'}_${normalizeForFile(paymentMethod)}_${safeDate}.pdf`;
+      const receiptTitle = `${safeBranch}_receipt_${order?.id || 'NEW'}_${normalizeForFile(paymentMethod)}_${safeDate}_${Date.now()}.pdf`;
       
       doc.write(`
         <html>

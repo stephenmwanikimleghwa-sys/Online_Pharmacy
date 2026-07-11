@@ -63,7 +63,7 @@ const reportService = {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `pharmacy_report_${new Date().toISOString().split('T')[0]}.pdf`);
+            link.setAttribute('download', `pharmacy_report_${new Date().toISOString().split('T')[0]}_${Date.now()}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -85,7 +85,9 @@ const reportService = {
             const contentDisposition = response.headers?.['content-disposition'] ||
                 response.headers?.get?.('content-disposition');
             const filenameMatch = contentDisposition?.match(/filename="?([^";]+)"?/i);
-            const filename = filenameMatch?.[1] || `receipt_${orderId}.pdf`;
+            let filename = filenameMatch?.[1] || `receipt_${orderId}.pdf`;
+            const ts = Date.now();
+            filename = filename.includes('.pdf') ? filename.replace('.pdf', `_${ts}.pdf`) : `${filename}_${ts}.pdf`;
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');

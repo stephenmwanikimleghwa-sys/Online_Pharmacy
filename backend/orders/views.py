@@ -758,9 +758,10 @@ def get_receipt_pdf(request, pk):
     safe_branch_name = slugify(branch_name).replace('-', '_') or "transcounty_main"
     safe_payment_method = slugify(payment_method).replace('-', '_') or "unknown"
     receipt_date = order.created_at.strftime("%Y%m%d") if order.created_at else timezone.now().strftime("%Y%m%d")
+    timestamp = timezone.now().strftime("%H%M%S")
     filename = (
         f"{safe_branch_name}_receipt_{order.id}_"
-        f"{safe_payment_method}_{receipt_date}.pdf"
+        f"{safe_payment_method}_{receipt_date}_{timestamp}.pdf"
     )
     return FileResponse(
         pdf_buffer,
