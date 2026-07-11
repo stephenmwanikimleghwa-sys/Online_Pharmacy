@@ -275,7 +275,7 @@ def low_stock_items(request):
         prod_data = ProductSerializer(bs.product).data
         prod_data['stock_quantity'] = float(bs.quantity)
         prod_data['reorder_level'] = float(bs.reorder_level)
-        if request.query_params.get('with_suggestions', 'true').lower() != 'false':
+        if request.query_params.get('with_suggestions', 'false').lower() == 'true':
             prod_data['reorder_intelligence'] = low_stock_reorder_suggestion(
                 bs.product_id, branch_id or bs.branch_id
             )

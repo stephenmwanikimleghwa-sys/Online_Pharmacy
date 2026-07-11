@@ -167,16 +167,61 @@ const AdminDashboard = () => {
         </div>
 
         {globalData?.active_users?.length > 0 && (
-          <div className="mb-6 bg-white dark:bg-gray-800 rounded-2xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Currently Logged-in Users</h3>
-            <div className="flex flex-wrap gap-3">
-              {globalData.active_users.map(u => (
-                <div key={u.id} className="flex flex-col bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 px-3 border border-gray-100 dark:border-gray-600">
-                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{u.username}</span>
-                  <span className="text-[10px] text-gray-500 uppercase">{u.role} {u.branch ? `• ${u.branch}` : ''}</span>
-                </div>
-              ))}
-            </div>
+          <div className="mb-6 bg-white dark:bg-gray-800 rounded-2xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm overflow-x-auto">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Today's Staff Sessions</h3>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">User</th>
+                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">Branch</th>
+                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">Login Time</th>
+                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">Status / Logout</th>
+                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase text-right">Time Spent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {globalData.active_users.map(u => (
+                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-2 pr-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{u.username}</span>
+                        <span className="text-[10px] text-gray-500 uppercase">{u.role}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4 text-sm text-gray-700 dark:text-gray-300">
+                      {u.branch || '—'}
+                    </td>
+                    <td className="py-2 pr-4 text-sm text-gray-700 dark:text-gray-300">
+                      {u.login_time ? new Date(u.login_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                    </td>
+                    <td className="py-2 pr-4">
+                      {u.is_active ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          <span className="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                          Logged in
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-500">
+                          Out at {u.logout_time ? new Date(u.logout_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 text-sm font-medium text-right text-gray-900 dark:text-white">
+                      {u.duration_minutes >= 60 
+                        ? `${Math.floor(u.duration_minutes / 60)}h ${u.duration_minutes % 60}m` 
+                        : `${u.duration_minutes}m`}
+                    </td>
+                  </tr>
+                ))}
+                {globalData.active_users.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="py-4 text-center text-sm text-gray-500">
+                      No staff activity recorded today.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
 
