@@ -23,6 +23,7 @@ from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 from users.models import User
 from users.utils import log_activity
 from django.http import HttpRequest
+from .tasks import notify_pharmacist_new_prescription
 
 
 def parse_date_range(request):
@@ -55,7 +56,9 @@ class PrescriptionUploadView(generics.CreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        prescription = serializer.save(user=self.request.user)
+        # Trigger push notification to pharmacists
+        notify_pharmacist_new_prescription.delay(prescription.id)
 
 
 class PrescriptionListView(generics.ListAPIView):

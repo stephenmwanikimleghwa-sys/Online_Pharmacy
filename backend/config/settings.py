@@ -9,6 +9,7 @@ License: MIT
 import os
 from pathlib import Path
 from datetime import timedelta
+from celery.schedules import crontab
 import environ
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
@@ -524,6 +525,17 @@ CELERY_BROKER_URL = env(
 CELERY_RESULT_BACKEND = env(
     "CELERY_RESULT_BACKEND", default=REDIS_URL or "rediss://localhost:6379/0"
 )
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    'daily-stock-and-expiry-digest': {
+        'task': 'reports.tasks.send_daily_stock_and_expiry_digest',
+        'schedule': crontab(hour=7, minute=0),
+    },
+    'end-of-day-sales-summary': {
+        'task': 'dashboard.tasks.send_end_of_day_sales_summary',
+        'schedule': crontab(hour=21, minute=0),
+    },
+}
 
 # Sentry Configuration
 SENTRY_DSN = env("SENTRY_DSN", default="")
