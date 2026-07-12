@@ -22,7 +22,9 @@ export function useProducts(filters: Record<string, unknown> = {}) {
 
 export function useInventoryList(filters: Record<string, unknown> = {}) {
   const { activeBranch } = useActiveBranch();
-  const params = { per_page: 5000, ...filters };
+  // Use server-side pagination: default 50 items per page.
+  // Callers can pass { per_page, page, search, ... } via filters.
+  const params = { per_page: 50, ...filters };
   return useQuery({
     queryKey: QUERY_KEYS.inventory(activeBranch?.id, params),
     queryFn: async () => {
@@ -34,12 +36,14 @@ export function useInventoryList(filters: Record<string, unknown> = {}) {
       const products = data.products || data.results || unwrapList(data);
       return {
         products,
-        totalItems: data.totalItems ?? products.length,
+        totalItems: data.totalItems ?? data.total_count ?? products.length,
+        totalPages: data.totalPages ?? data.num_pages ?? 1,
+        currentPage: data.currentPage ?? data.page ?? 1,
         raw: data,
       };
     },
-    staleTime: STALE_TIMES.SLOW,
-    refetchOnWindowFocus: false,  // prevent spurious refetch when user alt-tabs
+    staleTime: STALE_TIMES.MEDIUM,
+    refetchOnWindowFocus: false,
     enabled: !!activeBranch?.id,
   });
 }
