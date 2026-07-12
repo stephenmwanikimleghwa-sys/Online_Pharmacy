@@ -11,6 +11,8 @@ import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { inventoryService } from '../services/inventoryService';
+import { queryClient } from '../lib/queryClient';
+import { QUERY_KEYS } from '../lib/queryKeys';
 
 const AdminStock = () => {
 	const { notify } = useNotification();
@@ -54,10 +56,12 @@ const AdminStock = () => {
 		};
 	};
 
-	// Removed pagination - now loading all products on single page
-
-	// Search and filter state
+	// Search, filter, and pagination state
 	const [searchQuery, setSearchQuery] = useState('');
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
+	const [totalItems, setTotalItems] = useState(0);
+
 	const [filters, setFilters] = useState({
 		lowStock: false,
 		outOfStock: false,
@@ -105,17 +109,22 @@ const AdminStock = () => {
 		fetchItems();
 	}, []);
 
-	// Instant search - refetch when search or filters change (no debounce)
+	// Instant search - refetch when search, filters, or page change
 	useEffect(() => {
 		if (isInitialLoad) return; // Skip on first render
 		const controller = new AbortController();
 		const timeout = setTimeout(() => {
 			fetchItems(controller.signal);
-		}, 50); // Very small delay to batch rapid changes
+		}, 400); // Debounce typing to prevent network spam & UI lag
 		return () => {
 			clearTimeout(timeout);
 			controller.abort();
 		};
+	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category, currentPage]);
+
+	// Reset to page 1 when search or filters change
+	useEffect(() => {
+		if (!isInitialLoad) setCurrentPage(1);
 	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category]);
 
 	const fetchItems = async (signal) => {
@@ -128,9 +137,10 @@ const AdminStock = () => {
 			}
 			setError('');
 
-			// Build query params - load ALL products (no pagination)
+			// Build query params
 			const params = {
-				per_page: 99999, // Load all products without pagination limit
+				per_page: 50,
+				page: currentPage,
 			};
 
 			// Add filters
@@ -140,7 +150,7 @@ const AdminStock = () => {
 			const trimmedSearchQuery = searchQuery.trim();
 			if (trimmedSearchQuery) params.search = trimmedSearchQuery;
 
-			let products = [];
+			let fetchedProducts = [];
 			let totalPagesCount = 1;
 			let totalItemsCount = 0;
 
@@ -153,24 +163,27 @@ const AdminStock = () => {
 				const payload = data.data || data;
 				
 				if (Array.isArray(payload.products)) {
-					products = payload.products;
-					totalItemsCount = payload.totalItems ?? products.length;
+					fetchedProducts = payload.products;
+					totalItemsCount = payload.totalItems ?? fetchedProducts.length;
 					totalPagesCount = payload.totalPages ?? 1;
 				} else if (Array.isArray(payload)) {
-					products = payload;
-					totalItemsCount = products.length;
+					fetchedProducts = payload;
+					totalItemsCount = fetchedProducts.length;
 					totalPagesCount = 1;
 				}
-				} catch (inventoryErr) {
+
+				setItems(fetchedProducts.map(sanitizeItem));
+				setTotalPages(totalPagesCount);
+				setTotalItems(totalItemsCount);
+			} catch (inventoryErr) {
 				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
 				throw inventoryErr;
 			}
 
 			if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
-			setItems(products.map(sanitizeItem));
 
 			// Extract unique categories
-			const uniqueCategories = [...new Set(products.map(p => getCategoryLabel(p.category)).filter(Boolean))];
+			const uniqueCategories = [...new Set(fetchedProducts.map(p => getCategoryLabel(p.category)).filter(Boolean))];
 			setCategories(uniqueCategories.sort());
 
 		} catch (err) {
@@ -379,6 +392,7 @@ const AdminStock = () => {
 
 			if (isEditMode && editingItem) {
 				await api.patch(`/products/${editingItem.id}/`, data, { headers });
+				queryClient.invalidateQueries({ queryKey: QUERY_KEYS.inventory._def });
 			} else {
 				// Optimistic UI: append a temporary item so user sees the new product immediately
 					const optimisticId = `tmp-${Date.now()}`;
@@ -399,6 +413,7 @@ const AdminStock = () => {
 						const response = await api.post('/products/', data, { headers });
 						// Replace optimistic item with real server response
 						setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
+						queryClient.invalidateQueries({ queryKey: QUERY_KEYS.inventory._def });
 						notify.success('Product Added', 'The product has been added to the system.');
 						// Background refresh — does NOT trigger a loading spinner
 						void fetchItems();
@@ -655,7 +670,50 @@ const AdminStock = () => {
 						</table>
 					</div>
 
-					{/* Removed pagination - all products loaded on single scrollable page */}
+					{/* ── Pagination Controls ── */}
+					{totalPages > 1 && (
+						<div className="flex items-center justify-between p-4 bg-white/5 border-t border-white/10">
+							<p className="text-xs font-medium text-slate-500">
+								Page {currentPage} of {totalPages} &middot; {totalItems} items total
+							</p>
+							<div className="flex items-center gap-2">
+								<button
+									onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+									disabled={currentPage === 1 || loading}
+									className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 transition-all disabled:opacity-40"
+								>
+									← Prev
+								</button>
+								{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+									let page = i + 1;
+									if (totalPages > 5) {
+										page = Math.min(Math.max(currentPage - 2, 1) + i, totalPages - (4 - i));
+									}
+									return (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											disabled={loading}
+											className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-40 ${
+												page === currentPage
+													? 'border-primary-500 bg-primary-50 text-primary-700'
+													: 'border-slate-200 text-slate-700 hover:bg-slate-50'
+											}`}
+										>
+											{page}
+										</button>
+									);
+								})}
+								<button
+									onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+									disabled={currentPage === totalPages || loading}
+									className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 transition-all disabled:opacity-40"
+								>
+									Next →
+								</button>
+							</div>
+						</div>
+					)}
 				</div>
 			</ErrorBoundary>
 
