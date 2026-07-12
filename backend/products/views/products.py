@@ -407,7 +407,23 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated and self.request.user.pharmacy:
             pharmacy = self.request.user.pharmacy
         
-        serializer.save(pharmacy=pharmacy)
+        product = serializer.save(pharmacy=pharmacy)
+        
+        # Log the initial product creation so it appears in inventory history
+        from products.models import StockLog
+        user = self.request.user if self.request.user.is_authenticated else None
+        branch = getattr(user, 'branch', None) if user else None
+        
+        StockLog.objects.create(
+            product=product,
+            previous_quantity=0,
+            new_quantity=product.stock_quantity,
+            change_amount=product.stock_quantity,
+            change_type='restock',
+            reason="Initial product creation",
+            branch=branch,
+            logged_by=user
+        )
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
