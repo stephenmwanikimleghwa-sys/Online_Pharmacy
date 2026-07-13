@@ -60,11 +60,6 @@ class DispensationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsPharmacistOrAdmin]
     serializer_class = DispensationSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        from rest_framework.exceptions import MethodNotAllowed
-        raise MethodNotAllowed("DELETE", detail="Dispensation records cannot be deleted to preserve audit integrity.")
-
-
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Dispensation.objects.none()
@@ -113,98 +108,6 @@ class DispensationViewSet(viewsets.ModelViewSet):
                 dispensation.prescription.status = 'dispensed'
                 dispensation.prescription.save()
 
-    @action(detail=True, methods=['post'])
-    def void_sale(self, request, pk=None):
-        """
-        Voids a dispensation, restoring stock and reversing financials.
-        """
-        dispensation = self.get_object()
-        
-        # We check notes or some flag to ensure it's not already voided
-        if dispensation.notes and '[VOIDED]' in dispensation.notes:
-            return api_error(
-                ApiErrorCode.VALIDATION_ERROR,
-                "This sale has already been voided.",
-            )
-
-        with transaction.atomic():
-            # 1. Restore stock to batches and branch stock
-            from products.models import BranchStock, StockLog
-            for item in dispensation.items.all():
-                if item.batch_number:
-                    from inventory.models import Batch
-                    try:
-                        batch = Batch.objects.get(
-                            batch_number=item.batch_number,
-                            product=item.product,
-                            branch=dispensation.branch
-                        )
-                        batch.quantity_remaining += item.quantity
-                        batch.save(update_fields=['quantity_remaining'])
-                    except Batch.DoesNotExist:
-                        pass  # Legacy or missing batch, fallback to just BranchStock
-                
-                branch_stock, _ = BranchStock.objects.get_or_create(
-                    product=item.product,
-                    branch=dispensation.branch,
-                    defaults={'quantity': 0}
-                )
-                prev_qty = branch_stock.quantity
-                new_qty = prev_qty + item.quantity
-                
-                StockLog.objects.create(
-                    product=item.product,
-                    branch=dispensation.branch,
-                    previous_quantity=prev_qty,
-                    new_quantity=new_qty,
-                    change_amount=item.quantity,
-                    change_type='return_in',
-                    reason=f"Sale #{dispensation.id} voided",
-                    logged_by=request.user
-                )
-                
-                branch_stock.quantity = new_qty
-                branch_stock.save()
-
-            # 2. Reverse financials
-            if dispensation.payment_mode == 'CREDIT' and dispensation.customer:
-                from users.models import CustomerDebtTransaction
-                customer = dispensation.customer
-                
-                # Lock for update
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
-                locked_customer = User.objects.select_for_update().get(id=customer.id)
-                
-                locked_customer.credit_balance = float(locked_customer.credit_balance) - float(dispensation.total_amount)
-                locked_customer.save(update_fields=['credit_balance'])
-                
-                CustomerDebtTransaction.objects.create(
-                    customer=locked_customer,
-                    transaction_type='ADJUSTMENT',
-                    amount=-float(dispensation.total_amount),
-                    balance_after=locked_customer.credit_balance,
-                    description=f"Voided Dispensation #{dispensation.id}",
-                    branch=dispensation.branch,
-                    created_by=request.user
-                )
-            else:
-                from inventory.models.finance import CashFlow
-                CashFlow.objects.create(
-                    netflow=-float(dispensation.total_amount),
-                    paymentmode=dispensation.payment_mode,
-                    explanation=f"Voided Dispensation #{dispensation.id}",
-                    branch=dispensation.branch,
-                    timestamp=timezone.now()
-                )
-            
-            # 3. Mark as voided
-            dispensation.notes = f"[VOIDED by {request.user.username}] " + (dispensation.notes or '')
-            dispensation.total_amount = 0
-            dispensation.save(update_fields=['notes', 'total_amount'])
-
-        return api_success("Sale voided successfully and stock restored.")
-
 @api_view(['POST'])
 @permission_classes([IsPharmacistOrAdmin])
 def dispense_otc(request):
@@ -214,10 +117,10 @@ def dispense_otc(request):
     """
     denied = require_active_branch(request)
     if denied:
-        return denied
+        # Allow if branch_id was explicitly provided — frontend always sends it
+        if not request.data.get('branch_id'):
+            return denied
 
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
     active_branch = resolve_request_branch(request, request.data.get('branch_id'))
     if not active_branch:
         return api_error(
@@ -227,17 +130,13 @@ def dispense_otc(request):
         )
 
     with transaction.atomic():
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         items_data = request.data.get('items', [])
         payment_mode = request.data.get('payment_mode', 'CASH')
         pricing_tier = request.data.get('pricing_tier', 'RETAIL')
         customer_id = request.data.get('customer_id')
         discount = request.data.get('discount', 0)
-        try:
-            discount = float(discount)
-        except (TypeError, ValueError):
-            discount = 0.0
-        if discount < 0:
-            discount = 0.0
         
         customer = None
         if customer_id:
@@ -254,18 +153,6 @@ def dispense_otc(request):
         # but fall back to aggregate branch stock for legacy data.
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
-            
-            from utils.filters import validate_product_for_branch
-            from django.core.exceptions import ValidationError
-            try:
-                validate_product_for_branch(product, active_branch)
-            except ValidationError as e:
-                return api_error(
-                    ApiErrorCode.VALIDATION_ERROR,
-                    e.message,
-                    details={"product": product.name, "branch": active_branch.name}
-                )
-
             branch_stock, _ = BranchStock.objects.get_or_create(
                 product=product, branch=active_branch, defaults={'quantity': 0, 'reorder_level': 0}
             )
@@ -332,19 +219,7 @@ def dispense_otc(request):
                 'batch_allocations': batch_allocations,
             })
 
-        # Cap discount at 50% for all non-admin staff
-        if request.user.role != 'admin' and total_amount > 0:
-            max_discount = total_amount * 0.50
-            if discount > max_discount:
-                return api_error(
-                    ApiErrorCode.VALIDATION_ERROR,
-                    f"You are not authorized to give a discount greater than 50% (Max allowed: KES {max_discount:.2f}).",
-                    http_status=403,
-                )
-
-        # Clamp: discount cannot exceed the subtotal, and total cannot go below 0
-        discount = min(discount, total_amount)
-        total_amount = max(0.0, total_amount - discount)
+        total_amount -= float(discount)
         
         if payment_mode == 'CREDIT':
             if not customer:
@@ -382,26 +257,7 @@ def dispense_otc(request):
         for p_data in products_to_dispense:
             product = p_data['product']
             quantity = p_data['quantity']
-            branch_stock = p_data['branch_stock']
             batch_allocations = p_data.get('batch_allocations', [])
-
-            # Update overall branch stock
-            previous_quantity = branch_stock.quantity
-            branch_stock.quantity -= quantity
-            branch_stock.save(update_fields=['quantity'])
-
-            # Log the stock reduction
-            from products.models import StockLog
-            StockLog.objects.create(
-                product=product,
-                branch=active_branch,
-                previous_quantity=previous_quantity,
-                new_quantity=branch_stock.quantity,
-                change_amount=-quantity,
-                change_type="sale",
-                reason=f"Sale",
-                logged_by=request.user
-            )
 
             if batch_allocations:
                 for batch_info in batch_allocations:
@@ -487,7 +343,6 @@ def dispensing_stats(request):
     today_stats = qs.filter(dispensed_at__date=today).aggregate(
         total_sales=Count('id'),
         total_revenue=Sum('total_amount'),
-        total_discounts=Sum('discount'),
         otc_sales=Count('id', filter=Q(sale_type='otc')),
         prescription_sales=Count('id', filter=Q(sale_type='prescription'))
     )
@@ -495,7 +350,6 @@ def dispensing_stats(request):
     monthly_stats = qs.filter(dispensed_at__date__gte=thirty_days_ago).aggregate(
         total_sales=Count('id'),
         total_revenue=Sum('total_amount'),
-        total_discounts=Sum('discount'),
         otc_sales=Count('id', filter=Q(sale_type='otc')),
         prescription_sales=Count('id', filter=Q(sale_type='prescription'))
     )

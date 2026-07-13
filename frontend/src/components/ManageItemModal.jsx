@@ -28,6 +28,12 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
   const [suppliers, setSuppliers] = useState([]);
   const [restockLoading, setRestockLoading] = useState(false);
 
+  // ── Adjust state ──────────────────────────────────────────────────────────
+  const [adjustQty, setAdjustQty] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
+  const [adjustBranch, setAdjustBranch] = useState('');
+  const [adjustLoading, setAdjustLoading] = useState(false);
+
   // ── Edit state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     name: item.name || '',
@@ -63,8 +69,10 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
           // no default — let admin pick
         } else if (user?.branch?.id) {
           setSelectedBranch(String(user.branch.id));
+          setAdjustBranch(String(user.branch.id));
         } else if (list.length === 1) {
           setSelectedBranch(String(list[0].id));
+          setAdjustBranch(String(list[0].id));
         }
       } catch {
         const fallback = [
@@ -73,7 +81,10 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
           { id: 4, name: 'Peakfarm' },
         ];
         setBranches(fallback);
-        if (user?.branch?.id) setSelectedBranch(String(user.branch.id));
+        if (user?.branch?.id) {
+          setSelectedBranch(String(user.branch.id));
+          setAdjustBranch(String(user.branch.id));
+        }
       }
     };
 
@@ -179,6 +190,40 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
     }
   };
 
+  // ── Adjust submit ─────────────────────────────────────────────────────────
+  const handleAdjust = async (e) => {
+    e.preventDefault();
+    const qty = parseInt(adjustQty, 10);
+    if (!adjustQty || isNaN(qty) || qty === 0) {
+      notify.warning('Invalid Quantity', 'Enter a non-zero number. Use negative to reduce stock.');
+      return;
+    }
+    if (!adjustBranch) {
+      notify.warning('Branch Required', 'Please select a branch before adjusting stock.');
+      return;
+    }
+    if (!adjustReason.trim()) {
+      notify.warning('Reason Required', 'Please provide a reason for this stock adjustment.');
+      return;
+    }
+    setAdjustLoading(true);
+    try {
+      await api.post(`/inventory/${item.id}/adjust/`, {
+        quantity: qty,
+        reason: adjustReason,
+        change_type: 'adjustment',
+        branch_id: parseInt(adjustBranch, 10),
+      });
+      notify.success('Stock Adjusted', `Stock for ${item.name} has been updated.`);
+      onEdit?.();
+      onClose();
+    } catch (error) {
+      notifyApiError(notify, error, 'Adjust Failed', 'Could not adjust stock.');
+    } finally {
+      setAdjustLoading(false);
+    }
+  };
+
   // ── Tabs config ───────────────────────────────────────────────────────────
   const tabs = [
     {
@@ -188,6 +233,16 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
             d="M12 4v16m8-8H4" />
+        </svg>
+      ),
+    },
+    {
+      id: 'adjust',
+      label: 'Adjust',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
         </svg>
       ),
     },
@@ -351,6 +406,75 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   disabled={restockLoading}
                 >
                   {restockLoading ? 'Saving...' : 'Add Stock'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── ADJUST TAB ── */}
+          {activeTab === 'adjust' && (
+            <form onSubmit={handleAdjust} className="p-8 space-y-6">
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                <p className="text-xs font-bold text-amber-800">Use <strong>negative numbers</strong> to remove stock (e.g. <code>-5</code>) and <strong>positive</strong> to add.</p>
+              </div>
+
+              {/* Branch */}
+              <div>
+                <label className="form-label">Branch *</label>
+                <select
+                  value={adjustBranch}
+                  onChange={(e) => setAdjustBranch(e.target.value)}
+                  required
+                  className="form-input w-full"
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <label className="form-label">Adjustment Quantity *</label>
+                <input
+                  type="number"
+                  value={adjustQty}
+                  onChange={(e) => setAdjustQty(e.target.value)}
+                  placeholder="e.g. -5 to remove, 10 to add"
+                  className="form-input w-full"
+                  required
+                />
+              </div>
+
+              {/* Reason */}
+              <div>
+                <label className="form-label">Reason *</label>
+                <input
+                  type="text"
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  placeholder="e.g. Expired, Damaged, Audit correction"
+                  className="form-input w-full"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-4 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="form-cancel-btn flex-1"
+                  disabled={adjustLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+                  disabled={adjustLoading}
+                >
+                  {adjustLoading ? 'Adjusting...' : 'Confirm Adjustment'}
                 </button>
               </div>
             </form>
