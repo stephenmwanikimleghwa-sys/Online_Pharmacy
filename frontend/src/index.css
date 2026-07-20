@@ -881,8 +881,28 @@ html {
   to   { opacity: 1; }
 }
 
-.fade-in {
+.fade-in,
+.animate-fade-in {
   animation: fade-in 0.3s ease both;
+}
+
+/* ---- Dashboard header accent: soft brand glow behind section headers ---- */
+.dash-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.dash-hero::before {
+  content: '';
+  position: absolute;
+  inset: -40px -30px auto -30px;
+  height: 220px;
+  z-index: -1;
+  background:
+    radial-gradient(60% 80% at 15% 0%, var(--brand-mist), transparent 70%),
+    radial-gradient(55% 90% at 90% 10%, var(--brand-soft), transparent 70%);
+  pointer-events: none;
+  border-radius: 24px;
 }
 
 /* ---- Modal scale-up entrance ---- */

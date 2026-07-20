@@ -1,4 +1,5 @@
 import React from 'react';
+import CountUp from './ui/CountUp';
 
 const InventorySummaryCard = ({ summary, onViewInventory }) => {
   const {
@@ -28,7 +29,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-primary">Total Products</p>
-              <p className="text-3xl font-display font-bold" style={{color:'var(--text-primary)'}}>{totalProducts}</p>
+              <p className="text-3xl font-display font-bold" style={{color:'var(--text-primary)'}}><CountUp value={totalProducts} /></p>
             </div>
             <div className="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +45,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
             <div>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${lowStockItems > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>Low Stock Items</p>
               <p className={`text-3xl font-display font-bold ${lowStockItems > 0 ? 'text-amber-900' : 'text-emerald-900'}`}>
-                {lowStockItems}
+                <CountUp value={lowStockItems} />
               </p>
             </div>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform ${lowStockItems > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`}>
@@ -61,7 +62,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
             <div>
               <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${outOfStockItems > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>Out of Stock</p>
               <p className={`text-3xl font-display font-bold ${outOfStockItems > 0 ? 'text-rose-900' : 'text-emerald-900'}`}>
-                {outOfStockItems}
+                <CountUp value={outOfStockItems} />
               </p>
             </div>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform ${outOfStockItems > 0 ? 'bg-rose-500' : 'bg-emerald-500'}`}>
