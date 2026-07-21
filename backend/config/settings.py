@@ -154,6 +154,16 @@ try:
 except ImportError:
     pass
 
+# Fail OPEN when the rate-limit cache backend is unreachable. Per-endpoint
+# throttling is a security enhancement layered on top of DRF's global
+# throttling, not a hard dependency. The default cache is Redis with
+# IGNORE_EXCEPTIONS=True, so a Redis outage makes cache.add/incr return None;
+# django-ratelimit then defaults to should_limit=True and blocks EVERY request
+# — including a user's first, normal login. Failing open keeps auth working
+# during a Redis hiccup (requests are simply un-throttled) instead of locking
+# the whole app out. See config/ratelimit_compat.py for the same philosophy.
+RATELIMIT_FAIL_OPEN = True
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
