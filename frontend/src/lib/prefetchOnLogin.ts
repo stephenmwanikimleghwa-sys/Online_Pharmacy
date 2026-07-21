@@ -4,29 +4,43 @@ import { QUERY_KEYS } from './queryKeys';
 import { STALE_TIMES } from './staleTimes';
 import { unwrapList } from '../utils/parseApiData';
 
-export async function prefetchOnLogin(activeBranchId?: number) {
+export async function prefetchOnLogin(activeBranchId?: number, role?: string) {
+  const normRole = role?.toString?.().toLowerCase?.();
+  const isAdmin = normRole === "admin";
+  const isStaff = normRole === "pharmacist" || normRole === "cashier" || normRole === "auditor" || isAdmin;
+
   const tasks: Promise<unknown>[] = [
     queryClient.prefetchQuery({
       queryKey: QUERY_KEYS.branches,
-      queryFn: () => api.get('/auth/branches/').then((r) => r.data),
+      queryFn: () => api.get('/auth/branches/', { skipGlobalErrorNotification: true }).then((r) => r.data),
       staleTime: STALE_TIMES.VERY_SLOW,
     }),
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.suppliers,
-      queryFn: () => api.get('/inventory/suppliers/').then((r) => r.data),
-      staleTime: STALE_TIMES.SLOW,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.customers,
-      queryFn: () => api.get('/auth/customers/').then((r) => r.data),
-      staleTime: STALE_TIMES.SLOW,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.dashboardGlobal,
-      queryFn: () => api.get('/dashboard/global-overview/').then((r) => r.data),
-      staleTime: STALE_TIMES.FAST,
-    }),
   ];
+
+  if (isStaff) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.suppliers,
+        queryFn: () => api.get('/inventory/suppliers/', { skipGlobalErrorNotification: true }).then((r) => r.data),
+        staleTime: STALE_TIMES.SLOW,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.customers,
+        queryFn: () => api.get('/auth/customers/', { skipGlobalErrorNotification: true }).then((r) => r.data),
+        staleTime: STALE_TIMES.SLOW,
+      }),
+    );
+  }
+
+  if (isAdmin) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.dashboardGlobal,
+        queryFn: () => api.get('/dashboard/global-overview/', { skipGlobalErrorNotification: true }).then((r) => r.data),
+        staleTime: STALE_TIMES.FAST,
+      }),
+    );
+  }
 
   if (activeBranchId) {
     tasks.push(

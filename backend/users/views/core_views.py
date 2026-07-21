@@ -59,7 +59,7 @@ class UserLoginView(APIView):
                 user = serializer.validated_data["user"]
                 user = User.objects.select_related("pharmacy", "branch").get(pk=user.pk)
 
-                if not user.is_superuser and user.role != RoleChoices.ADMIN:
+                if not user.is_superuser and user.role not in (RoleChoices.ADMIN, RoleChoices.CUSTOMER):
                     if not get_allowed_branches(user).exists():
                         return api_error(
                             ApiErrorCode.NO_BRANCH_ASSIGNED,

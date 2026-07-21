@@ -27,8 +27,9 @@ interface StructuredErrorBody {
 
 export function extractStructuredError(data: unknown): StructuredErrorBody["error"] | null {
   if (!data || typeof data !== "object") return null;
-  const body = data as StructuredErrorBody;
+  const body = data as StructuredErrorBody & { code?: string; message?: string; details?: Record<string, unknown> };
   if (body.error?.code && body.error?.message) return body.error;
+  if (body.code && body.message) return { code: body.code, message: body.message, details: body.details };
   return null;
 }
 
@@ -139,10 +140,17 @@ export function getLoginErrorDisplay(errorData: unknown): ApiErrorDisplay {
       message: "Invalid username or password, try again.",
     };
   }
+  if (detail.toLowerCase().includes("permission") || detail.toLowerCase().includes("not allowed")) {
+    return {
+      title: "Login Restricted",
+      message:
+        "Your account does not have permission to log in or has not been assigned to an active branch. Contact your administrator.",
+    };
+  }
 
   return {
     title: "Login Failed",
-    message: fieldMessage ?? detail ?? "Please check your username and password and try again.",
+    message: fieldMessage ?? (detail || "Please check your username and password and try again."),
   };
 }
 

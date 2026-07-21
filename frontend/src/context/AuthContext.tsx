@@ -253,8 +253,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem("refresh_token");
           localStorage.removeItem("user_role");
           localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
-        } else {
-          }
+        }
       }
       setLoading(false);
     };
@@ -285,7 +284,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "Branch Switched",
           `You are now working at ${branch.name}. All transactions will be recorded here.`,
         );
-        void prefetchOnLogin(branch.id);
+        void prefetchOnLogin(branch.id, user?.role);
       }
       if (payload?.allowed_branches) {
         setAllowedBranches(payload.allowed_branches);
@@ -386,6 +385,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setRequiresBranchSelection(false);
         }
       } catch {
+        // Continue with user payload from login response
       }
 
       // Admin with multiple branches must pick before dashboard (API is source of truth)
@@ -410,7 +410,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         finalUser?.branch_info?.id ??
         (resp.allowed_branches?.length === 1 ? resp.allowed_branches[0]?.id : undefined);
       if (branchIdForPrefetch && !needsBranchSelection) {
-        void prefetchOnLogin(branchIdForPrefetch);
+        void prefetchOnLogin(branchIdForPrefetch, finalUser?.role);
       }
 
       return {
