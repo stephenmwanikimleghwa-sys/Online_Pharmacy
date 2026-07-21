@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from users.models import User, RoleChoices, Branch
 from users.permissions import IsAdminUser
@@ -60,6 +61,16 @@ def admin_create_user(request):
     permission_flags = data.get('permission_flags') or {}
     if not isinstance(permission_flags, dict):
         return api_validation_error("permission_flags must be an object.")
+
+    # Enforce password strength policy even for admin-created accounts, so users
+    # aren't handed weak credentials they're then forced to keep.
+    try:
+        validate_password(password)
+    except DjangoValidationError as exc:
+        return api_validation_error(
+            "Password does not meet security requirements.",
+            details={"password": list(exc.messages)},
+        )
 
     first_name = ''
     last_name = ''

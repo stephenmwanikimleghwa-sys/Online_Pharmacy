@@ -22,9 +22,7 @@ export function useProducts(filters: Record<string, unknown> = {}) {
 
 export function useInventoryList(filters: Record<string, unknown> = {}) {
   const { activeBranch } = useActiveBranch();
-  // Use server-side pagination: default 50 items per page.
-  // Callers can pass { per_page, page, search, ... } via filters.
-  const params = { per_page: 50, ...filters };
+  const params = { per_page: 5000, ...filters };
   return useQuery({
     queryKey: QUERY_KEYS.inventory(activeBranch?.id, params),
     queryFn: async () => {
@@ -36,14 +34,11 @@ export function useInventoryList(filters: Record<string, unknown> = {}) {
       const products = data.products || data.results || unwrapList(data);
       return {
         products,
-        totalItems: data.totalItems ?? data.total_count ?? products.length,
-        totalPages: data.totalPages ?? data.num_pages ?? 1,
-        currentPage: data.currentPage ?? data.page ?? 1,
+        totalItems: data.totalItems ?? products.length,
         raw: data,
       };
     },
-    staleTime: STALE_TIMES.MEDIUM,
-    refetchOnWindowFocus: false,
+    staleTime: STALE_TIMES.SLOW,
     enabled: !!activeBranch?.id,
   });
 }
@@ -84,8 +79,6 @@ export function useProductAvailability(id: number) {
   });
 }
 
-
-
 export function useLowStockAlerts(branchId?: number) {
   return useQuery({
     queryKey: QUERY_KEYS.lowStockAlerts(branchId ?? 0),
@@ -93,7 +86,6 @@ export function useLowStockAlerts(branchId?: number) {
       api
         .get('/inventory/low-stock/', {
           params: branchId ? { branch: branchId } : {},
-          skipGlobalErrorNotification: true,
         })
         .then((r) => r.data),
     staleTime: STALE_TIMES.MEDIUM,

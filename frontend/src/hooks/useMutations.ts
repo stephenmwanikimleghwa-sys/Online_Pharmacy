@@ -3,22 +3,13 @@ import api from '../services/api';
 import { queryClient } from '../lib/queryClient';
 import { QUERY_KEYS } from '../lib/queryKeys';
 
-/**
- * Mark large catalogue caches as stale WITHOUT immediately re-fetching.
- * The next mount / manual refetch will pick up fresh data.
- * This prevents the "slow reload" after every sale/intake/edit.
- */
-const markInventoryStale = () => {
-  void queryClient.invalidateQueries({ queryKey: ['inventory'], refetchType: 'none' });
-  void queryClient.invalidateQueries({ queryKey: ['products'],  refetchType: 'none' });
-  void queryClient.invalidateQueries({ queryKey: ['stock'],     refetchType: 'none' });
-};
-
 export function useCreateSale() {
   return useMutation({
     mutationFn: (saleData: unknown) => api.post('/inventory/dispense/otc/', saleData),
     onSuccess: () => {
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       void queryClient.invalidateQueries({ queryKey: ['logs', 'dispensing'] });
       void queryClient.invalidateQueries({ queryKey: ['dispensations'] });
@@ -33,7 +24,9 @@ export function useCreateStockIntake() {
       api.post('/inventory/stock-intake/', intakeData),
     onSuccess: (_data, variables) => {
       const branchId = variables.branch;
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
       if (branchId) {
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.expiryAlerts(branchId) });
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.lowStockAlerts(branchId) });
@@ -50,7 +43,9 @@ export function useApproveTransfer() {
     mutationFn: (transferId: number) =>
       api.post(`/inventory/transfers/${transferId}/approve/`),
     onSuccess: () => {
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       void queryClient.invalidateQueries({ queryKey: ['transfers'] });
     },
@@ -61,7 +56,9 @@ export function useCreateProduct() {
   return useMutation({
     mutationFn: (productData: unknown) => api.post('/products/', productData),
     onSuccess: () => {
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      void queryClient.invalidateQueries({ queryKey: ['stock'] });
     },
   });
 }
@@ -72,7 +69,8 @@ export function useUpdateProduct() {
       api.patch(`/products/${id}/`, data),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.productDetail(variables.id) });
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 }
@@ -107,7 +105,7 @@ export function useRecordSupplierPayment() {
     }: {
       supplierId: number;
       paymentData: unknown;
-    }) => api.post(`/inventory/suppliers/${supplierId}/record_payment/`, paymentData),
+    }) => api.post(`/inventory/suppliers/${supplierId}/payments/`, paymentData),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.supplierDetail(variables.supplierId),
@@ -135,7 +133,9 @@ export function useAdjustStock() {
     mutationFn: (adjustmentData: { product_id: number; [key: string]: unknown }) =>
       api.post(`/inventory/${adjustmentData.product_id}/adjust/`, adjustmentData),
     onSuccess: () => {
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
@@ -147,7 +147,9 @@ export function useMarkStockExpired() {
       api.post(`/inventory/expiry/batches/${batchId}/remove/`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['expiry'] });
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 }
@@ -181,7 +183,7 @@ export function useRejectTransfer() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['transfers'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      markInventoryStale();
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 }

@@ -5,14 +5,11 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { AddMedicineModal } from '../components/AddMedicineModal';
 import BulkAddMedicineModal from '../components/BulkAddMedicineModal';
 import StockLogsModal from '../components/StockLogsModal';
-import AdjustStockModal from '../components/AdjustStockModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { inventoryService } from '../services/inventoryService';
-import { queryClient } from '../lib/queryClient';
-import { QUERY_KEYS } from '../lib/queryKeys';
 
 const AdminStock = () => {
 	const { notify } = useNotification();
@@ -28,8 +25,6 @@ const AdminStock = () => {
 	const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 	const [isEditMode, setIsEditMode] = useState(false);
 	const [editingItem, setEditingItem] = useState(null);
-	const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
-	const [selectedItemForAdjust, setSelectedItemForAdjust] = useState(null);
 
 	const getCategoryLabel = (category) => {
 		if (!category && category !== 0) return '';
@@ -56,12 +51,10 @@ const AdminStock = () => {
 		};
 	};
 
-	// Search, filter, and pagination state
-	const [searchQuery, setSearchQuery] = useState('');
-	const [currentPage, setCurrentPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0);
+	// Removed pagination - now loading all products on single page
 
+	// Search and filter state
+	const [searchQuery, setSearchQuery] = useState('');
 	const [filters, setFilters] = useState({
 		lowStock: false,
 		outOfStock: false,
@@ -109,22 +102,17 @@ const AdminStock = () => {
 		fetchItems();
 	}, []);
 
-	// Instant search - refetch when search, filters, or page change
+	// Instant search - refetch when search or filters change (no debounce)
 	useEffect(() => {
 		if (isInitialLoad) return; // Skip on first render
 		const controller = new AbortController();
 		const timeout = setTimeout(() => {
 			fetchItems(controller.signal);
-		}, 400); // Debounce typing to prevent network spam & UI lag
+		}, 50); // Very small delay to batch rapid changes
 		return () => {
 			clearTimeout(timeout);
 			controller.abort();
 		};
-	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category, currentPage]);
-
-	// Reset to page 1 when search or filters change
-	useEffect(() => {
-		if (!isInitialLoad) setCurrentPage(1);
 	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category]);
 
 	const fetchItems = async (signal) => {
@@ -137,10 +125,9 @@ const AdminStock = () => {
 			}
 			setError('');
 
-			// Build query params
+			// Build query params - load ALL products (no pagination)
 			const params = {
-				per_page: 50,
-				page: currentPage,
+				per_page: 99999, // Load all products without pagination limit
 			};
 
 			// Add filters
@@ -150,7 +137,7 @@ const AdminStock = () => {
 			const trimmedSearchQuery = searchQuery.trim();
 			if (trimmedSearchQuery) params.search = trimmedSearchQuery;
 
-			let fetchedProducts = [];
+			let products = [];
 			let totalPagesCount = 1;
 			let totalItemsCount = 0;
 
@@ -163,27 +150,24 @@ const AdminStock = () => {
 				const payload = data.data || data;
 				
 				if (Array.isArray(payload.products)) {
-					fetchedProducts = payload.products;
-					totalItemsCount = payload.totalItems ?? fetchedProducts.length;
+					products = payload.products;
+					totalItemsCount = payload.totalItems ?? products.length;
 					totalPagesCount = payload.totalPages ?? 1;
 				} else if (Array.isArray(payload)) {
-					fetchedProducts = payload;
-					totalItemsCount = fetchedProducts.length;
+					products = payload;
+					totalItemsCount = products.length;
 					totalPagesCount = 1;
 				}
-
-				setItems(fetchedProducts.map(sanitizeItem));
-				setTotalPages(totalPagesCount);
-				setTotalItems(totalItemsCount);
-			} catch (inventoryErr) {
+				} catch (inventoryErr) {
 				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
 				throw inventoryErr;
 			}
 
 			if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
+			setItems(products.map(sanitizeItem));
 
 			// Extract unique categories
-			const uniqueCategories = [...new Set(fetchedProducts.map(p => getCategoryLabel(p.category)).filter(Boolean))];
+			const uniqueCategories = [...new Set(products.map(p => getCategoryLabel(p.category)).filter(Boolean))];
 			setCategories(uniqueCategories.sort());
 
 		} catch (err) {
@@ -220,7 +204,6 @@ const AdminStock = () => {
 			supplier: '',
 			description: '',
 			reorder_threshold: 10,
-			department: 'CHEMIST',
 			image: null,
 		});
 		setIsModalOpen(true);
@@ -248,7 +231,6 @@ const AdminStock = () => {
 			supplier: item.supplier || '',
 			description: item.description || '',
 			reorder_threshold: item.reorder_threshold ?? 10,
-			department: item.department || 'CHEMIST',
 			image: item.image || null,
 		});
 		setIsModalOpen(true);
@@ -272,7 +254,6 @@ const AdminStock = () => {
 			supplier: item.supplier || '',
 			description: item.description || '',
 			reorder_threshold: item.reorder_threshold ?? 10,
-			department: item.department || 'CHEMIST',
 			image: item.image || null,
 		});
 		setIsModalOpen(true);
@@ -361,7 +342,6 @@ const AdminStock = () => {
 
 				data.append('stock_quantity', Number(form.stock_quantity));
 				data.append('dosage_form', form.dosage_form);
-				data.append('department', form.department);
 				data.append('strength', form.strength?.trim() || '');
 				data.append('shelf_location', form.shelf_location?.trim() || '');
 				data.append('description', form.description?.trim() || '');
@@ -380,7 +360,6 @@ const AdminStock = () => {
 					...(form.use_legacy_prices && form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
 					stock_quantity: Number(form.stock_quantity),
 					dosage_form: form.dosage_form,
-					department: form.department,
 					strength: form.strength?.trim() || '',
 					shelf_location: form.shelf_location?.trim() || '',
 					description: form.description?.trim() || '',
@@ -392,43 +371,40 @@ const AdminStock = () => {
 
 			if (isEditMode && editingItem) {
 				await api.patch(`/products/${editingItem.id}/`, data, { headers });
-				queryClient.invalidateQueries({ queryKey: QUERY_KEYS.inventory._def });
 			} else {
 				// Optimistic UI: append a temporary item so user sees the new product immediately
-					const optimisticId = `tmp-${Date.now()}`;
-					const optimisticItem = {
-						id: optimisticId,
-						name: data instanceof FormData ? data.get('name') : data.name,
-						category: data instanceof FormData ? data.get('category') : data.category,
-						price: data instanceof FormData ? data.get('price') : data.price,
-						stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
-						department: data instanceof FormData ? data.get('department') : data.department,
-						expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
-						description: data instanceof FormData ? data.get('description') : data.description,
-						supplier: data instanceof FormData ? data.get('supplier') : data.supplier,
-						optimistic: true,
-					};
-					setItems(prev => [optimisticItem, ...prev]);
-					try {
-						const response = await api.post('/products/', data, { headers });
-						// Replace optimistic item with real server response
-						setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
-						queryClient.invalidateQueries({ queryKey: QUERY_KEYS.inventory._def });
-						notify.success('Product Added', 'The product has been added to the system.');
-						// Background refresh — does NOT trigger a loading spinner
-						void fetchItems();
-					} catch (postErr) {
-						// Remove optimistic item on failure
-						setItems(prev => prev.filter(i => i.id !== optimisticId));
-						notify.error('Add Failed', 'The product could not be added. Please try again.');
-						throw postErr;
-					}
+				const optimisticId = `tmp-${Date.now()}`;
+				const optimisticItem = {
+					id: optimisticId,
+					name: data instanceof FormData ? data.get('name') : data.name,
+					category: data instanceof FormData ? data.get('category') : data.category,
+					price: data instanceof FormData ? data.get('price') : data.price,
+					stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
+					expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
+					description: data instanceof FormData ? data.get('description') : data.description,
+					supplier: data instanceof FormData ? data.get('supplier') : data.supplier,
+					optimistic: true,
+				};
+				setItems(prev => [optimisticItem, ...prev]);
+				try {
+					const response = await api.post('/products/', data, { headers });
+					// Replace optimistic item with server response immediately
+					setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
+					notify.success('Product Added', 'The product has been added to the system.');
+					// optionally fetch in background to refresh pagination/indices
+					fetchItems();
+				} catch (postErr) {
+					// Remove optimistic item on failure and show error toast
+					setItems(prev => prev.filter(i => i.id !== optimisticId));
+					notify.error('Add Failed', 'The product could not be added. Please try again.');
+					throw postErr;
 				}
+			}
 
-				setIsModalOpen(false);
-				setFormErrors({});
-				// Edit path: refresh list after editing
-				if (isEditMode) await fetchItems();
+			setIsModalOpen(false);
+			setFormErrors({});
+			// refresh authoritative data (fetch will replace optimistic entry)
+			await fetchItems();
 			} catch (err) {
 			if (err.response?.data) {
 				// Handle validation errors from backend
@@ -441,11 +417,6 @@ const AdminStock = () => {
 
 	const openLogs = (item) => {
 		setSelectedItemForLogs(item);
-	};
-
-	const openAdjustModal = (item) => {
-		setSelectedItemForAdjust(item);
-		setIsAdjustModalOpen(true);
 	};
 
 	const handleAdjust = async (item) => {
@@ -597,7 +568,7 @@ const AdminStock = () => {
 									const low = !out && item.stock_quantity <= (item.reorder_threshold ?? 10);
 									return (
 									<tr key={String(item.id ?? `row-${idx}`)} className="border-b hover:bg-primary/5 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
-										<td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors ${out ? 'text-slate-400' : 'text-slate-800'}`} style={{ background: 'var(--bg-primary)' }}>
+										<td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors min-w-[12rem] ${out ? 'text-slate-400' : 'text-slate-800'}`} style={{ background: 'var(--bg-primary)' }}>
 											{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}
 										</td>
 										<td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">
@@ -658,7 +629,6 @@ const AdminStock = () => {
 											<div className="flex flex-wrap items-center justify-end gap-1.5">
 												<button onClick={() => openEditModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition-all">Edit</button>
 												<button onClick={() => openDuplicateModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all">Duplicate</button>
-												<button onClick={() => openAdjustModal(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-100 transition-all">Adjust</button>
 												<button onClick={() => navigate('/otc-sales')} className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-all">Quick Sale</button>
 												<button onClick={() => openLogs(item)} className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all">Logs</button>
 											</div>
@@ -670,50 +640,7 @@ const AdminStock = () => {
 						</table>
 					</div>
 
-					{/* ── Pagination Controls ── */}
-					{totalPages > 1 && (
-						<div className="flex items-center justify-between p-4 bg-white/5 border-t border-white/10">
-							<p className="text-xs font-medium text-slate-500">
-								Page {currentPage} of {totalPages} &middot; {totalItems} items total
-							</p>
-							<div className="flex items-center gap-2">
-								<button
-									onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-									disabled={currentPage === 1 || loading}
-									className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 transition-all disabled:opacity-40"
-								>
-									← Prev
-								</button>
-								{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-									let page = i + 1;
-									if (totalPages > 5) {
-										page = Math.min(Math.max(currentPage - 2, 1) + i, totalPages - (4 - i));
-									}
-									return (
-										<button
-											key={page}
-											onClick={() => setCurrentPage(page)}
-											disabled={loading}
-											className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-40 ${
-												page === currentPage
-													? 'border-primary-500 bg-primary-50 text-primary-700'
-													: 'border-slate-200 text-slate-700 hover:bg-slate-50'
-											}`}
-										>
-											{page}
-										</button>
-									);
-								})}
-								<button
-									onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-									disabled={currentPage === totalPages || loading}
-									className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 transition-all disabled:opacity-40"
-								>
-									Next →
-								</button>
-							</div>
-						</div>
-					)}
+					{/* Removed pagination - all products loaded on single scrollable page */}
 				</div>
 			</ErrorBoundary>
 
@@ -739,17 +666,6 @@ const AdminStock = () => {
 				<StockLogsModal 
 					item={selectedItemForLogs} 
 					onClose={() => setSelectedItemForLogs(null)} 
-				/>
-			)}
-
-			{isAdjustModalOpen && (
-				<AdjustStockModal
-					item={selectedItemForAdjust}
-					onClose={() => {
-						setIsAdjustModalOpen(false);
-						setSelectedItemForAdjust(null);
-					}}
-					onSuccess={() => fetchItems()}
 				/>
 			)}
 		</div>

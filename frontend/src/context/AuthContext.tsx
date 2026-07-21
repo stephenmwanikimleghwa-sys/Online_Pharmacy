@@ -13,6 +13,7 @@ import { extractStructuredError } from "../utils/apiErrorDisplay";
 import { useNavigate } from "react-router-dom";
 import { prefetchOnLogin } from "../lib/prefetchOnLogin";
 import { queryClient } from "../lib/queryClient";
+import { clearApiCache } from "../lib/serviceWorker";
 
 export const ACTIVE_BRANCH_STORAGE_KEY = "active_branch";
 
@@ -433,16 +434,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    const refreshToken = localStorage.getItem("refresh_token");
-    // Fire-and-forget: blacklist token server-side (don't await so UI responds instantly)
-    if (refreshToken) {
-      api.post("/auth/logout/", { refresh: refreshToken }).catch(() => {
-        // Ignore errors — local cleanup still proceeds
-      });
-    }
-
     notifySuccess("Logged Out", "You have been logged out safely.");
     queryClient.clear();
+    // Purge the service worker's cached API reads so the next user on a shared
+    // machine cannot see the previous user's data.
+    clearApiCache();
     setToken(null);
     setUser(null);
     setActiveBranchState(null);

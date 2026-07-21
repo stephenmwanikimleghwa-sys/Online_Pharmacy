@@ -32,7 +32,9 @@ def health_check(request):
     except Exception as e:
         health_status["status"] = "unhealthy"
         health_status["checks"]["database"] = False
-        health_status["database_error"] = str(e)
+        # Log full error server-side; don't leak connection details to callers.
+        import logging
+        logging.getLogger(__name__).error("health_check_db_error: %s", e)
     
     # Check Redis connection (if configured)
     try:
@@ -44,18 +46,9 @@ def health_check(request):
                 health_status["checks"]["redis"] = False
                 health_status["redis_warning"] = (
                     "REDIS_URL is not a valid Redis URL. "
-                    "It must start with redis://, rediss://, or unix://. "
-                    f"Got prefix: {redis_url[:15]}..."
+                    "It must start with redis://, rediss://, or unix://."
                 )
             else:
-                # Mask sensitive info but show scheme for debugging
-                scheme = redis_url.split("://")[0]
-                health_status["redis_debug"] = {
-                    "has_scheme": True,
-                    "scheme": scheme,
-                    "prefix": redis_url[:10] + "..."
-                }
-                
                 r = redis.from_url(redis_url)
                 r.ping()
                 health_status["checks"]["redis"] = True
@@ -63,30 +56,21 @@ def health_check(request):
             health_status["checks"]["redis"] = False
             health_status["redis_warning"] = "REDIS_URL not configured"
     except Exception as e:
-        # Redis is optional, so we don't fail the health check
+        # Redis is optional, so we don't fail the health check.
+        # Log details server-side; don't leak them to unauthenticated callers.
+        import logging
+        logging.getLogger(__name__).warning("health_check_redis_error: %s", e)
         health_status["checks"]["redis"] = False
-        health_status["redis_error_type"] = type(e).__name__
-        health_status["redis_warning"] = "Redis error: " + str(e)
-    
-    # Diagnostic logging for Render (check for SSL/Proxy issues)
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info("DEBUG: Health check request headers: %s", dict(request.headers))
-    logger.info("DEBUG: Request is_secure: %s", request.is_secure())
+        health_status["redis_warning"] = "Redis unavailable"
 
-    # Deeper diagnostics for the database issue
-    db_cfg = settings.DATABASES.get("default", {})
-    health_status["database_params"] = {
-        "host": db_cfg.get("HOST"),
-        "port": db_cfg.get("PORT"),
-        "name": db_cfg.get("NAME"),
-        "engine": db_cfg.get("ENGINE"),
-        "options": {k: v for k, v in db_cfg.get("OPTIONS", {}).items() if k != "password"},
-    }
+    # NOTE: This endpoint is unauthenticated. Do not expose infrastructure
+    # details (DB host/port/name, connection options) or log request headers
+    # (which include the Authorization bearer token) here — that is an
+    # information-disclosure risk. Keep the response to status + checks only.
 
     # Return appropriate status code
     status_code = 200 if health_status["status"] == "healthy" else 503
-    
+
     return JsonResponse(health_status, status=status_code)
 
 

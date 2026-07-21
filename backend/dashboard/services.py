@@ -10,7 +10,7 @@ from inventory.models import Dispensation, InterBranchTransfer
 from orders.models import Order
 from products.models import BranchStock, Product
 from users.branch_auth import get_allowed_branches
-from users.models import Branch, User, StaffActivityLog
+from users.models import Branch, User
 
 
 def _branches_for_admin(user):
@@ -32,7 +32,7 @@ def build_global_overview(user):
         for d in Dispensation.objects
         .filter(branch_id__in=branch_ids, dispensed_at__date=today)
         .values('branch_id')
-        .annotate(count=Count('id'), revenue=Sum('total_amount'), discounts=Sum('discount'))
+        .annotate(count=Count('id'), revenue=Sum('total_amount'))
     }
 
     # Single bulk query: today's order count + revenue per branch
@@ -64,7 +64,6 @@ def build_global_overview(user):
 
     branches = []
     total_revenue = 0.0
-    total_discounts = 0.0
     total_sales = 0
     total_low_stock = 0
 
@@ -74,7 +73,6 @@ def build_global_overview(user):
         o = order_map.get(bid, {})
         sales_count = (d.get('count') or 0) + (o.get('count') or 0)
         revenue_f = float(d.get('revenue') or 0) + float(o.get('revenue') or 0)
-        discounts_f = float(d.get('discounts') or 0)
         low_stock = low_stock_map.get(bid, 0)
         products_count = products_map.get(bid, 0)
 
@@ -88,81 +86,29 @@ def build_global_overview(user):
             "today_revenue": revenue_f,
         })
         total_revenue += revenue_f
-        total_discounts += discounts_f
         total_sales += sales_count
         total_low_stock += low_stock
 
-    # Session tracking for today
-    today_start = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.min.time()))
-    logs = StaffActivityLog.objects.filter(
-        timestamp__gte=today_start,
-        event_type__in=['LOGIN', 'LOGOUT']
-    ).select_related('user', 'user__branch').order_by('timestamp')
-
-    user_sessions_map = {}
-    for log in logs:
-        if not log.user:
-            continue
-        uid = log.user.id
-        if uid not in user_sessions_map:
-            user_sessions_map[uid] = {
-                "id": uid,
-                "username": log.user.username,
-                "role": log.user.role,
-                "branch": log.user.branch.name if log.user.branch else None,
-                "login_time": None,
-                "logout_time": None,
-                "duration_minutes": 0,
-                "is_active": False,
-                "last_activity": log.user.last_activity,
-            }
-        
-        session = user_sessions_map[uid]
-        if log.event_type == 'LOGIN':
-            session['login_time'] = log.timestamp
-            session['logout_time'] = None
-            session['is_active'] = True
-        elif log.event_type == 'LOGOUT':
-            if session['login_time']:
-                diff = log.timestamp - session['login_time']
-                session['duration_minutes'] += int(diff.total_seconds() / 60)
-            session['logout_time'] = log.timestamp
-            session['is_active'] = False
-
-    # For users who never logged out, calculate duration up to now (or their last activity)
-    now = timezone.now()
-    active_threshold = now - timedelta(minutes=15)
-    
-    for uid, session in user_sessions_map.items():
-        if session['is_active'] and session['login_time']:
-            # If their last API call was > 15 mins ago, consider them implicitly logged out
-            if session['last_activity'] and session['last_activity'] < active_threshold:
-                session['is_active'] = False
-                session['logout_time'] = session['last_activity']
-                diff = session['logout_time'] - session['login_time']
-                session['duration_minutes'] += int(max(0, diff.total_seconds() / 60))
-            else:
-                diff = now - session['login_time']
-                session['duration_minutes'] += int(diff.total_seconds() / 60)
-                
-        # Format times for JSON
-        session['login_time'] = session['login_time'].isoformat() if session['login_time'] else None
-        session['logout_time'] = session['logout_time'].isoformat() if session['logout_time'] else None
-        # Remove last_activity to keep payload clean
-        session.pop('last_activity', None)
-
-    # Convert map to list, sort by is_active (True first), then duration
-    user_sessions_today = sorted(
-        user_sessions_map.values(), 
-        key=lambda x: (-int(x['is_active']), -x['duration_minutes'])
-    )
+    # Single query for recently active users
+    threshold = timezone.now() - timedelta(minutes=15)
+    active_users = [
+        {
+            "id": u.id,
+            "username": u.username,
+            "role": u.role,
+            "branch": u.branch.name if u.branch else None,
+            "last_activity": u.last_activity.isoformat() if u.last_activity else None,
+        }
+        for u in User.objects
+        .filter(is_active=True, last_activity__gte=threshold)
+        .select_related('branch')
+    ]
 
     return {
         "branches": branches,
-        "active_users": user_sessions_today, # Kept same key for backward compatibility, but data is richer
+        "active_users": active_users,
         "totals": {
             "total_revenue_today": total_revenue,
-            "total_discounts_today": total_discounts,
             "total_sales_today": total_sales,
             "total_low_stock": total_low_stock,
         },

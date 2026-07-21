@@ -163,7 +163,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                 
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Amount (KES)</label>
-                  <input type="number" step="0.01" inputMode="decimal" value={amount} onChange={e=>setAmount(e.target.value)} required className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/50 text-sm font-bold text-slate-700" placeholder="0.00" />
+                  <input type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/50 text-sm font-bold text-slate-700" placeholder="0.00" />
                 </div>
                 
                 <div>

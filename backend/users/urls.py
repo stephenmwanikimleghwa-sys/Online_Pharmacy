@@ -10,13 +10,11 @@ from .views.core_views import (
     UserLoginView,
     UserProfileView,
     ChangePasswordView,
-    LogoutView,
     admin_user_list,
     verify_pharmacist,
     profile,
     PasswordResetRequestView,
     PasswordResetConfirmView,
-    delete_my_account,
 )
 from .views.branch_auth_views import SwitchBranchView
 from .views.admin_views import (
@@ -46,12 +44,10 @@ router.register(r'customers', CustomerViewSet, basename='customer')
 urlpatterns = [
     path('', include(router.urls)),
     path("login/", UserLoginView.as_view(), name="login"),
-    path("logout/", LogoutView.as_view(), name="logout"),
     path("switch-branch/", SwitchBranchView.as_view(), name="switch_branch"),
     # Profile management
     # Simple function-based profile endpoint returns the authenticated user's data
     path("profile/", profile, name="profile"),
-    path("profile/delete/", delete_my_account, name="delete_my_account"),
     path(
         "change-password/", ChangePasswordView.as_view(), name="change_password"
     ),

@@ -121,11 +121,11 @@ const ConsultationWorkflow = () => {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">Temp (°C)</label>
-              <input type="number" step="0.1" inputMode="decimal" className="form-input w-full rounded-xl" value={vitals.temperature} onChange={e => setVitals({...vitals, temperature: e.target.value})} disabled={consultation.is_paid} />
+              <input type="number" step="0.1" className="form-input w-full rounded-xl" value={vitals.temperature} onChange={e => setVitals({...vitals, temperature: e.target.value})} disabled={consultation.is_paid} />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">Weight (kg)</label>
-              <input type="number" step="0.1" inputMode="decimal" className="form-input w-full rounded-xl" value={vitals.weight} onChange={e => setVitals({...vitals, weight: e.target.value})} disabled={consultation.is_paid} />
+              <input type="number" step="0.1" className="form-input w-full rounded-xl" value={vitals.weight} onChange={e => setVitals({...vitals, weight: e.target.value})} disabled={consultation.is_paid} />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">BP Systolic</label>

@@ -16,8 +16,8 @@ from products.serializers import ProductSerializer
 from ..serializers import StockLogSerializer
 from config.api_responses import ApiErrorCode, api_error, api_validation_error
 from users.utils import log_activity
+from utils.cached_view import cached_view
 from ..models.stock_intake import StockIntake
-from utils.filters import filter_products_by_branch_type, get_allowed_product_types
 
 @api_view(["GET"])
 @permission_classes([IsPharmacistOrAdmin])
@@ -29,34 +29,35 @@ def inventory_summary(request):
     
     qs = BranchStock.objects.filter(product__is_active=True)
     active = get_active_branch(request)
+
+    # Resolve the branch scope this request is counting over. The cache key must
+    # include this scope so an admin viewing branch A never gets branch B's
+    # counts. Falls back to a per-user key when no branch is resolved.
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
+        scope = f"branch_{branch_param}"
     elif active:
         qs = qs.filter(branch=active)
+        scope = f"branch_{active.id}"
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
-        
-    target_branch = None
-    if is_admin and branch_param and branch_param != 'all':
-        target_branch = Branch.objects.filter(id=branch_param).first()
-    elif active:
-        target_branch = active
-    elif not is_admin and user.branch:
-        target_branch = user.branch
+        scope = f"branch_{user.branch_id}"
+    else:
+        scope = f"user_{user.id}_all"
 
-    allowed_types = get_allowed_product_types(target_branch)
-    if allowed_types:
-        qs = qs.filter(product__product_type__in=allowed_types)
-        
-    total_products = qs.values('product_id').distinct().count()
-    low_stock_items = qs.filter(quantity__lte=F('reorder_level'), quantity__gt=0).count()
-    out_of_stock_items = qs.filter(quantity__lte=0).count()
+    def _compute():
+        return {
+            "totalProducts": qs.values('product_id').distinct().count(),
+            "lowStockItems": qs.filter(
+                quantity__lte=F('reorder_level'), quantity__gt=0
+            ).count(),
+            "outOfStockItems": qs.filter(quantity__lte=0).count(),
+        }
 
-    return Response({
-        "totalProducts": total_products,
-        "lowStockItems": low_stock_items,
-        "outOfStockItems": out_of_stock_items,
-    })
+    # Short TTL: these counts change on every sale/intake. 30s cuts repeated DB
+    # load from dashboards that poll without risking long-lived stale data.
+    data = cached_view(f"inventory_summary_{scope}", _compute, timeout=30)
+    return Response(data)
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -74,18 +75,6 @@ def inventory_list(request):
             .order_by("name")
         )
 
-        active_branch = get_active_branch(request)
-        target_branch = None
-        if is_admin and branch_param and branch_param != 'all':
-            target_branch = Branch.objects.filter(id=branch_param).first()
-        elif active_branch:
-            target_branch = active_branch
-        elif not is_admin and user.branch:
-            target_branch = user.branch
-            
-        if target_branch:
-            products = filter_products_by_branch_type(products, target_branch)
-
         search = request.GET.get("search", "").strip()
         if search:
             products = products.filter(
@@ -98,20 +87,26 @@ def inventory_list(request):
         if category:
             products = products.filter(category=category)
 
-        # Always paginate — cap per_page at 200 to prevent database dumps.
-        # Frontend default is 50 items/page; legacy callers requesting 5000+ get capped.
-        per_page_raw = int(request.GET.get("per_page", 50))
-        per_page = min(per_page_raw, 200)
+        # No pagination for inventory management - return all products
+        # When per_page is large (99999), return all results without pagination
+        per_page = int(request.GET.get("per_page", 99999))
         page = request.GET.get("page", 1)
-
-        paginator = Paginator(products, per_page)
-        try:
-            products_page = paginator.page(page)
-        except PageNotAnInteger:
-            products_page = paginator.page(1)
-        except EmptyPage:
-            products_page = paginator.page(paginator.num_pages)
-        total_count = paginator.count
+        paginator = None
+        
+        if per_page >= 99999:
+            # Return all products without pagination
+            products_page = products
+            total_count = products.count()
+        else:
+            # Fallback to pagination if per_page is reasonable
+            paginator = Paginator(products, per_page)
+            try:
+                products_page = paginator.page(page)
+            except PageNotAnInteger:
+                products_page = paginator.page(1)
+            except EmptyPage:
+                products_page = paginator.page(paginator.num_pages)
+            total_count = paginator.count
 
         # Serialize
         serialized_products = ProductSerializer(products_page, many=True).data
@@ -188,13 +183,23 @@ def inventory_list(request):
                 except Exception:
                     pass
         
-        # Build response — always paginated
-        response_data = {
-            "products": serialized_products,
-            "totalPages": paginator.num_pages,
-            "currentPage": int(page),
-            "totalItems": total_count,
-        }
+        # Build response - handle both paginated and non-paginated responses
+        if paginator is None:
+            # Non-paginated response
+            response_data = {
+                "products": serialized_products,
+                "totalPages": 1,
+                "currentPage": 1,
+                "totalItems": total_count,
+            }
+        else:
+            # Paginated response
+            response_data = {
+                "products": serialized_products,
+                "totalPages": paginator.num_pages,
+                "currentPage": int(page),
+                "totalItems": paginator.count,
+            }
 
         return Response(response_data)
 
@@ -215,7 +220,7 @@ def inventory_list(request):
         )
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def low_stock_items(request):
     """Get list of low stock items."""
     from django.db.models import Prefetch
@@ -243,23 +248,16 @@ def low_stock_items(request):
     data = []
     from inventory.views.supplier import low_stock_reorder_suggestion
     branch_id = None
-    target_branch = None
     if is_admin and branch_param and branch_param != 'all':
         branch_id = int(branch_param)
-        target_branch = Branch.objects.filter(id=branch_id).first()
     elif not is_admin and user.branch:
         branch_id = user.branch.id
-        target_branch = user.branch
-        
-    allowed_types = get_allowed_product_types(target_branch)
-    if allowed_types:
-        qs = qs.filter(product__product_type__in=allowed_types)
 
     for bs in qs:
         prod_data = ProductSerializer(bs.product).data
         prod_data['stock_quantity'] = float(bs.quantity)
         prod_data['reorder_level'] = float(bs.reorder_level)
-        if request.query_params.get('with_suggestions', 'false').lower() == 'true':
+        if request.query_params.get('with_suggestions', 'true').lower() != 'false':
             prod_data['reorder_intelligence'] = low_stock_reorder_suggestion(
                 bs.product_id, branch_id or bs.branch_id
             )
@@ -268,7 +266,7 @@ def low_stock_items(request):
     return Response(data)
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def out_of_stock_items(request):
     """Get list of out of stock items."""
     user = request.user
@@ -287,16 +285,8 @@ def out_of_stock_items(request):
     )
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
-        target_branch = Branch.objects.filter(id=branch_param).first()
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
-        target_branch = user.branch
-    else:
-        target_branch = None
-        
-    allowed_types = get_allowed_product_types(target_branch)
-    if allowed_types:
-        qs = qs.filter(product__product_type__in=allowed_types)
     
     data = []
     for bs in qs:
@@ -307,7 +297,7 @@ def out_of_stock_items(request):
     return Response(data)
 
 @api_view(["GET"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAuditorOrAdmin])
 def inventory_detail(request, pk):
     """Get detailed information about a specific inventory item."""
     product = get_object_or_404(Product, pk=pk, is_active=True)
@@ -582,9 +572,6 @@ def branch_stock_view(request):
     product_id = request.query_params.get("product_id")
     if product_id:
         products_qs = products_qs.filter(id=product_id)
-        
-    if not is_admin:
-        products_qs = filter_products_by_branch_type(products_qs, active_branch)
 
     if is_admin:
         branches = list(Branch.objects.filter(is_active=True).order_by("name"))

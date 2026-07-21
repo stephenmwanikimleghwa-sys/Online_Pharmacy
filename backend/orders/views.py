@@ -12,7 +12,6 @@ from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
 from users.models import User
 from payments.models import Payment
 from payments.models import PaymentMethodChoices
-from users.utils import log_activity, sanitize_log_input
 import stripe
 from django.conf import settings
 from django.utils import timezone
@@ -24,7 +23,7 @@ from django.db import transaction
 import requests
 import base64
 import json
-import structlog
+import logging
 from datetime import datetime
 from django.core.cache import cache
 from products.models import Product, BranchStock, StockLog
@@ -32,7 +31,7 @@ from users.active_branch import get_active_branch, require_active_branch
 from config.api_responses import ApiErrorCode, api_error, api_success
 from .models import Order, OrderItem, OrderStatusChoices, OrderTemplate, OrderTemplateItem
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -50,7 +49,7 @@ def quick_sale(request):
     active_branch = get_active_branch(request)
 
     try:
-        logger.debug("quick_sale_initiated", user_id=request.user.id, branch_id=active_branch.id)
+        logger.debug(f"Quick sale initiated by user {request.user.id} at branch {active_branch.id}")
 
         items = request.data.get('items', [])
         requested_payment_method = (request.data.get("payment_method") or "cash").strip().lower()
@@ -185,7 +184,7 @@ def quick_sale(request):
                     notes=f"Quick sale at {active_branch.name}",
                 )
             except Exception as log_exc:
-                logger.warning("dispensing_log_skipped", error=str(log_exc))
+                logger.warning("DispensingLog skipped: %s", log_exc)
 
             total_amount += order_item.subtotal
 
@@ -227,7 +226,7 @@ def quick_sale(request):
                     notes=f"Requested payment method: {requested_payment_method}",
                 )
         except Exception as pay_exc:
-            logger.error("payment_record_failed", order_id=order.id, error=str(pay_exc))
+            logger.error("Payment record failed for order %s: %s", order.id, pay_exc)
             order.delete()
             return api_error(
                 ApiErrorCode.VALIDATION_ERROR,
@@ -265,7 +264,7 @@ def quick_sale(request):
         )
 
     except Exception as e:
-        logger.exception("quick_sale_error", error=str(e))
+        logger.error("Quick sale error: %s", e, exc_info=True)
         return api_error(
             ApiErrorCode.VALIDATION_ERROR,
             "Something went wrong while processing the sale. Please try again.",
@@ -595,10 +594,10 @@ def mpesa_callback(request):
     DEPRECATED: Use payments.views.mpesa_callback instead for secure webhook handling.
     This endpoint is kept for backward compatibility only.
     """
-    logger.warning("deprecated_mpesa_callback_endpoint_used")
+    logger.warning("M-Pesa callback received on deprecated endpoint (orders.views). Use payments.views instead.")
     try:
         callback_data = json.loads(request.body)
-        logger.debug("mpesa_callback_received_deprecated")
+        logger.debug("M-Pesa callback received (deprecated endpoint)")
 
         # Process each transaction
         for result in callback_data.get("Body", {}).get("stkCallback", {}).get("CallbackMetadata", []) or []:
@@ -633,10 +632,9 @@ def mpesa_callback(request):
                         # Update order
                         payment.order.status = "paid"
                         payment.order.save()
-                        logger.info("deprecated_mpesa_payment_completed", receipt=receipt)
+                        logger.info(f"M-Pesa payment completed (deprecated endpoint): receipt={receipt}")
                     except Payment.DoesNotExist:
-                        safe_id = sanitize_log_input(checkout_id)
-                        logger.error("payment_not_found_for_checkout_id", checkout_id=safe_id)
+                        logger.error(f"Payment not found for checkout_id {checkout_id}")
 
                 else:
                     error_msg = callback_data["Body"]["stkCallback"].get("ResultDesc", "Payment failed")
@@ -645,16 +643,13 @@ def mpesa_callback(request):
                         payment = Payment.objects.get(reference=checkout_id, method="mpesa")
                         payment.status = "failed"
                         payment.save()
+                        logger.warning(f"M-Pesa payment failed: {error_msg}")
                     except Payment.DoesNotExist:
-                        safe_id = sanitize_log_input(checkout_id)
-                        safe_err = sanitize_log_input(error_msg)
-                        logger.warning("mpesa_payment_failed_deprecated", error=safe_err)
-                        logger.error("payment_not_found_for_failed_checkout_id", checkout_id=safe_id)
+                        logger.error(f"Payment not found for failed checkout_id {checkout_id}")
 
         return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
     except Exception as e:
-        safe_err = sanitize_log_input(str(e))
-        logger.exception("deprecated_mpesa_callback_error", error=safe_err)
+        logger.error(f"M-Pesa callback error (deprecated endpoint): {str(e)}", exc_info=True)
         return JsonResponse(
             {"ResultCode": 1, "ResultDesc": "Processing error"},
             status=500
@@ -667,24 +662,22 @@ def stripe_webhook(request):
     DEPRECATED: Use payments.views.stripe_webhook instead for secure webhook handling.
     This endpoint is kept for backward compatibility only.
     """
-    logger.warning("deprecated_stripe_webhook_endpoint_used")
+    logger.warning("Stripe webhook received on deprecated endpoint (orders.views). Use payments.views instead.")
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
     if not endpoint_secret:
-        logger.error("stripe_webhook_secret_missing_deprecated")
+        logger.error("STRIPE_WEBHOOK_SECRET not configured")
         return JsonResponse({"error": "Webhook not configured"}, status=500)
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
-        safe_err = sanitize_log_input(str(e))
-        logger.warning("invalid_stripe_payload_deprecated", error=safe_err)
+        logger.warning(f"Invalid Stripe webhook payload: {str(e)}")
         return JsonResponse({"error": "Invalid payload"}, status=400)
     except stripe.error.SignatureVerificationError as e:
-        safe_err = sanitize_log_input(str(e))
-        logger.warning("invalid_stripe_signature_deprecated", error=safe_err)
+        logger.warning(f"Invalid Stripe webhook signature: {str(e)}")
         return JsonResponse({"error": "Invalid signature"}, status=401)
 
     if event["type"] == "payment_intent.succeeded":
@@ -702,11 +695,10 @@ def stripe_webhook(request):
             order.status = "paid"
             order.save()
 
-            logger.info("deprecated_stripe_payment_completed", order_id=order_id, reference=reference)
+            logger.info(f"Stripe payment completed (deprecated endpoint): order_id={order_id}, reference={reference}")
 
         except Payment.DoesNotExist:
-            safe_ref = sanitize_log_input(reference)
-            logger.error("stripe_payment_not_found_deprecated", reference=safe_ref)
+            logger.error(f"Payment not found for Stripe reference {reference}")
             return JsonResponse({"error": "Payment not found"}, status=404)
 
     return JsonResponse({"status": "success"}, status=200)
@@ -758,10 +750,9 @@ def get_receipt_pdf(request, pk):
     safe_branch_name = slugify(branch_name).replace('-', '_') or "transcounty_main"
     safe_payment_method = slugify(payment_method).replace('-', '_') or "unknown"
     receipt_date = order.created_at.strftime("%Y%m%d") if order.created_at else timezone.now().strftime("%Y%m%d")
-    timestamp = timezone.now().strftime("%H%M%S")
     filename = (
         f"{safe_branch_name}_receipt_{order.id}_"
-        f"{safe_payment_method}_{receipt_date}_{timestamp}.pdf"
+        f"{safe_payment_method}_{receipt_date}.pdf"
     )
     return FileResponse(
         pdf_buffer,

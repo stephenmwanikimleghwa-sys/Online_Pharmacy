@@ -338,7 +338,6 @@ const Login: React.FC = () => {
                 name="username"
                 type="text"
                 required
-                autoComplete="username"
                 value={credentials.username}
                 onChange={handleChange}
                 placeholder="Username / Email Address"
@@ -355,7 +354,6 @@ const Login: React.FC = () => {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
-                autoComplete="current-password"
                 value={credentials.password}
                 onChange={handleChange}
                 placeholder="Password"
@@ -371,17 +369,6 @@ const Login: React.FC = () => {
                 {showPassword
                   ? <EyeSlashIcon style={{ width: 18, height: 18 }} />
                   : <EyeIcon style={{ width: 18, height: 18 }} />}
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', marginBottom: '16px' }}>
-              <button
-                type="button"
-                onClick={() => navigate('/password-reset')}
-                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-              >
-                Forgot password?
               </button>
             </div>
 
@@ -419,7 +406,7 @@ const Login: React.FC = () => {
 
       {/* Responsive tweak for small screens */}
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
           .login-card-left { display: none !important; }
         }
         .login-input::placeholder {

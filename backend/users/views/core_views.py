@@ -3,7 +3,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.throttling import AnonRateThrottle
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
@@ -12,6 +11,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.vary import vary_on_headers
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from users.serializers import (
     UserLoginSerializer,
     UserProfileSerializer,
@@ -22,7 +23,6 @@ from users.serializers import (
 )
 from users.models import User, RoleChoices
 from users.permissions import IsAdminUser
-from users.utils import log_activity
 from users.branch_auth import (
     issue_tokens,
     login_user_payload,
@@ -35,23 +35,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class LoginRateThrottle(AnonRateThrottle):
-    """Strict rate limit for the login endpoint: 5 attempts per minute per IP."""
-    scope = "login"
-
-
 # Registration views removed - only admin can create users
 
 
 class UserLoginView(APIView):
     """
     Login view to authenticate users and return JWT tokens.
-    Throttled to 5 requests/minute per IP to prevent brute-force attacks.
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
 
+    # Throttle brute-force attempts by client IP. The global DRF AnonRateThrottle
+    # (100/hour) is too loose for credential stuffing on the login endpoint.
+    @method_decorator(ratelimit(key="ip", rate="10/m", block=True))
     def post(self, request):
         try:
             serializer = UserLoginSerializer(data=request.data)
@@ -224,33 +220,14 @@ def profile(request):
             return Response(UserProfileSerializer(request.user).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(["DELETE"])
-@permission_classes([IsAuthenticated])
-def delete_my_account(request):
-    """
-    GDPR / Kenya DPA 2019 Right to Erasure.
-    Soft deletes the user account.
-    """
-    user = request.user
-    log_activity(
-        user=user,
-        event_type='ACCOUNT_DELETION_REQUESTED',
-        ip_address=request.META.get('REMOTE_ADDR'),
-        details_dict={'username': user.username}
-    )
-    user.is_active = False
-    user.save()
-    return api_success(
-        "Account deactivated successfully. Contact admin for full data erasure.",
-        http_status=status.HTTP_200_OK
-    )
-
 class PasswordResetRequestView(APIView):
     """
     Step 1: Request a password reset link.
     """
     permission_classes = [AllowAny]
 
+    # Throttle by IP to prevent reset-email flooding / enumeration probing.
+    @method_decorator(ratelimit(key="ip", rate="5/m", block=True))
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -291,6 +268,8 @@ class PasswordResetConfirmView(APIView):
     """
     permission_classes = [AllowAny]
 
+    # Throttle by IP to prevent brute-forcing the reset token.
+    @method_decorator(ratelimit(key="ip", rate="10/m", block=True))
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():
@@ -317,27 +296,3 @@ class PasswordResetConfirmView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LogoutView(APIView):
-    """
-    Logout view that blacklists the refresh token, preventing reuse.
-    Requires the refresh token in the request body.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        try:
-            from rest_framework_simplejwt.tokens import RefreshToken
-            from rest_framework_simplejwt.exceptions import TokenError
-            refresh_token = request.data.get("refresh")
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
-        except TokenError:
-            # Token already blacklisted or invalid — treat as successful logout
-            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
-        except Exception as exc:
-            logger.warning("Logout error: %s", exc)
-            return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)

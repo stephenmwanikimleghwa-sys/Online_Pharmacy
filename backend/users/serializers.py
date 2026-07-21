@@ -81,10 +81,36 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
 
 class UserUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating user profile."""
+    """Serializer for a user updating THEIR OWN profile.
+
+    SECURITY: This serializer is used by self-service endpoints (profile PATCH),
+    so it must never expose privilege- or state-controlling fields. Do NOT add
+    `role`, `is_active`, `is_verified`, `is_staff`, `is_superuser`, `branch`,
+    `pharmacy`, `permission_flags`, or any `can_*` flag here — those are
+    admin-only and belong in admin_views.update_user. Adding one would let any
+    authenticated user escalate their own privileges.
+    """
     class Meta:
         model = User
         fields = ['email', 'phone_number', 'profile_picture', 'first_name', 'last_name', 'address', 'date_of_birth']
+
+    # Fields that must never be settable through self-service profile updates.
+    _FORBIDDEN_FIELDS = frozenset({
+        'role', 'is_active', 'is_verified', 'is_staff', 'is_superuser',
+        'branch', 'pharmacy', 'permission_flags', 'can_process_sales',
+        'can_manage_inventory', 'can_edit_prices', 'can_view_reports',
+        'can_view_financials', 'can_manage_users', 'can_delete_records',
+        'can_view_audit_logs', 'can_transfer_stock',
+    })
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Fail loudly at import/instantiation time if a privilege field ever
+        # leaks into this serializer's field set.
+        leaked = self._FORBIDDEN_FIELDS & set(self.fields)
+        assert not leaked, (
+            f"UserUpdateSerializer must not expose privilege fields: {sorted(leaked)}"
+        )
 
 class UserLoginSerializer(serializers.Serializer):
     """Serializer for user login."""
@@ -122,19 +148,8 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
-    def validate_old_password(self, value):
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
-            if not request.user.check_password(value):
-                raise serializers.ValidationError("Incorrect old password.")
-        return value
-
     def validate_new_password(self, value):
-        from django.core.exceptions import ValidationError as DjangoValidationError
-        try:
-            validate_password(value)
-        except DjangoValidationError as exc:
-            raise serializers.ValidationError(list(exc.messages))
+        validate_password(value)
         return value
 
 class PasswordResetRequestSerializer(serializers.Serializer):
@@ -154,11 +169,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True)
 
     def validate_new_password(self, value):
-        from django.core.exceptions import ValidationError as DjangoValidationError
-        try:
-            validate_password(value)
-        except DjangoValidationError as exc:
-            raise serializers.ValidationError(list(exc.messages))
+        validate_password(value)
         return value
 
 class StaffActivityLogSerializer(serializers.ModelSerializer):

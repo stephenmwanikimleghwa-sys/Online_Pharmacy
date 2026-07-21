@@ -298,199 +298,102 @@ def supplier_scorecard(supplier_id):
 
 
 def procurement_analytics():
-    """
-    Full procurement analytics report.
-
-    Performance strategy:
-    - ALL StockIntake rows for the last 12 months are fetched in ONE query.
-    - Supplier comparison is done in Python (no per-product DB loops).
-    - Result is cached for 15 minutes to avoid recomputing on every page load.
-    """
-    from django.core.cache import cache
-    from inventory.models.supplier import Supplier
-
-    CACHE_KEY = "procurement_analytics_v2"
-    CACHE_TTL = 60 * 15  # 15 minutes
-
-    cached = cache.get(CACHE_KEY)
-    if cached is not None:
-        return cached
-
     twelve_months_ago = timezone.now() - timedelta(days=365)
-    three_months_ago = timezone.now() - timedelta(days=90)
+    intakes = StockIntake.objects.filter(received_date__gte=twelve_months_ago)
 
-    # ── 1. Bulk fetch all intakes for the year ──────────────────────────────
-    intakes = list(
-        StockIntake.objects.filter(received_date__gte=twelve_months_ago)
-        .select_related("supplier")
-        .values(
-            "id",
-            "product_id",
-            "supplier_id",
-            "supplier__name",
-            "unit_cost",
-            "total_cost",
-            "received_date",
-            "invoice_number",
-        )
-        .order_by("product_id", "supplier_id", "-received_date")
+    spending_by_supplier = list(
+        intakes.values("supplier_id", "supplier__name")
+        .annotate(total_spent=Sum("total_cost"), order_count=Count("id"))
+        .order_by("-total_spent")
     )
+    total_spend = sum(float(s["total_spent"] or 0) for s in spending_by_supplier)
 
-    # ── 2. Spending by supplier ─────────────────────────────────────────────
-    supplier_spend: dict = {}
-    for row in intakes:
-        sid = row["supplier_id"]
-        if sid not in supplier_spend:
-            supplier_spend[sid] = {
-                "supplier_id": sid,
-                "supplier_name": row["supplier__name"],
-                "total_spent": 0.0,
-                "order_count": 0,
-            }
-        supplier_spend[sid]["total_spent"] += float(row["total_cost"] or 0)
-        supplier_spend[sid]["order_count"] += 1
-
-    spending_by_supplier = sorted(
-        supplier_spend.values(), key=lambda x: x["total_spent"], reverse=True
-    )
-    total_spend = sum(s["total_spent"] for s in spending_by_supplier)
     for row in spending_by_supplier:
+        row["total_spent"] = float(row["total_spent"] or 0)
+        row["supplier_name"] = row["supplier__name"]
         row["pct_of_total"] = (
             round(row["total_spent"] / total_spend * 100, 1) if total_spend else 0
         )
 
-    # ── 3. Monthly avg cost trend ───────────────────────────────────────────
-    monthly: dict = {}
-    for row in intakes:
-        month_key = row["received_date"].strftime("%Y-%m")
-        monthly.setdefault(month_key, []).append(float(row["unit_cost"]))
+    # Monthly average cost trend
+    monthly = {}
+    for intake in intakes.order_by("received_date"):
+        month_key = intake.received_date.strftime("%Y-%m")
+        if month_key not in monthly:
+            monthly[month_key] = []
+        monthly[month_key].append(float(intake.unit_cost))
     price_trend = [
         {"month": k, "avg_price": round(sum(v) / len(v), 2)}
         for k, v in sorted(monthly.items())
     ]
 
-    # ── 4. Group intakes by product × supplier (for savings calc) ──────────
-    # Structure: { product_id: { supplier_id: [unit_cost, ...] } }
-    product_supplier_prices: dict = {}
-    product_supplier_meta: dict = {}  # stores name and order of first occurrence
-    for row in intakes:
-        pid = row["product_id"]
-        sid = row["supplier_id"]
-        product_supplier_prices.setdefault(pid, {}).setdefault(sid, []).append(
-            float(row["unit_cost"])
-        )
-        product_supplier_meta.setdefault(pid, {}).setdefault(
-            sid,
-            {
-                "supplier_name": row["supplier__name"],
-                "last_price": float(row["unit_cost"]),  # first = most recent (ordered DESC)
-                "times_supplied": 0,
-            },
-        )
-        product_supplier_meta[pid][sid]["times_supplied"] += 1
-
-    # ── 5. Bulk fetch 3-month usage per product in ONE query ────────────────
-    from django.db.models import Sum as _Sum
-    usage_qs = (
-        DispensationItem.objects.filter(
-            dispensation__dispensed_at__gte=three_months_ago,
-        )
-        .values("product_id")
-        .annotate(total=_Sum("quantity"))
-    )
-    product_usage = {row["product_id"]: float(row["total"] or 0) / 3.0 for row in usage_qs}
-
-    # ── 6. Compute potential savings in Python (no extra DB hits) ───────────
+    # Potential savings
+    product_ids = intakes.values_list("product_id", flat=True).distinct()
     savings_rows = []
-    for pid, supplier_data in product_supplier_prices.items():
-        if len(supplier_data) < 2:
-            continue  # only one supplier — no alternative to compare
-        meta = product_supplier_meta[pid]
-
-        # Build a summary list sorted by last_price ascending
-        comparison = sorted(
-            [
-                {
-                    "supplier_id": sid,
-                    "supplier_name": meta[sid]["supplier_name"],
-                    "last_price": meta[sid]["last_price"],
-                    "times_supplied": meta[sid]["times_supplied"],
-                }
-                for sid in supplier_data
-            ],
-            key=lambda x: x["last_price"],
-        )
-        cheapest = comparison[0]
-        # "current" = most frequently used supplier
-        current = max(comparison, key=lambda x: x["times_supplied"])
-
-        if cheapest["supplier_id"] == current["supplier_id"]:
-            continue  # already using cheapest supplier
-
-        monthly_usage = product_usage.get(pid, 0)
-        price_diff = current["last_price"] - cheapest["last_price"]
-        if price_diff <= 0:
+    for pid in product_ids:
+        comp = compare_suppliers_for_product(pid)
+        if not comp or len(comp.get("comparison", [])) < 2:
             continue
-
-        monthly_saving = price_diff * monthly_usage
-        # Fetch product name lazily from first intake meta
-        product_name = (
-            Product.objects.filter(pk=pid).values_list("name", flat=True).first()
-            or f"Product #{pid}"
+        cheapest = comp["comparison"][0]
+        current = comp["comparison"][-1]
+        for row in comp["comparison"]:
+            if row["times_supplied"] >= current.get("times_supplied", 0):
+                current = row
+        if cheapest["supplier_id"] == current["supplier_id"]:
+            continue
+        monthly_usage = suggested_order_quantity(pid, None) / 2 if False else 0
+        three_months_ago = timezone.now() - timedelta(days=90)
+        usage = (
+            DispensationItem.objects.filter(
+                product_id=pid,
+                dispensation__dispensed_at__gte=three_months_ago,
+            ).aggregate(t=Sum("quantity"))["t"]
+            or 0
         )
+        monthly_usage = float(usage) / 3.0
+        monthly_saving = (current["last_price"] - cheapest["last_price"]) * monthly_usage
         savings_rows.append(
             {
                 "product_id": pid,
-                "product_name": product_name,
+                "product_name": comp["product"]["name"],
                 "current_supplier": current["supplier_name"],
-                "current_price": round(current["last_price"], 2),
+                "current_price": current["last_price"],
                 "cheapest_supplier": cheapest["supplier_name"],
-                "cheapest_price": round(cheapest["last_price"], 2),
+                "cheapest_price": cheapest["last_price"],
                 "monthly_usage": round(monthly_usage, 1),
                 "monthly_saving": round(monthly_saving, 2),
                 "annual_saving": round(monthly_saving * 12, 2),
             }
         )
-
     savings_rows.sort(key=lambda x: x["annual_saving"], reverse=True)
     total_annual = sum(r["annual_saving"] for r in savings_rows)
 
-    # ── 7. Supplier dependency alerts ───────────────────────────────────────
-    product_supplier_sets: dict = {}
-    for row in intakes:
-        product_supplier_sets.setdefault(row["product_id"], set()).add(row["supplier_id"])
-
-    single_source: dict = {}
-    for pid, sids in product_supplier_sets.items():
+    # Supplier dependency
+    product_supplier_counts = {}
+    for intake in intakes:
+        key = intake.product_id
+        product_supplier_counts.setdefault(key, set()).add(intake.supplier_id)
+    supplier_product_share = {}
+    for pid, sids in product_supplier_counts.items():
         if len(sids) == 1:
-            sid = next(iter(sids))
-            single_source[sid] = single_source.get(sid, 0) + 1
-
-    total_unique = len(product_supplier_sets) or 1
+            sid = list(sids)[0]
+            supplier_product_share[sid] = supplier_product_share.get(sid, 0) + 1
+    total_unique = len(product_supplier_counts) or 1
     dependency_alerts = []
-    if single_source:
-        # Fetch names for all flagged suppliers in ONE query
-        flagged_ids = list(single_source.keys())
-        supplier_names = dict(
-            Supplier.objects.filter(pk__in=flagged_ids).values_list("id", "name")
-        )
-        for sid, count in single_source.items():
-            pct = count / total_unique * 100
-            if pct > 40:
-                dependency_alerts.append(
-                    {
-                        "supplier_id": sid,
-                        "supplier_name": supplier_names.get(sid, f"Supplier #{sid}"),
-                        "pct": round(pct, 1),
-                    }
-                )
+    for sid, count in supplier_product_share.items():
+        pct = count / total_unique * 100
+        if pct > 40:
+            from inventory.models.supplier import Supplier
 
-    result = {
+            name = Supplier.objects.filter(pk=sid).values_list("name", flat=True).first()
+            dependency_alerts.append(
+                {"supplier_id": sid, "supplier_name": name, "pct": round(pct, 1)}
+            )
+
+    return {
         "spending_by_supplier": spending_by_supplier,
         "price_trend": price_trend,
         "potential_savings": savings_rows,
         "total_annual_savings": round(total_annual, 2),
         "dependency_alerts": dependency_alerts,
     }
-    cache.set(CACHE_KEY, result, CACHE_TTL)
-    return result

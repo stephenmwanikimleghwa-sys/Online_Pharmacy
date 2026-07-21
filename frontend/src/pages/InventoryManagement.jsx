@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import React, { Suspense, lazy, useMemo, useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
@@ -10,9 +10,6 @@ import inventoryService from '../services/inventoryService';
 import InventoryItemCardSkeleton from '../components/InventoryItemCardSkeleton';
 import ManageItemModal from '../components/ManageItemModal';
 import StockLogsModal from '../components/StockLogsModal';
-import BranchTypeBanner from '../components/BranchTypeBanner';
-import { queryClient } from '../lib/queryClient';
-import { QUERY_KEYS } from '../lib/queryKeys';
 const SupplierList = lazy(() => import('./inventory/SupplierList'));
 const BatchList = lazy(() => import('./inventory/BatchList'));
 const StockIntakeLog = lazy(() => import('./StockIntakeLog'));
@@ -25,10 +22,15 @@ const InventoryManagement = () => {
   const navigate = useNavigate();
   useDocumentTitle('Inventory Management');
   const [activeTab, setActiveTab] = useState('inventory');
-  const [currentPage, setCurrentPage] = useState(1);
-  const { activeBranch } = useAuth();
-
-  // Search & filter state
+  const {
+    data: inventoryData,
+    isLoading: loading,
+    isFetching,
+    error: inventoryError,
+    refetch: refetchInventory,
+  } = useInventoryList();
+  const inventory = inventoryData?.products ?? [];
+  const totalInventoryItems = inventoryData?.totalItems ?? inventory.length;
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -36,15 +38,9 @@ const InventoryManagement = () => {
   const [showManageModal, setShowManageModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
   const BRANCH_COLUMNS = ['Transcounty Main', 'Transcounty Annex', 'Peakfarm'];
+
   const searchInputRef = useRef(null);
 
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => { setDebouncedSearchTerm(searchTerm); }, 400);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Sync tab from URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
@@ -53,7 +49,12 @@ const InventoryManagement = () => {
     }
   }, [location.search]);
 
-  // Global search shortcut Cmd+K
+  useEffect(() => {
+    if (inventoryError) {
+      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please try again.');
+    }
+  }, [inventoryError, notify]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -65,50 +66,18 @@ const InventoryManagement = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Build server-side query params from current UI state
-  const inventoryParams = useMemo(() => {
-    const p = { page: currentPage };
-    if (debouncedSearchTerm) p.search = debouncedSearchTerm;
-    if (filter === 'low') p.low_stock = 'true';
-    if (filter === 'out') p.out_of_stock = 'true';
-    return p;
-  }, [currentPage, debouncedSearchTerm, filter]);
-
-  const {
-    data: inventoryData,
-    isLoading: loading,
-    isFetching,
-    error: inventoryError,
-    refetch: refetchInventory,
-  } = useInventoryList(inventoryParams);
-  const inventory = inventoryData?.products ?? [];
-  const totalInventoryItems = inventoryData?.totalItems ?? inventory.length;
-  const totalPages = inventoryData?.totalPages ?? 1;
-
-  // Reset to page 1 when search/filter changes
-  useEffect(() => { setCurrentPage(1); }, [debouncedSearchTerm, filter]);
-
-  /** Update a single item in the RQ cache without triggering a full refetch. */
-  const patchCachedItem = useCallback((updatedItem) => {
-    const queryKey = QUERY_KEYS.inventory(activeBranch?.id, inventoryParams);
-    queryClient.setQueryData(queryKey, (old) => {
-      if (!old) return old;
-      const products = old.products.map((p) =>
-        p.id === updatedItem.id ? { ...p, ...updatedItem } : p
-      );
-      return { ...old, products };
-    });
-    // Kick off a background refetch so fresh data arrives silently
-    void refetchInventory();
-  }, [activeBranch?.id, inventoryParams, refetchInventory]);
-
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const handleRestock = async (itemId, quantity, reason, branchId, options = {}) => {
     try {
       await inventoryService.restockInventory(itemId, quantity, reason, branchId, options);
       notify.success('Stock Updated', 'Inventory levels have been updated for this product.');
-      // Update the specific item's stock in-cache instantly
-      patchCachedItem({ id: itemId, _restocked: true });
+      refetchInventory();
     } catch (error) {
       notifyApiError(notify, error, 'Restock Failed', 'Could not update stock for this item.');
     }
@@ -145,16 +114,19 @@ const InventoryManagement = () => {
     return { withDerived, lowStockCount, expired, expiringSoon };
   }, [inventory]);
 
-  // Server-side filtering: the backend already filters by search/low_stock/out_of_stock.
-  // We only add client-side expiring filter here since that's not a backend param.
   const filteredInventory = useMemo(() => {
-    if (filter === 'expiring') {
-      return inventoryMetrics.withDerived.filter(
-        (item) => item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry'
-      );
-    }
-    return inventoryMetrics.withDerived;
-  }, [inventoryMetrics.withDerived, filter]);
+    const loweredSearch = debouncedSearchTerm.toLowerCase();
+    return inventoryMetrics.withDerived.filter((item) => {
+      const name = (item.name || '').toLowerCase();
+      const matchesSearch = name.includes(loweredSearch);
+      const matchesFilter =
+        filter === 'all' ? true :
+          filter === 'low' ? (item.is_low_stock && item.stock_quantity > 0) :
+            filter === 'out' ? (item.stock_quantity === 0) :
+              filter === 'expiring' ? (item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry') : true;
+      return matchesSearch && matchesFilter;
+    });
+  }, [inventoryMetrics.withDerived, debouncedSearchTerm, filter]);
 
   const getBranchQty = (item, branchName) => {
     if (!branchName) return 0;
@@ -234,9 +206,6 @@ const InventoryManagement = () => {
         </div>
       ) : (
         <div className="animate-fade-in">
-          {/* Branch type context banner — only for non-admin staff */}
-          {user?.role !== 'admin' && <BranchTypeBanner context="are shown in this list" />}
-
           {/* Filters and Search Bento Section */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
             <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
@@ -501,55 +470,6 @@ const InventoryManagement = () => {
               </div>
             )}
           </div>
-
-          {/* ── Pagination Controls ── */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 px-1">
-              <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Page {currentPage} of {totalPages} &middot; {totalInventoryItems} items total
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || isFetching}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-40"
-                  style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
-                >
-                  ← Prev
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Show pages around current page
-                  let page = i + 1;
-                  if (totalPages > 5) {
-                    page = Math.min(Math.max(currentPage - 2, 1) + i, totalPages - (4 - i));
-                  }
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      disabled={isFetching}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-40"
-                      style={{
-                        borderColor: page === currentPage ? 'var(--color-primary)' : 'var(--border-primary)',
-                        background: page === currentPage ? 'var(--btn-gradient)' : 'transparent',
-                        color: page === currentPage ? '#fff' : 'var(--text-primary)',
-                      }}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || isFetching}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-40"
-                  style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Modals with Premium Styling */}
           {showManageModal && selectedItem && (

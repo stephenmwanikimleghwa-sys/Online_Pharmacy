@@ -96,13 +96,13 @@ const Sidebar = () => {
   const { mainLinks, operationsLinks, adminLinks } = getNavGroups(user ?? null);
 
   const inventoryPrefetch = usePrefetchOnHover(
-    QUERY_KEYS.inventory(activeBranch?.id, { per_page: 50 }),
+    QUERY_KEYS.inventory(activeBranch?.id, { per_page: 5000 }),
     async () => {
-      const res = await api.get('/inventory/list/', { params: { per_page: 50 } });
+      const res = await api.get('/inventory/list/', { params: { per_page: 5000 } });
       const data = res.data || {};
       return data.products || data.results || unwrapList(data);
     },
-    STALE_TIMES.MEDIUM,
+    STALE_TIMES.SLOW,
   );
   const suppliersPrefetch = usePrefetchOnHover(
     QUERY_KEYS.suppliers,

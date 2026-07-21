@@ -22,7 +22,6 @@ import logging
 from decimal import Decimal
 from utils.response import api_response
 from users.utils import log_activity
-from utils.filters import filter_products_by_branch_type
 
 logger = logging.getLogger(__name__)
 
@@ -53,15 +52,13 @@ class ProductListCreateView(generics.ListCreateAPIView):
         Get the list of items for this view.
         Returns active products ordered by name.
         """
-        qs = (
+        return (
             Product.objects
             .filter(is_active=True)
             .select_related('pharmacy', 'pricing_tier')
             .prefetch_related('pricing_tier', 'branch_stocks', 'branch_stocks__branch')
             .order_by('name')
         )
-        active_branch = _branch_for_request(self.request)
-        return filter_products_by_branch_type(qs, active_branch)
 
     def get_permissions(self) -> List[Any]:
         """
@@ -223,8 +220,6 @@ def search_products(request: Request) -> Response:
             branch_stocks__branch=active_branch,
             branch_stocks__quantity__gt=0,
         ).distinct()
-    
-    products = filter_products_by_branch_type(products, active_branch)
 
     if query:
         products = products.filter(
@@ -277,7 +272,7 @@ def my_products(request: Request) -> Response:
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def pricing_summary(request: Request) -> Response:
     """
     Return counts for pricing management UI:
@@ -356,7 +351,6 @@ class ProductViewSet(viewsets.ModelViewSet):
                 else:
                     queryset = queryset.none()
                     
-        queryset = filter_products_by_branch_type(queryset, active_branch)
         return queryset.order_by('name')
 
     def get_permissions(self) -> List[Any]:
@@ -407,23 +401,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated and self.request.user.pharmacy:
             pharmacy = self.request.user.pharmacy
         
-        product = serializer.save(pharmacy=pharmacy)
-        
-        # Log the initial product creation so it appears in inventory history
-        from products.models import StockLog
-        user = self.request.user if self.request.user.is_authenticated else None
-        branch = getattr(user, 'branch', None) if user else None
-        
-        StockLog.objects.create(
-            product=product,
-            previous_quantity=0,
-            new_quantity=product.stock_quantity,
-            change_amount=product.stock_quantity,
-            change_type='restock',
-            reason="Initial product creation",
-            branch=branch,
-            logged_by=user
-        )
+        serializer.save(pharmacy=pharmacy)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

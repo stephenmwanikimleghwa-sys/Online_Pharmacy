@@ -61,20 +61,13 @@ const SupplierList = () => {
   }, 0);
 
   // Form Handlers
-  const [formError, setFormError] = useState('');
-  const [formSaving, setFormSaving] = useState(false);
-
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setFormSaving(true);
     try {
       if (editingSupplier) {
         await inventoryService.updateSupplier(editingSupplier.id, formData);
-        notify.success('Supplier Updated', `${formData.name} has been updated.`);
       } else {
         await inventoryService.createSupplier(formData);
-        notify.success('Supplier Added', `${formData.name} has been added successfully.`);
       }
       setIsFormModalOpen(false);
       setEditingSupplier(null);
@@ -85,22 +78,13 @@ const SupplierList = () => {
       if (selectedSupplier && editingSupplier && selectedSupplier.id === editingSupplier.id) {
           setSelectedSupplier({...selectedSupplier, ...formData});
       }
-    } catch (err) {
-      const msg = err?.response?.data?.detail
-        || err?.response?.data?.name?.[0]
-        || err?.response?.data?.message
-        || err?.message
-        || 'Could not save supplier. Please try again.';
-      setFormError(msg);
-      notify.error('Save Failed', msg);
-    } finally {
-      setFormSaving(false);
+    } catch {
+      notify.error('Save Failed', 'The supplier could not be saved. Please try again.');
     }
   };
 
   const handleEdit = (supplier) => {
     setEditingSupplier(supplier);
-    setFormError('');
     setFormData({
         name: supplier.name,
         contact_person: supplier.contact_person || '',
@@ -145,7 +129,6 @@ const SupplierList = () => {
           onClick={() => {
               setEditingSupplier(null);
               setFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
-              setFormError('');
               setIsFormModalOpen(true);
           }}
           className="btn-primary px-5 py-2.5 rounded-xl font-bold text-sm shadow-premium flex items-center gap-2"
@@ -324,20 +307,9 @@ const SupplierList = () => {
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Address</label>
                             <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-semibold text-slate-800" rows="3" />
                         </div>
-                        {formError && (
-                            <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
-                                ⚠ {formError}
-                            </div>
-                        )}
                         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                            <button type="button" onClick={() => { setIsFormModalOpen(false); setFormError(''); }} className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors" disabled={formSaving}>Cancel</button>
-                            <button type="submit" disabled={formSaving} className="px-5 py-2.5 btn-primary text-white rounded-xl font-bold shadow-md transition-all disabled:opacity-60 flex items-center gap-2">
-                                {formSaving ? (
-                                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>
-                                ) : (
-                                    editingSupplier ? 'Update Supplier' : 'Add Supplier'
-                                )}
-                            </button>
+                            <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
+                            <button type="submit" className="px-5 py-2.5 btn-primary text-white rounded-xl font-bold shadow-md transition-all">Save</button>
                         </div>
                     </form>
                 </div>

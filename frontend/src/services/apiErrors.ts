@@ -119,15 +119,37 @@ export function mapAxiosErrorToDisplay(
   }
 
   if (!error.response) {
+    const retryAction =
+      error.config && ctx.onRetry
+        ? () => ctx.onRetry!(error.config!)
+        : undefined;
+
+    // A request that was aborted by our own timeout means the server was
+    // reachable but slow — distinct from being fully offline. Telling the user
+    // "check your connection" is misleading when they're online but on a weak
+    // link, so we give a slow-network message and offer a retry.
+    const isTimeout =
+      error.code === "ECONNABORTED" ||
+      /timeout/i.test(error.message ?? "");
+    const isOffline =
+      typeof navigator !== "undefined" && navigator.onLine === false;
+
+    if (isTimeout && !isOffline) {
+      return {
+        title: "Slow Network",
+        message:
+          "The server is taking longer than usual to respond. This is usually a slow connection — you can retry.",
+        actionLabel: retryAction ? "Retry" : undefined,
+        action: retryAction,
+      };
+    }
+
     return {
       title: "No Internet Connection",
       message:
         "Could not connect to the server. Please check your internet connection and try again.",
-      actionLabel: error.config && ctx.onRetry ? "Retry" : undefined,
-      action:
-        error.config && ctx.onRetry
-          ? () => ctx.onRetry!(error.config!)
-          : undefined,
+      actionLabel: retryAction ? "Retry" : undefined,
+      action: retryAction,
     };
   }
 

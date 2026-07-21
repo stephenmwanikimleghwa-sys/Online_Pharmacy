@@ -155,7 +155,8 @@ const RestockModal = ({ item, onClose, onRestock }) => {
             </label>
             <input
               type="number"
-              min="1" inputMode="numeric" value={quantity}
+              min="1"
+              value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required
               className="form-input"

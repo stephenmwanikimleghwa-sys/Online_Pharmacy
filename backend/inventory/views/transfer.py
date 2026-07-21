@@ -56,14 +56,6 @@ class InterBranchTransferViewSet(viewsets.ModelViewSet):
             request.user, dest_id
         ):
             return api_validation_error("You do not have access to one or both branches.")
-            
-        from utils.filters import validate_product_for_branch
-        from django.core.exceptions import ValidationError
-        try:
-            validate_product_for_branch(serializer.validated_data["product"], serializer.validated_data["destination_branch"])
-            validate_product_for_branch(serializer.validated_data["product"], serializer.validated_data["source_branch"])
-        except ValidationError as e:
-            return api_validation_error(e.message)
         transfer = serializer.save(requested_by=request.user)
         log_activity(
             user=request.user,

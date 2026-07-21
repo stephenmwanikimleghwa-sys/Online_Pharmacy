@@ -18,8 +18,20 @@ class GlobalOverviewView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
+        # build_global_overview scopes branches by the admin's pharmacy (or all
+        # branches for a superuser with no pharmacy). The cache key MUST include
+        # that scope, otherwise a pharmacy-scoped admin and a superuser (or two
+        # admins from different pharmacies) would share one cached blob and see
+        # each other's data. Key by pharmacy_id, with a distinct key for the
+        # global superuser view.
+        user = request.user
+        if user.is_superuser and not getattr(user, "pharmacy_id", None):
+            scope = "super"
+        else:
+            scope = f"pharmacy_{getattr(user, 'pharmacy_id', None) or 'none'}"
+        cache_key = f"dashboard_global_{scope}"
         data = cached_view(
-            "dashboard_global",
+            cache_key,
             lambda: build_global_overview(request.user),
             timeout=60,
         )
@@ -32,7 +44,7 @@ class BranchOperationsView(APIView):
     Operational data for request.active_branch only.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
         branch = get_active_branch(request)

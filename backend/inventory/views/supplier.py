@@ -36,7 +36,6 @@ class SupplierViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "contact_person", "email", "phone"]
-    pagination_class = None
 
     @action(detail=False, methods=["get"], url_path="compare")
     def compare(self, request):
@@ -168,9 +167,10 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
 def low_stock_reorder_suggestion(product_id, branch_id):
     comparison = compare_suppliers_for_product(product_id)
-    comparison_list = (comparison or {}).get("comparison", [])
-    cheapest = comparison_list[0] if comparison_list else None
-    alt = comparison_list[1] if len(comparison_list) > 1 else None
+    cheapest = (comparison or {}).get("comparison", [{}])[0] if comparison else None
+    alt = None
+    if comparison and len(comparison.get("comparison", [])) > 1:
+        alt = comparison["comparison"][1]
     suggested_qty = suggested_order_quantity(product_id, branch_id)
     return {
         "suggested_quantity": suggested_qty,

@@ -442,3 +442,4 @@ env.bak/
 venv.bak/
 .venv/
 backend/ci-venv/
+backend/test-venv/

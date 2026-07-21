@@ -7,14 +7,11 @@ License: MIT
 """
 
 import os
-import sys
 from pathlib import Path
 from datetime import timedelta
-from celery.schedules import crontab
 import environ
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
-import structlog
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,10 +21,19 @@ env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+_INSECURE_SECRET_KEY_DEFAULT = "your-secret-key-here-change-in-production"
+SECRET_KEY = env("SECRET_KEY", default=_INSECURE_SECRET_KEY_DEFAULT)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
+
+# The SECRET_KEY signs all JWTs (see SIMPLE_JWT.SIGNING_KEY below). Running in
+# production with the shipped default would let anyone forge valid tokens.
+if not DEBUG and SECRET_KEY == _INSECURE_SECRET_KEY_DEFAULT:
+    raise ImproperlyConfigured(
+        "SECRET_KEY must be set to a unique, secret value in production "
+        "(DEBUG=False). The insecure default is not allowed."
+    )
 
 # When running behind a proxy (like Render) that terminates SSL, respect
 # the X-Forwarded-Proto header so Django knows the original request scheme.
@@ -109,7 +115,6 @@ INSTALLED_APPS = [
     "django_filters",
     "storages",
     "drf_yasg",
-    "django_structlog",
     # Local apps (complete ones only)
     # Local apps
     "health",
@@ -138,7 +143,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django_structlog.middlewares.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -323,7 +327,6 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
         "pharmacist": "5000/hour",
         "admin": "10000/hour",
-        "login": "5/minute",
     },
     "EXCEPTION_HANDLER": "config.exception_handlers.structured_exception_handler",
 }
@@ -334,7 +337,6 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
@@ -349,8 +351,8 @@ SIMPLE_JWT = {
 # NOTE: CORS_ALLOW_ALL_ORIGINS=True and CORS_ALLOW_CREDENTIALS=True are
 # mutually exclusive in django-cors-headers. When both are set the middleware
 # silently refuses to add the Access-Control-Allow-Origin header.
-# Instead, we list allowed origins explicitly + use a regex catch-all for
-# Render subdomains. The middleware will echo back the matching origin.
+# We therefore enumerate allowed origins explicitly. The middleware echoes
+# back the matching origin.
 CORS_ALLOW_CREDENTIALS = True
 
 # Build allowed origins: merge hardcoded defaults with env var (comma-separated)
@@ -366,9 +368,15 @@ _cors_env = env("CORS_ALLOWED_ORIGINS", default="")
 _cors_from_env = [o.strip() for o in _cors_env.split(",") if o.strip()] if _cors_env else []
 CORS_ALLOWED_ORIGINS = list(set(_cors_defaults + _cors_from_env))
 
-# Support regex for any onrender.com subdomain (useful for review apps)
+# SECURITY: Do NOT use a broad `^https://.*\.onrender\.com$` regex here.
+# onrender.com is a shared domain, so that pattern would let ANY app hosted on
+# Render make credentialed cross-origin requests to this API. Add specific
+# review-app hostnames via the CORS_ALLOWED_ORIGINS env var instead. A tightly
+# scoped regex (e.g. matching only your own service prefix) can be supplied via
+# the CORS_ALLOWED_ORIGIN_REGEXES env var if review apps are needed.
+_cors_regex_env = env("CORS_ALLOWED_ORIGIN_REGEXES", default="")
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.onrender\.com$",
+    r.strip() for r in _cors_regex_env.split(",") if r.strip()
 ]
 
 # Explicitly allow all standard methods (including OPTIONS for preflight)
@@ -401,12 +409,7 @@ CORS_PREFLIGHT_MAX_AGE = 3600
 AUTH_USER_MODEL = "users.User"
 
 # Email backend (for future use)
-# Email backend: use SMTP in production, console in dev (console prints to stdout, never sends)
-EMAIL_BACKEND = (
-    "django.core.mail.backends.console.EmailBackend"
-    if DEBUG
-    else "django.core.mail.backends.smtp.EmailBackend"
-)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
@@ -439,19 +442,20 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "json_formatter": {
-            "()": structlog.stdlib.ProcessorFormatter,
-            "processor": structlog.processors.JSONRenderer(),
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
         },
-        "plain_console": {
-            "()": structlog.stdlib.ProcessorFormatter,
-            "processor": structlog.dev.ConsoleRenderer(colors=True),
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
     "handlers": {
         "console": {
+            "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "json_formatter" if not DEBUG else "plain_console",
+            "formatter": "simple",
         },
     },
     "root": {
@@ -460,35 +464,19 @@ LOGGING = {
     },
 }
 
-structlog.configure(
-    processors=[
-        structlog.contextvars.merge_contextvars,
-        structlog.stdlib.filter_by_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.UnicodeDecoder(),
-        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-    ],
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
 if LOG_TO_FILE:
     logs_dir = BASE_DIR / "logs"
     try:
         logs_dir.mkdir(parents=True, exist_ok=True)
     except Exception:
+        # Fall back to console-only if directory cannot be created
         LOG_TO_FILE = False
     else:
         LOGGING["handlers"]["file"] = {
             "level": "INFO",
             "class": "logging.FileHandler",
             "filename": str(logs_dir / "django.log"),
-            "formatter": "json_formatter",
+            "formatter": "verbose",
         }
         LOGGING["root"]["handlers"].append("file")
 
@@ -544,17 +532,6 @@ CELERY_BROKER_URL = env(
 CELERY_RESULT_BACKEND = env(
     "CELERY_RESULT_BACKEND", default=REDIS_URL or "rediss://localhost:6379/0"
 )
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_BEAT_SCHEDULE = {
-    'daily-stock-and-expiry-digest': {
-        'task': 'reports.tasks.send_daily_stock_and_expiry_digest',
-        'schedule': crontab(hour=7, minute=0),
-    },
-    'end-of-day-sales-summary': {
-        'task': 'dashboard.tasks.send_end_of_day_sales_summary',
-        'schedule': crontab(hour=21, minute=0),
-    },
-}
 
 # Sentry Configuration
 SENTRY_DSN = env("SENTRY_DSN", default="")

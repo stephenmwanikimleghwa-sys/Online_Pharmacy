@@ -10,7 +10,6 @@ export function useExpiryAlerts(branchId?: number) {
       api
         .get('/inventory/expiry/summary/', {
           params: branchId ? { branch: branchId } : {},
-          skipGlobalErrorNotification: true,
         })
         .then((r) => r.data),
     staleTime: STALE_TIMES.MEDIUM,

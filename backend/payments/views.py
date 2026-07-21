@@ -97,11 +97,10 @@ def initiate_stripe_payment(request):
     Initiate a Stripe payment for an order.
     """
     order_id = request.data.get("order_id")
-    amount = request.data.get("amount")
 
-    if not order_id or not amount:
+    if not order_id:
         return Response(
-            {"error": "order_id and amount are required."},
+            {"error": "order_id is required."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -111,6 +110,15 @@ def initiate_stripe_payment(request):
         return Response(
             {"error": "Order not found or not pending."},
             status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Amount is always derived server-side from the order total. Never trust a
+    # client-supplied amount — doing so would allow paying an arbitrary price.
+    amount = order.total_amount
+    if amount is None or amount <= 0:
+        return Response(
+            {"error": "Order has no payable amount."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Create Stripe PaymentIntent
@@ -164,12 +172,11 @@ def initiate_mpesa_payment(request):
     Initiate M-Pesa STK Push for an order.
     """
     order_id = request.data.get("order_id")
-    amount = request.data.get("amount")
     phone_number = request.data.get("phone_number")
 
-    if not order_id or not amount or not phone_number:
+    if not order_id or not phone_number:
         return Response(
-            {"error": "order_id, amount, and phone_number are required."},
+            {"error": "order_id and phone_number are required."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -179,6 +186,15 @@ def initiate_mpesa_payment(request):
         return Response(
             {"error": "Order not found or not pending."},
             status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Amount is always derived server-side from the order total. Never trust a
+    # client-supplied amount — doing so would allow paying an arbitrary price.
+    amount = order.total_amount
+    if amount is None or amount <= 0:
+        return Response(
+            {"error": "Order has no payable amount."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Get access token
@@ -327,39 +343,67 @@ def mpesa_callback(request):
         callback_data = json.loads(request.body)
         logger.info("mpesa_callback_verified")
 
-        # Process each transaction
-        callback_metadata = callback_data.get("Body", {}).get("stkCallback", {}).get("CallbackMetadata", [])
-        for result in callback_metadata or []:
-            try:
-                if result.get("ResultCode") == 0:  # Success
-                    receipt = result.get("MpesaReceiptNumber", "")
-                    amount = result.get("Amount", 0)
-                    phone = result.get("PhoneNumber", "")
-                    account_ref = result.get("AccountReference", "")
+        # Real Daraja STK callback shape:
+        #   Body.stkCallback = {
+        #     CheckoutRequestID, ResultCode, ResultDesc,
+        #     CallbackMetadata: { Item: [ {Name, Value}, ... ] }   # only on success
+        #   }
+        # The Payment record's `reference` is the CheckoutRequestID we stored at
+        # initiation, so we match on that (not the receipt number).
+        stk_callback = callback_data.get("Body", {}).get("stkCallback", {})
+        checkout_request_id = stk_callback.get("CheckoutRequestID", "")
+        result_code = stk_callback.get("ResultCode")
 
-                    try:
-                        order_id = account_ref.replace("Order ", "")
-                        payment = Payment.objects.get(reference=receipt, method="mpesa")
-                        payment.status = "completed"
-                        payment.transaction_date = timezone.now()
-                        payment.save()
+        if not checkout_request_id:
+            logger.warning("mpesa_callback_missing_checkout_id")
+            return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
 
-                        order = payment.order
-                        order.status = "paid"
-                        order.save()
+        try:
+            payment = Payment.objects.get(
+                reference=checkout_request_id, method="mpesa"
+            )
+        except Payment.DoesNotExist:
+            logger.error(
+                "payment_not_found_for_checkout", checkout_id=checkout_request_id
+            )
+            return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
 
-                        logger.info("mpesa_payment_completed", order_id=order_id, receipt=receipt)
+        if result_code == 0:  # Success
+            # CallbackMetadata.Item is a list of {Name, Value} pairs.
+            items = stk_callback.get("CallbackMetadata", {}).get("Item", [])
+            metadata = {
+                item.get("Name"): item.get("Value")
+                for item in items
+                if item.get("Name")
+            }
+            receipt = metadata.get("MpesaReceiptNumber", "")
 
-                    except Payment.DoesNotExist:
-                        logger.error("payment_not_found_for_receipt", receipt=receipt)
-                else:
-                    error_code = result.get("ResultCode", "unknown")
-                    error_desc = result.get("ResultDesc", "Unknown error")
-                    logger.warning("mpesa_transaction_failed", error_code=error_code, error_desc=error_desc)
+            payment.status = "completed"
+            payment.transaction_date = timezone.now()
+            if receipt:
+                # Store the actual M-Pesa receipt now that we have it.
+                payment.reference = receipt
+            payment.save()
 
-            except Exception as e:
-                logger.exception("mpesa_transaction_processing_error", error=str(e))
-                continue
+            order = payment.order
+            order.status = "paid"
+            order.save()
+
+            logger.info(
+                "mpesa_payment_completed",
+                order_id=order.id,
+                receipt=receipt,
+                checkout_id=checkout_request_id,
+            )
+        else:
+            payment.status = "failed"
+            payment.save()
+            logger.warning(
+                "mpesa_transaction_failed",
+                checkout_id=checkout_request_id,
+                error_code=result_code,
+                error_desc=stk_callback.get("ResultDesc", "Unknown error"),
+            )
 
         return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
 

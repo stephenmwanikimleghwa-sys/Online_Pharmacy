@@ -38,11 +38,6 @@ export const getPurchaseOrderReceivePrefill = (id) =>
 export const receivePurchaseOrder = (id, data) =>
   api.post(`/purchase-orders/${id}/receive/`, data);
 
-export const sendPurchaseOrderToSupplier = (id, channel) =>
-  api.post(`/purchase-orders/${id}/send-order/`, { channel });
-
-
-
 export const getExpirySummary = (branchId) =>
   api.get('/inventory/expiry/summary/', {
     params: branchId ? { branch: branchId } : {},

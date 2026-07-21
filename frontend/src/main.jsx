@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import App from "./App.jsx";
+import { registerServiceWorker } from "./lib/serviceWorker";
 import "./index.css";
 
 const persister = createSyncStoragePersister({
@@ -49,3 +50,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 
 document.getElementById("splash")?.remove();
+
+// Register the service worker (production only) for stale-while-revalidate
+// caching of API reads, so screens load instantly on slow connections.
+registerServiceWorker();

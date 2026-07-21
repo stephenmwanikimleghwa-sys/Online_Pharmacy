@@ -117,10 +117,10 @@ def dispense_otc(request):
     """
     denied = require_active_branch(request)
     if denied:
-        # Allow if branch_id was explicitly provided — frontend always sends it
-        if not request.data.get('branch_id'):
-            return denied
+        return denied
 
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
     active_branch = resolve_request_branch(request, request.data.get('branch_id'))
     if not active_branch:
         return api_error(
@@ -130,8 +130,6 @@ def dispense_otc(request):
         )
 
     with transaction.atomic():
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
         items_data = request.data.get('items', [])
         payment_mode = request.data.get('payment_mode', 'CASH')
         pricing_tier = request.data.get('pricing_tier', 'RETAIL')
