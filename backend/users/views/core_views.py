@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
-from django_ratelimit.decorators import ratelimit
+from config.ratelimit_compat import ratelimit
 from users.serializers import (
     UserLoginSerializer,
     UserProfileSerializer,

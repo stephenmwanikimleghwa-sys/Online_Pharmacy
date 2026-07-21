@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.core.cache import cache
 import base64
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from django_ratelimit.decorators import ratelimit
+from config.ratelimit_compat import ratelimit
 from users.utils import log_activity, sanitize_log_input
 
 logger = structlog.get_logger(__name__)
