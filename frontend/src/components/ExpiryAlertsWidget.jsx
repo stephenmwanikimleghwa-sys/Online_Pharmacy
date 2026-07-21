@@ -4,9 +4,11 @@ import {
   markBatchRemoved,
   setBatchClearance,
 } from '../services/procurementService';
+import { ClockIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { useExpiryAlerts } from '../hooks/useExpiryAlerts';
+import { PanelSkeleton } from './ui/Skeleton';
 
 const EMPTY_EXPIRY = {
   summary: {},
@@ -47,14 +49,15 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
     }
   };
 
-  if (isLoading) return <p className="text-sm text-gray-500">Loading expiry alerts…</p>;
+  if (isLoading) return <PanelSkeleton rows={4} />;
   if (error) {
     return (
-      <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500">
+      <div className="rounded-2xl border border-dashed p-4 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
         <p>Could not load expiry data.</p>
         <button
           type="button"
-          className="mt-2 text-indigo-600 font-semibold hover:underline"
+          className="mt-2 font-semibold hover:underline"
+          style={{ color: 'var(--color-primary)' }}
           onClick={() => void refetch()}
         >
           Retry
@@ -68,11 +71,12 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
   const branchLabel = activeBranch?.name || 'your branch';
 
   return (
-    <div className={compact ? 'space-y-3' : 'bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700'}>
-      <h3 className="font-bold flex items-center gap-2 mb-3">
-        🔴 Expiry Alerts — {branchLabel}
+    <div className={compact ? 'space-y-3' : 'glass-card rounded-2xl p-6 border'} style={compact ? {} : { borderColor: 'var(--border-primary)' }}>
+      <h3 className="font-bold flex items-center gap-2 mb-3" style={{ color: 'var(--text-primary)' }}>
+        <ClockIcon className="w-5 h-5 text-rose-500" />
+        Expiry Alerts — {branchLabel}
       </h3>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
         {summary.expired || 0} expired · {summary.critical || 0} critical ·{' '}
         {summary.warning || 0} warning · {summary.caution || 0} caution
       </p>
@@ -130,17 +134,17 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
       )}
 
       {(displayData.caution_count > 0 || displayData.caution?.length > 0) && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
           CAUTION: {displayData.caution_count || displayData.caution?.length} products within 90 days.{' '}
-          <Link to="/reports" className="text-indigo-600 font-semibold">View all</Link>
+          <Link to="/reports" className="font-semibold" style={{ color: 'var(--color-primary)' }}>View all</Link>
         </p>
       )}
 
       {clearanceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full space-y-3">
-            <h4 className="font-bold">Set clearance price</h4>
-            <p className="text-sm">{clearanceModal.product_name}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="glass-card rounded-xl p-6 max-w-sm w-full space-y-3 border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            <h4 className="font-bold" style={{ color: 'var(--text-primary)' }}>Set clearance price</h4>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{clearanceModal.product_name}</p>
             <input
               type="number"
               className="form-input w-full"

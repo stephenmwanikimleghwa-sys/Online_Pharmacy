@@ -6,6 +6,7 @@ import clinicalService from '../../services/clinicalService';
 import api from '../../services/api';
 import { HeartIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../../context/NotificationContext';
+import { PanelSkeleton } from '../../components/ui/Skeleton';
 
 const ClinicalDashboard = () => {
   const { notify } = useNotification();
@@ -54,14 +55,14 @@ const ClinicalDashboard = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-slate-800">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 flex items-center gap-3">
+          <h1 className="text-3xl font-display font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             <HeartIcon className="w-8 h-8 text-rose-500" />
             Clinical Services
           </h1>
-          <p className="text-slate-500 mt-1 font-medium text-sm">Manage patient triage, consultations, and lab tests.</p>
+          <p className="mt-1 font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>Manage patient triage, consultations, and lab tests.</p>
         </div>
         <button onClick={() => setShowNewModal(true)} className="btn-primary bg-rose-500 hover:bg-rose-600 px-5 py-2.5 rounded-xl font-bold shadow-premium flex items-center gap-2">
           <PlusIcon className="w-5 h-5" /> New Consultation
@@ -69,24 +70,24 @@ const ClinicalDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {isLoading ? <div className="animate-pulse h-64 bg-slate-100 rounded-2xl"></div> : (
-          <div className="glass-card rounded-[2rem] border border-white/60 shadow-premium p-6">
+        {isLoading ? <PanelSkeleton rows={6} /> : (
+          <div className="glass-card rounded-[2rem] border shadow-premium p-6" style={{ borderColor: 'var(--border-primary)' }}>
              <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-slate-50">
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Date</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Patient</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Status</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Practitioner</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-right">Actions</th>
+                  <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>Date</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>Patient</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>Practitioner</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase text-right" style={{ color: 'var(--text-secondary)' }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   {consultations?.results?.map(c => (
-                    <tr key={c.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-4 text-sm font-medium">{new Date(c.created_at).toLocaleDateString()}</td>
+                    <tr key={c.id} className="border-b last:border-0" style={{ borderColor: 'var(--border-primary)' }}>
+                      <td className="px-4 py-4 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-4">
-                        <div className="font-bold text-slate-800">{c.patient_name}</div>
+                        <div className="font-bold" style={{ color: 'var(--text-primary)' }}>{c.patient_name}</div>
                       </td>
                       <td className="px-4 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase
@@ -96,14 +97,14 @@ const ClinicalDashboard = () => {
                           {c.status.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-sm">{c.practitioner_name || 'Unassigned'}</td>
+                      <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{c.practitioner_name || 'Unassigned'}</td>
                       <td className="px-4 py-4 text-right">
-                        <Link to={`/clinical/${c.id}`} className="text-rose-500 hover:text-rose-700 font-bold text-sm bg-rose-50 px-4 py-2 rounded-lg">View Details</Link>
+                        <Link to={`/clinical/${c.id}`} className="text-rose-500 hover:text-rose-700 font-bold text-sm px-4 py-2 rounded-lg" style={{ background: 'rgba(244,63,94,0.12)' }}>View Details</Link>
                       </td>
                     </tr>
                   ))}
                   {consultations?.results?.length === 0 && (
-                    <tr><td colSpan="5" className="text-center py-12 text-slate-400">No consultations in queue.</td></tr>
+                    <tr><td colSpan="5" className="text-center py-12" style={{ color: 'var(--text-secondary)' }}>No consultations in queue.</td></tr>
                   )}
                 </tbody>
              </table>
@@ -112,20 +113,20 @@ const ClinicalDashboard = () => {
       </div>
 
       {showNewModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-premium">
-            <h3 className="text-xl font-bold mb-4">Start New Consultation</h3>
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="glass-card w-full max-w-lg rounded-3xl p-6 shadow-premium border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Start New Consultation</h3>
+
             <div className="mb-4">
-              <label className="block text-xs font-bold text-slate-500 mb-1">Search Patient</label>
+              <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Search Patient</label>
               <input type="text" className="form-input w-full rounded-xl" placeholder="Name or ID..." value={searchPatient} onChange={e => setSearchPatient(e.target.value)} />
-              
+
               {patientsSearch?.results?.length > 0 && !selectedPatient && (
-                <div className="mt-2 border rounded-xl overflow-hidden shadow-sm max-h-48 overflow-y-auto">
+                <div className="mt-2 border rounded-xl overflow-hidden shadow-sm max-h-48 overflow-y-auto" style={{ borderColor: 'var(--border-primary)' }}>
                   {patientsSearch.results.map(p => (
-                    <button key={p.id} onClick={() => setSelectedPatient(p)} className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b last:border-0">
-                      <div className="font-bold text-sm">{p.first_name} {p.last_name}</div>
-                      <div className="text-xs text-slate-500">{p.phone_number}</div>
+                    <button key={p.id} onClick={() => setSelectedPatient(p)} className="w-full text-left px-4 py-3 border-b last:border-0 transition-colors hover:opacity-80" style={{ borderColor: 'var(--border-primary)' }}>
+                      <div className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{p.first_name} {p.last_name}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.phone_number}</div>
                     </button>
                   ))}
                 </div>
@@ -140,7 +141,7 @@ const ClinicalDashboard = () => {
             )}
 
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowNewModal(false)} className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancel</button>
+              <button onClick={() => setShowNewModal(false)} className="form-cancel-btn px-4 py-2 rounded-xl">Cancel</button>
               <button onClick={handleCreate} disabled={!selectedPatient || createMutation.isLoading} className="btn-primary bg-rose-500 hover:bg-rose-600 px-6 py-2 rounded-xl font-bold">Start</button>
             </div>
           </div>

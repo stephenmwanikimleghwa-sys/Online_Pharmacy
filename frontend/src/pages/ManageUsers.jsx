@@ -243,16 +243,15 @@ const ManageUsers = () => {
             </span>
           </div>
           
-          <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200">
+          <div className="flex p-1 rounded-xl border" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
             {['active', 'inactive', 'all'].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-                  filterStatus === status 
-                    ? 'bg-white shadow-sm text-indigo-600 border border-slate-200/50' 
-                    : 'text-slate-500 hover:text-slate-700'
+                  filterStatus === status ? 'shadow-sm text-primary' : ''
                 }`}
+                style={filterStatus === status ? { background: 'var(--bg-card)' } : { color: 'var(--text-secondary)' }}
               >
                 {status === 'all' ? 'All' : `${status} Staff`}
               </button>
@@ -300,8 +299,8 @@ const ManageUsers = () => {
                         {user.is_verified ? 'Verified' : 'Pending'}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border bg-slate-50 text-slate-500 border-slate-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--text-secondary)' }} />
                         Inactive
                       </span>
                     )}
@@ -406,7 +405,7 @@ const ManageUsers = () => {
                       {PERMISSION_OPTIONS.map(({ key, label }) => (
                         <label key={key} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}>
                           <span>{label}</span>
-                          <input type="checkbox" checked={Boolean(permissionFlags[key])} onChange={() => handlePermissionToggle(key)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                          <input type="checkbox" checked={Boolean(permissionFlags[key])} onChange={() => handlePermissionToggle(key)} className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500" style={{ borderColor: 'var(--border-primary)' }} />
                         </label>
                       ))}
                     </div>

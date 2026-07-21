@@ -98,7 +98,7 @@ const Customers = () => {
   if (!user || (user.role !== 'admin' && user.role !== 'pharmacist' && user.role !== 'cashier')) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-xl font-bold text-slate-400">Access Denied.</p>
+        <p className="text-xl font-bold" style={{ color: 'var(--text-secondary)' }}>Access Denied.</p>
       </div>
     );
   }
@@ -108,43 +108,43 @@ const Customers = () => {
       {/* Header section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <UserGroupIcon className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-display font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+            <UserGroupIcon className="w-8 h-8" style={{ color: 'var(--color-primary)' }} />
             Customers & Debt
             <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
           </h1>
-          <p className="text-slate-500 mt-1 text-sm font-medium">Manage credit clients, view transaction ledgers, and process debt payments.</p>
+          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Manage credit clients, view transaction ledgers, and process debt payments.</p>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-card rounded-3xl p-6 shadow-premium border border-white/60">
+        <div className="glass-card rounded-3xl p-6 shadow-premium border" style={{ borderColor: 'var(--border-primary)' }}>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-600" style={{ background: 'rgba(99,102,241,0.12)' }}>
               <UserGroupIcon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Clients</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Total Clients</p>
           </div>
-          <p className="text-3xl font-display font-bold text-slate-900">{customers.length}</p>
+          <p className="text-3xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>{customers.length}</p>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 shadow-premium border border-rose-100 bg-gradient-to-br from-rose-50/50 to-white">
+        <div className="glass-card rounded-3xl p-6 shadow-premium border" style={{ borderColor: 'rgba(244,63,94,0.25)' }}>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-600" style={{ background: 'rgba(244,63,94,0.12)' }}>
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Outstanding AR</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#e11d48' }}>Outstanding AR</p>
           </div>
           <p className="text-3xl font-display font-bold text-rose-600">KES {totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 shadow-premium border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white">
+        <div className="glass-card rounded-3xl p-6 shadow-premium border" style={{ borderColor: 'rgba(16,185,129,0.25)' }}>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600" style={{ background: 'rgba(16,185,129,0.12)' }}>
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Store Credit Owned</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#059669' }}>Store Credit Owned</p>
           </div>
           <p className="text-3xl font-display font-bold text-emerald-600">KES {totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
@@ -153,21 +153,21 @@ const Customers = () => {
       {/* Toolbar */}
       <div className="glass-card rounded-[2rem] border border-white/60 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
             placeholder="Search by name or phone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+            className="form-input w-full pl-11 pr-4 py-3 rounded-xl transition-all outline-none"
           />
         </div>
         <div className="relative w-full md:w-64">
-          <FunnelIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <FunnelIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
           <select
             value={filterDebt}
             onChange={(e) => setFilterDebt(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none appearance-none"
+            className="form-input w-full pl-11 pr-4 py-3 rounded-xl transition-all outline-none appearance-none"
           >
             <option value="all">All Customers</option>
             <option value="debt">With Outstanding Debt</option>
@@ -209,7 +209,8 @@ const Customers = () => {
               <button 
                 key={customer.id}
                 onClick={() => setSelectedCustomer(customer)}
-                className="text-left group relative glass-card rounded-3xl p-6 border border-white/60 shadow-sm hover:shadow-premium hover:border-primary/20 transition-all duration-300 hover:-translate-y-1"
+                className="text-left group relative glass-card rounded-3xl p-6 border shadow-sm hover:shadow-premium transition-all duration-300 hover:-translate-y-1"
+                style={{ borderColor: 'var(--border-primary)' }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-primary flex items-center justify-center text-white font-display font-bold text-lg shadow-glow-indigo group-hover:scale-110 transition-transform">
@@ -217,26 +218,24 @@ const Customers = () => {
                   </div>
                   <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                     isDebt ? 'bg-rose-100 text-rose-600' :
-                    isCredit ? 'bg-emerald-100 text-emerald-600' :
-                    'bg-slate-100 text-slate-500'
-                  }`}>
+                    isCredit ? 'bg-emerald-100 text-emerald-600' : ''
+                  }`} style={!isDebt && !isCredit ? { background: 'var(--bg-field)', color: 'var(--text-secondary)' } : {}}>
                     {isDebt ? 'In Debt' : isCredit ? 'Credit' : 'Cleared'}
                   </div>
                 </div>
-                
-                <h3 className="font-display font-bold text-slate-900 text-lg mb-1 truncate">{customer.name}</h3>
-                <p className="text-xs text-slate-500 font-medium mb-4 flex items-center gap-1.5">
+
+                <h3 className="font-display font-bold text-lg mb-1 truncate" style={{ color: 'var(--text-primary)' }}>{customer.name}</h3>
+                <p className="text-xs font-medium mb-4 flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                   {customer.phone || 'No phone'}
                 </p>
 
-                <div className="pt-4 border-t border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Balance</p>
+                <div className="pt-4 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Balance</p>
                   <p className={`font-display font-bold text-xl ${
                     isDebt ? 'text-rose-600' :
-                    isCredit ? 'text-emerald-600' :
-                    'text-slate-900'
-                  }`}>
+                    isCredit ? 'text-emerald-600' : ''
+                  }`} style={!isDebt && !isCredit ? { color: 'var(--text-primary)' } : {}}>
                     KES {Math.abs(bal).toLocaleString(undefined, {minimumFractionDigits: 2})}
                   </p>
                 </div>
@@ -246,8 +245,8 @@ const Customers = () => {
           
           {filteredCustomers.length === 0 && (
             <div className="col-span-full py-20 text-center">
-              <UserGroupIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">No customers found.</p>
+              <UserGroupIcon className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-primary)', opacity: 0.5 }} />
+              <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>No customers found.</p>
             </div>
           )}
         </div>
@@ -263,17 +262,17 @@ const Customers = () => {
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-premium overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowCreateModal(false)} />
+          <div className="relative w-full max-w-2xl glass-card rounded-[2rem] shadow-premium overflow-hidden border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            <div className="px-8 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)' }}>
               <div>
-                <h2 className="text-2xl font-display font-bold text-slate-900">Add Customer</h2>
-                <p className="text-sm text-slate-500 mt-1">Create a new credit customer record.</p>
+                <h2 className="text-2xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Add Customer</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Create a new credit customer record.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="form-cancel-btn px-4 py-2 rounded-xl"
               >
                 Close
               </button>
@@ -285,41 +284,41 @@ const Customers = () => {
                 </div>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="space-y-2 text-sm text-slate-600">
+                <label className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   Name
                   <input
                     value={newCustomer.name}
                     onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
                     placeholder="Customer name"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-input w-full px-4 py-3 rounded-2xl"
                     required
                   />
                 </label>
-                <label className="space-y-2 text-sm text-slate-600">
+                <label className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   Phone
                   <input
                     value={newCustomer.phone}
                     onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
                     placeholder="Phone number"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-input w-full px-4 py-3 rounded-2xl"
                     required
                   />
                 </label>
               </div>
               <div>
-                <label className="space-y-2 text-sm text-slate-600">
+                <label className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   Address
                   <textarea
                     value={newCustomer.address}
                     onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
                     placeholder="Customer address"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-input w-full px-4 py-3 rounded-2xl"
                     rows={3}
                   />
                 </label>
               </div>
               <div>
-                <label className="space-y-2 text-sm text-slate-600">
+                <label className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   Opening balance (optional)
                   <input
                     type="number"
@@ -327,7 +326,7 @@ const Customers = () => {
                     value={newCustomer.credit_balance}
                     onChange={(e) => setNewCustomer({ ...newCustomer, credit_balance: e.target.value })}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-input w-full px-4 py-3 rounded-2xl"
                   />
                 </label>
               </div>
@@ -335,7 +334,7 @@ const Customers = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                  className="form-cancel-btn flex-1 py-3 rounded-2xl"
                 >
                   Cancel
                 </button>

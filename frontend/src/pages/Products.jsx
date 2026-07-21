@@ -152,9 +152,9 @@ const Products = () => {
             <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <SparklesIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Browse <span className="text-primary">Products</span></h1>
+            <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Browse <span className="text-primary">Products</span></h1>
           </div>
-          <p className="text-lg text-slate-500 font-medium">
+          <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
             Browse our collection of quality pharmaceutical products.
           </p>
         </div>
@@ -165,11 +165,9 @@ const Products = () => {
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2.5 rounded-xl transition-all ${
-                viewMode === 'grid'
-                  ? 'bg-white text-primary shadow-premium'
-                  : 'hover:text-slate-600'
+                viewMode === 'grid' ? 'text-primary shadow-premium' : ''
               }`}
-              style={viewMode !== 'grid' ? { color: 'var(--text-muted)' } : {}}
+              style={viewMode === 'grid' ? { background: 'var(--bg-card)' } : { color: 'var(--text-muted)' }}
               aria-label="Grid view"
               aria-pressed={viewMode === 'grid'}
             >
@@ -180,10 +178,9 @@ const Products = () => {
             <button
               onClick={() => setViewMode('list')}
               className={`p-2.5 rounded-xl transition-all ${
-                viewMode === 'list'
-                  ? 'bg-white text-primary shadow-premium'
-                  : 'text-slate-400 hover:text-slate-600'
+                viewMode === 'list' ? 'text-primary shadow-premium' : ''
               }`}
+              style={viewMode === 'list' ? { background: 'var(--bg-card)' } : { color: 'var(--text-muted)' }}
               aria-label="List view"
               aria-pressed={viewMode === 'list'}
             >
@@ -264,7 +261,7 @@ const Products = () => {
               "{searchTerm}"
               <button
                 onClick={() => { setSearchTerm(''); setSearchParams({}); }}
-                className="hover:text-slate-900 transition-colors"
+                className="transition-colors hover:opacity-70"
               >
                 <XMarkIcon className="h-3.5 w-3.5" />
               </button>
@@ -289,7 +286,7 @@ const Products = () => {
       ) : filteredProducts.length === 0 ? (
         <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium py-24 flex flex-col items-center justify-center text-center px-10">
           <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6" style={{ background: 'var(--bg-field)' }}>
-            <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-10 h-10" style={{ color: 'var(--color-primary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
