@@ -3,6 +3,7 @@ from django.conf import settings
 from products.models import Product
 from django.utils import timezone
 from inventory.tasks import send_async_email
+from config.celery_utils import safe_delay
 from django.template.loader import render_to_string
 
 class RestockRequest(models.Model):
@@ -83,7 +84,8 @@ class RestockRequest(models.Model):
         
         # Send to requester
         if self.requested_by.email:
-            send_async_email.delay(
+            safe_delay(
+                send_async_email,
                 subject,
                 f'The status of your restock request for {self.product.name} has been updated to {self.get_status_display()}.',
                 None,  # Use default FROM email
@@ -102,7 +104,8 @@ class RestockRequest(models.Model):
             ).values_list('email', flat=True)
             
             if admins:
-                send_async_email.delay(
+                safe_delay(
+                    send_async_email,
                     'New Restock Request Requires Approval',
                     f'A new restock request for {self.product.name} requires your approval.',
                     None,

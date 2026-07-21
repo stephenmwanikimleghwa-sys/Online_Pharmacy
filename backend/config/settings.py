@@ -543,6 +543,18 @@ CELERY_RESULT_BACKEND = env(
     "CELERY_RESULT_BACKEND", default=REDIS_URL or "rediss://localhost:6379/0"
 )
 
+# Broker resilience: when Redis is unreachable, fail FAST instead of hanging the
+# web request that is publishing a task. Without a short timeout kombu blocks on
+# the socket and retries, so a broker outage stalls (or 500s) user-facing views.
+# Combined with config.celery_utils.safe_delay this keeps enqueue best-effort.
+CELERY_BROKER_CONNECTION_TIMEOUT = env.float("CELERY_BROKER_CONNECTION_TIMEOUT", default=3.0)
+CELERY_BROKER_CONNECTION_RETRY = False
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "socket_timeout": 3.0,
+    "socket_connect_timeout": 3.0,
+}
+
 # Sentry Configuration
 SENTRY_DSN = env("SENTRY_DSN", default="")
 

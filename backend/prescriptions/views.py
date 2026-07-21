@@ -24,6 +24,7 @@ from users.models import User
 from users.utils import log_activity
 from django.http import HttpRequest
 from .tasks import notify_pharmacist_new_prescription
+from config.celery_utils import safe_delay
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -61,8 +62,9 @@ class PrescriptionUploadView(generics.CreateAPIView):
     def perform_create(self, serializer):
         prescription = serializer.save(user=self.request.user)
         logger.info("prescription_uploaded", prescription_id=prescription.id)
-        # Trigger push notification to pharmacists
-        notify_pharmacist_new_prescription.delay(prescription.id)
+        # Trigger push notification to pharmacists. Best-effort: a broker outage
+        # must not fail the upload the user just completed.
+        safe_delay(notify_pharmacist_new_prescription, prescription.id)
 
 
 class PrescriptionListView(generics.ListAPIView):
