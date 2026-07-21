@@ -17,6 +17,11 @@ from rest_framework.exceptions import (
 )
 from rest_framework.views import exception_handler as drf_exception_handler
 
+try:
+    from ratelimit.exceptions import Ratelimited
+except ImportError:
+    Ratelimited = None
+
 from config.api_responses import ApiErrorCode
 
 
@@ -66,7 +71,15 @@ def structured_exception_handler(exc, context):
     message = _first_message(data)
     details = _flatten_details(data)
 
-    if isinstance(exc, NotAuthenticated):
+    # django-ratelimit's Ratelimited subclasses Django's core PermissionDenied,
+    # so without this it would render as a misleading 403 "You do not have
+    # permission to perform this action." It must be checked BEFORE the generic
+    # PermissionDenied/403 handling below. Map it to a proper 429.
+    if Ratelimited is not None and isinstance(exc, Ratelimited):
+        code = ApiErrorCode.VALIDATION_ERROR
+        message = "Too many attempts. Please wait a minute and try again."
+        status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    elif isinstance(exc, NotAuthenticated):
         code = ApiErrorCode.SESSION_EXPIRED
         message = "Your login session has expired. Please log in again to continue."
         status_code = status.HTTP_401_UNAUTHORIZED
