@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import LoadingSpinner from "../components/LoadingSpinner";
 import WelcomeBanner from "../components/WelcomeBanner";
 import QuickSale from "../components/QuickSale";
+import { PanelSkeleton, Skeleton } from "../components/ui/Skeleton";
 import { formatDate } from "../utils/displayHelpers";
 
 const CashierDashboard = () => {
@@ -33,9 +33,10 @@ const CashierDashboard = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-4">
-                <LoadingSpinner size="lg" />
-                <p className="animate-pulse" style={{color:'var(--text-secondary)'}}>Initializing Register...</p>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+                <Skeleton className="h-8 w-64 mb-8" rounded="rounded-xl" />
+                <Skeleton className="h-48 w-full mb-10" rounded="rounded-[2.5rem]" />
+                <PanelSkeleton rows={5} />
             </div>
         );
     }

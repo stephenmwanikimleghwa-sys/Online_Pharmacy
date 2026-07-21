@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranchParam } from '../hooks/useBranchParam';
-import { PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, EyeIcon, InboxStackIcon, CubeIcon, BanknotesIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import StockIntakeBulkModal from '../components/StockIntakeBulkModal';
+import StatCard from '../components/ui/StatCard';
+import { PanelSkeleton } from '../components/ui/Skeleton';
+import EmptyState from '../components/ui/EmptyState';
 
 const StockIntakeLog = () => {
   const { user, activeBranch } = useAuth();
@@ -77,9 +80,9 @@ const StockIntakeLog = () => {
             <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Stock <span className="text-primary">received</span></h1>
+            <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Stock <span className="text-primary">received</span></h1>
           </div>
-          <p className="text-lg text-slate-500 font-medium">
+          <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
             Use this page to record new deliveries. This helps you track what came in, who supplied it, cost, batch number, and expiry date.
           </p>
         </div>
@@ -96,22 +99,19 @@ const StockIntakeLog = () => {
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           {[
-            { label: 'Deliveries', value: summary.total_records, color: 'indigo', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
-            { label: 'Units received', value: summary.total_quantity_received, color: 'emerald', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg> },
-            { label: 'Total Cost', value: `KES ${parseFloat(summary.total_cost).toLocaleString()}`, color: 'violet', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-            { label: 'Suppliers', value: summary.distributors, color: 'amber', icon: (props) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
+            { label: 'Deliveries', value: summary.total_records, accent: 'indigo', icon: InboxStackIcon },
+            { label: 'Units received', value: summary.total_quantity_received, accent: 'emerald', icon: CubeIcon },
+            { label: 'Total Cost', value: `KES ${parseFloat(summary.total_cost).toLocaleString()}`, accent: 'primary', icon: BanknotesIcon },
+            { label: 'Suppliers', value: summary.distributors, accent: 'amber', icon: BuildingStorefrontIcon },
           ].map((stat, i) => (
-            <div key={i} className="glass-card rounded-3xl p-6 shadow-premium border border-white/60 hover:shadow-soft transition-all group">
-              <div className="flex items-center gap-4 mb-4">
-                <div className={`w-10 h-10 bg-${stat.color}-50 rounded-xl flex items-center justify-center text-${stat.color}-600 group-hover:scale-110 transition-transform`}>
-                  <stat.icon className="w-5 h-5" />
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
-              </div>
-              <p className="text-2xl font-display font-bold text-slate-900 break-words">
-                {stat.value}
-              </p>
-            </div>
+            <StatCard
+              key={i}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              accent={stat.accent}
+              delayIndex={i + 1}
+            />
           ))}
         </div>
       )}
@@ -127,70 +127,62 @@ const StockIntakeLog = () => {
       )}
 
       {/* Controls & Table Container */}
-      <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
-        <div className="px-8 py-8 border-b border-slate-100 bg-white/30 backdrop-blur-md flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="glass-card rounded-[2.5rem] border shadow-premium overflow-hidden" style={{ borderColor: 'var(--border-primary)' }}>
+        <div className="px-8 py-8 border-b flex flex-col md:flex-row justify-between items-center gap-6" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
           <div className="relative group w-full md:w-96">
             <input
               type="text"
               placeholder="Search by supplier..."
               value={filterDistributor}
               onChange={(e) => setFilterDistributor(e.target.value)}
-              className="w-full pl-12 pr-6 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700 placeholder:text-slate-300 shadow-sm"
+              className="form-input w-full pl-12 pr-6 py-3.5 rounded-2xl font-medium"
             />
             {!filterDistributor && (
-              <svg className="w-5 h-5 text-slate-300 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">All Records</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>All Records</span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50">
+              <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
                 {['Medicine / Product', 'Supplier', 'Quantity', 'Unit Price', 'Total Cost', 'Expiry Date', 'Actions'].map((header) => (
-                  <th key={header} className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{header}</th>
+                  <th key={header} className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-secondary)' }}>{header}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-40">
-                      <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
-                    </div>
+                  <td colSpan="7" className="px-8 py-8">
+                    <PanelSkeleton rows={5} />
                   </td>
                 </tr>
               ) : intakeRecords.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-40">
-                      <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center">
-                        <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      </div>
-                      <p className="text-slate-500 font-display font-bold">No deliveries recorded yet</p>
-                    </div>
+                  <td colSpan="7" className="px-8 py-12">
+                    <EmptyState icon={InboxStackIcon} title="No deliveries recorded yet" message="Recorded stock intakes will appear here." />
                   </td>
                 </tr>
               ) : (
                 intakeRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-indigo-50/30 transition-colors group">
+                  <tr key={record.id} className="border-b last:border-0 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
                     <td className="px-8 py-6">
-                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{record.product_name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">Batch: {record.batch_number || 'ST-ALPHA'}</p>
+                      <p className="font-bold group-hover:text-primary transition-colors" style={{ color: 'var(--text-primary)' }}>{record.product_name}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>Batch: {record.batch_number || 'ST-ALPHA'}</p>
                     </td>
                     <td className="px-8 py-6">
-                      <span className="px-3 py-1 bg-white border border-slate-100 rounded-xl text-xs font-bold text-slate-600 shadow-sm">{record.distributor_name}</span>
+                      <span className="px-3 py-1 border rounded-xl text-xs font-bold shadow-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>{record.distributor_name}</span>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-lg font-display font-bold text-slate-900">{record.quantity_received}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Units</p>
+                      <p className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>{record.quantity_received}</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-secondary)' }}>Units</p>
                     </td>
-                    <td className="px-8 py-6 font-medium text-slate-600 text-sm">KES {parseFloat(record.unit_cost).toLocaleString()}</td>
+                    <td className="px-8 py-6 font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>KES {parseFloat(record.unit_cost).toLocaleString()}</td>
                     <td className="px-8 py-6">
                       <p className="font-display font-bold text-primary">KES {parseFloat(record.total_cost).toLocaleString()}</p>
                     </td>
@@ -205,7 +197,8 @@ const StockIntakeLog = () => {
                     <td className="px-8 py-6">
                       <button
                         onClick={() => setSelectedRecord(record)}
-                        className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary hover:border-indigo-100 hover:shadow-card transition-all active:scale-90"
+                        className="w-10 h-10 border rounded-xl flex items-center justify-center hover:text-primary transition-all active:scale-90"
+                        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-muted)' }}
                       >
                         <EyeIcon className="w-5 h-5" />
                       </button>
@@ -234,63 +227,63 @@ const StockIntakeLog = () => {
       {/* Record Detail Modal - Premium Design */}
       {selectedRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedRecord(null)}></div>
-          <div className="relative w-full max-w-lg bg-white rounded-[2rem] shadow-premium overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedRecord(null)}></div>
+          <div className="relative w-full max-w-lg glass-card rounded-[2rem] shadow-premium overflow-hidden border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            <div className="px-8 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)' }}>
               <div>
-                <h2 className="text-xl font-display font-bold text-slate-900">Intake Details</h2>
-                <p className="text-sm text-slate-500 font-medium">Recorded on {new Date(selectedRecord.received_date).toLocaleString()}</p>
+                <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Intake Details</h2>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Recorded on {new Date(selectedRecord.received_date).toLocaleString()}</p>
               </div>
-              <button onClick={() => setSelectedRecord(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={() => setSelectedRecord(null)} className="transition-colors hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Product</label>
-                  <p className="font-semibold text-slate-800">{selectedRecord.product_name}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Product</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.product_name}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Supplier</label>
-                  <p className="font-semibold text-slate-800">{selectedRecord.supplier_name || selectedRecord.distributor_name}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Supplier</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.supplier_name || selectedRecord.distributor_name}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Quantity</label>
-                  <p className="font-semibold text-slate-800">{selectedRecord.quantity_received}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Quantity</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.quantity_received}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Unit Cost</label>
-                  <p className="font-semibold text-slate-800">KES {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Unit Cost</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>KES {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Cost</label>
-                  <p className="font-semibold text-slate-800">KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Total Cost</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Batch / Expiry</label>
-                  <p className="font-semibold text-slate-800">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Batch / Expiry</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {selectedRecord.batch_number || 'N/A'} <br/>
-                    <span className="text-slate-500 text-sm">Exp: {selectedRecord.expiry_date || 'N/A'}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Exp: {selectedRecord.expiry_date || 'N/A'}</span>
                   </p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice Number</label>
-                  <p className="font-semibold text-slate-800">{selectedRecord.invoice_number || 'N/A'}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Invoice Number</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.invoice_number || 'N/A'}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Payment Status</label>
-                  <p className="font-semibold text-slate-800">{selectedRecord.payment_status}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Payment Status</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.payment_status}</p>
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Received By</label>
-                  <p className="font-semibold text-slate-800">{selectedRecord.received_by_username || 'System'}</p>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Received By</label>
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.received_by_username || 'System'}</p>
                 </div>
               </div>
               {selectedRecord.notes && (
-                <div className="pt-6 border-t border-slate-100">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</label>
-                  <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl">{selectedRecord.notes}</p>
+                <div className="pt-6 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-secondary)' }}>Notes</label>
+                  <p className="text-sm p-4 rounded-xl" style={{ color: 'var(--text-secondary)', background: 'var(--bg-field)' }}>{selectedRecord.notes}</p>
                 </div>
               )}
             </div>

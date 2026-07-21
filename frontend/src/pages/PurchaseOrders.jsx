@@ -94,7 +94,7 @@ const PurchaseOrders = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left border-b text-gray-500">
+              <tr className="text-left border-b" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' }}>
                 <th className="py-2">PO Number</th>
                 <th>Supplier</th>
                 <th>Branch</th>

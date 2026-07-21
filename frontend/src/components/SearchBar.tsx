@@ -140,9 +140,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
     <div className={`relative ${className}`}>
       <div className="relative group">
         {/* Search input */}
-        <div className="relative flex items-center bg-white  rounded-2xl shadow-lg border border-gray-200  focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-200">
+        <div className="relative flex items-center rounded-2xl shadow-lg border focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-200" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
           <MagnifyingGlassIcon
-            className="h-5 w-5 text-gray-400 ml-4"
+            className="h-5 w-5 ml-4"
+            style={{ color: 'var(--text-muted)' }}
             aria-hidden="true"
           />
           <input
@@ -202,7 +203,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <div
             ref={suggestionsRef}
             id="search-suggestions"
-            className="absolute top-full left-0 right-0 mt-2 bg-white  rounded-xl shadow-xl border border-gray-200  overflow-hidden z-50"
+            className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border overflow-hidden z-50"
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
             role="listbox"
           >
             {filteredSuggestions.map((suggestion, index) => (
@@ -245,7 +247,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Filter panel */}
       {showFilterPanel && showFilters && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white  rounded-xl shadow-xl border border-gray-200  p-4 z-40">
+        <div className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border p-4 z-40" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">Filters</h3>
             {hasActiveFilters && (
