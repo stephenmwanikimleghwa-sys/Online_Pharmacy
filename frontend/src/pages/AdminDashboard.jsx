@@ -8,6 +8,10 @@ import {
   TruckIcon,
   ClockIcon,
   ShoppingBagIcon,
+  BanknotesIcon,
+  ChartBarIcon,
+  CheckCircleIcon,
+  InboxStackIcon,
 } from '@heroicons/react/24/outline';
 import WelcomeBanner from '../components/WelcomeBanner';
 import NewStockIntake from '../components/NewStockIntake';
@@ -18,6 +22,10 @@ import { useLowStockAlerts } from '../hooks/useProducts';
 import { useExpiryAlerts } from '../hooks/useExpiryAlerts';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import RefreshIndicator from '../components/ui/RefreshIndicator';
+import StatCard from '../components/ui/StatCard';
+import StatusDot from '../components/ui/StatusDot';
+import EmptyState from '../components/ui/EmptyState';
+import { StatGridSkeleton, PanelSkeleton } from '../components/ui/Skeleton';
 import { queryClient } from '../lib/queryClient';
 import { unwrapList } from '../utils/parseApiData';
 
@@ -127,8 +135,17 @@ const AdminDashboard = () => {
 
   if (loadingGlobal && !globalData) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-10 h-10 border-[3px] border-t-transparent rounded-xl animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+        <div className="mb-8">
+          <WelcomeBanner />
+        </div>
+        <div className="h-5 w-40 animate-shimmer rounded-lg mb-4" />
+        <StatGridSkeleton count={3} withTrend />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <PanelSkeleton rows={4} />
+          <PanelSkeleton rows={4} />
+          <PanelSkeleton rows={4} />
+        </div>
       </div>
     );
   }
@@ -146,144 +163,141 @@ const AdminDashboard = () => {
 
   const branches = globalData?.branches || [];
   const totals = globalData?.totals || {};
+  // Per-branch revenue makes a lightweight distribution sparkline on the revenue card.
+  const revenueTrend = branches.map((b) => Number(b.today_revenue) || 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in font-sans">
-      <div className="mb-8">
+      <div className="dash-hero mb-8">
         <WelcomeBanner />
       </div>
 
       {/* SECTION A — Global Overview */}
       <section className="mb-12">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
             Global Overview
-            <span title="System is Operational" className="text-emerald-500 animate-[spin_4s_linear_infinite] flex items-center">
-              ⚙️
-            </span>
+            <StatusDot tone="operational" label="Operational" title="System is operational" />
             <RefreshIndicator isFetching={isRefreshing} isLoading={loadingGlobal} />
           </h2>
-          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">All branches</span>
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>All branches</span>
         </div>
 
         {globalData?.active_users?.length > 0 && (
-          <div className="mb-6 bg-white dark:bg-gray-800 rounded-2xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm overflow-x-auto">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Today's Staff Sessions</h3>
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">User</th>
-                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">Branch</th>
-                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">Login Time</th>
-                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase">Status / Logout</th>
-                  <th className="py-2 text-xs font-semibold text-gray-500 uppercase text-right">Time Spent</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {globalData.active_users.map(u => (
-                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-2 pr-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{u.username}</span>
-                        <span className="text-[10px] text-gray-500 uppercase">{u.role}</span>
-                      </div>
-                    </td>
-                    <td className="py-2 pr-4 text-sm text-gray-700 dark:text-gray-300">
-                      {u.branch || '—'}
-                    </td>
-                    <td className="py-2 pr-4 text-sm text-gray-700 dark:text-gray-300">
-                      {u.login_time ? new Date(u.login_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
-                    </td>
-                    <td className="py-2 pr-4">
-                      {u.is_active ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-                          <span className="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                          Logged in
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          Out at {u.logout_time ? new Date(u.logout_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 text-sm font-medium text-right text-gray-900 dark:text-white">
-                      {u.duration_minutes >= 60 
-                        ? `${Math.floor(u.duration_minutes / 60)}h ${u.duration_minutes % 60}m` 
-                        : `${u.duration_minutes}m`}
-                    </td>
-                  </tr>
-                ))}
-                {globalData.active_users.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="py-4 text-center text-sm text-gray-500">
-                      No staff activity recorded today.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="mb-6 glass-card rounded-2xl p-5">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <StatusDot tone="operational" />
+              Currently Logged-in Users
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {globalData.active_users.map(u => (
+                <div
+                  key={u.id}
+                  className="flex flex-col rounded-xl p-2 px-3 border"
+                  style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}
+                >
+                  <span className="text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>{u.username}</span>
+                  <span className="text-[10px] uppercase" style={{ color: 'var(--text-secondary)' }}>{u.role} {u.branch ? `• ${u.branch}` : ''}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <p className="text-xs font-bold text-gray-500 uppercase mb-1">Total revenue today</p>
-            <p className="text-2xl font-bold text-emerald-600">{formatMoney(totals.total_revenue_today)}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-rose-100 dark:border-rose-900 shadow-sm bg-rose-50/30">
-            <p className="text-xs font-bold text-rose-600 uppercase mb-1">Discounts given today</p>
-            <p className="text-2xl font-bold text-rose-700">{formatMoney(totals.total_discounts_today || 0)}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <p className="text-xs font-bold text-gray-500 uppercase mb-1">Total sales today</p>
-            <p className="text-2xl font-bold text-indigo-600">{totals.total_sales_today ?? 0}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <p className="text-xs font-bold text-gray-500 uppercase mb-1">Low stock (all branches)</p>
-            <p className="text-2xl font-bold text-amber-500">{totals.total_low_stock ?? 0}</p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <StatCard
+            label="Total revenue today"
+            value={Number(totals.total_revenue_today) || 0}
+            format={formatMoney}
+            icon={BanknotesIcon}
+            accent="emerald"
+            trend={revenueTrend}
+            delayIndex={1}
+          />
+          <StatCard
+            label="Total sales today"
+            value={Number(totals.total_sales_today) || 0}
+            icon={ChartBarIcon}
+            accent="indigo"
+            delayIndex={2}
+          />
+          <StatCard
+            label="Low stock (all branches)"
+            value={Number(totals.total_low_stock) || 0}
+            icon={ExclamationTriangleIcon}
+            accent="rose"
+            hint="Across every branch"
+            delayIndex={3}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {branches.map((branch) => (
-            <div
-              key={branch.id}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-2 mb-4">
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white">{branch.name}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{formatBranchType(branch.type, branch.name)}</p>
+          {branches.map((branch, i) => {
+            const products = Number(branch.products_count) || 0;
+            const lowStock = Number(branch.low_stock_count) || 0;
+            // Stock-health bar: proportion of catalogue that is NOT low on stock.
+            const healthPct = products > 0
+              ? Math.max(0, Math.min(100, Math.round(((products - lowStock) / products) * 100)))
+              : 100;
+            const healthColor = healthPct >= 85 ? '#10b981' : healthPct >= 60 ? '#f59e0b' : '#f43f5e';
+            return (
+              <div
+                key={branch.id}
+                className={`glass-card rounded-2xl p-5 card-enter card-enter-${Math.min(6, i + 1)}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-4">
+                  <div>
+                    <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>{branch.name}</h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{formatBranchType(branch.type, branch.name)}</p>
+                  </div>
+                  <span
+                    className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: 'var(--brand-mist)' }}
+                  >
+                    <BuildingOffice2Icon className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                  </span>
                 </div>
-                <BuildingOffice2Icon className="w-8 h-8 text-indigo-400 opacity-60 shrink-0" />
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <dt className="text-xs" style={{ color: 'var(--text-secondary)' }}>Products</dt>
+                    <dd className="font-bold" style={{ color: 'var(--text-primary)' }}>{products}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sales today</dt>
+                    <dd className="font-bold" style={{ color: 'var(--text-primary)' }}>{branch.today_sales_count}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs" style={{ color: 'var(--text-secondary)' }}>Revenue today</dt>
+                    <dd className="font-bold text-emerald-500">{formatMoney(branch.today_revenue)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs" style={{ color: 'var(--text-secondary)' }}>Low stock</dt>
+                    <dd className="font-bold text-rose-500">{lowStock}</dd>
+                  </div>
+                </dl>
+                {/* Stock health bar */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Stock health</span>
+                    <span className="text-[10px] font-bold" style={{ color: healthColor }}>{healthPct}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-field)' }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${healthPct}%`, background: healthColor }}
+                    />
+                  </div>
+                </div>
               </div>
-              <dl className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <dt className="text-gray-500 text-xs">Products</dt>
-                  <dd className="font-bold text-gray-900 dark:text-white">{branch.products_count}</dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500 text-xs">Sales today</dt>
-                  <dd className="font-bold text-gray-900 dark:text-white">{branch.today_sales_count}</dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500 text-xs">Revenue today</dt>
-                  <dd className="font-bold text-emerald-600">{formatMoney(branch.today_revenue)}</dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500 text-xs">Low stock</dt>
-                  <dd className="font-bold text-rose-600">{branch.low_stock_count}</dd>
-                </div>
-              </dl>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       {/* SECTION B — Active Branch Operations */}
       <section>
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
             Active Branch Operations
           </h2>
           {activeBranch ? (
@@ -386,85 +400,113 @@ const AdminDashboard = () => {
         )}
 
         {!activeBranch?.id && (
-          <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-10 text-center text-gray-500">
-            <p className="font-medium">No active branch selected.</p>
-            <p className="text-sm mt-2">Choose a branch to see alerts, transactions, and transfers.</p>
-          </div>
+          <EmptyState
+            icon={BuildingOffice2Icon}
+            title="No active branch selected"
+            message="Choose a branch to see alerts, transactions, and transfers."
+            action={(
+              <Link to="/branch/select" className="btn-primary px-4 py-2 rounded-xl text-sm font-semibold text-white">
+                Select a branch →
+              </Link>
+            )}
+          />
         )}
 
         {activeBranch?.id && branchError && !branchOps && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-            <p className="text-sm font-medium text-red-700 mb-3">Failed to load branch operations.</p>
-            <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetchBranch()}>
-              Retry
-            </button>
-          </div>
+          <EmptyState
+            icon={ExclamationTriangleIcon}
+            title="Failed to load branch operations"
+            message="Something went wrong fetching this branch's data."
+            action={(
+              <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm font-semibold text-white" onClick={() => void refetchBranch()}>
+                Retry
+              </button>
+            )}
+          />
         )}
 
         {activeBranch?.id && loadingOps && !branchOps && (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-[3px] border-t-transparent rounded-xl animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PanelSkeleton rows={4} />
+            <PanelSkeleton rows={4} />
+            <PanelSkeleton rows={3} className="lg:col-span-2" />
           </div>
         )}
 
         {activeBranch?.id && branchOps && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(245, 158, 11, 0.16)' }}>
+                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
+                </span>
                 Low stock ({loadingLowStock ? '…' : lowStockAlerts.length})
               </h3>
               {loadingLowStock ? (
-                <div className="flex justify-center py-6">
-                  <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+                <div className="space-y-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex items-center justify-between gap-3">
+                      <div className="h-4 flex-1 animate-shimmer rounded" style={{ maxWidth: `${70 - i * 8}%` }} />
+                      <div className="h-4 w-14 animate-shimmer rounded" />
+                    </div>
+                  ))}
                 </div>
               ) : lowStockAlerts.length ? (
                 <ul className="space-y-2 max-h-48 overflow-y-auto">
                   {lowStockAlerts.map((item) => (
-                    <li key={item.product_id ?? item.id} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{item.product_name ?? item.name}</span>
-                      <span className="text-rose-600 font-bold">{item.quantity ?? item.stock_quantity} left</span>
+                    <li key={item.product_id ?? item.id} className="flex justify-between text-sm py-2 border-b last:border-0" style={{ borderColor: 'var(--border-primary)' }}>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{item.product_name ?? item.name}</span>
+                      <span className="text-rose-500 font-bold">{item.quantity ?? item.stock_quantity} left</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">No low stock alerts.</p>
+                <EmptyState compact tone="positive" icon={CheckCircleIcon} title="Stock levels healthy" message="No low-stock alerts for this branch." />
               )}
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <ClockIcon className="w-5 h-5 text-rose-500" />
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(244, 63, 94, 0.14)' }}>
+                  <ClockIcon className="w-5 h-5 text-rose-500" />
+                </span>
                 Expiry alerts ({loadingExpiry ? '…' : expiryCount})
               </h3>
               {loadingExpiry ? (
-                <div className="flex justify-center py-6">
-                  <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
+                <div className="space-y-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex items-center justify-between gap-3">
+                      <div className="h-4 flex-1 animate-shimmer rounded" style={{ maxWidth: `${68 - i * 8}%` }} />
+                      <div className="h-4 w-12 animate-shimmer rounded" />
+                    </div>
+                  ))}
                 </div>
               ) : expiryAlertItems.length ? (
                 <ul className="space-y-2 max-h-48 overflow-y-auto">
                   {expiryAlertItems.map((item) => (
-                    <li key={item.id} className="flex justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{item.product_name}</span>
-                      <span className="text-gray-500">{item.days_left}d left</span>
+                    <li key={item.id} className="flex justify-between text-sm py-2 border-b last:border-0" style={{ borderColor: 'var(--border-primary)' }}>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{item.product_name}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{item.days_left}d left</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">No products expiring within 60 days.</p>
+                <EmptyState compact tone="positive" icon={CheckCircleIcon} title="Nothing expiring soon" message="No products expiring within 60 days." />
               )}
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm lg:col-span-2">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <ShoppingBagIcon className="w-5 h-5 text-indigo-500" />
+            <div className="glass-card rounded-2xl p-6 lg:col-span-2">
+              <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(99, 102, 241, 0.14)' }}>
+                  <ShoppingBagIcon className="w-5 h-5 text-indigo-500" />
+                </span>
                 Last 5 transactions
               </h3>
               {branchOps.recent_transactions?.length ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                      <tr className="text-left border-b" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' }}>
                         <th className="pb-2 pr-4">Type</th>
                         <th className="pb-2 pr-4">Amount</th>
                         <th className="pb-2 pr-4">Payment</th>
@@ -474,46 +516,52 @@ const AdminDashboard = () => {
                     </thead>
                     <tbody>
                       {branchOps.recent_transactions.map((tx) => (
-                        <tr key={tx.id} className="border-b border-gray-50 dark:border-gray-700/50">
-                          <td className="py-2 pr-4 capitalize">{tx.sale_type}</td>
-                          <td className="py-2 pr-4 font-bold">{formatMoney(tx.total_amount)}</td>
-                          <td className="py-2 pr-4">{tx.payment_mode}</td>
-                          <td className="py-2 pr-4">{tx.dispensed_by}</td>
-                          <td className="py-2 text-gray-500">{new Date(tx.dispensed_at).toLocaleString()}</td>
+                        <tr key={tx.id} className="border-b last:border-0" style={{ borderColor: 'var(--border-primary)' }}>
+                          <td className="py-2 pr-4 capitalize" style={{ color: 'var(--text-primary)' }}>{tx.sale_type}</td>
+                          <td className="py-2 pr-4 font-bold text-emerald-500">{formatMoney(tx.total_amount)}</td>
+                          <td className="py-2 pr-4" style={{ color: 'var(--text-primary)' }}>{tx.payment_mode}</td>
+                          <td className="py-2 pr-4" style={{ color: 'var(--text-primary)' }}>{tx.dispensed_by}</td>
+                          <td className="py-2" style={{ color: 'var(--text-secondary)' }}>{new Date(tx.dispensed_at).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No recent transactions.</p>
+                <EmptyState compact icon={ShoppingBagIcon} title="No recent transactions" message="Sales at this branch will show up here." />
               )}
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm lg:col-span-2">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <TruckIcon className="w-5 h-5 text-blue-500" />
+            <div className="glass-card rounded-2xl p-6 lg:col-span-2">
+              <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.14)' }}>
+                  <TruckIcon className="w-5 h-5 text-blue-500" />
+                </span>
                 Pending stock transfers ({branchOps.pending_transfers_count})
               </h3>
               {branchOps.pending_transfers?.length ? (
                 <ul className="space-y-3">
                   {branchOps.pending_transfers.map((t) => (
-                    <li key={t.id} className="flex flex-wrap justify-between gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 text-sm items-center">
+                    <li
+                      key={t.id}
+                      className="flex flex-wrap justify-between gap-2 p-3 rounded-xl text-sm items-center border"
+                      style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}
+                    >
                       <div>
-                        <span className="font-medium block">{t.product_name} × {t.quantity}</span>
-                        <span className="text-gray-500 text-xs">
+                        <span className="font-medium block" style={{ color: 'var(--text-primary)' }}>{t.product_name} × {t.quantity}</span>
+                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                           {t.source_branch} → {t.destination_branch} · {t.requested_by} · {new Date(t.created_at).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" className="text-xs font-bold text-green-700 px-2 py-1 rounded bg-green-50" onClick={() => setApproveModal(t)}>Approve</button>
-                        <button type="button" className="text-xs font-bold text-red-700 px-2 py-1 rounded bg-red-50" onClick={() => setRejectModal(t.id)}>Reject</button>
+                        <button type="button" className="text-xs font-bold text-emerald-600 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(16, 185, 129, 0.14)' }} onClick={() => setApproveModal(t)}>Approve</button>
+                        <button type="button" className="text-xs font-bold text-rose-600 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(244, 63, 94, 0.14)' }} onClick={() => setRejectModal(t.id)}>Reject</button>
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">No pending transfers.</p>
+                <EmptyState compact tone="positive" icon={InboxStackIcon} title="No pending transfers" message="Transfer requests awaiting approval will appear here." />
               )}
             </div>
             <ExpiryAlertsWidget />

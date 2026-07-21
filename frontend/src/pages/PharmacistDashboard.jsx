@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import prescriptionService from "../services/prescriptionService";
-import LoadingSpinner from "../components/LoadingSpinner";
 import WelcomeBanner from "../components/WelcomeBanner";
+import { StatCardSkeleton, PanelSkeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../context/AuthContext";
 import PrescriptionCard from "../components/PrescriptionCard";
 import InventorySummaryCard from "../components/InventorySummaryCard";
@@ -13,7 +13,6 @@ import { useDashboardBranch } from "../hooks/useDashboard";
 import { useLowStockAlerts, useInventoryList } from "../hooks/useProducts";
 import { useExpiryAlerts } from "../hooks/useExpiryAlerts";
 import { unwrapList, getProductBranchQuantity } from "../utils/parseApiData";
-import BranchTypeBanner from "../components/BranchTypeBanner";
 
 const normalizeList = (res) => {
   if (!res) return [];
@@ -107,9 +106,22 @@ const PharmacistDashboard = () => {
 
   if (authLoading || rxLoading || dashboardLoading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[60vh] space-y-4">
-        <LoadingSpinner size="lg" />
-        <p className="animate-pulse" style={{color:'var(--text-secondary)'}}>Loading your dashboard...</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+        <div className="h-8 w-64 animate-shimmer rounded-xl mb-8" />
+        <div className="glass-card rounded-2xl p-6 mb-10">
+          <div className="h-6 w-48 animate-shimmer rounded-lg mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[0, 1, 2].map((i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-24 animate-shimmer rounded-2xl" />
+          ))}
+        </div>
+        <PanelSkeleton rows={4} />
       </div>
     );
   }
@@ -118,9 +130,6 @@ const PharmacistDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
       {/* Welcome Banner */}
       <WelcomeBanner />
-
-      {/* Branch type isolation notice */}
-      <BranchTypeBanner context="are available at this branch" />
 
       {/* Inventory Summary immediately after greeting */}
       <div className="mb-10">
