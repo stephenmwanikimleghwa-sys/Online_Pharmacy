@@ -17,10 +17,18 @@ from rest_framework.exceptions import (
 )
 from rest_framework.views import exception_handler as drf_exception_handler
 
+# django-ratelimit 4.x exposes its exception under `django_ratelimit`; the
+# legacy 3.x line used the bare `ratelimit` module. Try both so the 429 mapping
+# below works regardless of which is installed — importing only the old name
+# silently left Ratelimited = None, causing throttled requests to fall through
+# to the generic 403 "You do not have permission to perform this action."
 try:
-    from ratelimit.exceptions import Ratelimited
-except ImportError:
-    Ratelimited = None
+    from django_ratelimit.exceptions import Ratelimited
+except ImportError:  # pragma: no cover - fallback for legacy ratelimit<4
+    try:
+        from ratelimit.exceptions import Ratelimited
+    except ImportError:
+        Ratelimited = None
 
 from config.api_responses import ApiErrorCode
 
