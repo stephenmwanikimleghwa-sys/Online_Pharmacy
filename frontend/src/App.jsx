@@ -47,6 +47,7 @@ const QuotationsDashboard = lazy(() => import("./pages/finance/QuotationsDashboa
 const ClinicalDashboard = lazy(() => import('./pages/clinical/ClinicalDashboard'));
 const ConsultationWorkflow = lazy(() => import('./pages/clinical/ConsultationWorkflow'));
 const ReturnsDashboard = lazy(() => import('./pages/inventory/ReturnsDashboard'));
+const StockReconciliation = lazy(() => import('./pages/inventory/StockReconciliation'));
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import Footer from "./components/Footer";
@@ -113,6 +114,7 @@ function AppLayout() {
                   <Route path="/clinical" element={<ProtectedRoute element={ClinicalDashboard} allowedRoles={['admin', 'pharmacist']} />} />
                   <Route path="/clinical/:id" element={<ProtectedRoute element={ConsultationWorkflow} allowedRoles={['admin', 'pharmacist']} />} />
                   <Route path="/returns" element={<ProtectedRoute element={ReturnsDashboard} allowedRoles={['admin', 'pharmacist']} />} />
+                  <Route path="/reconciliation" element={<ProtectedRoute element={StockReconciliation} allowedRoles={['admin', 'pharmacist']} />} />
                   <Route path="/users" element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />} />
 
                   {/* Protected Customer Routes */}

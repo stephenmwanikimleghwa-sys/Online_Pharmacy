@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import SyncStatusIndicator from "../SyncStatusIndicator";
 import api from "../../services/api";
 import { usePrefetchOnHover } from "../../hooks/usePrefetchOnHover";
 import { QUERY_KEYS } from "../../lib/queryKeys";
@@ -11,7 +12,8 @@ import {
   SunIcon, MoonIcon, ArrowRightOnRectangleIcon, ChevronLeftIcon, ChevronRightIcon,
   HomeIcon, ShoppingBagIcon, ChartBarIcon, ClipboardDocumentListIcon, Squares2X2Icon,
   ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon, BuildingOffice2Icon,
-  BanknotesIcon, DocumentPlusIcon, UserGroupIcon, ArrowUturnLeftIcon
+  BanknotesIcon, DocumentPlusIcon, UserGroupIcon, ArrowUturnLeftIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import BranchSelector from "../BranchSelector";
 
@@ -48,6 +50,7 @@ const getNavGroups = (user) => {
       { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
       { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
+      { to: "/reconciliation", label: "Reconciliation", icon: ExclamationTriangleIcon },
       { to: "/clinical", label: "Clinical Services", icon: UserGroupIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
       { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
@@ -65,6 +68,7 @@ const getNavGroups = (user) => {
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
       { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
+      { to: "/reconciliation", label: "Reconciliation", icon: ExclamationTriangleIcon },
       { to: "/clinical", label: "Clinical Services", icon: UserGroupIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
       { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
@@ -281,6 +285,14 @@ const Sidebar = () => {
           backdropFilter: 'blur(18px)',
         }}
       >
+        {/* Offline-sync status: always visible so staff trust that a sale
+            recorded offline is safely queued and will upload. */}
+        {user ? (
+          <div className={`mb-3 flex ${isCollapsed ? 'justify-center' : ''}`}>
+            <SyncStatusIndicator />
+          </div>
+        ) : null}
+
         {/* Theme + Logout row */}
         <div className={`flex items-center ${isCollapsed ? 'flex-col space-y-2' : 'justify-between gap-2'} mb-3`}>
           <button

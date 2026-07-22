@@ -9,6 +9,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { SyncProvider } from "./context/SyncContext";
 import App from "./App.jsx";
 import { registerServiceWorker } from "./lib/serviceWorker";
 import "./index.css";
@@ -44,7 +45,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <AuthProvider>
             <CartProvider>
               <NotificationProvider>
-                <App />
+                <SyncProvider>
+                  <App />
+                </SyncProvider>
               </NotificationProvider>
             </CartProvider>
           </AuthProvider>

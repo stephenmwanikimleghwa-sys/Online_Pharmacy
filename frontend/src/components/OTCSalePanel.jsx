@@ -9,6 +9,7 @@ import {
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import { useSync } from "../context/SyncContext";
 import { fetchBranchCatalog, searchProducts } from "../services/productService";
 import { getProductDisplayPrice, getProductBranchQuantity } from "../utils/parseApiData";
 import LoadingButton from "./LoadingButton";
@@ -23,6 +24,7 @@ import { getProductAvailability, checkProductExpiry } from "../services/procurem
 const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const { notify } = useNotification();
   const { activeBranch, user } = useAuth();
+  const { online, queueWrite } = useSync();
   const branchId = activeBranch?.id ?? user?.branch ?? null;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -305,20 +307,65 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         }
       };
 
+      const paymentMode = getMappedPaymentMode();
+      const salePayload = {
+        items: selectedItems.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+        })),
+        payment_mode: paymentMode,
+        customer_id: setup.customerType === 'credit' ? setup.creditCustomerId : null,
+        patient_name: setup.patientName,
+        pricing_tier: setup.pricingTier.toUpperCase(),
+        discount: 0,
+        branch_id: branchId,
+      };
+
+      // Credit sales need a server-side credit-limit check, so they cannot be
+      // completed offline. Block queuing them and ask the user to retry online.
+      const isCreditSale = paymentMode === 'CREDIT';
+
+      // Offline (or a failed POST below) → queue the sale in the durable outbox
+      // so it uploads when the connection returns. The cashier gets immediate
+      // confirmation; stock reconciles server-side on sync (oversell is handled).
+      const queueOffline = async (reason) => {
+        if (isCreditSale) {
+          setSaleError(
+            "Credit sales require a connection to check the customer's credit limit. Please try again when online.",
+          );
+          return false;
+        }
+        await queueWrite('sale', salePayload, branchId);
+        const total = calculateTotal();
+        setLastOrder({
+          offline: true,
+          total_amount: total,
+          items: selectedItems.map((i) => ({
+            product_name: i.name,
+            quantity: i.quantity,
+            price_per_unit: i.unitPrice,
+          })),
+          patient_name: setup.patientName,
+        });
+        setSelectedItems([]);
+        setSearchTerm("");
+        setSearchResults(catalog);
+        notify.success(
+          `Sale saved offline (KES ${Number(total).toLocaleString()}). It will upload automatically when you're back online.`,
+          "success",
+        );
+        setShowReceipt(true);
+        return true;
+      };
+
+      if (!online) {
+        await queueOffline("offline");
+        return;
+      }
+
       const response = await api.post(
         "/inventory/dispense/otc/",
-        {
-          items: selectedItems.map((item) => ({
-            product_id: item.id,
-            quantity: item.quantity,
-          })),
-          payment_mode: getMappedPaymentMode(),
-          customer_id: setup.customerType === 'credit' ? setup.creditCustomerId : null,
-          patient_name: setup.patientName,
-          pricing_tier: setup.pricingTier.toUpperCase(),
-          discount: 0,
-          branch_id: branchId,
-        },
+        salePayload,
         { skipGlobalErrorNotification: true },
       );
       const order = response.data?.data ?? response.data;
@@ -333,6 +380,47 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       );
       setShowReceipt(true);
     } catch (error) {
+      // A network error (no response) while submitting online → fall back to the
+      // offline queue instead of losing the sale. Real server rejections (4xx
+      // with a response) are surfaced to the user as before.
+      const noResponse = !error.response;
+      if (noResponse && setup.customerType !== 'credit') {
+        try {
+          const paymentMode =
+            setup.customerType === 'credit' ? 'CREDIT' : undefined;
+          if (paymentMode !== 'CREDIT') {
+            await queueWrite(
+              'sale',
+              {
+                items: selectedItems.map((item) => ({
+                  product_id: item.id,
+                  quantity: item.quantity,
+                })),
+                payment_mode:
+                  paymentMethod === 'cash' ? 'CASH' : 'MPESA_TILL',
+                customer_id: null,
+                patient_name: setup.patientName,
+                pricing_tier: setup.pricingTier.toUpperCase(),
+                discount: 0,
+                branch_id: branchId,
+              },
+              branchId,
+            );
+            const total = calculateTotal();
+            setLastOrder({ offline: true, total_amount: total });
+            setSelectedItems([]);
+            setSearchTerm("");
+            notify.success(
+              `Connection lost — sale saved offline (KES ${Number(total).toLocaleString()}). It will upload automatically.`,
+              "success",
+            );
+            setShowReceipt(true);
+            return;
+          }
+        } catch {
+          /* fall through to error display */
+        }
+      }
       const data = error.response?.data;
       const msg =
         data?.error?.message ||
