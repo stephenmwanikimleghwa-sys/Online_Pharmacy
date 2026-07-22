@@ -520,9 +520,21 @@ if REDIS_URL:
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 # Don't blow up the site if Redis is temporarily unavailable
                 "IGNORE_EXCEPTIONS": True,
+                # IGNORE_EXCEPTIONS only helps once an exception is RAISED. Without
+                # socket timeouts, a paused/black-holing Redis (e.g. an idle Upstash
+                # instance) makes the client block on connect/read with no deadline,
+                # hanging the gunicorn worker until Render kills it — the browser then
+                # sees no response ("No Internet Connection") or a worker-timeout 502.
+                # Short timeouts turn that hang into a caught exception -> cache miss
+                # -> the view computes fresh data and still responds.
+                "SOCKET_CONNECT_TIMEOUT": 2,  # seconds to establish the connection
+                "SOCKET_TIMEOUT": 2,          # seconds for read/write ops
             },
         }
     }
+    # Log the swallowed cache errors instead of failing silently, so a Redis
+    # outage is visible in logs rather than a mysterious slowdown.
+    DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 else:
     # Fallback to in-memory cache when no REDIS_URL is configured (safer in first deploys)
     CACHES = {
