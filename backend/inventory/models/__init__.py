@@ -9,6 +9,7 @@ from .services import ClinicalService, SoldService
 from .returns import ProductReturn
 from .transfer import InterBranchTransfer
 from .purchase_order import PurchaseOrder, PurchaseOrderItem
+from .sync import SyncOperation, StockDiscrepancy, SyncOpType, SyncOpStatus
 
 __all__ = [
     'Prescription',
@@ -28,4 +29,8 @@ __all__ = [
     'InterBranchTransfer',
     'PurchaseOrder',
     'PurchaseOrderItem',
+    'SyncOperation',
+    'StockDiscrepancy',
+    'SyncOpType',
+    'SyncOpStatus',
 ]

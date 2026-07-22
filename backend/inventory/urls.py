@@ -17,6 +17,8 @@ from .views.document import DocumentViewSet
 from .views.supplier import SupplierViewSet
 from .views.batch import BatchViewSet
 from .views.purchase_order import PurchaseOrderViewSet
+from .views.sync import sync_operations
+from .views.discrepancies import discrepancy_list, resolve_discrepancy
 from .views.expiry import (
     expiry_summary_view,
     mark_batch_removed,
@@ -63,6 +65,11 @@ urlpatterns = [
     # Dispensing
     path('dispense/otc/', dispense_otc, name='dispense-otc'),
     path('dispensing/stats/', dispensing_stats, name='dispensing-stats'),
+
+    # Offline sync + reconciliation
+    path('sync/', sync_operations, name='sync-operations'),
+    path('discrepancies/', discrepancy_list, name='discrepancy-list'),
+    path('discrepancies/<int:pk>/resolve/', resolve_discrepancy, name='discrepancy-resolve'),
     
     # Exports
     path('export/inventory/', export_inventory, name='export-inventory'),

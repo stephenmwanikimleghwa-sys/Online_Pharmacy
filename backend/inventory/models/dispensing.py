@@ -178,7 +178,15 @@ class DispensationItem(models.Model):
     def save(self, *args, **kwargs):
         if not self.total_price:
             self.total_price = self.quantity * self.price_per_unit
-            
+
+        # The offline-sync path (inventory/services/sync.py) needs to own the
+        # stock decrement so it can clamp at zero and record a discrepancy on
+        # oversell. It sets `_skip_stock_update = True` and does the BranchStock
+        # update + StockLog itself. Mirrors the `_skip_credit` flag on StockIntake.
+        if getattr(self, "_skip_stock_update", False):
+            super().save(*args, **kwargs)
+            return
+
         from django.db import transaction
         from products.models import StockLog, BranchStock
         
