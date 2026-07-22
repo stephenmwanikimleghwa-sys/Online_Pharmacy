@@ -167,10 +167,9 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
 def low_stock_reorder_suggestion(product_id, branch_id):
     comparison = compare_suppliers_for_product(product_id)
-    cheapest = (comparison or {}).get("comparison", [{}])[0] if comparison else None
-    alt = None
-    if comparison and len(comparison.get("comparison", [])) > 1:
-        alt = comparison["comparison"][1]
+    ranked = (comparison or {}).get("comparison") or []
+    cheapest = ranked[0] if ranked else None
+    alt = ranked[1] if len(ranked) > 1 else None
     suggested_qty = suggested_order_quantity(product_id, branch_id)
     return {
         "suggested_quantity": suggested_qty,
