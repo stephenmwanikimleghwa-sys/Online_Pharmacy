@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pharmacy-aggregator-v4';
+const CACHE_NAME = 'pharmacy-aggregator-v5';
 // API reads live in a separate cache so we can wipe them on logout without
 // dropping the app shell. See CLEAR_API_CACHE message handler below.
 const API_CACHE_NAME = 'pharmacy-api-cache-v1';

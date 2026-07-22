@@ -14,7 +14,12 @@ import { registerServiceWorker } from "./lib/serviceWorker";
 import "./index.css";
 
 const persister = createSyncStoragePersister({
-  storage: window.sessionStorage,
+  // localStorage (not sessionStorage) so cached reads survive a tab close /
+  // machine reboot — essential for branches that lose connectivity for long
+  // stretches. maxAge below bounds how stale a restored cache may be, and
+  // logout (AuthContext) purges this key so a shared machine doesn't leak the
+  // previous user's data.
+  storage: window.localStorage,
   key: "TRANSCOUNTY_QUERY_CACHE",
   throttleTime: 1000,
 });

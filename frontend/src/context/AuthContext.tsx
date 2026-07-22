@@ -449,6 +449,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_role");
     localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+    // The React Query cache is persisted to localStorage (see main.jsx) so it
+    // survives reboots for offline reads; clear it on logout so the next user
+    // on a shared machine can't see the previous user's cached data.
+    localStorage.removeItem("TRANSCOUNTY_QUERY_CACHE");
 
     document.cookie.split(";").forEach((cookie) => {
       document.cookie = cookie
