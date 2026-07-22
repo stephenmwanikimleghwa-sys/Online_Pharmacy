@@ -30,21 +30,10 @@ services:
         value: "https://online-pharmacy-sn88.onrender.com,https://online-pharmacy-1-np3y.onrender.com,https://*.onrender.com"
       - key: PYTHON_VERSION
         value: "3.11.0"
-      - key: REDIS_URL
-        fromService:
-          name: pharmacy-cache
-          type: redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          name: pharmacy-cache
-          type: redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          name: pharmacy-cache
-          type: redis
-          property: connectionString
+      # Redis dropped 2026-07-22: the app runs with in-memory (LocMem) cache and
+      # eager in-process Celery when no REDIS_URL is set. Re-add REDIS_URL /
+      # CELERY_BROKER_URL / CELERY_RESULT_BACKEND here (and restore the redis
+      # service below) to re-enable distributed cache + async task dispatch.
 
   # Frontend Service (Static Site) — must call the Django backend URL, not same-origin /api
   - type: web
@@ -67,36 +56,16 @@ services:
         source: /*
         destination: /index.html
 
-  # Redis Service
-  - type: redis
-    name: pharmacy-cache
-    ipAllowList: []
-    plan: free
+  # Redis service and Celery worker removed 2026-07-22.
+  #
+  # The "pharmacy-aggregator-worker" service was declared type:web with no
+  # startCommand, so it inherited Dockerfile.render's CMD and ran gunicorn — a
+  # redundant second copy of the web app, NOT a Celery worker. Combined with the
+  # switch to eager in-process tasks (no broker), it served no purpose and just
+  # consumed a free-tier slot.
+  #
+  # To restore async processing later: re-add the `- type: redis` service, wire
+  # REDIS_URL/CELERY_BROKER_URL/CELERY_RESULT_BACKEND back into the backend
+  # service, and add a real worker service with:
+  #     startCommand: "celery -A config worker -l info"
 
-  # Background Worker (Celery)
-  - type: web
-    name: pharmacy-aggregator-worker
-    runtime: docker
-    region: ohio
-    plan: free
-    dockerfilePath: Dockerfile.render
-    envVars:
-      - key: DEBUG
-        value: "false"
-      - key: DJANGO_SETTINGS_MODULE
-        value: "config.settings"
-      - key: REDIS_URL
-        fromService:
-          name: pharmacy-cache
-          type: redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          name: pharmacy-cache
-          type: redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          name: pharmacy-cache
-          type: redis
-          property: connectionString
