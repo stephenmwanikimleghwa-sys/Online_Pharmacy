@@ -23,6 +23,7 @@ from django.utils import timezone
 
 from inventory.models.batch import Batch
 from inventory.models.dispensing import Dispensation, DispensationItem
+from inventory.models.finance import CashFlow
 from inventory.models.sync import (
     StockDiscrepancy,
     SyncOperation,
@@ -192,6 +193,17 @@ def _apply_sale(payload, branch, user, source_op):
 
     dispensation.total_amount = total - discount
     dispensation.save(update_fields=["total_amount"])
+
+    # Record the cash movement so offline sales appear in the finance ledger,
+    # matching the online dispense_otc path. Offline sync only handles non-credit
+    # sales (credit needs a live credit-limit check), so this is always a cash-in.
+    CashFlow.objects.create(
+        netflow=dispensation.total_amount,
+        paymentmode=payment_mode,
+        explanation=f"Dispensation #{dispensation.id} (offline sync)",
+        branch=branch,
+        timestamp=timezone.now(),
+    )
 
     return {
         "server_id": str(dispensation.id),
