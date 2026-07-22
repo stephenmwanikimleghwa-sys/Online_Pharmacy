@@ -547,13 +547,26 @@ else:
     }
 
 # Celery settings (for async tasks)
-# Celery: prefer explicit env vars, fall back to REDIS_URL if provided
+# Celery: prefer explicit env vars, fall back to REDIS_URL if provided.
+# When no Redis is configured we run tasks eagerly (below), so the broker/result
+# backend just need to be valid, in-process transports — NOT a bogus
+# rediss://localhost that raises SSL-param errors when Celery builds them.
 CELERY_BROKER_URL = env(
-    "CELERY_BROKER_URL", default=REDIS_URL or "rediss://localhost:6379/0"
+    "CELERY_BROKER_URL", default=REDIS_URL or "memory://"
 )
 CELERY_RESULT_BACKEND = env(
-    "CELERY_RESULT_BACKEND", default=REDIS_URL or "rediss://localhost:6379/0"
+    "CELERY_RESULT_BACKEND", default=REDIS_URL or "cache+memory://"
 )
+
+# No broker configured -> run tasks EAGERLY (synchronously, in-process) instead
+# of trying to publish to a Redis that isn't there. This keeps background work
+# (notification emails, etc.) actually happening when Redis is dropped: the task
+# body runs inline during the request. When REDIS_URL is set again, tasks go
+# back to async dispatch automatically. EAGER_PROPAGATES stays False so a task
+# error is logged, not raised into the user's request (safe_delay also guards).
+# Allow explicit override via CELERY_TASK_ALWAYS_EAGER for local/testing.
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=not bool(REDIS_URL))
+CELERY_TASK_EAGER_PROPAGATES = False
 
 # Broker resilience: when Redis is unreachable, fail FAST instead of hanging the
 # web request that is publishing a task. Without a short timeout kombu blocks on
