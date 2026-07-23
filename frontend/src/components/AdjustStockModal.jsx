@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
+import { useSync } from '../context/SyncContext';
+import { useAuth } from '../context/AuthContext';
 
 const AdjustStockModal = ({ item, onClose, onSuccess }) => {
   const { notify } = useNotification();
+  const { online, queueWrite } = useSync();
+  const { activeBranch, user } = useAuth();
+  const branchId = activeBranch?.id ?? user?.branch ?? null;
   const [qty, setQty] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,19 +22,48 @@ const AdjustStockModal = ({ item, onClose, onSuccess }) => {
       setError('Please enter a valid number');
       return;
     }
-    
+
+    const payload = {
+      product_id: item.id,
+      quantity: parseInt(qty, 10),
+      reason: reason || 'Manual adjustment',
+      change_type: 'adjustment',
+    };
+
+    // Offline (or a network failure below) → queue the adjustment so it uploads
+    // when the connection returns. Stock reconciles server-side on sync.
+    const queueOffline = async () => {
+      await queueWrite('adjustment', payload, branchId);
+      notify.success(
+        'Stock adjustment saved offline',
+        `The adjustment for ${item.name} will upload automatically when you're back online.`,
+      );
+      onSuccess();
+      onClose();
+    };
+
     try {
       setLoading(true);
       setError('');
+      if (!online) {
+        await queueOffline();
+        return;
+      }
       await api.post(`/inventory/${item.id}/adjust/`, {
-        quantity: parseInt(qty, 10),
-        reason: reason || 'Manual adjustment',
-        change_type: 'adjustment'
-      });
+        quantity: payload.quantity,
+        reason: payload.reason,
+        change_type: payload.change_type,
+      }, { skipGlobalErrorNotification: true });
       notify.success('Stock Adjusted', `Stock for ${item.name} has been updated.`);
       onSuccess();
       onClose();
     } catch (err) {
+      // No response = network failure → fall back to the offline queue instead
+      // of losing the adjustment. Real server rejections are shown to the user.
+      if (!err.response) {
+        await queueOffline();
+        return;
+      }
       setError(err.response?.data?.error || err.response?.data?.message || 'Failed to adjust stock');
     } finally {
       setLoading(false);

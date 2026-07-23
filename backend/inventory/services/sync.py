@@ -212,6 +212,134 @@ def _apply_sale(payload, branch, user, source_op):
     }
 
 
+def _apply_intake(payload, branch, user, source_op):
+    """Apply a queued offline stock intake. Increments stock (and creates a Batch
+    via StockIntake.save when an expiry is given), mirroring the online path.
+
+    payload = {supplier_id?, invoice_number?, payment_status?, items: [
+        {product_id, quantity, unit_cost?, expiry_date?, batch_number?}
+    ], notes?}
+    """
+    from inventory.models.stock_intake import StockIntake
+
+    items = payload.get("items") or []
+    if not items:
+        raise SyncApplyError("Intake has no items.")
+
+    supplier = None
+    supplier_id = payload.get("supplier_id")
+    if supplier_id:
+        from inventory.models.supplier import Supplier
+        supplier = Supplier.objects.filter(pk=supplier_id).first()
+    # StockIntake.supplier is NOT NULL — an intake queued without a resolvable
+    # supplier is a permanent data problem, not a transient one.
+    if supplier is None:
+        raise SyncApplyError(
+            "Stock intake requires a valid supplier_id (offline intake must "
+            "record which supplier the stock came from)."
+        )
+
+    payment_status = payload.get("payment_status", "PAID")
+    invoice_number = payload.get("invoice_number", "")
+    notes = payload.get("notes", "")
+
+    created_ids = []
+    for item in items:
+        try:
+            product = Product.objects.get(pk=item["product_id"])
+        except (KeyError, Product.DoesNotExist):
+            raise SyncApplyError(f"Unknown product in intake: {item.get('product_id')!r}")
+        qty = int(item.get("quantity", 0))
+        if qty <= 0:
+            continue
+        unit_cost = Decimal(str(item.get("unit_cost", 0) or 0))
+        intake = StockIntake(
+            product=product,
+            branch=branch,
+            supplier=supplier,
+            payment_status=payment_status,
+            invoice_number=invoice_number,
+            quantity_received=qty,
+            unit_cost=unit_cost,
+            total_cost=unit_cost * qty,
+            expiry_date=item.get("expiry_date") or None,
+            batch_number=item.get("batch_number", ""),
+            received_by=user,
+            notes=notes,
+        )
+        # Skip supplier-credit side effects on replay-safe sync path; stock and
+        # Batch creation still happen in StockIntake.save().
+        intake._skip_credit = True
+        try:
+            intake.save()
+        except ValueError as exc:
+            # e.g. pharmacy products require an expiry date. This is a permanent
+            # data problem with the queued op — don't retry it forever.
+            raise SyncApplyError(str(exc))
+        created_ids.append(str(intake.id))
+
+    return {"server_id": ",".join(created_ids), "discrepancy": False}
+
+
+def _apply_adjustment(payload, branch, user, source_op):
+    """Apply a queued offline stock adjustment (signed delta on aggregate stock),
+    mirroring adjust_inventory. A negative adjustment that would go below zero is
+    clamped at zero and recorded as a StockDiscrepancy rather than rejected —
+    consistent with the never-lose-the-record principle for offline ops.
+
+    payload = {product_id, quantity (signed), reason?, change_type?}
+    """
+    try:
+        product = Product.objects.get(pk=payload["product_id"])
+    except (KeyError, Product.DoesNotExist):
+        raise SyncApplyError(f"Unknown product in adjustment: {payload.get('product_id')!r}")
+
+    try:
+        quantity = int(payload.get("quantity"))
+    except (TypeError, ValueError):
+        raise SyncApplyError("Adjustment quantity must be a whole number.")
+    if quantity == 0:
+        raise SyncApplyError("Adjustment quantity must be non-zero.")
+
+    reason = payload.get("reason", "Offline sync adjustment")
+    change_type = payload.get("change_type", "adjustment")
+
+    branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+        product=product, branch=branch, defaults={"quantity": Decimal("0"), "reorder_level": Decimal("0")}
+    )
+    previous = branch_stock.quantity
+    new_qty = previous + Decimal(quantity)
+
+    discrepancy = None
+    if new_qty < 0:
+        # Would drive below zero: clamp and record the shortfall for reconciliation.
+        discrepancy = StockDiscrepancy.objects.create(
+            branch=branch,
+            product=product,
+            expected_quantity=previous,
+            requested_quantity=abs(Decimal(quantity)),
+            oversold_quantity=abs(new_qty),
+            source_operation=source_op,
+        )
+        new_qty = Decimal("0")
+
+    branch_stock.quantity = new_qty
+    branch_stock.save(update_fields=["quantity"])
+
+    StockLog.objects.create(
+        product=product,
+        branch=branch,
+        previous_quantity=int(previous),
+        new_quantity=int(new_qty),
+        change_amount=int(new_qty - previous),
+        change_type=change_type,
+        reason=reason + (" [CLAMPED]" if discrepancy else ""),
+        logged_by=user,
+    )
+
+    return {"server_id": str(product.id), "discrepancy": discrepancy is not None}
+
+
 def apply_operation(op: dict, branch, user) -> dict:
     """Apply one queued operation idempotently. ``op`` = {client_uuid, op_type,
     payload, client_created_at?}. Returns a result dict for the client."""
@@ -238,11 +366,17 @@ def apply_operation(op: dict, branch, user) -> dict:
     client_created_at = op.get("client_created_at")
 
     with transaction.atomic():
+        source_op = _placeholder_op(
+            client_uuid, op_type, branch, user, payload, client_created_at
+        )
         if op_type == SyncOpType.SALE:
-            result = _apply_sale(payload, branch, user, _placeholder_op(client_uuid, op_type, branch, user, payload, client_created_at))
-        else:
-            # intake / adjustment services land here in a later change; guard for now.
-            raise SyncApplyError(f"op_type {op_type} not yet implemented server-side.")
+            result = _apply_sale(payload, branch, user, source_op)
+        elif op_type == SyncOpType.INTAKE:
+            result = _apply_intake(payload, branch, user, source_op)
+        elif op_type == SyncOpType.ADJUSTMENT:
+            result = _apply_adjustment(payload, branch, user, source_op)
+        else:  # defensive; op_type already validated against SyncOpType.values
+            raise SyncApplyError(f"Unsupported op_type: {op_type!r}")
 
         # Persist the ledger row inside the same transaction so dedup and effect
         # commit atomically — no window where stock moved but the guard is absent.

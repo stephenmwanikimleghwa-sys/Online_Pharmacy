@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useSync } from "../context/SyncContext";
 import api from "../services/api";
 
 // ─── Helper ────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ const ProductSearch = ({ value, onChange, branchId }) => {
 // ─── Main Component ─────────────────────────────────────────────────────────
 const NewStockIntake = ({ onClose, onSuccess }) => {
   const { activeBranch, user } = useAuth();
+  const { online, queueWrite } = useSync();
 
   const [suppliers, setSuppliers] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -143,8 +145,44 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
     if (!branchId) return setError("Please select a receiving branch.");
     if (validItems.length === 0) return setError("Please add at least one product with quantity > 0.");
 
+    // Offline path: queue the intake in the durable outbox so it uploads when
+    // the connection returns. Requires supplier + expiry (pharmacy rule).
+    const queueOffline = async () => {
+      const missingExpiry = validItems.filter((i) => !i.expiry_date);
+      if (missingExpiry.length > 0) {
+        setError(
+          `Expiry date is required for offline intake (${missingExpiry.map((i) => i.product_name).join(", ")}).`,
+        );
+        return false;
+      }
+      await queueWrite(
+        "intake",
+        {
+          supplier_id: parseInt(supplierId, 10),
+          invoice_number: invoiceNumber,
+          payment_status: paymentStatus,
+          notes,
+          items: validItems.map((i) => ({
+            product_id: i.product_id,
+            quantity: parseInt(i.quantity_received, 10),
+            unit_cost: parseFloat(i.cost_price) || 0,
+            expiry_date: i.expiry_date || null,
+            batch_number: i.batch_number || "",
+          })),
+        },
+        parseInt(branchId, 10),
+      );
+      setSuccess({ message: `${validItems.length} product(s) queued offline — will upload when back online.`, items: validItems, totalCost });
+      if (onSuccess) onSuccess();
+      return true;
+    };
+
     setSubmitting(true);
     try {
+      if (!online) {
+        await queueOffline();
+        return;
+      }
       const res = await api.post("/inventory/stock-intake/bulk/", {
         supplier_id: supplierId,
         branch_id: branchId,
@@ -160,12 +198,17 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
           expiry_date: i.expiry_date || null,
           batch_number: i.batch_number || "",
         })),
-      });
+      }, { skipGlobalErrorNotification: true });
 
       const msg = res.data?.message || `${validItems.length} product(s) received successfully.`;
       setSuccess({ message: msg, items: validItems, totalCost });
       if (onSuccess) onSuccess();
     } catch (err) {
+      if (!err.response) {
+        // Network failure → fall back to offline queue
+        await queueOffline();
+        return;
+      }
       const detail = err.response?.data?.message || err.response?.data?.detail || "Stock intake failed. Please try again.";
       setError(detail);
     } finally {

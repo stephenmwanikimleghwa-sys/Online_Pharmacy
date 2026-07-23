@@ -219,6 +219,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           string,
           unknown
         >;
+        // Cache the profile so the app can hydrate the session offline.
+        try { localStorage.setItem("cached_profile", JSON.stringify(profileData)); } catch { /* non-fatal */ }
         const merged = mergeUserFromProfile(profileData, {
           allowed_branches: profileData.allowed_branches as BranchInfo[] | undefined,
           requires_branch_selection: profileData.requires_branch_selection as boolean | undefined,
@@ -236,6 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           persistActiveBranch(null);
         }
       } catch (error) {
+        const hasResponse = !!(error as { response?: unknown })?.response;
         if (isAuthRejection(error)) {
           notifyError(
             "Session Expired",
@@ -254,6 +257,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem("refresh_token");
           localStorage.removeItem("user_role");
           localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+          try { localStorage.removeItem("cached_profile"); } catch { /* non-fatal */ }
+        } else if (!hasResponse) {
+          // Network failure (offline or server unreachable). Hydrate from the
+          // last-known profile so the app stays usable without a round-trip.
+          try {
+            const raw = localStorage.getItem("cached_profile");
+            if (raw) {
+              const profileData = JSON.parse(raw) as Record<string, unknown>;
+              mergeUserFromProfile(profileData, {
+                allowed_branches: profileData.allowed_branches as BranchInfo[] | undefined,
+                requires_branch_selection: false,
+                active_branch: readStoredActiveBranch(),
+              });
+            }
+          } catch { /* cached data unreadable — stay logged out */ }
         }
       }
       setLoading(false);
