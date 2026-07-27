@@ -246,12 +246,30 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredBtn, setHoveredBtn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isOffline, setIsOffline] = useState<boolean>(
+    typeof navigator !== "undefined" ? !navigator.onLine : false,
+  );
   const { login, isAuthenticated, getPostLoginPath, loading: authLoading } = useAuth();
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const styles = getStyles(isDark);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Track connectivity so we can explain why a fresh login can't happen offline.
+  // A password can only be verified by the backend; with no connection there is
+  // nothing to authenticate against. An already-logged-in session, by contrast,
+  // is restored from cache elsewhere (AuthContext) and keeps working offline.
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   // Only auto-redirect when already signed in (e.g. bookmarked /login).
   // Do not run after a fresh login — handleSubmit navigates explicitly.
@@ -271,6 +289,14 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isOffline) {
+      setError(
+        "You're offline. Signing in needs an internet connection. Once you've signed in, the app keeps working offline.",
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -330,6 +356,34 @@ const Login: React.FC = () => {
         <div style={styles.rightPanel}>
           <h1 style={styles.title(isDark)}>Login</h1>
 
+          {/* Offline notice: a fresh login can't be verified without a connection. */}
+          {isOffline && (
+            <div
+              role="status"
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+                padding: "10px 14px",
+                background: isDark ? "rgba(251,191,36,0.12)" : "rgba(217,119,6,0.08)",
+                border: isDark ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(217,119,6,0.25)",
+                borderRadius: "10px",
+                color: isDark ? "#fde68a" : "#b45309",
+                fontSize: "0.82rem",
+                lineHeight: 1.4,
+                marginBottom: "16px",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            >
+              <ExclamationCircleIcon style={{ width: 18, height: 18, flexShrink: 0, marginTop: 1 }} />
+              <span>
+                You&rsquo;re offline. Signing in needs a connection &mdash; but once
+                you&rsquo;ve signed in, the app keeps working without internet.
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} style={{ width: "100%" }}>
             {/* Username / Email */}
             <div style={styles.inputWrapper}>
@@ -383,11 +437,12 @@ const Login: React.FC = () => {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isOffline}
               style={{
                 ...styles.loginBtn(isDark),
-                opacity: hoveredBtn ? 0.9 : 1,
-                transform: hoveredBtn ? "translateY(-1px)" : "none",
+                opacity: isOffline ? 0.5 : hoveredBtn ? 0.9 : 1,
+                cursor: isOffline ? "not-allowed" : "pointer",
+                transform: hoveredBtn && !isOffline ? "translateY(-1px)" : "none",
               }}
               onMouseEnter={() => setHoveredBtn(true)}
               onMouseLeave={() => setHoveredBtn(false)}
@@ -397,7 +452,7 @@ const Login: React.FC = () => {
                   <LoadingSpinner size="sm" color="white" />
                   Signing in…
                 </span>
-              ) : "Login"}
+              ) : isOffline ? "Offline" : "Login"}
             </button>
           </form>
 
