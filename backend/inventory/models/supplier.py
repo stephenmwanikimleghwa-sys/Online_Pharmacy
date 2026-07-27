@@ -4,7 +4,7 @@ class Supplier(models.Model):
     """
     Model representing a supplier or distributor of pharmaceutical products.
     """
-    name = models.CharField(max_length=255, verbose_name="Supplier Name")
+    name = models.CharField(max_length=255, unique=True, verbose_name="Supplier Name")
     contact_person = models.CharField(max_length=255, blank=True, null=True, verbose_name="Contact Person")
     email = models.EmailField(blank=True, null=True, verbose_name="Email Address")
     phone = models.CharField(max_length=50, blank=True, null=True, verbose_name="Phone Number")

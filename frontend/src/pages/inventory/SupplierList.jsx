@@ -9,6 +9,7 @@ import RefreshIndicator from '../../components/ui/RefreshIndicator';
 import { queryClient } from '../../lib/queryClient';
 import { QUERY_KEYS } from '../../lib/queryKeys';
 import { unwrapList } from '../../utils/parseApiData';
+import { formatFieldErrors } from '../../services/apiErrors';
 
 const SupplierList = () => {
   const { notify } = useNotification();
@@ -78,8 +79,14 @@ const SupplierList = () => {
       if (selectedSupplier && editingSupplier && selectedSupplier.id === editingSupplier.id) {
           setSelectedSupplier({...selectedSupplier, ...formData});
       }
-    } catch {
-      notify.error('Save Failed', 'The supplier could not be saved. Please try again.');
+    } catch (err) {
+      // Surface the backend's real message (e.g. a duplicate-name validation
+      // error) instead of a generic failure, so the user knows what to fix.
+      const detail = formatFieldErrors(err?.response?.data);
+      notify.error(
+        'Save Failed',
+        detail || 'The supplier could not be saved. Please try again.',
+      );
     }
   };
 

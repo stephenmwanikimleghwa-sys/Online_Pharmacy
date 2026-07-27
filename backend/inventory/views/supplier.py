@@ -36,6 +36,11 @@ class SupplierViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "contact_person", "email", "phone"]
+    # Suppliers are a small, bounded set the UI loads whole (client-side search
+    # and filtering run over the full list). The global default pagination
+    # (PAGE_SIZE=20) silently truncated the list, making any supplier past the
+    # first 20 invisible in the frontend. Return the complete list instead.
+    pagination_class = None
 
     @action(detail=False, methods=["get"], url_path="compare")
     def compare(self, request):
