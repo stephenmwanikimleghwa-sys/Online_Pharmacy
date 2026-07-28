@@ -23,10 +23,9 @@ const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  // 90s made a slow connection look like a frozen app. 25s is long enough for
-  // a cold-ish backend but short enough to surface a clear "slow network" error
-  // and let React Query retry (see queryClient retry/retryDelay).
-  timeout: 25000,
+  // 90s made a slow connection look like a frozen app, but 25s is often too short
+  // for a free-tier Render backend cold start (which can take ~50s). Bumping to 90s.
+  timeout: 90000,
   validateStatus: (status: number) => status >= 200 && status < 300,
 });
 
