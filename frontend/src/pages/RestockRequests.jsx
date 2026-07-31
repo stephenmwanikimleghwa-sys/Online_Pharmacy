@@ -48,8 +48,21 @@ const RestockRequests = () => {
       });
 
       const response = await api.get(`/inventory/restock-requests/?${params}`);
-      setRequests(response.data.results);
-      setTotalPages(Math.ceil(response.data.count / 10));
+      const data = response.data;
+      const results = Array.isArray(data) ? data : data?.results || [];
+      setRequests(results);
+      // Derive the page count from the page size the server actually used
+      // rather than a hardcoded divisor. This previously divided by 10 while
+      // the backend paged by 20, so the pager advertised twice as many pages as
+      // existed and the back half of the range led to empty tables.
+      // Only a page with a `next` link is known to be full, so only then does
+      // its length reveal the page size; without one we are on the last page.
+      const count = Array.isArray(data) ? results.length : data?.count ?? results.length;
+      if (!Array.isArray(data) && data?.next && results.length > 0) {
+        setTotalPages(Math.max(1, Math.ceil(count / results.length)));
+      } else {
+        setTotalPages(Math.max(1, currentPage));
+      }
     } catch (err) {
       setError('Failed to load restock requests');
     } finally {

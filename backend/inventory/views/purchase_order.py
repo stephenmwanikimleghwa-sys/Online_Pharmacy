@@ -18,6 +18,12 @@ from users.utils import log_activity
 class PurchaseOrderViewSet(viewsets.ModelViewSet):
     serializer_class = PurchaseOrderSerializer
     permission_classes = [IsPharmacistOrAdmin]
+    # The PO list is already narrowed by status/supplier/branch below and the UI
+    # renders it whole with no pager, so the global default pagination
+    # (PAGE_SIZE=20) silently hid every order past the 20th. Return the full
+    # filtered set instead. Unlike stock intake this stays bounded in practice:
+    # non-admins see only their branch, and open orders are worked off.
+    pagination_class = None
 
     def get_queryset(self):
         qs = PurchaseOrder.objects.select_related(

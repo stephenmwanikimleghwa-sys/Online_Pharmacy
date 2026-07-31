@@ -18,16 +18,28 @@ const StockIntakeLog = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [filterDistributor, setFilterDistributor] = useState('');
   const [summary, setSummary] = useState(null);
+  // Stock intake is an append-only log that grows without bound, so it stays
+  // server-paginated. Page through it rather than loading every delivery.
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
 
   // We fetch branches to pass to the modal
   const [branches, setBranches] = useState([]);
+
+  // Reset to the first page whenever the filters change — otherwise a filter
+  // applied on page 5 can land on an empty page of a much shorter result set.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterDistributor, activeBranch]);
 
   // Fetch stock intake records
   useEffect(() => {
     fetchIntakeRecords();
     fetchSummary();
     fetchBranches();
-  }, [filterDistributor, activeBranch]);
+  }, [filterDistributor, activeBranch, currentPage]);
 
   const fetchBranches = async () => {
     try {
@@ -40,10 +52,19 @@ const StockIntakeLog = () => {
   const fetchIntakeRecords = async () => {
     try {
       setLoading(true);
-      const params = { ...branchParams };
+      const params = { ...branchParams, page: currentPage };
       if (filterDistributor) params.distributor = filterDistributor;
       const response = await api.get('/inventory/stock-intake/', { params });
-      setIntakeRecords(Array.isArray(response.data) ? response.data : response.data.results || []);
+      const data = response.data;
+      const records = Array.isArray(data) ? data : data?.results || [];
+      setIntakeRecords(records);
+      // Drive the pager off the envelope's own next/previous links instead of
+      // dividing by an assumed page size — the frontend would silently drift
+      // if PAGE_SIZE ever changed. An unpaginated array response degrades to a
+      // single page, which is correct for it.
+      setTotalCount(Array.isArray(data) ? records.length : data?.count ?? records.length);
+      setHasNext(Array.isArray(data) ? false : Boolean(data?.next));
+      setHasPrev(Array.isArray(data) ? false : Boolean(data?.previous));
       setError(null);
     } catch (err) {
       setError('Could not load deliveries. Please try again.');
@@ -59,6 +80,19 @@ const StockIntakeLog = () => {
     } catch (err) {
       }
   };
+
+  // Row range for the pager caption. The page size is inferred from the rows we
+  // actually got back rather than hardcoded: while a next page exists the
+  // current page is full, so its length *is* the page size; on the final page we
+  // count back from the total. This keeps the caption correct even if the
+  // backend's PAGE_SIZE changes.
+  const pageRowCount = intakeRecords.length;
+  const rangeStart = totalCount === 0
+    ? 0
+    : hasNext
+      ? (currentPage - 1) * pageRowCount + 1
+      : Math.max(1, totalCount - pageRowCount + 1);
+  const rangeEnd = hasNext ? (currentPage - 1) * pageRowCount + pageRowCount : totalCount;
 
   if (!user || (user.role !== 'admin' && user.role !== 'pharmacist')) {
     return (
@@ -142,7 +176,9 @@ const StockIntakeLog = () => {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>All Records</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>
+              {totalCount} {totalCount === 1 ? 'Record' : 'Records'}
+            </span>
           </div>
         </div>
 
@@ -209,6 +245,41 @@ const StockIntakeLog = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pager. The intake log is append-only and unbounded, so it stays
+            server-paginated. Prev/next are driven by DRF's own next/previous
+            links rather than a page-size guess, which cannot drift out of sync
+            with the backend's PAGE_SIZE. */}
+        {!loading && totalCount > 0 && (hasPrev || hasNext) && (
+          <div
+            className="px-8 py-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
+            style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+              Showing {rangeStart}–{rangeEnd} of {totalCount}
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={!hasPrev}
+                className="px-4 py-2 border rounded-xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={!hasNext}
+                className="px-4 py-2 border rounded-xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stock intake modal */}
