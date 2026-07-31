@@ -6,6 +6,7 @@ from users.models import Branch
 from inventory.models.supplier import Supplier
 from decimal import Decimal
 from django.utils import timezone
+from datetime import timedelta
 
 User = get_user_model()
 
@@ -85,16 +86,17 @@ class InventoryModelTest(TestCase):
         supplier = Supplier.objects.create(name="Test Supplier", email="test@test.com")
         initial_stock = self.branch_stock.quantity
         quantity = 50
-        
+
         StockIntake.objects.create(
             product=self.product,
             supplier=supplier,
             branch=self.branch,
             quantity_received=quantity,
             unit_cost=Decimal("5.00"),
-            received_by=self.user
+            received_by=self.user,
+            expiry_date=(timezone.now() + timedelta(days=365)).date(),
         )
-        
+
         self.branch_stock.refresh_from_db()
         self.assertEqual(self.branch_stock.quantity, initial_stock + quantity)
 

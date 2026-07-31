@@ -43,8 +43,27 @@ class InventoryViewTest(TestCase):
             quantity=100
         )
 
+    def authenticate_with_branch(self, user=None, branch=None):
+        """Authenticate as `user` with `branch` as the active branch.
+
+        Branch-scoped endpoints read request.active_branch, which
+        BranchAwareJWTAuthentication populates from the active_branch_id token
+        claim. force_authenticate() bypasses authentication entirely, so the
+        claim is never applied and those endpoints correctly reject the request
+        with 403 NO_ACTIVE_BRANCH. Issue a real token instead so tests exercise
+        the same path as production.
+        """
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        user = user or self.pharmacist
+        branch = branch or self.branch
+        token = RefreshToken.for_user(user).access_token
+        token["active_branch_id"] = branch.id
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        return token
+
     def test_dispense_otc_success(self):
-        self.client.force_authenticate(user=self.pharmacist)
+        self.authenticate_with_branch()
         url = reverse('inventory:dispense-otc')
         data = {
             'items': [
@@ -60,7 +79,7 @@ class InventoryViewTest(TestCase):
         self.assertEqual(self.branch_stock.quantity, 95)
 
     def test_dispense_otc_insufficient_stock(self):
-        self.client.force_authenticate(user=self.pharmacist)
+        self.authenticate_with_branch()
         url = reverse('inventory:dispense-otc')
         data = {
             'items': [
@@ -69,7 +88,10 @@ class InventoryViewTest(TestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('Insufficient stock', str(response.data.get('error', '')))
+        # The endpoint returns a structured error body, not a bare string.
+        error = response.data.get('error', {})
+        self.assertEqual(error.get('code'), 'INSUFFICIENT_STOCK')
+        self.assertIn('only has', error.get('message', ''))
 
     def test_dispense_otc_uses_earliest_expiry_batch_first(self):
         supplier = Supplier.objects.create(name="Batch Supplier", email="batch@supplier.com")
@@ -95,7 +117,7 @@ class InventoryViewTest(TestCase):
             expiry_date=later_date,
         )
 
-        self.client.force_authenticate(user=self.pharmacist)
+        self.authenticate_with_branch()
         url = reverse('inventory:dispense-otc')
         data = {
             'items': [
@@ -144,7 +166,7 @@ class InventoryViewTest(TestCase):
 
     def test_stock_intake_create(self):
         supplier = Supplier.objects.create(name="Test Supplier", email="supplier@test.com")
-        self.client.force_authenticate(user=self.pharmacist)
+        self.authenticate_with_branch()
         url = reverse('inventory:stockintake-list')
         data = {
             'product_id': self.product.id,

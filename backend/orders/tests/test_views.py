@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from products.models import Product
+from products.models import Product, BranchStock
 from orders.models import Order, OrderItem, OrderStatusChoices
 from orders.serializers import OrderSerializer
 from users.models import Pharmacy, Branch
@@ -15,12 +15,26 @@ User = get_user_model()
 class OrderViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        
+
+        self.pharmacy = Pharmacy.objects.create(
+            name="Main Pharmacy",
+            address="123 Street",
+            contact_phone="1234567890",
+            license_number="LIC-MAIN",
+        )
+        self.branch = Branch.objects.create(
+            pharmacy=self.pharmacy,
+            name="Main Branch",
+            address="123 Street",
+            contact_phone="1234567890",
+        )
+
         # Create users
         self.pharmacist = User.objects.create_user(
             username="pharmacist",
             password="testpassword",
             role="pharmacist",
+            branch=self.branch,
             can_process_sales=True,
             can_manage_inventory=True
         )
@@ -29,7 +43,7 @@ class OrderViewTest(TestCase):
             password="password",
             role="customer"
         )
-        
+
         # Create product
         self.product = Product.objects.create(
             name="Paracetamol",
@@ -38,10 +52,34 @@ class OrderViewTest(TestCase):
             stock_quantity=100,
             is_active=True
         )
+        # quick_sale deducts branch stock, not the global Product.stock_quantity.
+        self.branch_stock = BranchStock.objects.create(
+            product=self.product,
+            branch=self.branch,
+            quantity=100,
+        )
+
+    def authenticate_with_branch(self, user=None, branch=None):
+        """Authenticate as `user` with `branch` as the active branch.
+
+        quick_sale calls require_active_branch, which reads request.active_branch.
+        That is populated by BranchAwareJWTAuthentication from the
+        active_branch_id token claim, and force_authenticate() bypasses
+        authentication entirely — so those tests got a correct 403 rather than
+        exercising the endpoint. Issue a real token instead.
+        """
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        user = user or self.pharmacist
+        branch = branch or self.branch
+        token = RefreshToken.for_user(user).access_token
+        token["active_branch_id"] = branch.id
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        return token
 
     def test_quick_sale_success(self):
         """Test successful quick sale by pharmacist"""
-        self.client.force_authenticate(user=self.pharmacist)
+        self.authenticate_with_branch()
         url = reverse('orders:quick_sale')
         data = {
             'items': [
@@ -51,18 +89,18 @@ class OrderViewTest(TestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['total_amount'], 20.0)
-        
+
         # Verify stock deduction
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.stock_quantity, 98)
-        
+        self.branch_stock.refresh_from_db()
+        self.assertEqual(self.branch_stock.quantity, 98)
+
         # Verify order creation
         order = Order.objects.get(id=response.data['id'])
         self.assertEqual(order.status, OrderStatusChoices.DELIVERED)
 
     def test_quick_sale_insufficient_stock(self):
         """Test quick sale fails if stock is insufficient"""
-        self.client.force_authenticate(user=self.pharmacist)
+        self.authenticate_with_branch()
         url = reverse('orders:quick_sale')
         data = {
             'items': [
@@ -71,7 +109,10 @@ class OrderViewTest(TestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('Insufficient stock', response.data['error'])
+        # The endpoint returns a structured error body, not a bare string.
+        error = response.data['error']
+        self.assertEqual(error['code'], 'INSUFFICIENT_STOCK')
+        self.assertIn('only has', error['message'])
 
     def test_quick_sale_permission(self):
         """Test customer cannot perform quick sale"""

@@ -95,3 +95,18 @@ class Payment(models.Model):
         if self.status != getattr(self, "_previous_status", None):
             self.updated_at = timezone.now()
         super().save(*args, **kwargs)
+        self._link_order()
+
+    def _link_order(self):
+        """Point Order.payment back at this payment.
+
+        Payment.order uses related_name="+", so there is no reverse accessor;
+        Order.payment is a separate FK that has to be set explicitly. No caller
+        ever did, so every order's payment stayed NULL — Order.is_paid was
+        always False and receipt filenames always said "unknown". Doing it here
+        covers every creation path (quick sale, M-Pesa, Stripe) at once.
+        Uses .update() to avoid recursing back into Order.save().
+        """
+        if not self.order_id:
+            return
+        Order.objects.filter(pk=self.order_id).exclude(payment=self).update(payment=self)

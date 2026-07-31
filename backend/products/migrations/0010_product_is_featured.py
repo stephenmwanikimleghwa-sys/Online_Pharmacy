@@ -6,24 +6,19 @@ from django.db import migrations, models
 def add_is_featured_if_missing(apps, schema_editor):
     Product = apps.get_model('products', 'Product')
     table_name = Product._meta.db_table
-    # Use information_schema so we don't depend on adapter-specific introspection results.
-    # This avoids "DuplicateColumn: column is_featured already exists" on Supabase.
-    with schema_editor.connection.cursor() as cursor:
-        schema_name = cursor.execute("SELECT current_schema()").fetchone()[0]
-        cursor.execute(
-            """
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_schema = %s
-              AND table_name = %s
-              AND column_name = %s
-            LIMIT 1
-            """,
-            [schema_name, table_name, "is_featured"],
-        )
-        exists = cursor.fetchone() is not None
+    # Only add the column when it isn't already there, so this stays a no-op on
+    # databases (e.g. Supabase) where it was created out of band. Uses Django's
+    # introspection rather than a raw information_schema query: cursor.execute()
+    # returns None, so the previous `cursor.execute(...).fetchone()` chain raised
+    # AttributeError on every backend and blocked all test-database creation.
+    connection = schema_editor.connection
+    with connection.cursor() as cursor:
+        existing_columns = {
+            column.name
+            for column in connection.introspection.get_table_description(cursor, table_name)
+        }
 
-    if not exists:
+    if "is_featured" not in existing_columns:
         field = models.BooleanField(default=False, verbose_name='Is Featured')
         field.set_attributes_from_name('is_featured')
         schema_editor.add_field(Product, field)
