@@ -43,6 +43,22 @@ export function useInventoryList(filters: Record<string, unknown> = {}) {
   });
 }
 
+export function useInventorySummary() {
+  const { activeBranch } = useActiveBranch();
+  return useQuery({
+    queryKey: QUERY_KEYS.inventorySummary(activeBranch?.id),
+    queryFn: () =>
+      api
+        .get('/inventory/summary/', {
+          params: { branch: activeBranch?.id },
+          skipGlobalErrorNotification: true,
+        })
+        .then((r) => r.data),
+    staleTime: STALE_TIMES.SLOW,
+    enabled: !!activeBranch?.id,
+  });
+}
+
 export function useProductDetail(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.productDetail(id),

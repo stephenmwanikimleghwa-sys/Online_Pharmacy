@@ -7,6 +7,8 @@ export const QUERY_KEYS = {
     ['products', { branchId, ...filters }],
   inventory: (branchId?: number, filters?: object) =>
     ['inventory', { branchId, ...filters }],
+  inventorySummary: (branchId?: number) =>
+    ['inventory', 'summary', branchId],
   productDetail: (id: number) => ['products', id],
   productAvailability: (id: number) => ['products', id, 'availability'],
   productSearch: (term: string, branchId?: number, context?: string) =>

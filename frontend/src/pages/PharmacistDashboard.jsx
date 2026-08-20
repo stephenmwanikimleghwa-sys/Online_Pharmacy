@@ -9,10 +9,8 @@ import InventorySummaryCard from "../components/InventorySummaryCard";
 import QuickActions from "../components/QuickActions";
 import QuickSale from "../components/QuickSale";
 import ExpiryAlertsWidget from "../components/ExpiryAlertsWidget";
-import { useDashboardBranch } from "../hooks/useDashboard";
-import { useLowStockAlerts, useInventoryList } from "../hooks/useProducts";
+import { useInventorySummary } from "../hooks/useProducts";
 import { useExpiryAlerts } from "../hooks/useExpiryAlerts";
-import { unwrapList, getProductBranchQuantity } from "../utils/parseApiData";
 
 const normalizeList = (res) => {
   if (!res) return [];
@@ -31,36 +29,22 @@ const PharmacistDashboard = () => {
   const navigate = useNavigate();
 
   const {
-    data: branchOps,
-    isLoading: branchLoading,
-  } = useDashboardBranch(activeBranch?.id);
-
-  const {
-    data: lowStockData,
-    isLoading: lowStockLoading,
-  } = useLowStockAlerts(activeBranch?.id);
+    data: summaryData,
+    isLoading: summaryLoading,
+  } = useInventorySummary();
 
   const {
     isLoading: expiryLoading,
   } = useExpiryAlerts(activeBranch?.id);
 
-  const {
-    data: inventoryData,
-    isLoading: inventoryLoading,
-  } = useInventoryList();
-
-  const lowStockList = unwrapList(lowStockData);
-  const products = inventoryData?.products ?? [];
   const inventorySummary = {
-    totalProducts: inventoryData?.totalItems ?? products.length,
-    lowStockItems: branchOps?.low_stock_count ?? lowStockList.length,
-    outOfStockItems: products.filter(
-      (p) => getProductBranchQuantity(p, activeBranch?.id) <= 0,
-    ).length,
+    totalProducts: summaryData?.totalProducts || 0,
+    lowStockItems: summaryData?.lowStockItems || 0,
+    outOfStockItems: summaryData?.outOfStockItems || 0,
   };
 
   const dashboardLoading =
-    branchLoading || lowStockLoading || expiryLoading || inventoryLoading;
+    summaryLoading || expiryLoading;
 
   useEffect(() => {
     if (authLoading) return;
@@ -262,7 +246,7 @@ const PharmacistDashboard = () => {
 
         </div>
 
-        <div className="mt-8">
+        <div className="lg:col-span-12 md:col-span-2 col-span-1 mt-8">
           <ExpiryAlertsWidget compact />
         </div>
       </div>
