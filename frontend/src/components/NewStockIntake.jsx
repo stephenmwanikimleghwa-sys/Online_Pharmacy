@@ -140,10 +140,18 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
     e.preventDefault();
     setError("");
 
-    const validItems = items.filter((i) => i.product_id && parseFloat(i.quantity_received) > 0);
     if (!supplierId) return setError("Please select a supplier.");
     if (!branchId) return setError("Please select a receiving branch.");
-    if (validItems.length === 0) return setError("Please add at least one product with quantity > 0.");
+
+    const activeItems = items.filter((i) => i.product_name || i.quantity_received || i.cost_price || i.batch_number);
+    if (activeItems.length === 0) return setError("Please add at least one product with quantity > 0.");
+
+    for (const i of activeItems) {
+      if (!i.product_id) return setError(`Please select "${i.product_name || 'a product'}" from the search dropdown. Typing the name is not enough.`);
+      if (!(parseFloat(i.quantity_received) > 0)) return setError(`Please enter a valid quantity > 0 for ${i.product_name || 'the product'}.`);
+    }
+
+    const validItems = activeItems;
 
     // Offline path: queue the intake in the durable outbox so it uploads when
     // the connection returns. Requires supplier + expiry (pharmacy rule).
