@@ -178,17 +178,36 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                         product_name = p_data.get('product_name', '').strip()
                         if not product_name:
                             continue
+                        department = (p_data.get('department') or 'CHEMIST').upper()
+                        if department not in ('CHEMIST', 'AGROVET', 'OTHER'):
+                            department = 'CHEMIST'
                         product = Product.objects.create(
                             name=product_name,
                             price=selling_price or cost_price or 0,
+                            department=department,
                             created_by=request.user
                         )
 
-                    # Update pricing
-                    tier, _ = PricingTier.objects.get_or_create(product=product, defaults={'buying_price': cost_price, 'retail_price': selling_price, 'wholesale_price': wholesale_price})
-                    if cost_price: tier.buying_price = cost_price
-                    if selling_price: tier.retail_price = selling_price
-                    if wholesale_price: tier.wholesale_price = wholesale_price
+                    # Update pricing — honor explicit selling/wholesale prices (manual)
+                    bp = cost_price or 0
+                    has_manual = bool(selling_price or wholesale_price)
+                    tier, _ = PricingTier.objects.get_or_create(
+                        product=product,
+                        defaults={
+                            'buying_price': bp or 0.01,
+                            'retail_price': selling_price or (bp * 1.33 if bp else 0.01),
+                            'wholesale_price': wholesale_price or (bp * 1.15 if bp else 0.01),
+                            'use_legacy_prices': has_manual,
+                        },
+                    )
+                    if cost_price:
+                        tier.buying_price = cost_price
+                    if selling_price:
+                        tier.retail_price = selling_price
+                    if wholesale_price:
+                        tier.wholesale_price = wholesale_price
+                    if has_manual:
+                        tier.use_legacy_prices = True
                     tier.save()
                     if selling_price:
                         product.price = selling_price

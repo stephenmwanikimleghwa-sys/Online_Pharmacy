@@ -87,26 +87,21 @@ def inventory_list(request):
         if category:
             products = products.filter(category=category)
 
-        # No pagination for inventory management - return all products
-        # When per_page is large (99999), return all results without pagination
-        per_page = int(request.GET.get("per_page", 99999))
+        # Cap page size — dumping the full catalog freezes stock management / OTC
+        try:
+            per_page = int(request.GET.get("per_page", 500))
+        except (TypeError, ValueError):
+            per_page = 500
+        per_page = max(1, min(per_page, 2000))
         page = request.GET.get("page", 1)
-        paginator = None
-        
-        if per_page >= 99999:
-            # Return all products without pagination
-            products_page = products
-            total_count = products.count()
-        else:
-            # Fallback to pagination if per_page is reasonable
-            paginator = Paginator(products, per_page)
-            try:
-                products_page = paginator.page(page)
-            except PageNotAnInteger:
-                products_page = paginator.page(1)
-            except EmptyPage:
-                products_page = paginator.page(paginator.num_pages)
-            total_count = paginator.count
+        paginator = Paginator(products, per_page)
+        try:
+            products_page = paginator.page(page)
+        except PageNotAnInteger:
+            products_page = paginator.page(1)
+        except EmptyPage:
+            products_page = paginator.page(paginator.num_pages)
+        total_count = paginator.count
 
         # Serialize
         serialized_products = ProductSerializer(products_page, many=True).data
@@ -535,22 +530,31 @@ def adjust_inventory(request, pk):
     return Response(ProductSerializer(product).data)
 
 @api_view(["GET"])
-@permission_classes([IsAuditorOrAdmin])
+@permission_classes([IsAuthenticated])
 def stock_logs(request):
-    """View recent stock logs."""
+    """View recent stock logs for inventory history modal (staff + auditors)."""
+    user = request.user
+    role = getattr(user, "role", None)
+    if not (
+        user.is_superuser
+        or role in ("admin", "pharmacist", "cashier", "auditor")
+        or getattr(user, "can_view_reports", False)
+    ):
+        return Response(
+            {"detail": "You do not have permission to view stock logs."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     logs = StockLog.objects.select_related("product", "logged_by", "branch").all()
-    
-    # Filter by product if specified
+
     product_id = request.query_params.get("product_id")
     if product_id:
         logs = logs.filter(product_id=product_id)
-        
-    # Filter by user branch unless admin
-    user = request.user
-    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
-    if not is_admin and user.branch:
+
+    is_admin = role == "admin" or user.is_superuser
+    if not is_admin and getattr(user, "branch", None):
         logs = logs.filter(branch=user.branch)
-        
+
     logs = logs.order_by("-timestamp")[:100]
     serializer = StockLogSerializer(logs, many=True)
     return Response(serializer.data)

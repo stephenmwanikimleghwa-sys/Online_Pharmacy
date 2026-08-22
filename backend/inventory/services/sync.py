@@ -28,9 +28,10 @@ from inventory.models.sync import (
     StockDiscrepancy,
     SyncOperation,
     SyncOpStatus,
+
     SyncOpType,
 )
-from products.models import BranchStock, Product, StockLog
+from products.models import BranchStock, Product, StockLog, resolve_unit_price
 
 
 class SyncApplyError(Exception):
@@ -148,11 +149,7 @@ def _apply_sale(payload, branch, user, source_op):
         qty = int(item["quantity"])
         if qty <= 0:
             continue
-        price = (
-            product.wholesale_price
-            if pricing_tier == "WHOLESALE" and product.wholesale_price
-            else product.price
-        )
+        price = resolve_unit_price(product, pricing_tier)
         line_total = Decimal(str(price)) * qty
         total += line_total
 

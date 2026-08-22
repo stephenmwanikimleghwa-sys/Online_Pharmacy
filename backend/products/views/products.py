@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q, Sum
 from products.models import Product, BranchStock
 from products.serializers import (
@@ -24,6 +24,19 @@ from utils.response import api_response
 from users.utils import log_activity
 
 logger = logging.getLogger(__name__)
+
+_DUP_NAME_MSG = (
+    "A product with this name already exists. Open it to edit, or choose a different name."
+)
+
+
+def _duplicate_name_response():
+    return api_response(
+        error=_DUP_NAME_MSG,
+        data={"name": [_DUP_NAME_MSG]},
+        status_code=status.HTTP_400_BAD_REQUEST,
+        success=False,
+    )
 
 
 def _branch_for_request(request):
@@ -85,8 +98,11 @@ class ProductListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        
+        try:
+            self.perform_create(serializer)
+        except IntegrityError:
+            return _duplicate_name_response()
+
         # Log activity
         log_activity(
             user=request.user,
@@ -143,7 +159,10 @@ class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        try:
+            self.perform_update(serializer)
+        except IntegrityError:
+            return _duplicate_name_response()
 
         updated_instance = serializer.instance
         new_values = {}
@@ -527,14 +546,27 @@ class ProductViewSet(viewsets.ModelViewSet):
                 for index, item_data in enumerate(request.data):
                     serializer = self.get_serializer(data=item_data)
                     if serializer.is_valid():
-                        self.perform_create(serializer)
+                        try:
+                            self.perform_create(serializer)
+                        except IntegrityError:
+                            errors.append({
+                                "index": index,
+                                "errors": {
+                                    "name": [
+                                        "A product with this name already exists."
+                                    ]
+                                },
+                            })
+                            continue
                         created_products.append(serializer.data)
                     else:
                         errors.append({"index": index, "errors": serializer.errors})
-                
+
                 if errors:
                     # Rollback transaction by raising an exception
                     raise Exception("Validation failed for some items.")
+        except IntegrityError:
+            return _duplicate_name_response()
         except Exception as e:
             if errors:
                 return api_response(

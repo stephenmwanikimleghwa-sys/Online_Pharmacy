@@ -56,14 +56,32 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "is_low_stock", "expiry_status", "days_until_expiry", "created_at", "updated_at")
 
     def to_representation(self, instance):
-        """Handle missing pricing_tier gracefully."""
+        """Canonical price/stock so every client sees the same numbers as the DB tiers/branches."""
         data = super().to_representation(instance)
-        # Check if pricing_tier exists
         try:
             if not hasattr(instance, 'pricing_tier') or instance.pricing_tier is None:
                 data['pricing_tier'] = None
+            else:
+                tier = instance.pricing_tier
+                retail = float(tier.retail_price) if tier.retail_price is not None else None
+                wholesale = float(tier.wholesale_price) if tier.wholesale_price is not None else None
+                buying = float(tier.buying_price) if tier.buying_price is not None else None
+                if retail is not None:
+                    data['price'] = retail
+                    data['selling_price'] = retail
+                if wholesale is not None:
+                    data['wholesale_price'] = wholesale
+                if buying is not None:
+                    data['buying_price'] = buying
         except Exception:
             data['pricing_tier'] = None
+
+        # Prefer branch_stock sum over legacy Product.stock_quantity when branches exist
+        try:
+            if data.get('branch_stocks'):
+                data['stock_quantity'] = data.get('total_stock', data.get('stock_quantity'))
+        except Exception:
+            pass
         return data
 
     def get_buying_price(self, instance):
@@ -168,12 +186,28 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Require either price or buying_price to be supplied."""
+        """Require either price or buying_price; honor manual prices when provided."""
         if not data.get('price') and not data.get('buying_price'):
             raise serializers.ValidationError(
                 {'price': 'Provide either a Price or a Buying Price.'}
             )
+        # Manual retail/wholesale must stick even if the client forgot the flag
+        if data.get('retail_price') is not None or data.get('wholesale_price') is not None:
+            data['use_legacy_prices'] = True
+        if not data.get('department'):
+            data['department'] = 'CHEMIST'
         return data
+
+    def validate_name(self, value: str) -> str:
+        name = (value or "").strip()
+        if not name:
+            raise serializers.ValidationError("Product name is required.")
+        qs = Product.objects.filter(name__iexact=name, is_active=True)
+        if qs.exists():
+            raise serializers.ValidationError(
+                f'A product named "{name}" already exists. Open it to edit, or choose a different name.'
+            )
+        return name
 
     def validate_price(self, value: Optional[Decimal]) -> Optional[Decimal]:
         """Validate that the price is greater than 0 when provided."""
@@ -207,6 +241,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             else:
                 validated_data['price'] = buying_price * Decimal('1.33')
 
+        stock_qty = validated_data.get('stock_quantity', 0) or 0
         product = super().create(validated_data)
 
         if buying_price is not None:
@@ -221,6 +256,18 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 if retail_price is not None:
                     tier.retail_price = retail_price
             tier.save()
+
+        # Ensure branch stock row exists so inventory/OTC see the product
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        branch = getattr(user, 'branch', None) if user else None
+        if branch is not None:
+            from products.models import BranchStock
+            BranchStock.objects.get_or_create(
+                product=product,
+                branch=branch,
+                defaults={'quantity': stock_qty},
+            )
 
         return product
 
@@ -276,6 +323,19 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             raise ValidationError("Price must be greater than 0.")
         return value
 
+    def validate_name(self, value: str) -> str:
+        name = (value or "").strip()
+        if not name:
+            raise serializers.ValidationError("Product name is required.")
+        qs = Product.objects.filter(name__iexact=name, is_active=True)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                f'A product named "{name}" already exists.'
+            )
+        return name
+
     def validate_buying_price(self, value: Optional[Decimal]) -> Optional[Decimal]:
         """Validate that the buying price is greater than 0 when provided."""
         if value is not None and value <= 0:
@@ -294,7 +354,11 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         use_legacy_prices = validated_data.pop('use_legacy_prices', None)
         wholesale_price = validated_data.pop('wholesale_price', None)
         retail_price = validated_data.pop('retail_price', None)
-        
+
+        # Preserve explicit WP/RP when the client sends them (Manual pricing)
+        if retail_price is not None or wholesale_price is not None:
+            use_legacy_prices = True
+
         product = super().update(instance, validated_data)
 
         if buying_price is not None or use_legacy_prices is not None:
@@ -310,6 +374,8 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
                         tier.wholesale_price = wholesale_price
                     if retail_price is not None:
                         tier.retail_price = retail_price
+                        product.price = retail_price
+                        product.save(update_fields=['price'])
                 tier.save()
             except PricingTier.DoesNotExist:
                 if buying_price is not None:

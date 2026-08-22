@@ -281,7 +281,7 @@ class StaffActivityLog(models.Model):
         null=True,
         related_name='activity_logs'
     )
-    event_type = models.CharField(max_length=20, default='LOGIN')
+    event_type = models.CharField(max_length=50, default='LOGIN')
     timestamp = models.DateTimeField(auto_now_add=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     branch = models.ForeignKey(

@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db.models.functions import Lower, Trim
 from decimal import Decimal
 from typing import Union, Optional
 
@@ -51,7 +52,7 @@ class Product(models.Model):
     department = models.CharField(
         max_length=50,
         choices=DepartmentChoices.choices,
-        default=DepartmentChoices.OTHER,
+        default=DepartmentChoices.CHEMIST,
         verbose_name="Department",
         help_text="Pharmacy department: CHEMIST or AGROVET"
     )
@@ -155,6 +156,15 @@ class Product(models.Model):
             models.Index(fields=["name", "category"]),  # For search
             models.Index(fields=["pharmacy"]),
             models.Index(fields=["stock_quantity"]),
+        ]
+        constraints = [
+            # Prevent active duplicate names (case/whitespace-insensitive).
+            # Inactive rows are excluded so soft-deleted dupes do not block recreate.
+            models.UniqueConstraint(
+                Lower(Trim("name")),
+                condition=models.Q(is_active=True),
+                name="products_active_name_ci_uniq",
+            ),
         ]
         ordering = ["name"]
 
@@ -394,6 +404,23 @@ class PricingTier(models.Model):
         elif tier == 'retail':
             return self.retail_price
         return self.retail_price  # Default to retail
+
+
+def resolve_unit_price(product, pricing_tier: str = "RETAIL") -> Decimal:
+    """
+    Canonical sale price for OTC/orders: prefer PricingTier, fall back to product.price.
+    pricing_tier accepts RETAIL/WHOLESALE (case-insensitive).
+    """
+    tier_key = (pricing_tier or "RETAIL").upper()
+    try:
+        tier = product.pricing_tier
+        if tier_key == "WHOLESALE" and tier.wholesale_price is not None:
+            return Decimal(str(tier.wholesale_price))
+        if tier.retail_price is not None:
+            return Decimal(str(tier.retail_price))
+    except Exception:
+        pass
+    return Decimal(str(product.price or 0))
 
 
 class BranchStock(models.Model):

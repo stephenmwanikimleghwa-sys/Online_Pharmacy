@@ -17,7 +17,7 @@ from ..models.dispensing import (
     DispensationItem
 )
 from ..models.batch import Batch
-from products.models import Product, BranchStock
+from products.models import Product, BranchStock, resolve_unit_price
 
 from ..serializers.dispensing import (
     PrescriptionSerializer,
@@ -205,7 +205,7 @@ def dispense_otc(request):
                         },
                     )
 
-            price = product.wholesale_price if pricing_tier == 'WHOLESALE' and product.wholesale_price else product.price
+            price = resolve_unit_price(product, pricing_tier)
             item_total = float(price) * requested_quantity
             total_amount += item_total
             products_to_dispense.append({
