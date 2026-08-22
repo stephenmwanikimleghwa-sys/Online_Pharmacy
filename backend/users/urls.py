@@ -16,6 +16,7 @@ from .views.core_views import (
     PasswordResetRequestView,
     PasswordResetConfirmView,
 )
+from .views.logout_view import LogoutView
 from .views.branch_auth_views import SwitchBranchView
 from .views.admin_views import (
     list_pharmacists,
@@ -44,6 +45,7 @@ router.register(r'customers', CustomerViewSet, basename='customer')
 urlpatterns = [
     path('', include(router.urls)),
     path("login/", UserLoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),  # C5: token blacklist on logout
     path("switch-branch/", SwitchBranchView.as_view(), name="switch_branch"),
     # Profile management
     # Simple function-based profile endpoint returns the authenticated user's data

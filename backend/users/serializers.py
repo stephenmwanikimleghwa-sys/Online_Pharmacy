@@ -89,6 +89,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     `pharmacy`, `permission_flags`, or any `can_*` flag here — those are
     admin-only and belong in admin_views.update_user. Adding one would let any
     authenticated user escalate their own privileges.
+
+    SECURITY (C6): All free-text fields are stripped of HTML tags to prevent
+    stored XSS attacks. User-supplied markup is never stored verbatim.
     """
     class Meta:
         model = User
@@ -111,6 +114,33 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         assert not leaked, (
             f"UserUpdateSerializer must not expose privilege fields: {sorted(leaked)}"
         )
+
+    @staticmethod
+    def _sanitize_text(value, max_length=100):
+        """Strip HTML tags and enforce length limit. Prevents stored XSS (C6)."""
+        from django.utils.html import strip_tags
+        if value is None:
+            return value
+        cleaned = strip_tags(str(value)).strip()
+        if len(cleaned) > max_length:
+            raise serializers.ValidationError(f"Value too long (max {max_length} characters).")
+        return cleaned
+
+    def validate_first_name(self, value):
+        return self._sanitize_text(value, max_length=50)
+
+    def validate_last_name(self, value):
+        return self._sanitize_text(value, max_length=50)
+
+    def validate_address(self, value):
+        return self._sanitize_text(value, max_length=255)
+
+    def validate_email(self, value):
+        """Prevent email change to an address already used by another account (H3: mass assignment)."""
+        if self.instance and value:
+            if User.objects.filter(email=value).exclude(pk=self.instance.pk).exists():
+                raise serializers.ValidationError("This email address is already in use.")
+        return value
 
 class UserLoginSerializer(serializers.Serializer):
     """Serializer for user login."""

@@ -29,11 +29,16 @@ def _user_can_see_transfer_details(user):
 
 
 class SupplierViewSet(viewsets.ModelViewSet):
-    """ViewSet for viewing and editing suppliers."""
+    """ViewSet for viewing and editing suppliers.
+
+    SECURITY (C4): Suppliers contain commercially sensitive procurement data.
+    Access is restricted to pharmacist/admin roles only.
+    Customers must never see supplier data.
+    """
 
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsPharmacistOrAdmin]  # C4: was IsAuthenticated (customers could access)
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "contact_person", "email", "phone"]
     # Suppliers are a small, bounded set the UI loads whole (client-side search

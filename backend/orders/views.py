@@ -290,35 +290,55 @@ class OrderListCreateView(generics.ListCreateAPIView):
     """
     List all orders with filtering (by user, status).
     Create a new order (authenticated customers only).
+
+    SECURITY (C1+C2): All methods require authentication.
+    Customers only see their own orders.
+    Pharmacists only see orders from their active branch.
+    Admins see orders from all their allowed branches.
     """
 
-    serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         from django.db.models import Prefetch
-        queryset = (
+        user = self.request.user
+
+        base_qs = (
             Order.objects
             .select_related("user", "payment")
-            .prefetch_related(
-                Prefetch("items__product")
-            )
+            .prefetch_related(Prefetch("items__product"))
             .order_by("-created_at")
         )
-        # Filter by user if specified
+
+        # Scope by role — never return unscoped results to non-admins
+        role = getattr(user, "role", None)
+        if role == "customer":
+            queryset = base_qs.filter(user=user)
+        elif role in ("pharmacist", "cashier", "auditor"):
+            active_branch = get_active_branch(self.request)
+            if not active_branch:
+                return Order.objects.none()
+            queryset = base_qs.filter(branch=active_branch)
+        elif role == "admin" or user.is_superuser:
+            queryset = base_qs  # Admins see all (further filtering below if branch selected)
+            active_branch = get_active_branch(self.request)
+            if active_branch:
+                queryset = base_qs.filter(branch=active_branch)
+        else:
+            return Order.objects.none()
+
+        # Optional query-param filters
         user_id = self.request.query_params.get("user_id")
-        if user_id:
+        if user_id and role in ("admin",) or user.is_superuser:
             queryset = queryset.filter(user_id=user_id)
-        # Filter by status
         status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         return queryset
 
     def get_permissions(self):
-        if self.request.method == "POST":
-            return [permissions.IsAuthenticated()]  # Customers can create
-        return [permissions.IsAuthenticatedOrReadOnly()]  # All can list with auth
+        # All methods require authentication (C1 fix — GET was IsAuthenticatedOrReadOnly)
+        return [permissions.IsAuthenticated()]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -332,40 +352,61 @@ class OrderListCreateView(generics.ListCreateAPIView):
 class OrderRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update, or delete a specific order.
-    Customers can view their own orders.
-    Pharmacists/admins can manage all.
+    Customers can view only their own orders.
+    Pharmacists can view/modify only orders from their active branch (C2 fix).
+    Admins can manage all.
     """
 
     serializer_class = OrderUpdateSerializer
     lookup_field = "pk"
-    permission_classes = [IsOrderOwner]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         from django.db.models import Prefetch
-        
-        if not self.request.user.is_authenticated:
+
+        user = self.request.user
+        if not user.is_authenticated:
             return Order.objects.none()
-        
+
         queryset = (
             Order.objects
             .select_related("user", "payment")
             .prefetch_related(Prefetch("items__product"))
         )
-        # Customers see only their orders
-        if self.request.user.role == "customer":
-            return queryset.filter(user=self.request.user)
-        # Pharmacists/admins see all
-        elif self.request.user.role in ["pharmacist", "admin"]:
+        role = getattr(user, "role", None)
+        if role == "customer":
+            return queryset.filter(user=user)
+        elif role in ("pharmacist", "cashier", "auditor"):
+            active_branch = get_active_branch(self.request)
+            if not active_branch:
+                return Order.objects.none()
+            return queryset.filter(branch=active_branch)
+        elif role == "admin" or user.is_superuser:
             return queryset
         return Order.objects.none()
 
     def get_object(self):
         obj = super().get_object()
-        # Permission check: user must own the order, or be pharmacist/admin
-        if self.request.user.is_authenticated:
-            if self.request.user.role == "customer" and obj.user != self.request.user:
-                self.permission_denied(self.request)
+        user = self.request.user
+        role = getattr(user, "role", None)
+        # Customer isolation: can only view own orders
+        if role == "customer" and obj.user != user:
+            self.permission_denied(self.request)
         return obj
+
+    def perform_update(self, serializer):
+        """C2: Verify branch ownership before allowing any order modification."""
+        from rest_framework.exceptions import PermissionDenied
+        instance = self.get_object()
+        user = self.request.user
+        role = getattr(user, "role", None)
+        if role not in ("admin",) and not user.is_superuser:
+            active_branch = get_active_branch(self.request)
+            if not active_branch or instance.branch_id != active_branch.id:
+                raise PermissionDenied(
+                    "You do not have permission to modify orders from another branch."
+                )
+        serializer.save()
 
 
 @api_view(["GET"])

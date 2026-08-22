@@ -48,10 +48,10 @@ def root_redirect(request: HttpRequest):
     return redirect("/swagger/")
 
 urlpatterns = [
-    # Root: redirect to frontend (configurable) or docs by default
+    # Root: redirect to frontend (configurable) or local swagger UI.
     path("", root_redirect, name="root"),
-    # Admin site
-    path("admin/", admin.site.urls),
+    # Admin site — obfuscated URL (C3 security fix: /admin/ returns 404 to scanners)
+    path("tc-mgmt/", admin.site.urls),
 ]
 
 # Conditionally expose API documentation only in DEBUG or when explicitly enabled

@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views.inventory import (
     inventory_summary, inventory_list, low_stock_items,
     out_of_stock_items, inventory_detail, restock_inventory,
-    adjust_inventory, stock_logs, branch_stock_view
+    adjust_inventory, stock_logs, branch_stock_view, stock_usage
 )
 from .views.restock import RestockRequestViewSet
 from .views.stock_intake import StockIntakeViewSet
@@ -61,6 +61,7 @@ urlpatterns = [
     
     # Logs & History
     path('logs/', stock_logs, name='logs'),
+    path('stock-usage/', stock_usage, name='stock-usage'),
     
     # Dispensing
     path('dispense/otc/', dispense_otc, name='dispense-otc'),

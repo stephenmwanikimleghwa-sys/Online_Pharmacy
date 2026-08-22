@@ -119,9 +119,15 @@ def issue_tokens(user: User, active_branch_id: int | None = None) -> dict[str, s
     from rest_framework_simplejwt.tokens import RefreshToken
 
     refresh = RefreshToken.for_user(user)
+    
+    # H5: Embed role in token claims
+    refresh["role"] = user.role
+    refresh.access_token["role"] = user.role
+    
     if active_branch_id is not None:
         refresh["active_branch_id"] = active_branch_id
         refresh.access_token["active_branch_id"] = active_branch_id
+        
     return {
         "access": str(refresh.access_token),
         "refresh": str(refresh),

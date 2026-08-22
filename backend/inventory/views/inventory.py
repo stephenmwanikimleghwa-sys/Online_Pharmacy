@@ -603,3 +603,9 @@ def branch_stock_view(request):
         rows.append(row)
 
     return Response({"results": rows})
+
+@api_view(["GET"])
+@permission_classes([IsPharmacistOrAdmin])
+def stock_usage(request):
+    """Placeholder for stock usage metrics."""
+    return Response({"results": []})

@@ -145,12 +145,38 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         fields = ("status", "notes", "delivery_address")
 
     def validate_status(self, value):
+        """
+        SECURITY (H3): Enforce valid state transitions to prevent logic flaws.
+        """
         user = self.context["request"].user
+        
+        # Role-based restriction
         if value in ["confirmed", "shipped", "delivered"]:
-            if user.role not in ["admin", "pharmacist"]:
+            if getattr(user, "role", None) not in ["admin", "pharmacist"]:
                 raise ValidationError(
-                    "Only admins and pharmacists can update order status."
+                    "Only admins and pharmacists can update order status to this state."
                 )
+
+        # Transition validation
+        if self.instance:
+            current_status = self.instance.status
+            if current_status == value:
+                return value
+                
+            valid_transitions = {
+                "pending": {"confirmed", "cancelled"},
+                "confirmed": {"shipped", "cancelled"},
+                "shipped": {"delivered", "cancelled"},
+                "delivered": set(),  # Terminal state
+                "cancelled": set(),  # Terminal state
+            }
+            
+            allowed_next = valid_transitions.get(current_status, set())
+            if value not in allowed_next:
+                raise ValidationError(
+                    f"Invalid status transition from '{current_status}' to '{value}'."
+                )
+                
         return value
 
 class OrderTemplateItemSerializer(serializers.ModelSerializer):

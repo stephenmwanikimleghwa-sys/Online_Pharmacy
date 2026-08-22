@@ -36,4 +36,8 @@ urlpatterns = [
     ),
     # Admin: List all prescriptions for review
     path("admin/list/", views.AdminPrescriptionListView.as_view(), name="admin_list"),
+    # Admin Reports
+    path("reports/daily-stats/", views.daily_prescriptions_report, name="daily_stats"),
+    path("reports/medicines-dispensed/", views.medicines_dispensed_report, name="medicines_dispensed"),
+    path("reports/stock-usage/", views.stock_usage_report, name="stock_usage"),
 ]

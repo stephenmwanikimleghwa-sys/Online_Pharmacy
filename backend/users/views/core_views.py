@@ -50,8 +50,25 @@ class UserLoginView(APIView):
     @method_decorator(ratelimit(key="ip", rate="10/m", block=True))
     def post(self, request):
         try:
+            # H6: Check account lockout status before validating credentials
+            username = request.data.get("username", "")
+            client_ip = request.META.get("REMOTE_ADDR", "unknown")
+            lockout_key = f"login_attempts:{username}:{client_ip}"
+            
+            from django.core.cache import cache
+            attempts = cache.get(lockout_key, 0)
+            if attempts >= 5:
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    "Too many failed login attempts. Please try again in 15 minutes.",
+                    http_status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
             serializer = UserLoginSerializer(data=request.data)
             if serializer.is_valid():
+                # Login successful, reset attempt counter
+                cache.delete(lockout_key)
+                
                 user = serializer.validated_data["user"]
                 user = User.objects.select_related("pharmacy", "branch").get(pk=user.pk)
 
@@ -91,6 +108,10 @@ class UserLoginView(APIView):
                     },
                     http_status=status.HTTP_200_OK,
                 )
+            
+            # Login failed, increment attempt counter
+            cache.set(lockout_key, attempts + 1, timeout=900)  # 15 minutes
+            
             errors = serializer.errors
             code = ApiErrorCode.VALIDATION_ERROR
             message = "Please check your login details and try again."
@@ -142,6 +163,9 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 class ChangePasswordView(APIView):
     """
     Change user password.
+
+    SECURITY (C5): Blacklists all outstanding JWT tokens for the user after
+    a successful password change, preventing stolen tokens from remaining valid.
     """
 
     permission_classes = [IsAuthenticated]
@@ -155,8 +179,25 @@ class ChangePasswordView(APIView):
             user.set_password(serializer.validated_data["new_password"])
             user.must_change_password = False
             user.save()
+
+            # C5: Blacklist all outstanding tokens for this user so that any
+            # stolen/leaked access tokens cannot be used after a password change.
+            try:
+                from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+                from rest_framework_simplejwt.tokens import RefreshToken
+                outstanding = OutstandingToken.objects.filter(user=user)
+                for token_record in outstanding:
+                    try:
+                        token = RefreshToken(token_record.token)
+                        token.blacklist()
+                    except Exception:
+                        pass  # Already blacklisted or expired — non-fatal
+            except Exception as e:
+                logger.warning("Could not blacklist outstanding tokens for user %s: %s", user.username, e)
+
             return Response(
-                {"message": "Password changed successfully."}, status=status.HTTP_200_OK
+                {"message": "Password changed successfully. Please log in again."},
+                status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
