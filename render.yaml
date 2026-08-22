@@ -48,9 +48,18 @@ services:
       - key: VITE_API_BASE_URL
         value: https://online-pharmacy-sn88.onrender.com/api
     headers:
-      - path: /*
+      # Hashed assets (Vite adds content hashes) — cache aggressively
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      # index.html must always be fresh so new deployments take effect
+      - path: /index.html
         name: Cache-Control
         value: no-cache
+      # Fallback for other files
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
     routes:
       - type: rewrite
         source: /*

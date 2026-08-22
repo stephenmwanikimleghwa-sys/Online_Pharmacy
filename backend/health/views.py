@@ -4,7 +4,6 @@ Health check endpoint for deployment monitoring
 from django.http import JsonResponse
 from django.db import connection
 import os
-import redis
 from django.conf import settings
 
 
@@ -13,7 +12,14 @@ def health_check(request):
     Health check endpoint that verifies database/redis connectivity.
     SECURITY (H2): Only returns 'healthy' or 'unhealthy'.
     Internal details are logged but never exposed to the client.
+
+    Supports ?fast=1 query param for lightweight keep-alive pings
+    that skip DB/Redis checks (used by external cron monitors).
     """
+    # Fast mode: skip DB/Redis checks for keep-alive pings
+    if request.GET.get("fast") == "1":
+        return JsonResponse({"status": "healthy"}, status=200)
+
     is_healthy = True
     
     # Check database connection
@@ -31,6 +37,7 @@ def health_check(request):
         if redis_url:
             valid_schemes = ("redis://", "rediss://", "unix://")
             if redis_url.startswith(valid_schemes):
+                import redis
                 r = redis.from_url(redis_url)
                 r.ping()
     except Exception as e:
