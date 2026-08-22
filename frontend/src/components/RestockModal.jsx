@@ -96,7 +96,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
         {/* Header */}
         <div className="modal-header">
           <h2 className="text-2xl font-display font-bold relative z-10">Add stock</h2>
-          <p className="text-white/70 text-xs mt-2 font-medium relative z-10 uppercase tracking-widest">{item.name}</p>
+          <p className="text-white/70 text-xs mt-2 font-medium relative z-10">{item.name}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8" style={{ background: 'var(--bg-card)' }}>
@@ -190,7 +190,7 @@ const RestockModal = ({ item, onClose, onRestock }) => {
             </button>
             <button
               type="submit"
-              className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+              className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Saving...' : 'Add stock'}

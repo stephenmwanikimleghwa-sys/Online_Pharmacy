@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
 
 export interface SearchSuggestion {
@@ -37,12 +37,12 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  placeholder = 'Search for medicines, active compounds, or therapeutic categories...',
+  placeholder = 'Search medicines…',
   onSearch,
   suggestions = [],
   filterOptions,
   className = '',
-  showFilters = true
+  showFilters = false
 }) => {
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -60,7 +60,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   ).slice(0, 8);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedSuggestionIndex(prev =>
@@ -80,7 +80,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       setShowSuggestions(false);
       setShowFilterPanel(false);
     }
-  }, [filteredSuggestions, selectedSuggestionIndex]);
+  };
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     setQuery(suggestion.label);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import financeService from '../../services/financeService';
-import { BanknotesIcon, ArrowTrendingUpIcon, ArrowDownTrayIcon, BuildingLibraryIcon, UserGroupIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { BanknotesIcon, ArrowDownTrayIcon, BuildingLibraryIcon, UserGroupIcon, ClockIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import BranchSelector from '../../components/BranchSelector';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import { utils, writeFile } from 'xlsx';
 import StatCard from '../../components/ui/StatCard';
 import EmptyState from '../../components/ui/EmptyState';
 import { PanelSkeleton, Skeleton } from '../../components/ui/Skeleton';
+import PageHeader from '../../components/PageHeader';
 
 const money = (n) => `KES ${Number(n || 0).toLocaleString()}`;
 
@@ -76,30 +77,29 @@ const FinancialDashboard = () => {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-display font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-            <BanknotesIcon className="w-8 h-8" style={{ color: 'var(--color-primary)' }} />
-            Financial Overview
-          </h1>
-          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Monitor cash flow, balances, and credit summaries.</p>
-        </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          {['cash_flow', 'account_balances'].includes(activeTab) && (
-             <div className="w-48">
-               <BranchSelector onChange={b => setSelectedBranch(b?.id || '')} />
-             </div>
-          )}
-          <button onClick={handleExportCSV} className="btn-primary px-4 py-2.5 rounded-xl font-bold text-sm shadow-premium flex items-center gap-2">
-            <ArrowDownTrayIcon className="w-5 h-5" /> Export Data
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Financials"
+        description="Cash flow, balances, and AR / AP for your branches."
+        actions={
+          <>
+            {['cash_flow', 'account_balances'].includes(activeTab) && (
+              <div className="w-48">
+                <BranchSelector onChange={(b) => setSelectedBranch(b?.id || '')} />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="btn-primary px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" /> Export
+            </button>
+          </>
+        }
+      />
 
       {/* Tabs */}
-      <div className="glass-card rounded-[2rem] border shadow-sm p-2 flex overflow-x-auto custom-scrollbar" style={{ borderColor: 'var(--border-primary)' }}>
+      <div className="glass-card rounded-xl border p-1.5 flex overflow-x-auto custom-scrollbar" style={{ borderColor: 'var(--border-primary)' }}>
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -107,10 +107,10 @@ const FinancialDashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${isActive ? 'btn-primary text-white shadow-md' : ''}`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${isActive ? 'btn-primary text-white' : ''}`}
               style={isActive ? {} : { color: 'var(--text-secondary)' }}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4 h-4" />
               {tab.label}
             </button>
           )
@@ -118,7 +118,7 @@ const FinancialDashboard = () => {
       </div>
 
       {/* Content Area */}
-      <div className="glass-card rounded-[2rem] border shadow-premium p-6 sm:p-8 min-h-[50vh]" style={{ borderColor: 'var(--border-primary)' }}>
+      <div className="glass-card rounded-xl border shadow-premium p-6 sm:p-8 min-h-[50vh]" style={{ borderColor: 'var(--border-primary)' }}>
         {activeTab === 'cash_flow' && (
           <div className="space-y-6">
             <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>30-Day Cash Flow</h2>
@@ -170,13 +170,13 @@ const FinancialDashboard = () => {
             <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Accounts Receivable & Payable</h2>
             {isLoadingSummary ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[0, 1].map(i => <Skeleton key={i} className="h-40" rounded="rounded-3xl" />)}
+                {[0, 1].map(i => <Skeleton key={i} className="h-40" rounded="rounded-xl" />)}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* AR */}
-                <div className="glass-card p-6 rounded-3xl border" style={{ borderColor: 'rgba(16,185,129,0.25)' }}>
-                  <h3 className="text-sm font-bold uppercase tracking-widest mb-6" style={{ color: '#059669' }}>Accounts Receivable (AR)</h3>
+                <div className="glass-card p-6 rounded-xl border" style={{ borderColor: 'rgba(16,185,129,0.25)' }}>
+                  <h3 className="text-sm font-semibold mb-5" style={{ color: '#059669' }}>Accounts receivable (AR)</h3>
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Customer Debts (Owed to Pharmacy)</p>
@@ -190,8 +190,8 @@ const FinancialDashboard = () => {
                 </div>
 
                 {/* AP */}
-                <div className="glass-card p-6 rounded-3xl border" style={{ borderColor: 'rgba(244,63,94,0.25)' }}>
-                  <h3 className="text-sm font-bold uppercase tracking-widest mb-6" style={{ color: '#e11d48' }}>Accounts Payable (AP)</h3>
+                <div className="glass-card p-6 rounded-xl border" style={{ borderColor: 'rgba(244,63,94,0.25)' }}>
+                  <h3 className="text-sm font-semibold mb-5" style={{ color: '#e11d48' }}>Accounts payable (AP)</h3>
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Supplier Debts (Owed by Pharmacy)</p>
@@ -219,11 +219,11 @@ const FinancialDashboard = () => {
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                        <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Date</th>
-                        <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Type / Mode</th>
-                        <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Description</th>
-                        <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Reference</th>
-                        <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Amount</th>
+                        <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Type / Mode</th>
+                        <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Description</th>
+                        <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Reference</th>
+                        <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Amount</th>
                       </tr>
                     </thead>
                     <tbody>

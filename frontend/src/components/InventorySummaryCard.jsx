@@ -9,7 +9,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
   } = summary;
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-white/50 shadow-premium">
+    <div className="glass-card rounded-2xl p-6 border border-white/50">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>Inventory Summary</h2>
@@ -17,7 +17,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         </div>
         <button
           onClick={onViewInventory}
-          className="px-5 py-2.5 btn-primary text-white rounded-xl font-bold shadow-soft hover:shadow-glow  transition-all active:scale-[0.98] text-sm"
+          className="px-5 py-2.5 btn-primary text-white rounded-xl font-bold shadow-soft  transition-all active:scale-[0.98] text-sm"
         >
           View stock list
         </button>
@@ -28,7 +28,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         <div className="data-cell p-5 rounded-2xl group hover:shadow-premium transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-primary">Total Products</p>
+              <p className="text-xs font-bold mb-1 text-primary">Total Products</p>
               <p className="text-3xl font-display font-bold" style={{color:'var(--text-primary)'}}><CountUp value={totalProducts} /></p>
             </div>
             <div className="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
@@ -43,7 +43,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         <div className={`p-5 rounded-2xl border transition-all group ${lowStockItems > 0 ? 'bg-amber-50/50 border-amber-100' : 'bg-emerald-50/50 border-emerald-100'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${lowStockItems > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>Low Stock Items</p>
+              <p className={`text-xs font-bold mb-1 ${lowStockItems > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>Low Stock Items</p>
               <p className={`text-3xl font-display font-bold ${lowStockItems > 0 ? 'text-amber-900' : 'text-emerald-900'}`}>
                 <CountUp value={lowStockItems} />
               </p>
@@ -60,7 +60,7 @@ const InventorySummaryCard = ({ summary, onViewInventory }) => {
         <div className={`p-5 rounded-2xl border transition-all group ${outOfStockItems > 0 ? 'bg-rose-50/50 border-rose-100' : 'bg-emerald-50/50 border-emerald-100'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${outOfStockItems > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>Out of Stock</p>
+              <p className={`text-xs font-bold mb-1 ${outOfStockItems > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>Out of Stock</p>
               <p className={`text-3xl font-display font-bold ${outOfStockItems > 0 ? 'text-rose-900' : 'text-emerald-900'}`}>
                 <CountUp value={outOfStockItems} />
               </p>

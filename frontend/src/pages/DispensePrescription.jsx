@@ -120,14 +120,14 @@ const DispensePrescription = () => {
           </div>
           <button
             onClick={() => navigate('/pharmacist/dashboard')}
-            className="form-cancel-btn px-6 py-3 rounded-2xl text-[10px] uppercase tracking-widest hover:border-[var(--color-primary)] hover:text-primary transition-all shadow-sm hover:shadow-premium"
+            className="form-cancel-btn px-6 py-3 rounded-2xl text-xs hover:border-[var(--color-primary)] hover:text-primary transition-all shadow-sm hover:shadow-premium"
           >
             Terminal Dashboard
           </button>
         </div>
 
         {/* Prescription Details Card */}
-        <div className="glass-card rounded-[2.5rem] p-10 border border-[var(--border-primary)] shadow-premium mb-10 relative overflow-hidden">
+        <div className="glass-card rounded-xl p-10 border border-[var(--border-primary)] shadow-premium mb-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 btn-primary/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
 
           <div className="flex items-center gap-3 mb-8">
@@ -139,15 +139,15 @@ const DispensePrescription = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2" style={{color:'var(--text-secondary)'}}>Subject Name</p>
+              <p className="text-xs font-bold mb-2" style={{color:'var(--text-secondary)'}}>Subject Name</p>
               <p className="text-2xl font-display font-bold" style={{color:'var(--text-primary)'}}>
                 {prescription.patient_name || prescription.user?.full_name}
               </p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2" style={{color:'var(--text-secondary)'}}>System Status</p>
+              <p className="text-xs font-bold mb-2" style={{color:'var(--text-secondary)'}}>System Status</p>
               <div className="flex">
-                <span className="px-4 py-1.5 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm" style={{background:'var(--brand-mist)', borderColor:'var(--brand-border-soft)'}}>
+                <span className="px-4 py-1.5 text-primary rounded-full text-xs font-bold border shadow-sm" style={{background:'var(--brand-mist)', borderColor:'var(--brand-border-soft)'}}>
                   {prescription.status}
                 </span>
               </div>
@@ -168,7 +168,7 @@ const DispensePrescription = () => {
         </div>
 
         {/* Medicines Section */}
-        <div className="glass-card rounded-[2.5rem] p-10 border border-[var(--border-primary)] shadow-premium mb-10">
+        <div className="glass-card rounded-xl p-10 border border-[var(--border-primary)] shadow-premium mb-10">
           <div className="flex items-center gap-3 mb-10">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{background:'var(--brand-mist)', borderColor:'var(--brand-border-soft)'}}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.638.319a4 4 0 01-2.154.493H8.5a4 4 0 01-4-4V7a4 4 0 014-4h2a4 4 0 011.929.5L13 3.5a2 2 0 011 1.732V9a2 2 0 01-2 2h-1M14 6a2 2 0 00-2 2v1M17 10a2 2 0 00-2 2v1" /></svg>
@@ -182,12 +182,12 @@ const DispensePrescription = () => {
               const isAvailable = medicineStatus.available && medicineStatus.currentStock >= medicine.quantity;
 
               return (
-                <div key={index} className="data-cell p-8 rounded-[2rem] transition-all hover:shadow-premium group">
+                <div key={index} className="data-cell p-8 rounded-xl transition-all hover:shadow-premium group">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-display font-bold" style={{color:'var(--text-primary)'}}>{medicine.name}</h3>
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${isAvailable ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${isAvailable ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
                           }`}>
                           {isAvailable ? 'In Stock' : 'Stock Depleted'}
                         </span>
@@ -205,7 +205,7 @@ const DispensePrescription = () => {
 
                     <div className="flex flex-col items-end gap-4 min-w-[200px]">
                       <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{color:'var(--text-secondary)'}}>Available Ledger</p>
+                        <p className="text-xs font-bold mb-1" style={{color:'var(--text-secondary)'}}>Available Ledger</p>
                         <p className={`text-2xl font-display font-bold ${isAvailable ? 'text-slate-900' : 'text-rose-600'}`}>
                           {medicineStatus.currentStock || 0} <span className="text-sm font-medium text-slate-400">{getProductUnitLabel(medicine, medicineStatus.currentStock || 0)}</span>
                         </p>
@@ -222,7 +222,7 @@ const DispensePrescription = () => {
                             className="w-16 px-2 py-2 text-center font-bold bg-transparent focus:outline-none" style={{color:'var(--text-primary)'}}
                           />
                           <div className="h-6 w-px" style={{background:'var(--border-primary)'}}></div>
-                          <span className="text-[10px] font-bold uppercase pr-2" style={{color:'var(--text-secondary)'}}>Release</span>
+                          <span className="text-xs font-semibold pr-2" style={{color:'var(--text-secondary)'}}>Release</span>
                         </div>
                       )}
                     </div>
@@ -231,7 +231,7 @@ const DispensePrescription = () => {
                   {!isAvailable && (
                     <div className="mt-6 p-4 bg-rose-50/50 rounded-2xl border border-rose-100 flex items-center gap-3 text-rose-600">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                      <p className="text-xs font-bold uppercase tracking-wider">Critical: Ledger stock insufficient for secure release.</p>
+                      <p className="text-xs font-semibold">Critical: Ledger stock insufficient for secure release.</p>
                     </div>
                   )}
                 </div>
@@ -241,7 +241,7 @@ const DispensePrescription = () => {
         </div>
 
         {/* Action Bar */}
-        <div className="glass-card rounded-[2.5rem] p-8 border border-[var(--border-primary)] shadow-premium">
+        <div className="glass-card rounded-xl p-8 border border-[var(--border-primary)] shadow-premium">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
             <div>
               <h3 className="text-xl font-display font-bold mb-1" style={{color:'var(--text-primary)'}}>Authorization Terminal</h3>
@@ -251,7 +251,7 @@ const DispensePrescription = () => {
             <button
               onClick={handleDispense}
               disabled={dispensing || Object.keys(dispensedMedicines).length === 0}
-              className="btn-primary px-10 py-5 rounded-3xl shadow-glow hover:shadow-premium font-bold text-[11px] uppercase tracking-[0.2em] transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-4"
+              className="btn-primary px-10 py-5 rounded-3xl shadow-glow hover:shadow-premium font-bold text-xs transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-4"
             >
               {dispensing ? (
                 <>

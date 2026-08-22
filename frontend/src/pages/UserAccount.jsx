@@ -55,7 +55,7 @@ const UserAccount = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 opacity-40">
           <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
+          <p className="text-xs font-bold text-slate-500">Loading...</p>
         </div>
       </div>
     );
@@ -89,10 +89,10 @@ const UserAccount = () => {
       {profile && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Profile Card */}
-          <div className="lg:col-span-8 glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
+          <div className="lg:col-span-8 glass-card rounded-xl border border-white/60 shadow-premium overflow-hidden">
             <div className="px-10 py-8 border-b" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
               <h2 className="text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Profile Information</h2>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>Personal Details</p>
+              <p className="text-xs font-bold mt-1" style={{ color: 'var(--text-muted)' }}>Personal Details</p>
             </div>
 
             <div className="p-10">
@@ -128,13 +128,13 @@ const UserAccount = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="data-cell p-6 rounded-2xl">
-                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Role</p>
-                  <span className="brand-mist px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest capitalize">
+                  <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-muted)' }}>Role</p>
+                  <span className="brand-mist px-3 py-1 rounded-xl text-xs font-bold capitalize">
                     {profile.role}
                   </span>
                 </div>
                 <div className="data-cell p-6 rounded-2xl">
-                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Address</p>
+                  <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-muted)' }}>Address</p>
                   <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{profile.address || "No address provided"}</p>
                 </div>
               </div>
@@ -159,7 +159,7 @@ const UserAccount = () => {
                     notifyApiError(notify, error, "Update Failed", "Could not update your profile. Please try again.");
                   });
                 }}
-                className="mt-8 px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group font-bold text-xs uppercase tracking-widest"
+                className="mt-8 px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group font-bold text-xs"
               >
                 <PencilIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
                 Edit Profile
@@ -168,24 +168,24 @@ const UserAccount = () => {
           </div>
 
           {/* Side Panel */}
-          <div className="lg:col-span-4 bg-slate-900 rounded-[2.5rem] p-8 shadow-glow-indigo text-white flex flex-col justify-between relative overflow-hidden group">
+          <div className="lg:col-span-4 bg-slate-900 rounded-xl p-8 shadow-glow-indigo text-white flex flex-col justify-between relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 btn-primary/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:btn-primary/20 transition-colors duration-700"></div>
             <div>
-              <h3 className="text-[10px] font-bold text-indigo-300 uppercase tracking-[0.2em] mb-6 relative z-10">Account Status</h3>
+              <h3 className="text-xs font-bold text-indigo-300 mb-6 relative z-10">Account Status</h3>
               <div className="space-y-4 relative z-10">
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Username</span>
+                  <span className="text-slate-400 text-xs font-bold">Username</span>
                   <span className="font-display font-bold text-lg">{user?.username}</span>
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
-                  <span className="text-emerald-300 text-xs font-bold uppercase tracking-widest">Status</span>
+                  <span className="text-emerald-300 text-xs font-bold">Status</span>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
                     <span className="font-display font-bold text-emerald-400">Active</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Role</span>
+                  <span className="text-slate-400 text-xs font-bold">Role</span>
                   <span className="font-display font-bold capitalize">{profile.role}</span>
                 </div>
               </div>

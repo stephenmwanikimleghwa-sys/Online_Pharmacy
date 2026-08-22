@@ -39,17 +39,26 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: 'dist',
     sourcemap: false,
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts'],
-          excel: ['xlsx'],
-          query: ['@tanstack/react-query'],
-          icons: ['@heroicons/react'],
-          ui: ['@headlessui/react'],
-          utils: ['axios', 'date-fns']
+        manualChunks(id) {
+          // Heavy one-off libraries — only loaded on demand
+          if (id.includes('node_modules/xlsx')) return 'excel';
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'charts';
+          // UI framework chunks
+          if (id.includes('node_modules/@headlessui')) return 'ui';
+          if (id.includes('node_modules/@heroicons')) return 'icons';
+          // Query / data layer
+          if (id.includes('node_modules/@tanstack')) return 'query';
+          // Date utilities
+          if (id.includes('node_modules/date-fns')) return 'utils';
+          // Core React runtime
+          if (id.includes('node_modules/react-dom')) return 'react-dom';
+          if (id.includes('node_modules/react-router-dom') || id.includes('node_modules/react-router')) return 'router';
+          if (id.includes('node_modules/react')) return 'react';
+          // Everything else from node_modules into a shared vendor chunk
+          if (id.includes('node_modules')) return 'vendor';
         }
       }
     }

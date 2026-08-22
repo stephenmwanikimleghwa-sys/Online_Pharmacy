@@ -114,7 +114,7 @@ const StockIntakeLog = () => {
             <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Stock <span className="text-primary">received</span></h1>
+            <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Stock received</h1>
           </div>
           <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
             Use this page to record new deliveries. This helps you track what came in, who supplied it, cost, batch number, and expiry date.
@@ -125,7 +125,7 @@ const StockIntakeLog = () => {
           className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add a delivery</span>
+          <span className="text-xs font-bold leading-none mt-0.5">Add a delivery</span>
         </button>
       </div>
 
@@ -161,7 +161,7 @@ const StockIntakeLog = () => {
       )}
 
       {/* Controls & Table Container */}
-      <div className="glass-card rounded-[2.5rem] border shadow-premium overflow-hidden" style={{ borderColor: 'var(--border-primary)' }}>
+      <div className="glass-card rounded-xl border shadow-premium overflow-hidden" style={{ borderColor: 'var(--border-primary)' }}>
         <div className="px-8 py-8 border-b flex flex-col md:flex-row justify-between items-center gap-6" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
           <div className="relative group w-full md:w-96">
             <input
@@ -176,7 +176,7 @@ const StockIntakeLog = () => {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>
+            <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>
               {totalCount} {totalCount === 1 ? 'Record' : 'Records'}
             </span>
           </div>
@@ -187,7 +187,7 @@ const StockIntakeLog = () => {
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--border-primary)' }}>
                 {['Medicine / Product', 'Supplier', 'Quantity', 'Unit Price', 'Total Cost', 'Expiry Date', 'Actions'].map((header) => (
-                  <th key={header} className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-secondary)' }}>{header}</th>
+                  <th key={header} className="px-8 py-5 text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{header}</th>
                 ))}
               </tr>
             </thead>
@@ -209,21 +209,21 @@ const StockIntakeLog = () => {
                   <tr key={record.id} className="border-b last:border-0 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
                     <td className="px-8 py-6">
                       <p className="font-bold group-hover:text-primary transition-colors" style={{ color: 'var(--text-primary)' }}>{record.product_name}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>Batch: {record.batch_number || 'ST-ALPHA'}</p>
+                      <p className="text-xs font-semibold tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>Batch: {record.batch_number || 'ST-ALPHA'}</p>
                     </td>
                     <td className="px-8 py-6">
                       <span className="px-3 py-1 border rounded-xl text-xs font-bold shadow-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>{record.distributor_name}</span>
                     </td>
                     <td className="px-8 py-6">
                       <p className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>{record.quantity_received}</p>
-                      <p className="text-[9px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-secondary)' }}>Units</p>
+                      <p className="text-xs font-bold mt-0.5" style={{ color: 'var(--text-secondary)' }}>Units</p>
                     </td>
                     <td className="px-8 py-6 font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>KES {parseFloat(record.unit_cost).toLocaleString()}</td>
                     <td className="px-8 py-6">
                       <p className="font-display font-bold text-primary">KES {parseFloat(record.total_cost).toLocaleString()}</p>
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${record.expiry_date && new Date(record.expiry_date) < new Date()
+                      <span className={`px-3 py-1 rounded-xl text-xs font-bold border ${record.expiry_date && new Date(record.expiry_date) < new Date()
                         ? 'bg-rose-50 text-rose-600 border-rose-100'
                         : 'bg-emerald-50 text-emerald-600 border-emerald-100'
                         }`}>
@@ -255,7 +255,7 @@ const StockIntakeLog = () => {
             className="px-8 py-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
             style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}
           >
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>
               Showing {rangeStart}–{rangeEnd} of {totalCount}
             </p>
             <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ const StockIntakeLog = () => {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={!hasPrev}
-                className="px-4 py-2 border rounded-xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 border rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
               >
                 Previous
@@ -272,7 +272,7 @@ const StockIntakeLog = () => {
                 type="button"
                 onClick={() => setCurrentPage((p) => p + 1)}
                 disabled={!hasNext}
-                className="px-4 py-2 border rounded-xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 border rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
               >
                 Next
@@ -299,7 +299,7 @@ const StockIntakeLog = () => {
       {selectedRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedRecord(null)}></div>
-          <div className="relative w-full max-w-lg glass-card rounded-[2rem] shadow-premium overflow-hidden border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+          <div className="relative w-full max-w-lg glass-card rounded-xl shadow-premium overflow-hidden border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
             <div className="px-8 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)' }}>
               <div>
                 <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Intake Details</h2>
@@ -312,48 +312,48 @@ const StockIntakeLog = () => {
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Product</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Product</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.product_name}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Supplier</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Supplier</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.supplier_name || selectedRecord.distributor_name}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Quantity</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Quantity</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.quantity_received}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Unit Cost</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Unit Cost</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>KES {parseFloat(selectedRecord.unit_cost).toLocaleString()}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Total Cost</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Total Cost</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>KES {parseFloat(selectedRecord.total_cost).toLocaleString()}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Batch / Expiry</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Batch / Expiry</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {selectedRecord.batch_number || 'N/A'} <br/>
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Exp: {selectedRecord.expiry_date || 'N/A'}</span>
                   </p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Invoice Number</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Invoice Number</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.invoice_number || 'N/A'}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Payment Status</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Payment Status</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.payment_status}</p>
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Received By</label>
+                  <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Received By</label>
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedRecord.received_by_username || 'System'}</p>
                 </div>
               </div>
               {selectedRecord.notes && (
                 <div className="pt-6 border-t" style={{ borderColor: 'var(--border-primary)' }}>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-secondary)' }}>Notes</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>Notes</label>
                   <p className="text-sm p-4 rounded-xl" style={{ color: 'var(--text-secondary)', background: 'var(--bg-field)' }}>{selectedRecord.notes}</p>
                 </div>
               )}

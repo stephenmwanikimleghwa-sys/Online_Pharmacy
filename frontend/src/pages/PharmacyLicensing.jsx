@@ -132,7 +132,7 @@ const PharmacyLicensing = () => {
 
             {/* ── Pharmacy Profile / Receipt Header ── */}
             {pharmacy && (
-                <div className="glass-card rounded-[2.5rem] p-8 border border-white/60 shadow-premium mb-12">
+                <div className="glass-card rounded-xl p-8 border border-white/60 shadow-premium mb-12">
                     <h3 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                         <BuildingStorefrontIcon className="w-6 h-6 text-primary" />
                         Pharmacy Profile &amp; Receipt Header
@@ -198,7 +198,7 @@ const PharmacyLicensing = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Upload Section */}
                 <div className="lg:col-span-1">
-                    <div className="glass-card rounded-[2.5rem] p-8 border border-white/60 shadow-premium h-fit sticky top-8">
+                    <div className="glass-card rounded-xl p-8 border border-white/60 shadow-premium h-fit sticky top-8">
                         <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <UploadIcon className="w-6 h-6 text-primary" />
                             Upload Document
@@ -206,7 +206,7 @@ const PharmacyLicensing = () => {
 
                         <form onSubmit={handleUpload} className="space-y-6">
                             <div>
-                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">Document Title</label>
+                                <label className="form-label block text-sm font-bold mb-2">Document Title</label>
                                 <input
                                     type="text"
                                     required
@@ -218,7 +218,7 @@ const PharmacyLicensing = () => {
                             </div>
 
                             <div>
-                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">Category</label>
+                                <label className="form-label block text-sm font-bold mb-2">Category</label>
                                 <select
                                     className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-semibold"
                                     value={formData.document_type}
@@ -233,7 +233,7 @@ const PharmacyLicensing = () => {
                             </div>
 
                             <div>
-                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">Expiry Date</label>
+                                <label className="form-label block text-sm font-bold mb-2">Expiry Date</label>
                                 <input
                                     type="date"
                                     className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-semibold"
@@ -243,7 +243,7 @@ const PharmacyLicensing = () => {
                             </div>
 
                             <div>
-                                <label className="form-label block text-sm font-bold uppercase tracking-widest mb-2">File (PDF or Image)</label>
+                                <label className="form-label block text-sm font-bold mb-2">File (PDF or Image)</label>
                                 <div className="relative group border-2 border-dashed rounded-2xl p-6 hover:bg-indigo-50/20 transition-all cursor-pointer" style={{ borderColor: 'var(--border-primary)' }}>
                                     <input
                                         type="file"
@@ -285,7 +285,7 @@ const PharmacyLicensing = () => {
                             </div>
                             <button
                                 onClick={fetchDocuments}
-                                className="mt-4 px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-all uppercase tracking-widest"
+                                className="mt-4 px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-all"
                             >
                                 Try Again
                             </button>
@@ -295,18 +295,18 @@ const PharmacyLicensing = () => {
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="bg-slate-100 animate-pulse h-48 rounded-[2rem]" />
+                                <div key={i} className="bg-slate-100 animate-pulse h-48 rounded-xl" />
                             ))}
                         </div>
                     ) : documents.length === 0 ? (
-                        <div className="glass-card border-2 border-dashed rounded-[2.5rem] py-24 text-center" style={{ borderColor: 'var(--border-primary)' }}>
+                        <div className="glass-card border-2 border-dashed rounded-xl py-24 text-center" style={{ borderColor: 'var(--border-primary)' }}>
                             <DocIcon className="w-20 h-20 text-slate-200 mx-auto mb-6" />
-                            <p className="text-slate-400 font-bold uppercase tracking-widest">No documents uploaded yet</p>
+                            <p className="text-slate-400 font-bold">No documents uploaded yet</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {documents.map((doc) => (
-                                <div key={doc.id} className="group relative glass-card p-7 rounded-[2rem] border border-white/60 shadow-premium hover:shadow-glow transition-all">
+                                <div key={doc.id} className="group relative glass-card p-7 rounded-xl border border-white/60 shadow-premium hover:shadow-glow transition-all">
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="p-4 bg-indigo-50 rounded-2xl group-hover:btn-primary transition-colors">
                                             <DocIcon className="w-8 h-8 text-primary group-hover:text-white" />
@@ -321,12 +321,12 @@ const PharmacyLicensing = () => {
 
                                     <div>
                                         <h3 className="text-xl font-bold text-slate-900 group-hover:text-primary transition-colors mb-2 line-clamp-1">{doc.title}</h3>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">{doc.document_type}</span>
+                                        <span className="text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">{doc.document_type}</span>
                                     </div>
 
                                     <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
                                         <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Status</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase mb-1">Status</p>
                                             {doc.is_expired ? (
                                                 <div className="flex items-center gap-1.5 text-rose-600 font-bold text-xs">
                                                     <WarningIcon className="w-4 h-4" /> Expired
@@ -344,7 +344,7 @@ const PharmacyLicensing = () => {
 
                                         {doc.expiry_date && (
                                             <div className="text-right">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Expires</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Expires</p>
                                                 <p className={`text-xs font-bold ${doc.is_expired ? 'text-rose-600' : 'text-slate-700'}`}>
                                                     {formatDate(doc.expiry_date, 'MMM dd, yyyy', 'N/A')}
                                                 </p>

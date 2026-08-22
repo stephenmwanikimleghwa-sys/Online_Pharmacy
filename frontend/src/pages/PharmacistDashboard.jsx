@@ -119,7 +119,7 @@ const PharmacistDashboard = () => {
       <div className="mb-10">
         <InventorySummaryCard
           summary={inventorySummary}
-          onViewInventory={() => navigate("/inventory")}
+          onViewInventory={() => navigate("/inventory/management")}
         />
       </div>
 
@@ -129,58 +129,47 @@ const PharmacistDashboard = () => {
           onQuickSale={() => setIsQuickSaleOpen(true)}
           onAddPrescription={handleAddPrescription}
           onViewReports={handleViewReports}
-          onViewInventory={() => navigate("/inventory")}
+          onViewInventory={() => navigate("/inventory/management")}
         />
       </div>
 
-      {/* Main Content Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
 
-        {/* Direct OTC Sale (moved to primary slot) */}
-        <div className="lg:col-span-12 btn-primary rounded-[2rem] p-8 shadow-glow text-white relative overflow-hidden group">
-          {/* Decorative blobs */}
-          <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-          <div className="absolute bottom-[-40px] left-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-
-          <div className="relative z-10">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/20">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <h3 className="text-2xl font-display font-bold mb-3 tracking-tight">Direct OTC Sale</h3>
-            <p className="text-sm mb-8 font-medium leading-relaxed" style={{color:'rgba(255,255,255,0.8)'}}>Handle non-prescription over-the-counter sales instantly and update inventory.</p>
-            <button
-              onClick={() => setIsQuickSaleOpen(true)}
-              className="w-full py-4 bg-white text-lg font-bold rounded-2xl shadow-lg transform group-hover:scale-[1.02] active:scale-[0.98] transition-all"
-              style={{color:'var(--color-primary)'}}
-            >
-              Quick Sale (OTC)
-            </button>
+        <div
+          className="lg:col-span-12 glass-card p-6 md:p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          style={{ borderRadius: 'var(--radius-surface)' }}
+        >
+          <div>
+            <h3 className="text-xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              OTC sale
+            </h3>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              Ring up a non-prescription sale and update stock.
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsQuickSaleOpen(true)}
+            className="btn-primary px-7 py-3 rounded-lg text-white font-semibold text-sm whitespace-nowrap"
+          >
+            Start sale
+          </button>
         </div>
 
-        {/* Pending Prescriptions - moved to side */}
-        <div className="lg:col-span-12 glass-card rounded-[2rem] p-8 flex flex-col border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl" style={{background:'var(--brand-mist)'}}>
-                <svg className="w-6 h-6" style={{color:'var(--brand-color)'}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              </div>
-              <h2 className="text-2xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>
-                Pending Prescriptions
-              </h2>
-            </div>
-            <span className="px-4 py-1.5 text-primary text-[10px] font-bold rounded-full border uppercase tracking-widest" style={{background:'var(--brand-mist)', borderColor:'var(--brand-border-soft)'}}>
-              {pendingPrescriptions.length} Active Scripts
+        <div className="lg:col-span-12 glass-card rounded-xl p-6 md:p-8 flex flex-col border" style={{borderColor:'var(--border-primary)'}}>
+          <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+            <h2 className="text-xl font-display font-bold tracking-tight" style={{color:'var(--text-primary)'}}>
+              Pending prescriptions
+            </h2>
+            <span className="brand-mist px-3 py-1 text-xs font-semibold rounded-md">
+              {pendingPrescriptions.length} waiting
             </span>
           </div>
 
           {pendingPrescriptions.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-20 rounded-3xl border border-dashed" style={{background:'var(--bg-field)', borderColor:'var(--border-primary)', color:'var(--text-secondary)'}}>
-              <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-soft mb-6 opacity-60" style={{background:'var(--bg-card)'}}>
-                <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              </div>
-              <p className="text-lg font-display font-bold" style={{color:'var(--text-primary)'}}>Queue is Clear</p>
-              <p className="text-sm mt-1" style={{color:'var(--text-secondary)'}}>No pending prescriptions require your attention.</p>
+            <div className="flex-1 flex flex-col items-center justify-center py-14 rounded-xl border border-dashed" style={{background:'var(--bg-field)', borderColor:'var(--border-primary)', color:'var(--text-secondary)'}}>
+              <p className="text-base font-display font-semibold" style={{color:'var(--text-primary)'}}>No pending prescriptions</p>
+              <p className="text-sm mt-1" style={{color:'var(--text-secondary)'}}>New scripts will show up here.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -208,7 +197,7 @@ const PharmacistDashboard = () => {
 
         {/* Recently Dispensed and Pending scripts section */}
         <div className="lg:col-span-12 flex flex-col gap-8">
-          <div className="glass-card rounded-[2rem] p-8 border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
+          <div className="glass-card rounded-xl p-8 border shadow-premium" style={{borderColor:'var(--border-primary)'}}>
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 rounded-xl" style={{background:'rgba(16,185,129,0.12)'}}>
                 <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
@@ -221,7 +210,7 @@ const PharmacistDashboard = () => {
             {dispensedPrescriptions.length === 0 ? (
               <div className="py-12 flex flex-col items-center justify-center opacity-60" style={{color:'var(--text-secondary)'}}>
                 <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <p className="text-xs font-bold uppercase tracking-widest italic text-center">No history for this session</p>
+                <p className="text-sm text-center">No dispensed prescriptions yet today</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -237,7 +226,7 @@ const PharmacistDashboard = () => {
                     onClick={() => navigate("/prescriptions/dispensed")}
                     className="w-full py-3 text-primary text-sm font-bold rounded-xl transition-all active:scale-[0.98]" style={{background:'var(--brand-mist)'}}
                   >
-                    Open Dispensing Ledger
+                    View all dispensed
                   </button>
                 )}
               </div>

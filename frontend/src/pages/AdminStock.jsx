@@ -445,7 +445,7 @@ const AdminStock = () => {
 		<div className="min-h-screen flex items-center justify-center">
 			<div className="flex flex-col items-center gap-4 opacity-40">
 				<div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-				<p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading...</p>
+				<p className="text-xs font-bold text-slate-500">Loading...</p>
 			</div>
 		</div>
 	);
@@ -460,14 +460,14 @@ const AdminStock = () => {
 						<div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
 							<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
 						</div>
-						<h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Manage <span className="text-primary">Stock</span></h1>
+						<h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Inventory control</h1>
 					</div>
 					<p className="text-lg text-slate-500 font-medium">Add, edit, and manage pharmaceutical products in your inventory.</p>
 				</div>
 				<div className="flex flex-wrap gap-3">
 					<button
 						onClick={() => navigate('/admin/restock-requests')}
-						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-card hover:bg-slate-50 transition-all active:scale-[0.98]"
+						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs shadow-sm hover:shadow-card hover:bg-slate-50 transition-all active:scale-[0.98]"
 					>
 						Restock Requests
 					</button>
@@ -477,19 +477,19 @@ const AdminStock = () => {
 					>
 						{/* Stack icon for bulk */}
 						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-						<span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Bulk Add</span>
+						<span className="text-xs font-bold leading-none mt-0.5">Bulk Add</span>
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); openAddModal(); }}
 						className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
 					>
 						<PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-						<span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add Medicine</span>
+						<span className="text-xs font-bold leading-none mt-0.5">Add Medicine</span>
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); handleRefresh(); }}
 						disabled={loading}
-						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:shadow-card hover:bg-slate-50 disabled:opacity-40 transition-all active:scale-[0.98]"
+						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs shadow-sm hover:shadow-card hover:bg-slate-50 disabled:opacity-40 transition-all active:scale-[0.98]"
 					>
 						Refresh
 					</button>
@@ -506,10 +506,10 @@ const AdminStock = () => {
 			)}
 
 			{/* Search and Filters */}
-			<div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium mb-10">
+			<div className="glass-card rounded-xl p-8 border border-white/60 shadow-premium mb-10">
 				<div className="flex flex-wrap gap-4">
 					<div className="flex-1 min-w-[200px]">
-						<label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Search</label>
+						<label className="block text-xs font-bold text-slate-400 mb-2">Search</label>
 						<input
 							type="text"
 							value={searchQuery}
@@ -519,7 +519,7 @@ const AdminStock = () => {
 						/>
 					</div>
 					<div className="w-48">
-						<label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Category</label>
+						<label className="block text-xs font-bold text-slate-400 mb-2">Category</label>
 						<select
 							value={filters.category}
 							onChange={(e) => setFilters({ ...filters, category: e.target.value })}
@@ -548,7 +548,7 @@ const AdminStock = () => {
 			</div>
 
 			<ErrorBoundary>
-				<div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
+				<div className="glass-card rounded-xl border border-white/60 shadow-premium overflow-hidden">
 					<div className="overflow-auto max-h-[70vh]">
 						<table className="min-w-full text-sm">
 							<thead className="sticky top-0 z-20" style={{ background: 'var(--bg-primary)' }}>
@@ -609,7 +609,7 @@ const AdminStock = () => {
 														classes = 'text-white bg-rose-600 border border-rose-700';
 													}
 													return (
-														<span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${classes}`}>
+														<span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${classes}`}>
 															{text}
 														</span>
 													);
@@ -620,9 +620,9 @@ const AdminStock = () => {
 										</td>
 										<td className="px-3 py-3">
 											<div className="flex flex-wrap gap-1">
-												{out && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold whitespace-nowrap">Out</span>}
-												{low && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold whitespace-nowrap">Low</span>}
-												{!out && !low && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold whitespace-nowrap">In Stock</span>}
+												{out && <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold whitespace-nowrap">Out</span>}
+												{low && <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold whitespace-nowrap">Low</span>}
+												{!out && !low && <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold whitespace-nowrap">In Stock</span>}
 											</div>
 										</td>
 										<td className="px-3 py-3 text-right">

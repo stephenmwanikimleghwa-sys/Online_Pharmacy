@@ -149,12 +149,12 @@ const NameAutocompleteCell = ({ row, updateRow, hasError, errorMsg }) => {
                     {product.name}
                   </span>
                   {isExact && (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-sm flex-shrink-0">
+                    <span className="text-xs font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-sm flex-shrink-0">
                       Exists
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] text-slate-400 truncate mt-0.5">
+                <span className="text-xs text-slate-400 truncate mt-0.5">
                   {[product.category, product.dosage_form].filter(Boolean).join(' · ')}
                 </span>
               </li>
@@ -163,12 +163,12 @@ const NameAutocompleteCell = ({ row, updateRow, hasError, errorMsg }) => {
         </ul>
       )}
       {duplicateMatch && (
-        <div className="absolute left-1 bottom-0 text-[9px] font-bold text-amber-600 flex items-center gap-1 whitespace-nowrap">
+        <div className="absolute left-1 bottom-0 text-xs font-bold text-amber-600 flex items-center gap-1 whitespace-nowrap">
           <ExclamationTriangleIcon className="w-3 h-3" /> Already exists
         </div>
       )}
       {hasError && !duplicateMatch && (
-        <p className="text-rose-500 text-[10px] font-bold absolute left-1 bottom-0">{errorMsg}</p>
+        <p className="text-rose-500 text-xs font-bold absolute left-1 bottom-0">{errorMsg}</p>
       )}
     </div>
   );
@@ -302,69 +302,75 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-6xl bg-white rounded-[2rem] shadow-premium overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="absolute inset-0 modal-overlay" onClick={onClose} />
+      <div
+        className="relative w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] border"
+        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', borderRadius: 'var(--radius-surface)' }}
+      >
 
-        {/* ── Header ────────────────────────────────────────────────────── */}
-        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div
+          className="px-5 py-4 sm:px-6 flex items-center justify-between shrink-0"
+          style={{ borderBottom: '1px solid var(--border-primary)' }}
+        >
           <div>
-            <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">Bulk Add Medicines</h2>
-            <p className="text-sm text-slate-500 font-medium mt-1">Add multiple new medicines to the system at once.</p>
+            <h2 className="text-xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Bulk add medicines
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              Add several products to inventory in one go.
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
-            <XMarkIcon className="w-6 h-6" />
+          <button type="button" onClick={onClose} className="p-2 rounded-lg" style={{ color: 'var(--text-secondary)' }} aria-label="Close">
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
-        {/* ── Body ──────────────────────────────────────────────────────── */}
-        <div className="p-8 overflow-y-auto flex-1">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1">
           <form id="bulkAddMedicineForm" onSubmit={handleSubmit}>
 
-            {/* Row controls */}
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Medicines</h3>
-                <span className="text-[10px] font-bold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-widest">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Medicines</h3>
+                <span className="brand-mist text-xs font-semibold px-2.5 py-1 rounded-md">
                   {rows.length} {rows.length === 1 ? 'row' : 'rows'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={addRow}
-                className="flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg"
+                style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)' }}
               >
-                <PlusIcon className="w-4 h-4" /> Add Row
+                <PlusIcon className="w-4 h-4" /> Add row
               </button>
             </div>
 
-            {/* Helper note */}
-            <p className="text-[11px] text-slate-400 font-medium mb-4">
-              Fields marked <span className="text-rose-500 font-bold">*</span> are required. 
-              If no Retail Price is entered, it will be auto-calculated as BP × 1.33.
+            <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Fields marked <span className="text-rose-500 font-semibold">*</span> are required.
+              If no retail price is entered, it defaults to buy price × 1.33.
             </p>
 
-            {/* Table */}
-            <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left" style={{ minWidth: '1000px' }}>
                   <thead className="bg-slate-100/70 sticky top-0 z-10">
                     <tr>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-56">
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-56">
                         Name <span className="text-rose-500">*</span>
                       </th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-40">Category</th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-36">Dosage Form</th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-36">Manufacturer</th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-28">
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-40">Category</th>
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-36">Dosage Form</th>
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-36">Manufacturer</th>
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-28">
                         Buy Price <span className="text-rose-500">*</span>
                       </th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-28">
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-28">
                         Retail Price
                       </th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-24">
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-24">
                         Init Stock <span className="text-rose-500">*</span>
                       </th>
-                      <th className="px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-32">Expiry</th>
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-32">Expiry</th>
                       <th className="px-3 py-3 w-10" />
                     </tr>
                   </thead>
@@ -439,7 +445,7 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                             placeholder: '0.00',
                           })}
                           {rowErrors[row.id]?.buying_price && (
-                            <p className="text-rose-500 text-[10px] mt-0.5 font-bold">{rowErrors[row.id].buying_price}</p>
+                            <p className="text-rose-500 text-xs mt-0.5 font-bold">{rowErrors[row.id].buying_price}</p>
                           )}
                         </td>
 
@@ -465,7 +471,7 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                             placeholder: '0',
                           })}
                           {rowErrors[row.id]?.stock_quantity && (
-                            <p className="text-rose-500 text-[10px] mt-0.5 font-bold">{rowErrors[row.id].stock_quantity}</p>
+                            <p className="text-rose-500 text-xs mt-0.5 font-bold">{rowErrors[row.id].stock_quantity}</p>
                           )}
                         </td>
 
@@ -509,16 +515,18 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
           </form>
         </div>
 
-        {/* ── Footer ────────────────────────────────────────────────────── */}
-        <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-slate-500 font-medium">
-            <span className="font-bold text-slate-700">{rows.length}</span> medicine{rows.length !== 1 ? 's' : ''} to be added.
+        <div
+          className="px-5 py-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0"
+          style={{ borderTop: '1px solid var(--border-primary)' }}
+        >
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{rows.length}</span> medicine{rows.length !== 1 ? 's' : ''} to add
           </div>
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 md:flex-none px-6 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+              className="flex-1 md:flex-none form-cancel-btn px-5 py-2.5 rounded-lg font-semibold text-sm"
             >
               Cancel
             </button>
@@ -526,10 +534,10 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
               form="bulkAddMedicineForm"
               type="submit"
               disabled={loading}
-              className="flex-1 md:flex-none px-8 py-3.5 btn-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-premium hover:shadow-glow transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 md:flex-none px-5 py-2.5 btn-primary text-white rounded-lg font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {loading ? 'Saving…' : `Add ${rows.length} Medicine${rows.length !== 1 ? 's' : ''}`}
+              {loading ? 'Saving…' : `Add ${rows.length}`}
             </button>
           </div>
         </div>

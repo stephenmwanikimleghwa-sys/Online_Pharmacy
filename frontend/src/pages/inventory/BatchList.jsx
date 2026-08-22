@@ -36,25 +36,25 @@ const BatchList = () => {
     );
 
     return (
-        <div className="glass-card  overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-800">Batch Management</h2>
-                <p className="text-sm text-gray-600 mt-1">View and track inventory batches</p>
+        <div className="glass-card overflow-hidden border" style={{ borderColor: 'var(--border-primary)', borderRadius: 'var(--radius-surface)' }}>
+            <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <h2 className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>Batches</h2>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Track batch numbers and expiry</p>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <table className="min-w-full">
+                    <thead style={{ background: 'var(--bg-field)' }}>
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch #</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Batch #</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Product</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Supplier</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Quantity</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Expiry</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Status</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody>
                         {batches.map((batch) => {
                             const isExpired = new Date(batch.expiry_date) < new Date();
                             const isNearExpiry = !isExpired && new Date(batch.expiry_date) < new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days

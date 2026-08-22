@@ -28,7 +28,7 @@ const PrescriptionCard = ({ prescription, onAction, showActions = true }) => {
           <div className="flex gap-2 mt-5 pt-5 border-t" style={{borderColor:'var(--border-primary)'}}>
             <button
               onClick={() => onAction(prescription.id, "validate")}
-              className="flex-1 py-2.5 btn-primary text-white rounded-xl  text-sm font-bold shadow-soft hover:shadow-glow transition-all active:scale-[0.98]"
+              className="flex-1 py-2.5 btn-primary text-white rounded-xl  text-sm font-bold shadow-soft transition-all active:scale-[0.98]"
             >
               Validate
             </button>
@@ -65,13 +65,13 @@ const PrescriptionCard = ({ prescription, onAction, showActions = true }) => {
               prescription.user?.username ||
               "Unknown Patient"}
           </h3>
-          <div className="text-[10px] mt-1 flex items-center gap-1.5 font-bold uppercase tracking-widest" style={{color:'var(--text-secondary)'}}>
+          <div className="text-xs mt-1 flex items-center gap-1.5 font-bold" style={{color:'var(--text-secondary)'}}>
             <span className="w-1.5 h-1.5 rounded-full" style={{background:'var(--border-primary)'}}></span>
             ID: {prescription.id?.substring(0, 8).toUpperCase() || 'N/A'}
           </div>
         </div>
         <span
-          className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-widest ${getStatusColor(prescription.status)}`}
+          className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(prescription.status)}`}
         >
           {prescription.status}
         </span>

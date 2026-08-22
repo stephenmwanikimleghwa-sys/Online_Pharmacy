@@ -273,70 +273,77 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-6xl bg-white rounded-[2rem] shadow-premium overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="absolute inset-0 modal-overlay" onClick={onClose}></div>
+      <div
+        className="relative w-full max-w-6xl overflow-hidden flex flex-col max-h-[90vh] border"
+        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', borderRadius: 'var(--radius-surface)' }}
+      >
         
-        {/* Header */}
-        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div
+          className="px-5 py-4 sm:px-6 flex items-center justify-between shrink-0"
+          style={{ borderBottom: '1px solid var(--border-primary)' }}
+        >
           <div>
-            <h2 className="text-2xl font-display font-bold text-slate-900 tracking-tight">New Stock Intake</h2>
-            <p className="text-sm text-slate-500 font-medium mt-1">Record a bulk delivery from a supplier and update inventory.</p>
+            <h2 className="text-xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Stock intake
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              Record a supplier delivery and update stock.
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
-            <XMarkIcon className="w-6 h-6" />
+          <button type="button" onClick={onClose} className="p-2 rounded-lg" style={{ color: 'var(--text-secondary)' }} aria-label="Close">
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
           <form id="bulkIntakeForm" onSubmit={validateExpiryAndSubmit}>
             
-            {/* Invoice Meta Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 pb-8 border-b border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 pb-6" style={{ borderBottom: '1px solid var(--border-primary)' }}>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Supplier *</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Supplier *</label>
                 <select
                   value={supplierId}
                   onChange={e => setSupplierId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="form-input w-full"
                   required
                 >
-                  <option value="">Select Supplier</option>
+                  <option value="">Select supplier</option>
                   {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Branch *</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Branch *</label>
                 <select
                   value={branchId}
                   onChange={e => setBranchId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="form-input w-full"
                   required
                 >
-                  <option value="">Select Branch</option>
+                  <option value="">Select branch</option>
                   {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Invoice # *</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Invoice # *</label>
                 <input
                   type="text"
                   value={invoiceNumber}
                   onChange={e => setInvoiceNumber(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="form-input w-full"
                   placeholder="INV-XXXXX"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Payment Status *</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Payment status *</label>
                 <select
                   value={paymentStatus}
                   onChange={e => setPaymentStatus(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                  className="form-input w-full"
                 >
                   <option value="PAID">Paid</option>
                   <option value="CREDIT">Credit</option>
@@ -347,7 +354,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
 
             {/* Products Section */}
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Products Received</h3>
+              <h3 className="text-sm font-bold text-slate-800">Products Received</h3>
               <button
                 type="button"
                 onClick={addRow}
@@ -362,14 +369,14 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                 <table className="w-full text-left min-w-[800px]">
                   <thead className="bg-slate-100/50">
                     <tr>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-64">Product</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-24">Qty</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-28">Cost Price</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-28">Retail Price</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-28">WS Price</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-32">Expiry</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-32">Batch #</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-12"></th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-64">Product</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-24">Qty</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-28">Cost Price</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-28">Retail Price</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-28">WS Price</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-32">Expiry</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-32">Batch #</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 w-12"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -383,9 +390,9 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                           />
                           {row.product_id && supplierHistory[row.product_id] && supplierHistory[row.product_id].length > 0 && (
                             <div className="mt-2 flex flex-col gap-1 max-h-24 overflow-y-auto custom-scrollbar bg-slate-50 border border-slate-100 rounded-lg p-2 shadow-inner">
-                              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Past Suppliers</span>
+                              <span className="text-xs font-bold text-slate-400">Past Suppliers</span>
                               {supplierHistory[row.product_id].slice(0, 3).map((hist, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-[10px]">
+                                <div key={idx} className="flex items-center justify-between text-xs">
                                   <span className="text-slate-600 truncate max-w-[120px]" title={hist.supplier_name}>{hist.supplier_name}</span>
                                   <span className={`font-bold ${idx === 0 ? 'text-emerald-600' : 'text-slate-500'}`}>KES {hist.unit_cost}</span>
                                 </div>
@@ -399,7 +406,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
                         <td className="px-4 py-2">
                           <input type="number" min="0" step="0.01" value={row.cost_price} onChange={(e) => updateRow(row.id, 'cost_price', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-primary-500/30" placeholder="0.00" />
                           {rowPriceHints[row.id] && (
-                            <div className="mt-1 text-[10px] leading-snug">
+                            <div className="mt-1 text-xs leading-snug">
                               <p>Last from supplier: KES {rowPriceHints[row.id].last_price ?? '—'}</p>
                               <p>Best ever ({rowPriceHints[row.id].best_supplier}): KES {rowPriceHints[row.id].best_price ?? '—'}</p>
                               {row.cost_price && rowPriceHints[row.id].last_price && parseFloat(row.cost_price) > rowPriceHints[row.id].last_price && (
@@ -436,7 +443,7 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
             </div>
 
             <div className="mt-8">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Notes / Comments</label>
+              <label className="block text-xs font-bold text-slate-400 mb-2">Notes / Comments</label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
@@ -447,17 +454,21 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Invoice Cost:</span>
-            <span className="text-2xl font-display font-bold text-slate-900">KES {calculateTotal().toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+        <div
+          className="px-5 py-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0"
+          style={{ borderTop: '1px solid var(--border-primary)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Invoice total</span>
+            <span className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+              KES {calculateTotal().toLocaleString(undefined, {minimumFractionDigits: 2})}
+            </span>
           </div>
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 md:flex-none px-6 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+              className="flex-1 md:flex-none form-cancel-btn px-5 py-2.5 rounded-lg font-semibold text-sm"
             >
               Cancel
             </button>
@@ -465,10 +476,10 @@ const StockIntakeBulkModal = ({ isOpen, onClose, onSuccess, branches = [] }) => 
               form="bulkIntakeForm"
               type="submit"
               disabled={loading}
-              className="flex-1 md:flex-none px-8 py-3.5 btn-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-premium hover:shadow-glow transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 md:flex-none px-5 py-2.5 btn-primary text-white rounded-lg font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
-              Confirm Intake
+              Confirm intake
             </button>
           </div>
         </div>

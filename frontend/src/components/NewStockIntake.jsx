@@ -239,10 +239,10 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
           <table className="w-full text-sm text-left">
             <thead style={{ background: "var(--bg-field)" }}>
               <tr>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Product</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Qty</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Unit Cost</th>
-                <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Total</th>
+                <th className="px-4 py-3 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Product</th>
+                <th className="px-4 py-3 text-xs font-semibold text-right" style={{ color: "var(--text-secondary)" }}>Qty</th>
+                <th className="px-4 py-3 text-xs font-semibold text-right" style={{ color: "var(--text-secondary)" }}>Unit Cost</th>
+                <th className="px-4 py-3 text-xs font-semibold text-right" style={{ color: "var(--text-secondary)" }}>Total</th>
               </tr>
             </thead>
             <tbody className="divide-y" style={{ borderColor: "var(--border-primary)" }}>
@@ -409,7 +409,7 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
       )}
       <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "var(--border-primary)" }}>
         <div>
-          <p className="text-xs uppercase tracking-widest font-bold" style={{ color: "var(--text-secondary)" }}>Invoice Total</p>
+          <p className="text-xs font-bold" style={{ color: "var(--text-secondary)" }}>Invoice Total</p>
           <p className="text-2xl font-display font-bold text-emerald-600">KES {fmt(totalCost)}</p>
           {paymentStatus === "CREDIT" && (
             <p className="text-xs text-amber-600 font-semibold mt-0.5">⚠ Will add KES {fmt(totalCost)} to supplier credit</p>

@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import returnService from '../../services/returnService';
 import api from '../../services/api';
-import { ArrowUturnLeftIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../../context/NotificationContext';
+import PageHeader from '../../components/PageHeader';
 
 const ReturnsDashboard = () => {
   const { notify } = useNotification();
@@ -110,31 +111,32 @@ const ReturnsDashboard = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-slate-800">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 flex items-center gap-3">
-            <ArrowUturnLeftIcon className="w-8 h-8 text-amber-500" />
-            Returns & Refunds
-          </h1>
-          <p className="text-slate-500 mt-1 font-medium text-sm">Manage reversed sales, refunds, and restocks.</p>
-        </div>
-        <button onClick={() => setShowNewModal(true)} className="btn-primary bg-amber-500 hover:bg-amber-600 px-5 py-2.5 rounded-xl font-bold shadow-premium flex items-center gap-2">
-          <PlusIcon className="w-5 h-5" /> Initiate Return
-        </button>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      <PageHeader
+        title="Returns"
+        description="Reversed sales, refunds, and restocks."
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowNewModal(true)}
+            className="btn-primary px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2"
+          >
+            <PlusIcon className="w-4 h-4" /> New return
+          </button>
+        }
+      />
 
-      <div className="glass-card rounded-[2rem] border border-white/60 shadow-premium p-6">
-        {isLoading ? <div className="animate-pulse h-64 bg-slate-100 rounded-2xl"></div> : (
+      <div className="glass-card rounded-xl border p-4 sm:p-6" style={{ borderColor: 'var(--border-primary)' }}>
+        {isLoading ? <div className="animate-pulse h-64 rounded-xl" style={{ background: 'var(--bg-field)' }}></div> : (
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50">
-                <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Date</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Receipt #</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Refund</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Status</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Initiated By</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-right">Actions</th>
+              <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Date</th>
+                <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Receipt #</th>
+                <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Refund</th>
+                <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Initiated by</th>
+                <th className="px-4 py-3 text-xs font-semibold text-right" style={{ color: 'var(--text-secondary)' }}>Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -144,7 +146,7 @@ const ReturnsDashboard = () => {
                   <td className="px-4 py-4 font-bold text-slate-800">#{ret.dispensation}</td>
                   <td className="px-4 py-4 text-sm font-bold text-rose-500">KSh {parseFloat(ret.total_refund).toFixed(2)}</td>
                   <td className="px-4 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold
                       ${ret.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                         ret.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                       {ret.status}
@@ -175,7 +177,7 @@ const ReturnsDashboard = () => {
 
       {showNewModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl p-6 shadow-premium max-h-[90vh] overflow-y-auto">
+          <div className="bg-white w-full max-w-2xl rounded-xl p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4">Initiate Return</h3>
             
             {!dispensation ? (
@@ -203,13 +205,13 @@ const ReturnsDashboard = () => {
                       <div className="flex-1 text-sm font-bold">{item.name} <span className="text-slate-400 font-normal">(@ KSh {item.price_per_unit})</span></div>
                       
                       <div className="w-24">
-                        <label className="block text-[10px] uppercase text-slate-400 font-bold mb-1">Return Qty</label>
+                        <label className="block text-xs uppercase text-slate-400 font-bold mb-1">Return Qty</label>
                         <input type="number" min="0" max={item.max_quantity} className="form-input w-full text-sm rounded-lg" value={item.quantity} onChange={e => handleQuantityChange(item.dispensation_item_id, e.target.value)} />
-                        <div className="text-[10px] text-slate-400 mt-1">Max: {item.max_quantity}</div>
+                        <div className="text-xs text-slate-400 mt-1">Max: {item.max_quantity}</div>
                       </div>
 
                       <div className="w-32">
-                         <label className="block text-[10px] uppercase text-slate-400 font-bold mb-1">Condition</label>
+                         <label className="block text-xs uppercase text-slate-400 font-bold mb-1">Condition</label>
                          <select className="form-input w-full text-sm rounded-lg" value={item.condition} onChange={e => handleConditionChange(item.dispensation_item_id, e.target.value)} disabled={item.quantity === 0}>
                            <option value="sellable">Sellable</option>
                            <option value="damaged">Damaged</option>

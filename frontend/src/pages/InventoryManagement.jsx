@@ -144,12 +144,12 @@ const InventoryManagement = () => {
       <div className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div>
           <div className="flex flex-wrap items-center gap-4 mb-3">
-            <h1 className="text-5xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              Stock <span className="text-primary">management</span>
+            <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Stock management
             </h1>
             <RefreshIndicator isLoading={loading} isFetching={isFetching} />
             {user?.pharmacy_name && (
-              <span className="brand-mist text-[10px] font-bold px-4 py-2 rounded-2xl uppercase tracking-[0.2em] shadow-sm">
+              <span className="brand-mist text-xs font-semibold px-3 py-1.5 rounded-lg">
                 {user.pharmacy_name}
               </span>
             )}
@@ -158,7 +158,7 @@ const InventoryManagement = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex p-1.5 rounded-[2rem] w-full lg:w-auto shadow-inner border backdrop-blur-md" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+        <div className="flex p-1.5 rounded-xl w-full lg:w-auto shadow-inner border backdrop-blur-md" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
           {[
             { id: 'inventory', label: 'Stock list' },
             { id: 'suppliers', label: 'Suppliers' },
@@ -169,7 +169,7 @@ const InventoryManagement = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 lg:flex-none px-8 py-3.5 rounded-[1.5rem] text-[11px] font-bold transition-all duration-500 uppercase tracking-widest ${activeTab === tab.id
+              className={`flex-1 lg:flex-none px-8 py-3.5 rounded-[1.5rem] text-xs font-bold transition-all duration-500 ${activeTab === tab.id
                 ? 'bg-white text-primary shadow-premium transform scale-[1.02] border border-indigo-50/50'
                 : 'text-muted hover:text-primary hover:bg-white/50'
                 }`}
@@ -208,13 +208,13 @@ const InventoryManagement = () => {
         <div className="animate-fade-in">
           {/* Filters and Search Bento Section */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
-            <div className="lg:col-span-8 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
+            <div className="lg:col-span-8 glass-card rounded-xl p-8 border border-white/60 shadow-premium">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Search */}
                 <div className="relative group">
-                  <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-1" style={{ color: 'var(--text-muted)' }}>
+                  <label className="flex items-center justify-between text-xs font-bold mb-3 px-1" style={{ color: 'var(--text-muted)' }}>
                     <span>Search</span>
-                    <span className="hidden md:inline-block bg-field border border-border text-muted px-2 py-0.5 rounded text-[9px]">Cmd K</span>
+                    <span className="hidden md:inline-block bg-field border border-border text-muted px-2 py-0.5 rounded text-xs">Cmd K</span>
                   </label>
                   <div className="relative">
                     <input
@@ -233,7 +233,7 @@ const InventoryManagement = () => {
 
                 {/* Filter */}
                 <div>
-                  <label className="block text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-3 px-1">
+                  <label className="block text-xs font-bold text-muted mb-3 px-1">
                     Filter by stock
                   </label>
                   <div className="relative">
@@ -256,13 +256,13 @@ const InventoryManagement = () => {
             </div>
 
             {/* Stats Card */}
-            <div className="lg:col-span-4 glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium relative overflow-hidden">
+            <div className="lg:col-span-4 glass-card rounded-xl p-8 border border-white/60 shadow-premium relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary/20 transition-colors duration-700"></div>
-              <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-6 relative z-10">Summary</h3>
+              <h3 className="text-xs font-bold text-primary mb-6 relative z-10">Summary</h3>
               <div className="space-y-4 relative z-10">
                 {/* Visual health bar */}
                 <div className="mb-2">
-                  <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-muted mb-1">
+                  <div className="flex justify-between text-xs font-bold text-muted mb-1">
                     <span>Stock Health</span>
                     <span>{inventory.length > 0 ? Math.round(((inventory.length - inventoryMetrics.lowStockCount) / inventory.length) * 100) : 0}%</span>
                   </div>
@@ -275,11 +275,11 @@ const InventoryManagement = () => {
                 </div>
 
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-field border border-border hover:bg-white/50 transition-all group/stat">
-                  <span className="text-muted text-xs font-bold uppercase tracking-widest">Total items</span>
+                  <span className="text-muted text-xs font-bold">Total items</span>
                   <span className="font-display font-bold text-2xl group-hover:scale-110 transition-transform" style={{ color: 'var(--text-primary)' }}>{totalInventoryItems}</span>
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all group/stat">
-                  <span className="text-rose-600 text-xs font-bold uppercase tracking-widest">Need restock</span>
+                  <span className="text-rose-600 text-xs font-bold">Need restock</span>
                   <span className="font-display font-bold text-2xl text-rose-600 group-hover:scale-110 transition-transform">
                     {inventoryMetrics.lowStockCount}
                   </span>
@@ -340,7 +340,7 @@ const InventoryManagement = () => {
             <h2 className="text-2xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Your stock</h2>
             <div className="flex items-center gap-3">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+              <p className="text-xs font-bold text-slate-500">
                 Showing <span className="text-slate-900">{filteredInventory.length} items</span>
               </p>
             </div>
@@ -364,13 +364,13 @@ const InventoryManagement = () => {
                 <div className="flex gap-4 mt-8 relative z-10">
                   <button
                     onClick={() => { setSearchTerm(''); setFilter('all'); }}
-                    className="form-cancel-btn px-6 py-3 font-bold text-xs rounded-xl uppercase tracking-widest transition-all"
+                    className="form-cancel-btn px-6 py-3 font-bold text-xs rounded-xl transition-all"
                   >
                     Clear Filters
                   </button>
                   <button
                     onClick={() => searchInputRef.current?.focus()}
-                    className="px-6 py-3 btn-primary dark:bg-primary-600 text-white font-bold text-xs rounded-xl border border-indigo-500 dark:border-primary-500 uppercase tracking-widest hover:btn-primary dark:hover:bg-primary-500 shadow-sm dark:shadow-glow transition-all"
+                    className="px-6 py-3 btn-primary dark:bg-primary-600 text-white font-bold text-xs rounded-xl border border-indigo-500 dark:border-primary-500 hover:btn-primary dark:hover:bg-primary-500 shadow-sm dark:shadow-glow transition-all"
                   >
                     Search Again
                   </button>
@@ -413,7 +413,7 @@ const InventoryManagement = () => {
                             {item.category || '—'}
                           </td>
                           <td className="px-3 py-3 text-xs font-semibold">
-                            <span className={`px-2 py-1 rounded-md text-white text-[10px] font-bold ${item.department === 'CHEMIST' ? 'bg-blue-600' : item.department === 'AGROVET' ? 'bg-green-600' : 'bg-slate-600'}`}>
+                            <span className={`px-2 py-1 rounded-md text-white text-xs font-bold ${item.department === 'CHEMIST' ? 'bg-blue-600' : item.department === 'AGROVET' ? 'bg-green-600' : 'bg-slate-600'}`}>
                               {item.department || '—'}
                             </span>
                           </td>
@@ -432,9 +432,9 @@ const InventoryManagement = () => {
                           <td className="px-3 py-3 text-right font-bold">{total}</td>
                           <td className="px-3 py-3">
                             <div className="flex flex-wrap gap-1">
-                              {out && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 whitespace-nowrap">Out</span>}
-                              {low && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">Low</span>}
-                              {expSoon && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 whitespace-nowrap">Exp</span>}
+                              {out && <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 whitespace-nowrap">Out</span>}
+                              {low && <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">Low</span>}
+                              {expSoon && <span className="text-xs px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 whitespace-nowrap">Exp</span>}
                             </div>
                           </td>
                           <td className="px-3 py-3 text-right">

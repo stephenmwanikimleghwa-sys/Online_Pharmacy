@@ -7,7 +7,6 @@ import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persist
 import { queryClient } from "./lib/queryClient";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { SyncProvider } from "./context/SyncContext";
 import App from "./App.jsx";
@@ -43,13 +42,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ThemeProvider>
           <AuthProvider>
-            <CartProvider>
-              <NotificationProvider>
-                <SyncProvider>
-                  <App />
-                </SyncProvider>
-              </NotificationProvider>
-            </CartProvider>
+            <NotificationProvider>
+              <SyncProvider>
+                <App />
+              </SyncProvider>
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>

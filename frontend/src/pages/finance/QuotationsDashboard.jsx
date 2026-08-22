@@ -7,6 +7,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { notifyApiError } from '../../utils/notifyApiError';
 import BranchSelector from '../../components/BranchSelector';
 import api from '../../services/api';
+import PageHeader from '../../components/PageHeader';
 
 const CreateQuotationModal = ({ isOpen, onClose }) => {
   const { notify } = useNotification();
@@ -82,7 +83,7 @@ const CreateQuotationModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-3xl rounded-[2rem] shadow-premium overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-3xl rounded-xl shadow-premium overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h2 className="text-xl font-bold text-slate-800">Create Quotation</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><XMarkIcon className="w-6 h-6 text-slate-500" /></button>
@@ -196,44 +197,46 @@ const QuotationsDashboard = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-slate-800">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 flex items-center gap-3">
-            <DocumentPlusIcon className="w-8 h-8 text-primary" />
-            Quotations
-          </h1>
-          <p className="text-slate-500 mt-1 font-medium text-sm">Manage pro-forma invoices and convert them to sales.</p>
-        </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-primary px-5 py-2.5 rounded-xl font-bold shadow-premium flex items-center gap-2">
-          New Quotation
-        </button>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      <PageHeader
+        title="Quotations"
+        description="Create pro-forma invoices and convert them to sales."
+        actions={
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary px-5 py-2.5 rounded-lg font-semibold text-sm"
+          >
+            New quotation
+          </button>
+        }
+      />
 
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
         {['', 'draft', 'converted', 'expired'].map(status => (
           <button 
             key={status}
             onClick={() => setStatusFilter(status)}
-            className={`px-4 py-1.5 rounded-full text-sm font-bold capitalize transition-all ${statusFilter === status ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${statusFilter === status ? 'btn-primary text-white' : ''}`}
+            style={statusFilter === status ? {} : { background: 'var(--bg-field)', color: 'var(--text-secondary)' }}
           >
             {status || 'All'}
           </button>
         ))}
       </div>
 
-      <div className="glass-card rounded-[2rem] border border-white/60 shadow-premium p-6 min-h-[50vh]">
-        {isLoading ? <div className="animate-pulse h-64 bg-slate-100 rounded-xl"></div> : (
+      <div className="glass-card rounded-xl border p-4 sm:p-6 min-h-[50vh]" style={{ borderColor: 'var(--border-primary)' }}>
+        {isLoading ? <div className="animate-pulse h-64 rounded-xl" style={{ background: 'var(--bg-field)' }}></div> : (
            <div className="overflow-x-auto">
              <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-slate-50">
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">ID</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Customer</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Date</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Status</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-right">Total (KES)</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-right">Actions</th>
+                  <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                    <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>ID</th>
+                    <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Customer</th>
+                    <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-right" style={{ color: 'var(--text-secondary)' }}>Total (KES)</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-right" style={{ color: 'var(--text-secondary)' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -242,14 +245,14 @@ const QuotationsDashboard = () => {
                       <td className="px-4 py-3 text-xs font-bold text-slate-500">#{q.id}</td>
                       <td className="px-4 py-3">
                         <p className="text-sm font-bold text-slate-700">{q.customer_name}</p>
-                        <p className="text-[10px] text-slate-400">{q.customer_phone}</p>
+                        <p className="text-xs text-slate-400">{q.customer_phone}</p>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-600">
                         {new Date(q.created_at).toLocaleDateString()}
-                        <p className="text-[9px] text-slate-400 mt-0.5">Valid to: {new Date(q.valid_until).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Valid to: {new Date(q.valid_until).toLocaleDateString()}</p>
                       </td>
                       <td className="px-4 py-3">
-                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                         <span className={`px-2 py-1 rounded-full text-xs font-semibold
                             ${q.status === 'converted' ? 'bg-emerald-100 text-emerald-700' : 
                               q.status === 'expired' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'}`}>
                            {q.status}

@@ -126,7 +126,7 @@ const DispensingLogs = () => {
             <thead className="bg-slate-50/50">
               <tr>
                 {headers.map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">{h}</th>
+                  <th key={h} className="px-5 py-3 text-left text-xs font-bold text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -165,7 +165,7 @@ const DispensingLogs = () => {
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-600">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                           style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
                           {(log.dispensed_by_name || 'U')[0].toUpperCase()}
                         </div>
@@ -182,7 +182,7 @@ const DispensingLogs = () => {
                       KES {Number(log.total_amount || 0).toFixed(2)}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm">
-                      <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
+                      <span className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
                         {log.payment_mode || 'N/A'}
                       </span>
                     </td>

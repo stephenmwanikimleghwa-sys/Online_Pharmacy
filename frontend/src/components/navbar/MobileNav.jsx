@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
-  HomeIcon,
   Squares2X2Icon,
   ClipboardDocumentListIcon,
   ShoppingBagIcon,
@@ -51,20 +50,21 @@ const MobileNav = ({ isOpen, user, handleLogout, onClose }) => {
         <div className="px-3 py-4 space-y-1">
           {user ? (
             <>
-              <Link to="/" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
-                <HomeIcon className="h-5 w-5" /> Home
-              </Link>
               <Link to={getDashboardHref(user.role)} onClick={onClose} className={`${linkBase} mobile-nav-link`}>
                 <Squares2X2Icon className="h-5 w-5" /> Dashboard
               </Link>
-              <Link to="/inventory" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
+              <Link
+                to={user.role === "cashier" ? "/otc-sales" : "/inventory/management"}
+                onClick={onClose}
+                className={`${linkBase} mobile-nav-link`}
+              >
                 <ClipboardDocumentListIcon className="h-5 w-5" /> Inventory
               </Link>
               <Link to="/otc-sales" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
                 <ShoppingBagIcon className="h-5 w-5" /> OTC Sale
               </Link>
               <Link to={getUserManagementHref(user)} onClick={onClose} className={`${linkBase} mobile-nav-link`}>
-                <UsersIcon className="h-5 w-5" /> User Management
+                <UsersIcon className="h-5 w-5" /> {user.role === "admin" ? "Users" : "Customers"}
               </Link>
               <Link to="/account" onClick={onClose} className={`${linkBase} mobile-nav-link`}>
                 <UserCircleIcon className="h-5 w-5" /> Profile

@@ -174,30 +174,30 @@ const AdminDashboard = () => {
 
       {/* SECTION A — Global Overview */}
       <section className="mb-12">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
-            Global Overview
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <h2 className="text-lg font-display font-bold flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
+            Network overview
             <StatusDot tone="operational" label="Operational" title="System is operational" />
             <RefreshIndicator isFetching={isRefreshing} isLoading={loadingGlobal} />
           </h2>
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>All branches</span>
+          <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>All branches</span>
         </div>
 
         {globalData?.active_users?.length > 0 && (
-          <div className="mb-6 glass-card rounded-2xl p-5">
-            <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <div className="mb-6 glass-card rounded-xl p-5">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
               <StatusDot tone="operational" />
-              Currently Logged-in Users
+              Signed in now
             </h3>
             <div className="flex flex-wrap gap-3">
               {globalData.active_users.map(u => (
                 <div
                   key={u.id}
-                  className="flex flex-col rounded-xl p-2 px-3 border"
+                  className="flex flex-col rounded-lg p-2 px-3 border"
                   style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}
                 >
                   <span className="text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>{u.username}</span>
-                  <span className="text-[10px] uppercase" style={{ color: 'var(--text-secondary)' }}>{u.role} {u.branch ? `• ${u.branch}` : ''}</span>
+                  <span className="text-xs capitalize" style={{ color: 'var(--text-secondary)' }}>{u.role} {u.branch ? `· ${u.branch}` : ''}</span>
                 </div>
               ))}
             </div>
@@ -278,8 +278,8 @@ const AdminDashboard = () => {
                 {/* Stock health bar */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Stock health</span>
-                    <span className="text-[10px] font-bold" style={{ color: healthColor }}>{healthPct}%</span>
+                    <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Stock health</span>
+                    <span className="text-xs font-bold" style={{ color: healthColor }}>{healthPct}%</span>
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-field)' }}>
                     <div
@@ -570,7 +570,7 @@ const AdminDashboard = () => {
 
         {approveModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+            <div className="glass-card rounded-xl p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Confirm action</p>
@@ -596,7 +596,7 @@ const AdminDashboard = () => {
 
         {rejectModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+            <div className="glass-card rounded-xl p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Confirm action</p>

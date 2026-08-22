@@ -140,9 +140,7 @@ export const inventoryService = {
 
   // Get stock usage stats
   getStockUsage: async (dateRange) => {
-    // TODO: Implement backend endpoint for stock usage
-    // For now returning empty array to prevent crash
-    return { data: [] };
+    return api.get("/inventory/stock-usage/", { params: dateRange });
   },
 
   // --- Inter-branch transfers ---

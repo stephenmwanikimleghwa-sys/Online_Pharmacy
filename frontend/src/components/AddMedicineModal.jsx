@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { PlusIcon, PencilSquareIcon, ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef } from 'react';
+import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { createPortal } from 'react-dom';
 import api from '../services/api';
 
@@ -99,32 +99,36 @@ export const AddMedicineModal = ({
 
   return createPortal(
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="modal-card bg-white opacity-100 scale-100 rounded-[2.5rem] shadow-premium max-w-3xl w-full overflow-hidden flex flex-col md:flex-row transition-all">
-        {/* Visual Panel */}
-        <div className="md:w-1/3 p-10 text-white flex flex-col justify-between relative overflow-hidden" style={{background:'var(--btn-gradient)'}}>
-          <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+      <div
+        className="modal-card max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+        style={{ borderRadius: 'var(--radius-surface)', background: 'var(--bg-card)' }}
+      >
+        <div
+          className="px-5 py-4 sm:px-6 flex items-start justify-between gap-4 shrink-0"
+          style={{ borderBottom: '1px solid var(--border-primary)' }}
+        >
           <div>
-            <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
-              {isEditMode ? (
-                <PencilSquareIcon className="w-6 h-6" />
-              ) : (
-                <PlusIcon className="w-6 h-6" />
-              )}
-            </div>
-            <h2 className="text-3xl font-display font-bold leading-tight">
-              {isEditMode ? 'Edit Medicine' : 'Add New Medicine'}
+            <h2 className="text-xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              {isEditMode ? 'Edit medicine' : 'Add medicine'}
             </h2>
-            <p className="text-sm mt-4 font-medium leading-relaxed" style={{color:'rgba(255,255,255,0.75)'}}>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
               {isEditMode
-                ? 'Update the details for this product in your pharmacy inventory.'
-                : 'Register a new pharmaceutical product into your inventory system.'}
+                ? 'Update product details in inventory.'
+                : 'Register a new product in inventory.'}
             </p>
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 mt-8" style={{color:'rgba(255,255,255,0.7)'}}>Inventory Module</div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-lg"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
 
-        {/* Form Panel */}
-        <form onSubmit={onSubmit} className="md:w-2/3 p-10 overflow-y-auto max-h-[85vh]" style={{background:'var(--bg-field)'}}>
+        <form onSubmit={onSubmit} className="p-5 sm:p-6 overflow-y-auto flex-1" style={{ background: 'var(--bg-card)' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name — full width with autocomplete */}
             <div className="md:col-span-2">
@@ -147,7 +151,7 @@ export const AddMedicineModal = ({
                 {/* Loading spinner inside input */}
                 {loadingSuggestions && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }} />
                   </div>
                 )}
 
@@ -177,12 +181,12 @@ export const AddMedicineModal = ({
                             <p className={`font-semibold truncate ${isExact ? 'text-amber-700' : 'text-slate-800'}`}>
                               {product.name}
                             </p>
-                            <p className="text-[11px] text-slate-400 truncate">
+                            <p className="text-xs text-slate-400 truncate">
                               {[product.category, product.dosage_form, product.manufacturer].filter(Boolean).join(' · ')}
                             </p>
                           </div>
                           {isExact && (
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                            <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full flex-shrink-0">
                               Exists
                             </span>
                           )}
@@ -201,14 +205,14 @@ export const AddMedicineModal = ({
                     <p className="text-xs font-bold text-amber-700">
                       "{duplicateMatch.name}" already exists in the system.
                     </p>
-                    <p className="text-[11px] text-amber-600 mt-0.5">
+                    <p className="text-xs text-amber-600 mt-0.5">
                       Adding again may create a duplicate. Consider using <span className="font-bold">Restock</span> or <span className="font-bold">Edit</span> instead. Fields have been pre-filled from the existing record.
                     </p>
                   </div>
                 </div>
               )}
 
-              {formErrors.name && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.name}</p>}
+              {formErrors.name && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.name}</p>}
             </div>
 
             {/* Category */}
@@ -247,7 +251,7 @@ export const AddMedicineModal = ({
                   </ul>
                 )}
               </div>
-              {formErrors.category && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.category}</p>}
+              {formErrors.category && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.category}</p>}
             </div>
 
             {/* Dosage Form (Unit of Measure) */}
@@ -284,7 +288,7 @@ export const AddMedicineModal = ({
                 <option value="CHEMIST">Chemist</option>
                 <option value="AGROVET">Agrovet</option>
               </select>
-              {formErrors.department && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.department}</p>}
+              {formErrors.department && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.department}</p>}
             </div>
 
             {/* Buying Price (BP) */}
@@ -299,10 +303,10 @@ export const AddMedicineModal = ({
                 placeholder="Cost from supplier, e.g. 100"
                 className={inputBase(formErrors.buying_price)}
               />
-              <p className="mt-1.5 text-[10px] text-slate-400 px-1">
+              <p className="mt-1.5 text-xs text-slate-400 px-1">
                 WSP auto-set to <span className="font-bold text-emerald-600">BP × 1.15</span> &nbsp;·&nbsp; SP to <span className="font-bold text-rose-500">BP × 1.33</span>
               </p>
-              {formErrors.buying_price && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.buying_price}</p>}
+              {formErrors.buying_price && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.buying_price}</p>}
             </div>
 
             {/* Pricing Mode Toggle */}
@@ -310,7 +314,7 @@ export const AddMedicineModal = ({
               <label className="form-label flex items-center justify-between cursor-pointer mb-0">
                 <span className="text-sm font-bold text-slate-700">Pricing Mode</span>
                 <div className="flex items-center gap-3">
-                  <span className={`text-xs font-bold uppercase tracking-wider ${!form.use_legacy_prices ? 'text-primary' : 'text-slate-400'}`}>Auto</span>
+                  <span className={`text-xs font-semibold ${!form.use_legacy_prices ? 'text-primary' : 'text-slate-400'}`}>Auto</span>
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, use_legacy_prices: !form.use_legacy_prices })}
@@ -318,7 +322,7 @@ export const AddMedicineModal = ({
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.use_legacy_prices ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
-                  <span className={`text-xs font-bold uppercase tracking-wider ${form.use_legacy_prices ? 'text-primary' : 'text-slate-400'}`}>Manual</span>
+                  <span className={`text-xs font-semibold ${form.use_legacy_prices ? 'text-primary' : 'text-slate-400'}`}>Manual</span>
                 </div>
               </label>
 
@@ -362,7 +366,7 @@ export const AddMedicineModal = ({
                 onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
                 className={inputBase(formErrors.stock_quantity)}
               />
-              {formErrors.stock_quantity && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.stock_quantity}</p>}
+              {formErrors.stock_quantity && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.stock_quantity}</p>}
             </div>
 
             {/* Reorder Threshold */}
@@ -375,7 +379,7 @@ export const AddMedicineModal = ({
                 onChange={(e) => setForm({ ...form, reorder_threshold: e.target.value })}
                 className={inputBase(formErrors.reorder_threshold)}
               />
-              {formErrors.reorder_threshold && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.reorder_threshold}</p>}
+              {formErrors.reorder_threshold && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.reorder_threshold}</p>}
             </div>
 
             {/* Strength */}
@@ -424,7 +428,7 @@ export const AddMedicineModal = ({
                 onChange={(e) => setForm({ ...form, expiry_date: e.target.value })}
                 className={inputBase(formErrors.expiry_date)}
               />
-              {formErrors.expiry_date && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.expiry_date}</p>}
+              {formErrors.expiry_date && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.expiry_date}</p>}
             </div>
 
             {/* Description — full width */}
@@ -464,20 +468,19 @@ export const AddMedicineModal = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 mt-8">
+          <div className="flex gap-3 mt-8">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 form-cancel-btn rounded-2xl px-6 py-4"
+              className="flex-1 form-cancel-btn rounded-lg px-5 py-2.5 text-sm font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+              className="flex-[2] px-5 py-2.5 btn-primary text-white rounded-lg font-semibold text-sm"
             >
-              {isEditMode ? 'Save Changes' : 'Add Medicine'}
+              {isEditMode ? 'Save changes' : 'Add medicine'}
             </button>
           </div>
         </form>

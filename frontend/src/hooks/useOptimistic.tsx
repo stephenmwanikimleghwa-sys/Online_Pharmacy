@@ -1,9 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-interface OptimisticState<T> {
-  data: T[];
-  optimistic: Set<string>;
-}
 
 interface OptimisticContextType {
   addOptimistic: <T>(items: T[], id: string) => T[];

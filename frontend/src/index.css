@@ -1,5 +1,5 @@
-/* Import custom fonts */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap");
+/* Import custom fonts — Outfit display, DM Sans body */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -12,54 +12,55 @@
   box-sizing: border-box;
 }
 
-/* Premium color variables - Light mode */
+/* Ops color system — deep teal, calm surfaces (not purple SaaS) */
 :root {
-  --color-primary: #7c3aed;
-  --color-accent: #6d28d9;
-  --color-highlight: #8b5cf6;
+  --color-primary: #0f6b63;
+  --color-accent: #0a4f4a;
+  --color-highlight: #1a8a7f;
   --color-white: #ffffff;
   --glass-overlay: rgba(255, 255, 255, 0.08);
-  --brand-mist: rgba(124, 58, 237, 0.14);
-  --brand-soft: rgba(217, 70, 239, 0.08);
-  --brand-border-soft: rgba(217, 70, 239, 0.22);
-  --brand-highlight-soft: rgba(124, 58, 237, 0.12);
-  --brand-highlight-border: rgba(124, 58, 237, 0.18);
-  --pink-leak: rgba(255,80,200,0.35);
-  --orb-primary: rgba(124, 58, 237, 0.95);
-  --orb-secondary: rgba(192, 38, 211, 0.72);
-  --orb-shadow: rgba(35, 9, 70, 0.55);
-  --orb-ring: rgba(174, 72, 230, 0.88);
-  --orb-ring-shadow: rgba(20, 5, 70, 0.45);
-  --orb-glow: rgba(190, 120, 255, 0.9);
-  --orb-glow-shadow: rgba(45, 20, 90, 0.55);
-  --orb-petal: rgba(220, 140, 255, 0.48);
-  --orb-flare: rgba(192, 38, 211, 0.38);
-  --orb-spark: rgba(225, 140, 255, 0.6);
-  --orb-spark-soft: rgba(192, 38, 211, 0.35);
+  --brand-mist: rgba(15, 107, 99, 0.12);
+  --brand-soft: rgba(15, 107, 99, 0.06);
+  --brand-border-soft: rgba(15, 107, 99, 0.22);
+  --brand-highlight-soft: rgba(26, 138, 127, 0.12);
+  --brand-highlight-border: rgba(26, 138, 127, 0.2);
+  --pink-leak: rgba(15, 107, 99, 0.2);
+  --orb-primary: rgba(15, 107, 99, 0.9);
+  --orb-secondary: rgba(10, 79, 74, 0.7);
+  --orb-shadow: rgba(8, 40, 38, 0.45);
+  --orb-ring: rgba(26, 138, 127, 0.85);
+  --orb-ring-shadow: rgba(8, 40, 38, 0.4);
+  --orb-glow: rgba(45, 160, 148, 0.75);
+  --orb-glow-shadow: rgba(8, 40, 38, 0.45);
+  --orb-petal: rgba(26, 138, 127, 0.35);
+  --orb-flare: rgba(15, 107, 99, 0.3);
+  --orb-spark: rgba(45, 160, 148, 0.45);
+  --orb-spark-soft: rgba(15, 107, 99, 0.28);
   --glass-shadow-dark: rgba(0,0,0,0.35);
   --glass-shadow-soft: rgba(0,0,0,0.34);
   --glass-shadow-small: rgba(0,0,0,0.32);
-  --orb-glare: rgba(255,255,255,0.15);
+  --orb-glare: rgba(255,255,255,0.12);
 
-  --bg-gradient-light: #f7f7f9;
-  --color-bg-light: #f7f7f9;
+  --bg-gradient-light: linear-gradient(165deg, #e8f1ef 0%, #f3f6f5 42%, #eef2f1 100%);
+  --color-bg-light: #eef2f1;
   --color-bg-card-light: #ffffff;
-  --color-field-bg-light: #f4f4f6;
-  --color-text-light: #18181b;
-  --color-text-muted-light: #6b7280;
-  --color-border-light: rgba(17, 24, 39, 0.10);
-  --btn-gradient-light: #7c3aed;
+  --color-field-bg-light: #e8eeec;
+  --color-text-light: #14201e;
+  --color-text-muted-light: #5b6b68;
+  --color-border-light: rgba(20, 32, 30, 0.10);
+  --btn-gradient-light: #0f6b63;
 
-  --bg-gradient-dark: #0e0e12;
-  --color-bg-dark: #0e0e12;
-  --color-bg-card-dark: #17171c;
-  --color-field-bg-dark: #1e1e25;
-  --color-text-dark: #f4f4f5;
-  --color-text-muted-dark: #a1a1aa;
+  --bg-gradient-dark: linear-gradient(165deg, #0a1211 0%, #0f1816 50%, #0c1413 100%);
+  --color-bg-dark: #0c1413;
+  --color-bg-card-dark: #151f1d;
+  --color-field-bg-dark: #1a2624;
+  --color-text-dark: #eef3f2;
+  --color-text-muted-dark: #9aada8;
   --color-border-dark: rgba(255, 255, 255, 0.10);
-  --btn-gradient-dark: #7c3aed;
+  --btn-gradient-dark: #1a8a7f;
 
   --bg-gradient: var(--bg-gradient-light);
+  --bg-base: var(--color-bg-light);
   --bg-primary: var(--color-bg-light);
   --bg-card: var(--color-bg-card-light);
   --bg-field: var(--color-field-bg-light);
@@ -68,17 +69,21 @@
   --border-primary: var(--color-border-light);
   --btn-gradient: var(--btn-gradient-light);
   --text-muted: var(--color-text-muted-light);
-  --glass-border: rgba(17, 24, 39, 0.10);
-  --glass-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --glass-border: rgba(20, 32, 30, 0.10);
+  --glass-shadow: 0 1px 2px rgba(20, 32, 30, 0.06), 0 1px 3px rgba(20, 32, 30, 0.04);
+  --primary: var(--color-primary);
+  --secondary: var(--color-highlight);
+  --radius-surface: 12px;
 
-  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
 }
 
-/* Dark mode colors - Purple glass palette */
+/* Dark mode colors */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-gradient: var(--bg-gradient-dark);
+    --bg-base: var(--color-bg-dark);
     --bg-primary: var(--color-bg-dark);
     --bg-card: var(--color-bg-card-dark);
     --bg-field: var(--color-field-bg-dark);
@@ -94,6 +99,7 @@
 /* Manual dark mode toggle support */
 .dark {
   --bg-gradient: var(--bg-gradient-dark);
+  --bg-base: var(--color-bg-dark);
   --bg-primary: var(--color-bg-dark);
   --bg-card: var(--color-bg-card-dark);
   --bg-field: var(--color-field-bg-dark);
@@ -108,6 +114,7 @@
 /* Manual light mode — overrides prefers-color-scheme: dark when user explicitly picks light */
 .light {
   --bg-gradient: var(--bg-gradient-light);
+  --bg-base: var(--color-bg-light);
   --bg-primary: var(--color-bg-light);
   --bg-card: var(--color-bg-card-light);
   --bg-field: var(--color-field-bg-light);
@@ -115,8 +122,8 @@
   --text-secondary: var(--color-text-muted-light);
   --border-primary: var(--color-border-light);
   --btn-gradient: var(--btn-gradient-light);
-  --glass-border: rgba(17, 24, 39, 0.10);
-  --glass-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --glass-border: rgba(20, 32, 30, 0.10);
+  --glass-shadow: 0 1px 2px rgba(20, 32, 30, 0.06), 0 1px 3px rgba(20, 32, 30, 0.04);
 }
 
 /* Body — rich gradient background */
@@ -146,8 +153,14 @@ body {
 }
 
 .glass-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-  border-color: rgba(124, 58, 237, 0.25);
+  box-shadow: 0 4px 12px rgba(20, 32, 30, 0.08);
+  border-color: rgba(15, 107, 99, 0.28);
+}
+
+.brand-mist {
+  background: var(--brand-mist);
+  color: var(--color-primary);
+  border: 1px solid var(--brand-border-soft);
 }
 
 .btn-primary {
@@ -220,13 +233,13 @@ body {
 }
 
 .nav-link-active {
-  box-shadow: 0 0 0 1px rgba(217, 70, 239, 0.2);
+  box-shadow: 0 0 0 1px rgba(15, 107, 99, 0.22);
 }
 
 .nav-secondary-btn,
 .nav-account-btn {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(200, 120, 240, 0.18);
+  border-color: rgba(15, 107, 99, 0.18);
 }
 
 .nav-mobile-btn:hover,

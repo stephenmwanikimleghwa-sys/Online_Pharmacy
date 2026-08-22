@@ -66,7 +66,7 @@ export default function StatCard({
       <div className="flex items-start justify-between gap-3 pl-2">
         <div className="min-w-0">
           <p
-            className="text-[11px] font-bold uppercase tracking-wider mb-1 truncate"
+            className="text-xs font-semibold mb-1 truncate"
             style={{ color: 'var(--text-secondary)' }}
           >
             {label}

@@ -80,7 +80,7 @@ function AppLayout() {
   // Hide full sidebar/navbar chrome on the public home page when not logged in
   const isUnauthHome = location.pathname === "/" && !isAuthenticated;
   const showChrome = !isAuthPage && !isUnauthHome;
-  const showFooter = location.pathname === "/";
+  const showFooter = false; // Public footer lives on Home; ops screens stay uncluttered
 
   return (
     <>
@@ -98,6 +98,10 @@ function AppLayout() {
                   {/* Public Routes */}
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
+                  <Route
+                    path="/inventory"
+                    element={<Navigate to="/inventory/management" replace />}
+                  />
                   <Route path="/password-reset" element={<PasswordResetRequest />} />
                   <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
                   <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />

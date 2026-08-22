@@ -110,7 +110,7 @@ const AddPrescription = () => {
 
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Patient Details Section */}
-          <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium relative overflow-hidden">
+          <div className="glass-card rounded-xl p-10 border border-white/60 shadow-premium relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 btn-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
             <div className="flex items-center gap-3 mb-8">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{ background: 'var(--bg-mist)', borderColor: 'var(--border-primary)' }}>
@@ -121,7 +121,7 @@ const AddPrescription = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Legal Full Name <span className="text-rose-500">*</span></label>
+                <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Legal Full Name <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   name="name"
@@ -133,7 +133,7 @@ const AddPrescription = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Age (Years) <span className="text-rose-500">*</span></label>
+                <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Age (Years) <span className="text-rose-500">*</span></label>
                 <input
                   type="number"
                   name="age"
@@ -145,7 +145,7 @@ const AddPrescription = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Gender Profile <span className="text-rose-500">*</span></label>
+                <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Gender Profile <span className="text-rose-500">*</span></label>
                 <select
                   name="gender"
                   value={patientDetails.gender}
@@ -160,7 +160,7 @@ const AddPrescription = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Network Contact <span className="text-rose-500">*</span></label>
+                <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Network Contact <span className="text-rose-500">*</span></label>
                 <input
                   type="tel"
                   name="contact"
@@ -172,7 +172,7 @@ const AddPrescription = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Government ID</label>
+                <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Government ID</label>
                 <input
                   type="text"
                   name="idNumber"
@@ -186,7 +186,7 @@ const AddPrescription = () => {
           </div>
 
           {/* Prescribed Medicines Section */}
-          <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium relative">
+          <div className="glass-card rounded-xl p-10 border border-white/60 shadow-premium relative">
             <div className="flex justify-between items-center mb-10">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{ background: 'var(--bg-mist)', borderColor: 'var(--border-primary)' }}>
@@ -200,20 +200,20 @@ const AddPrescription = () => {
                 className="px-5 py-2.5 btn-primary text-white rounded-xl  shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center gap-2 group"
               >
                 <svg className="w-4 h-4 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                <span className="text-[10px] font-bold uppercase tracking-widest leading-none mt-0.5">Add Line Item</span>
+                <span className="text-xs font-bold leading-none mt-0.5">Add Line Item</span>
               </button>
             </div>
 
             <div className="space-y-8">
               {medicines.map((medicine, index) => (
                 <div key={index} className="data-cell p-8 rounded-3xl relative group animate-scale-up">
-                  <div className="absolute -left-3 top-8 w-6 h-10 btn-primary rounded-lg flex items-center justify-center text-[10px] font-bold text-white shadow-glow-indigo">
+                  <div className="absolute -left-3 top-8 w-6 h-10 btn-primary rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-glow-indigo">
                     {index + 1}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="lg:col-span-2">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Medicine Asset <span className="text-rose-500">*</span></label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Medicine Asset <span className="text-rose-500">*</span></label>
                       <input
                         type="text"
                         name="medicine"
@@ -225,7 +225,7 @@ const AddPrescription = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Dosage Spec <span className="text-rose-500">*</span></label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Dosage Spec <span className="text-rose-500">*</span></label>
                       <input
                         type="text"
                         name="dosage"
@@ -237,7 +237,7 @@ const AddPrescription = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Quantity <span className="text-rose-500">*</span></label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Quantity <span className="text-rose-500">*</span></label>
                       <input
                         type="number"
                         name="quantity"
@@ -249,7 +249,7 @@ const AddPrescription = () => {
                       />
                     </div>
                     <div className="lg:col-span-4">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Extended Instructions</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Extended Instructions</label>
                       <textarea
                         name="instructions"
                         rows={2}
@@ -276,7 +276,7 @@ const AddPrescription = () => {
           </div>
 
           {/* Prescription Upload Section */}
-          <div className="glass-card rounded-[2.5rem] p-10 border border-white/60 shadow-premium relative overflow-hidden">
+          <div className="glass-card rounded-xl p-10 border border-white/60 shadow-premium relative overflow-hidden">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center text-primary border" style={{ background: 'var(--bg-mist)', borderColor: 'var(--border-primary)' }}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
@@ -284,7 +284,7 @@ const AddPrescription = () => {
               <h2 className="text-xl font-display font-bold text-slate-900">Ledger Documentation <span className="text-slate-400 font-medium text-sm ml-2">(Optional)</span></h2>
             </div>
 
-            <div className="p-10 border-2 border-dashed rounded-[2.5rem] text-center hover:border-indigo-400 transition-colors group" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+            <div className="p-10 border-2 border-dashed rounded-xl text-center hover:border-indigo-400 transition-colors group" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
               <input
                 type="file"
                 id="prescription-file"
@@ -299,7 +299,7 @@ const AddPrescription = () => {
                 <h3 className="text-lg font-bold text-slate-900 mb-2">
                   {prescriptionFile ? prescriptionFile.name : 'Click to upload source document'}
                 </h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                <p className="text-xs text-slate-400 font-bold">
                   Verified PDF, JPG, or PNG (MAX 10MB)
                 </p>
               </label>
@@ -311,7 +311,7 @@ const AddPrescription = () => {
             <button
               type="submit"
               disabled={loading}
-              className="px-10 py-5 btn-primary text-white rounded-3xl hover:bg-slate-900 shadow-premium hover:shadow-glow-indigo font-bold text-[11px] uppercase tracking-[0.2em] transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-4"
+              className="px-10 py-5 btn-primary text-white rounded-3xl hover:bg-slate-900 shadow-premium hover:shadow-glow-indigo font-bold text-xs transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-4"
             >
               {loading ? (
                 <>

@@ -2,7 +2,7 @@ import React from 'react';
 
 const InventoryItemCardSkeleton = () => {
   return (
-    <div className="glass-card rounded-3xl p-6 border border-white/10 shadow-premium animate-pulse h-full flex flex-col">
+    <div className="glass-card rounded-xl p-6 border border-white/10 animate-pulse h-full flex flex-col">
       {/* Header section skeleton */}
       <div className="flex justify-between items-start mb-6">
         <div className="flex-1">

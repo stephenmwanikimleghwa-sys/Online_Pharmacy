@@ -22,19 +22,22 @@ const getDashboardHref = (role) => {
     case 'admin':      return '/admin/dashboard';
     case 'pharmacist': return '/branch/dashboard';
     case 'cashier':    return '/cashier/dashboard';
+    case 'auditor':    return '/reports';
     case 'customer':   return '/customer/dashboard';
     default:           return '/account';
   }
 };
 
 const getNavGroups = (user) => {
-  const mainLinks = [
-    { to: "/", label: "Home", icon: HomeIcon },
-    { to: "/products", label: "Store", icon: ShoppingBagIcon },
-  ];
+  const mainLinks = [];
 
   if (user) {
-    mainLinks.splice(1, 0, { to: getDashboardHref(user.role), label: "Dashboard", icon: Squares2X2Icon });
+    mainLinks.push(
+      { to: getDashboardHref(user.role), label: "Dashboard", icon: Squares2X2Icon },
+      { to: "/products", label: "Catalogue", icon: ShoppingBagIcon },
+    );
+  } else {
+    mainLinks.push({ to: "/", label: "Home", icon: HomeIcon });
   }
 
   const operationsLinks = [];
@@ -223,7 +226,7 @@ const Sidebar = () => {
         {sections.map((section) => (
           <div key={section.title} className="space-y-1.5">
             {!isCollapsed && (
-              <p className="px-3 text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--text-secondary)' }}>
+              <p className="px-3 text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>
                 {section.title}
               </p>
             )}
@@ -330,7 +333,7 @@ const Sidebar = () => {
                 <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
                   {user.username}
                 </p>
-                <p className="text-[10px] font-semibold truncate uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-secondary)' }}>
                   {user.role}
                 </p>
               </div>

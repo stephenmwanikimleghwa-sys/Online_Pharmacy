@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, ShieldCheckIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import LoadingSpinner from "../components/LoadingSpinner";
 
 const ForcePasswordChange: React.FC = () => {
     const { user, logout, getDashboardPath, updateProfile } = useAuth();
@@ -141,7 +140,7 @@ const ForcePasswordChange: React.FC = () => {
 
                         {/* Password Requirements */}
                         <div className="p-4 rounded-xl text-xs space-y-2 font-medium" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)' }}>
-                            <p className="font-bold text-[10px] uppercase tracking-widest mb-3">Password Requirements</p>
+                            <p className="font-bold text-xs mb-3">Password Requirements</p>
                             <div className="flex items-center gap-2">
                                 {passwords.newPassword.length >= 8 ? <CheckCircleIcon className="w-4 h-4 text-emerald-500" /> : <XCircleIcon className="w-4 h-4 text-rose-500" />}
                                 <span style={{ color: passwords.newPassword.length >= 8 ? 'var(--text-primary)' : 'inherit' }}>At least 8 characters</span>

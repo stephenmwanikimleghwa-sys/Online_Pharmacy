@@ -68,7 +68,7 @@ const ManageUsers = () => {
         <div className="flex flex-col items-center gap-4 opacity-40">
           <div className="w-10 h-10 border-[3px] border-t-transparent rounded-xl animate-spin"
             style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
-          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+          <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
       </div>
     );
@@ -217,7 +217,7 @@ const ManageUsers = () => {
           className="btn-primary px-6 py-3.5 text-white rounded-2xl transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <UserPlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Add User</span>
+          <span className="text-xs font-bold leading-none mt-0.5">Add User</span>
         </button>
       </div>
 
@@ -232,12 +232,12 @@ const ManageUsers = () => {
       )}
 
       {/* Table Container */}
-      <div className="glass-card rounded-[2.5rem] overflow-hidden">
+      <div className="glass-card rounded-xl overflow-hidden">
         <div className="table-header-row px-8 py-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div className="flex items-center gap-3">
             <UserIcon className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
             <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>All Users</h2>
-            <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+            <span className="text-xs font-bold px-3 py-1 rounded-full"
               style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
               {users.length} total
             </span>
@@ -248,7 +248,7 @@ const ManageUsers = () => {
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   filterStatus === status ? 'shadow-sm text-primary' : ''
                 }`}
                 style={filterStatus === status ? { background: 'var(--bg-card)' } : { color: 'var(--text-secondary)' }}
@@ -263,7 +263,7 @@ const ManageUsers = () => {
             <thead>
               <tr style={{ background: 'var(--bg-field)' }}>
                 {["Username", "Email", "Role", "Status", "Actions"].map(h => (
-                  <th key={h} className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.2em]"
+                  <th key={h} className="px-8 py-5 text-xs font-bold"
                     style={{ color: 'var(--text-secondary)' }}>{h}</th>
                 ))}
               </tr>
@@ -281,25 +281,25 @@ const ManageUsers = () => {
                       </div>
                       <div>
                         <p className="font-bold transition-colors" style={{ color: 'var(--text-primary)' }}>{user.username}</p>
-                        {user.full_name && <p className="text-[10px] font-bold uppercase tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>{user.full_name}</p>}
+                        {user.full_name && <p className="text-xs font-semibold tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>{user.full_name}</p>}
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-6 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{user.email || '—'}</td>
                   <td className="px-8 py-6">
-                    <span className="px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm capitalize"
+                    <span className="px-3 py-1 rounded-xl text-xs font-bold border shadow-sm capitalize"
                       style={getRoleStyle(user.role)}>
                       {user.role}
                     </span>
                   </td>
                   <td className="px-8 py-6">
                     {user.is_active ? (
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${user.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border ${user.is_verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${user.is_verified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                         {user.is_verified ? 'Verified' : 'Pending'}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' }}>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' }}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--text-secondary)' }} />
                         Inactive
                       </span>
@@ -308,23 +308,23 @@ const ManageUsers = () => {
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2">
                       <button onClick={() => handleEdit(user)}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-sm flex items-center gap-1"
                         style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)', borderColor: 'var(--brand-border-soft)' }}>
                         <PencilSquareIcon className="h-3.5 w-3.5" /> Edit
                       </button>
                       <button onClick={() => handleResetPassword(user)}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border shadow-sm flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-sm flex items-center gap-1"
                         style={{ background: 'rgba(59,130,246,0.08)', color: '#2563eb', borderColor: 'rgba(59,130,246,0.18)' }}>
                         Reset Password
                       </button>
                       {user.is_active ? (
                         <button onClick={() => handleDelete(user)}
-                          className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-100 shadow-sm flex items-center gap-1">
+                          className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold hover:bg-amber-100 transition-all border border-amber-100 shadow-sm flex items-center gap-1">
                           <TrashIcon className="h-3.5 w-3.5" /> Delete
                         </button>
                       ) : (
                         <button onClick={() => handleReactivate(user)}
-                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm flex items-center gap-1">
+                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm flex items-center gap-1">
                           <CheckCircleIcon className="h-3.5 w-3.5" /> Reactivate Account
                         </button>
                       )}
@@ -358,7 +358,7 @@ const ManageUsers = () => {
                       : 'Create a new user account with the appropriate role and permissions.'}
                   </p>
                 </div>
-                <div className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] mt-8">Access Control</div>
+                <div className="text-xs font-bold text-white/30 mt-8">Access Control</div>
               </div>
 
               {/* Form Panel */}
@@ -400,7 +400,7 @@ const ManageUsers = () => {
                     </select>
                   </div>
                   <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
-                    <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: 'var(--text-secondary)' }}>Permission Flags</p>
+                    <p className="text-xs font-bold mb-3" style={{ color: 'var(--text-secondary)' }}>Permission Flags</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {PERMISSION_OPTIONS.map(({ key, label }) => (
                         <label key={key} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}>
@@ -418,7 +418,7 @@ const ManageUsers = () => {
                     Cancel
                   </button>
                   <button type="submit"
-                    className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]">
+                    className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs transition-all active:scale-[0.98]">
                     {isEditMode ? 'Save Changes' : `Add ${formData.role === 'admin' ? 'Admin' : 'Pharmacist'}`}
                   </button>
                 </div>

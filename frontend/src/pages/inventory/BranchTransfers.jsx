@@ -131,13 +131,13 @@ const BranchTransfers = () => {
 
   return (
     <ActiveBranchGuard title="Active branch required for transfers">
-      <div className="space-y-10">
-        <div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
-          <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+      <div className="space-y-6">
+        <div className="glass-card rounded-xl p-5 sm:p-6 border" style={{ borderColor: 'var(--border-primary)' }}>
+          <h2 className="text-lg font-display font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
             New stock transfer
           </h2>
-          <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-            From <strong>{activeBranch?.name}</strong> to another branch. Stock is moved when the transfer is approved.
+          <p className="text-sm mb-5" style={{ color: 'var(--text-secondary)' }}>
+            From <strong>{activeBranch?.name}</strong> to another branch. Stock moves when approved.
           </p>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -205,7 +205,7 @@ const BranchTransfers = () => {
           </form>
         </div>
 
-        <div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium">
+        <div className="glass-card rounded-xl p-5 sm:p-6 border" style={{ borderColor: 'var(--border-primary)' }}>
           <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
             Transfers for {activeBranch?.name}
           </h2>
@@ -264,7 +264,7 @@ const BranchTransfers = () => {
 
         {approvingTransfer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+            <div className="glass-card rounded-xl p-6 max-w-md w-full border " style={{ background: 'var(--bg-card)' }}>
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Confirm action</p>
@@ -294,7 +294,7 @@ const BranchTransfers = () => {
 
         {rejectingId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="glass-card rounded-[2rem] p-6 max-w-md w-full border border-white/60 shadow-premium" style={{ background: 'var(--bg-card)' }}>
+            <div className="glass-card rounded-xl p-6 max-w-md w-full border " style={{ background: 'var(--bg-card)' }}>
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Confirm action</p>

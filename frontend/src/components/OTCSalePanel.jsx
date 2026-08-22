@@ -445,14 +445,14 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     if (qty <= 0) return null;
     if (qty <= 5) {
       return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700">
+        <span className="text-xs font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700">
           Only {qty} left
         </span>
       );
     }
     if (qty <= 20) {
       return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+        <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700">
           {qty} in stock
         </span>
       );
@@ -633,14 +633,14 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                   <div className="flex gap-2 pt-1">
                     <button
                       type="button"
-                      className="text-[11px] font-semibold px-2 py-1 rounded bg-indigo-600 text-white"
+                      className="text-xs font-semibold px-2 py-1 rounded bg-indigo-600 text-white"
                       onClick={() => setTransferModal({ product: outOfStockHint.product, availability: {
                         other_branches: outOfStockHint.alternatives,
                       }})}
                     >
                       Request Transfer
                     </button>
-                    <button type="button" className="text-[11px] underline" onClick={() => setOutOfStockHint(null)}>
+                    <button type="button" className="text-xs underline" onClick={() => setOutOfStockHint(null)}>
                       Dismiss
                     </button>
                   </div>
@@ -672,7 +672,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                 </div>
                 {outHere ? (
                   <>
-                    <span className="inline-block mt-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                    <span className="inline-block mt-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
                       Out of Stock at {activeBranch?.name}
                     </span>
                     <button

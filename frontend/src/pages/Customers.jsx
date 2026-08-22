@@ -124,7 +124,7 @@ const Customers = () => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-600" style={{ background: 'rgba(99,102,241,0.12)' }}>
               <UserGroupIcon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Total Clients</p>
+            <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>Total Clients</p>
           </div>
           <p className="text-3xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>{customers.length}</p>
         </div>
@@ -134,7 +134,7 @@ const Customers = () => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-600" style={{ background: 'rgba(244,63,94,0.12)' }}>
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#e11d48' }}>Outstanding AR</p>
+            <p className="text-xs font-bold" style={{ color: '#e11d48' }}>Outstanding AR</p>
           </div>
           <p className="text-3xl font-display font-bold text-rose-600">KES {totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
@@ -144,14 +144,14 @@ const Customers = () => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600" style={{ background: 'rgba(16,185,129,0.12)' }}>
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#059669' }}>Store Credit Owned</p>
+            <p className="text-xs font-bold" style={{ color: '#059669' }}>Store Credit Owned</p>
           </div>
           <p className="text-3xl font-display font-bold text-emerald-600">KES {totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
       </div>
 
       {/* Toolbar */}
-      <div className="glass-card rounded-[2rem] border border-white/60 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
+      <div className="glass-card rounded-xl border border-white/60 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
           <input
@@ -178,7 +178,7 @@ const Customers = () => {
           <button
             type="button"
             onClick={() => { resetCreateForm(); setShowCreateModal(true); }}
-            className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-premium hover:bg-primary-600 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-2xl font-bold text-xs shadow-premium hover:bg-primary-600 transition-all"
           >
             <PlusIcon className="w-4 h-4" />
             Add Customer
@@ -216,7 +216,7 @@ const Customers = () => {
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-primary flex items-center justify-center text-white font-display font-bold text-lg shadow-glow-indigo group-hover:scale-110 transition-transform">
                     {customer.name[0]?.toUpperCase()}
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${
                     isDebt ? 'bg-rose-100 text-rose-600' :
                     isCredit ? 'bg-emerald-100 text-emerald-600' : ''
                   }`} style={!isDebt && !isCredit ? { background: 'var(--bg-field)', color: 'var(--text-secondary)' } : {}}>
@@ -231,7 +231,7 @@ const Customers = () => {
                 </p>
 
                 <div className="pt-4 border-t" style={{ borderColor: 'var(--border-primary)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-secondary)' }}>Balance</p>
+                  <p className="text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>Balance</p>
                   <p className={`font-display font-bold text-xl ${
                     isDebt ? 'text-rose-600' :
                     isCredit ? 'text-emerald-600' : ''
@@ -263,7 +263,7 @@ const Customers = () => {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowCreateModal(false)} />
-          <div className="relative w-full max-w-2xl glass-card rounded-[2rem] shadow-premium overflow-hidden border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+          <div className="relative w-full max-w-2xl glass-card rounded-xl shadow-premium overflow-hidden border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
             <div className="px-8 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)' }}>
               <div>
                 <h2 className="text-2xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Add Customer</h2>
@@ -341,7 +341,7 @@ const Customers = () => {
                 <button
                   type="submit"
                   disabled={creatingCustomer}
-                  className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold uppercase tracking-widest shadow-premium hover:bg-primary-600 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold shadow-premium hover:bg-primary-600 transition-colors disabled:opacity-50"
                 >
                   {creatingCustomer ? 'Saving...' : 'Create Customer'}
                 </button>

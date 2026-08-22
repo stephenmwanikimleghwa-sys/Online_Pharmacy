@@ -81,7 +81,7 @@ const DocumentRegistry = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Upload Form */}
-        <div className="lg:col-span-1 glass-card rounded-[2rem] p-6 border border-white/60 shadow-premium h-fit">
+        <div className="lg:col-span-1 glass-card rounded-xl p-6 border border-white/60 shadow-premium h-fit">
           <h3 className="text-lg font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Upload New Document</h3>
           <form onSubmit={handleUpload} className="space-y-4">
             <div>
@@ -138,7 +138,7 @@ const DocumentRegistry = () => {
         </div>
 
         {/* Document Registry List */}
-        <div className="lg:col-span-2 glass-card rounded-[2rem] p-6 border border-white/60 shadow-premium">
+        <div className="lg:col-span-2 glass-card rounded-xl p-6 border border-white/60 shadow-premium">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Document Archive</h3>
             <select
@@ -157,10 +157,10 @@ const DocumentRegistry = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="table-header-row">
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Title & Type</th>
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Uploaded By</th>
-                  <th className="pb-4 pt-2 px-4 text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Date</th>
-                  <th className="pb-4 pt-2 px-4 text-right text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Action</th>
+                  <th className="pb-4 pt-2 px-4 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Title & Type</th>
+                  <th className="pb-4 pt-2 px-4 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Uploaded By</th>
+                  <th className="pb-4 pt-2 px-4 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Date</th>
+                  <th className="pb-4 pt-2 px-4 text-right text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
@@ -173,7 +173,7 @@ const DocumentRegistry = () => {
                     <tr key={doc.id} className="hover:bg-indigo-50/20 dark:hover:bg-indigo-900/10 transition-colors">
                       <td className="py-4 px-4">
                         <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{doc.title}</p>
-                        <span className="data-cell inline-block mt-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-md">
+                        <span className="data-cell inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-md">
                           {doc.document_type}
                         </span>
                       </td>
@@ -188,7 +188,7 @@ const DocumentRegistry = () => {
                           href={doc.file}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="brand-mist px-3 py-1.5 rounded-lg text-xs font-bold uppercase"
+                          className="brand-mist px-3 py-1.5 rounded-lg text-xs font-semibold"
                         >
                           View / DL
                         </a>

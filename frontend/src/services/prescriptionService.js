@@ -75,9 +75,7 @@ export const prescriptionService = {
 
   // Get daily prescription stats
   getDailyPrescriptions: async (dateRange) => {
-    // TODO: Implement backend endpoint for daily stats
-    // For now returning empty array to prevent crash
-    return { data: [] };
+    return api.get("/prescriptions/reports/daily-stats/", { params: dateRange });
   },
 
   // Get dispensed medicines stats

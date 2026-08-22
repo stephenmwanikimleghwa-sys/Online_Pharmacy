@@ -1,6 +1,8 @@
 // UI Components
 export { default as Breadcrumb } from './Breadcrumb';
 export { default as QuickActions } from './QuickActions';
+export { default as PageHeader } from './PageHeader';
+export { default as ModalFrame } from './ModalFrame';
 export { default as ThemeToggle } from './ThemeToggle';
 export { default as Skeleton, ProductCardSkeleton, TableSkeleton, StatsSkeleton, FormSkeleton, ListSkeleton } from './Skeleton';
 export { NotificationProvider, useNotification } from '../context/NotificationContext';

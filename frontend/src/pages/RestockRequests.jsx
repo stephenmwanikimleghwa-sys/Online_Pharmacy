@@ -153,7 +153,7 @@ const RestockRequests = () => {
           className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
         >
           <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs font-bold uppercase tracking-widest leading-none mt-0.5">Authorize Requisition</span>
+          <span className="text-xs font-semibold leading-none mt-0.5">Approve restock</span>
         </button>
       </div>
 
@@ -167,10 +167,10 @@ const RestockRequests = () => {
       )}
 
       {/* Filters Bento */}
-      <div className="glass-card rounded-[2rem] p-8 border border-white/60 shadow-premium mb-10">
+      <div className="glass-card rounded-xl p-8 border border-white/60 shadow-premium mb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">Protocol Status</label>
+            <label className="block text-xs font-bold text-slate-400 mb-3 px-1">Protocol Status</label>
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -184,7 +184,7 @@ const RestockRequests = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">Asset Filter</label>
+            <label className="block text-xs font-bold text-slate-400 mb-3 px-1">Asset Filter</label>
             <select
               value={filters.product}
               onChange={(e) => setFilters({ ...filters, product: e.target.value })}
@@ -197,19 +197,19 @@ const RestockRequests = () => {
             </select>
           </div>
           <div className="flex items-end justify-end">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 py-2 bg-slate-100 rounded-full border border-slate-200/50">Real-time Coordination</span>
+            <span className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)' }}>Live updates</span>
           </div>
         </div>
       </div>
 
       {/* Requests Table Container */}
-      <div className="glass-card rounded-[2.5rem] border border-white/60 shadow-premium overflow-hidden">
+      <div className="glass-card rounded-xl border border-white/60 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50">
                 {['Asset Details', 'Requested By', 'Volume', 'Status', 'Timestamp', 'Security Actions'].map((header) => (
-                  <th key={header} className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{header}</th>
+                  <th key={header} className="px-8 py-5 text-xs font-bold text-slate-400">{header}</th>
                 ))}
               </tr>
             </thead>
@@ -219,7 +219,7 @@ const RestockRequests = () => {
                   <td colSpan="6" className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center gap-4 opacity-40">
                       <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Retrieving Requisitions...</p>
+                      <p className="text-xs font-bold text-slate-500">Retrieving Requisitions...</p>
                     </div>
                   </td>
                 </tr>
@@ -230,7 +230,7 @@ const RestockRequests = () => {
                       <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center">
                         <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
-                      <p className="text-slate-500 font-display font-bold italic">No requisitions detected in this corridor.</p>
+                      <p className="text-slate-500 font-display font-semibold">No restock requests right now.</p>
                     </div>
                   </td>
                 </tr>
@@ -239,11 +239,11 @@ const RestockRequests = () => {
                   <tr key={request.id} className="hover:bg-indigo-50/30 transition-colors group">
                     <td className="px-8 py-6">
                       <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{request.product_details?.name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">{request.supplier || 'Generic Channel'}</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-tight mt-0.5">{request.supplier || 'Generic Channel'}</p>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400 border border-slate-200">
+                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-200">
                           {request.requested_by_username?.[0]?.toUpperCase()}
                         </div>
                         <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{request.requested_by_username}</span>
@@ -251,16 +251,16 @@ const RestockRequests = () => {
                     </td>
                     <td className="px-8 py-6">
                       <p className="text-lg font-display font-bold text-slate-900">{request.requested_quantity}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Units Requested</p>
+                      <p className="text-xs font-bold text-slate-400 mt-0.5">Units Requested</p>
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border shadow-sm ${STATUS_COLORS[request.status]}`}>
+                      <span className={`px-3 py-1 rounded-xl text-xs font-bold border shadow-sm ${STATUS_COLORS[request.status]}`}>
                         {request.status_display}
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-[11px] font-bold text-slate-500">{new Date(request.created_at).toLocaleDateString()}</p>
-                      <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-0.5">{new Date(request.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="text-xs font-bold text-slate-500">{new Date(request.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{new Date(request.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
@@ -268,13 +268,13 @@ const RestockRequests = () => {
                           <>
                             <button
                               onClick={() => handleStatusUpdate(request.id, 'approve')}
-                              className="px-3 py-1.5 bg-indigo-50 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm"
+                              className="px-3 py-1.5 bg-indigo-50 text-primary rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(request.id, 'reject')}
-                              className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100 shadow-sm"
+                              className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-all border border-rose-100 shadow-sm"
                             >
                               Reject
                             </button>
@@ -283,7 +283,7 @@ const RestockRequests = () => {
                         {request.status === 'approved' && (
                           <button
                             onClick={() => handleStatusUpdate(request.id, 'complete')}
-                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm"
+                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm"
                           >
                             Execute/Complete
                           </button>
@@ -291,7 +291,7 @@ const RestockRequests = () => {
                         {['pending', 'approved'].includes(request.status) && (
                           <button
                             onClick={() => handleStatusUpdate(request.id, 'cancel')}
-                            className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200 shadow-sm"
+                            className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all border border-slate-200 shadow-sm"
                           >
                             Void
                           </button>
@@ -307,21 +307,21 @@ const RestockRequests = () => {
 
         {/* Pagination Section */}
         <div className="px-10 py-6 border-t flex items-center justify-between" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
             Protocol Page <span style={{ color: 'var(--text-primary)' }}>{currentPage}</span> of <span style={{ color: 'var(--text-primary)' }}>{totalPages}</span>
           </p>
           <div className="flex gap-4">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="form-cancel-btn px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 disabled:opacity-40"
+              className="form-cancel-btn px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40"
             >
               Previous Sequence
             </button>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="form-cancel-btn px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 disabled:opacity-40"
+              className="form-cancel-btn px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40"
             >
               Next Sequence
             </button>
@@ -345,7 +345,7 @@ const RestockRequests = () => {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <div className="bg-white rounded-[2.5rem] shadow-premium max-w-2xl w-full overflow-hidden flex flex-col md:flex-row border-[8px] border-white ring-1 ring-slate-200 animate-scale-up">
+            <div className="bg-white rounded-xl shadow-premium max-w-2xl w-full overflow-hidden flex flex-col md:flex-row border-[8px] border-white ring-1 ring-slate-200 animate-scale-up">
               {/* Visual Panel */}
               <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
@@ -353,16 +353,16 @@ const RestockRequests = () => {
                   <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
                     <PlusIcon className="w-6 h-6" />
                   </div>
-                  <h2 className="text-3xl font-display font-bold leading-tight">Authorize Requisition</h2>
+                  <h2 className="text-2xl font-display font-bold leading-tight">Approve restock</h2>
                   <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">Initialize the procurement protocol for inventory assets.</p>
                 </div>
-                <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.3em] opacity-40">System Release 12.0</div>
+                <div className="text-xs font-bold text-indigo-400 opacity-40">System Release 12.0</div>
               </div>
 
               <form onSubmit={handleSubmit} className="md:w-2/3 p-10 bg-slate-50/30">
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Target Asset</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Target Asset</label>
                     <select
                       value={formData.product}
                       onChange={(e) => setFormData({ ...formData, product: e.target.value })}
@@ -373,12 +373,12 @@ const RestockRequests = () => {
                         <option key={product.id} value={product.id}>{product.name}</option>
                       ))}
                     </select>
-                    {formErrors.product && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.product}</p>}
+                    {formErrors.product && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.product}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Protocol Volume</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Protocol Volume</label>
                       <input
                         type="number"
                         min="1"
@@ -387,11 +387,11 @@ const RestockRequests = () => {
                         className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm ${formErrors.requested_quantity ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
                         placeholder="Quantity..."
                       />
-                      {formErrors.requested_quantity && <p className="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2">{formErrors.requested_quantity}</p>}
+                      {formErrors.requested_quantity && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.requested_quantity}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Estimated Commitment</label>
+                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Estimated Commitment</label>
                       <input
                         type="number"
                         step="0.01" inputMode="decimal"
@@ -405,7 +405,7 @@ const RestockRequests = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Procurement Vendor</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Procurement Vendor</label>
                     <input
                       type="text"
                       value={formData.supplier}
@@ -416,7 +416,7 @@ const RestockRequests = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Strategic Notes</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Strategic Notes</label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -431,13 +431,13 @@ const RestockRequests = () => {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="form-cancel-btn flex-1 px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all"
+                    className="form-cancel-btn flex-1 px-6 py-4 rounded-2xl font-bold text-xs transition-all"
                   >
                     Abort
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+                    className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs transition-all active:scale-[0.98]"
                   >
                     Finalize Requisition
                   </button>

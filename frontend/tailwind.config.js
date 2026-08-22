@@ -158,26 +158,26 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Inter", "system-ui", "sans-serif"],
+        sans: ["DM Sans", "system-ui", "sans-serif"],
+        display: ["Outfit", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "page-gradient": "none",
         "hero-gradient":
-          "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)",
+          "linear-gradient(135deg, #0a4f4a 0%, #0f6b63 100%)",
         "card-gradient": "none",
       },
       boxShadow: {
-        soft: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-        glow: "0 0 0 3px rgba(124, 58, 237, 0.20)",
-        "glow-sm": "0 0 0 2px rgba(124, 58, 237, 0.15)",
-        card: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
-        glass: "0 1px 3px rgba(0,0,0,0.08)",
-        premium: "0 4px 12px rgba(0,0,0,0.10)",
+        soft: "0 1px 3px rgba(20,32,30,0.06), 0 1px 2px rgba(20,32,30,0.04)",
+        glow: "0 0 0 3px rgba(15, 107, 99, 0.18)",
+        "glow-sm": "0 0 0 2px rgba(15, 107, 99, 0.14)",
+        card: "0 1px 3px rgba(20,32,30,0.08), 0 1px 2px rgba(20,32,30,0.04)",
+        glass: "0 1px 3px rgba(20,32,30,0.06)",
+        premium: "0 4px 12px rgba(20,32,30,0.08)",
       },
       animation: {
-        "fade-in": "fadeIn 0.5s ease-out",
-        "slide-up": "slideUp 0.5s ease-out",
+        "fade-in": "fadeIn 0.45s ease-out",
+        "slide-up": "slideUp 0.45s ease-out",
         "float": "float 3s ease-in-out infinite",
         "pulse-subtle": "pulseSubtle 2s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
@@ -188,16 +188,16 @@ module.exports = {
           "100%": { opacity: "1" },
         },
         slideUp: {
-          "0%": { transform: "translateY(20px)", opacity: "0" },
+          "0%": { transform: "translateY(16px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
         pulseSubtle: {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
-          "50%": { opacity: "0.8", transform: "scale(0.98)" },
+          "50%": { opacity: "0.85", transform: "scale(0.99)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },

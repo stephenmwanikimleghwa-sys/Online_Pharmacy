@@ -274,42 +274,57 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
 
   return createPortal(
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="modal-card max-w-lg w-full max-h-[90vh] overflow-hidden animate-scale-up rounded-[2rem] flex flex-col">
+      <div
+        className="modal-card max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
+        style={{ borderRadius: 'var(--radius-surface)', background: 'var(--bg-card)' }}
+      >
 
-        {/* ── Header ── */}
-        <div className="modal-header flex-shrink-0">
-          <div className="flex items-start justify-between relative z-10">
-            <div>
-              <h2 className="text-2xl font-display font-bold">Manage Medicine</h2>
-              <p className="text-white/70 text-xs mt-1.5 font-medium uppercase tracking-widest truncate max-w-xs">
+        <div
+          className="px-5 py-4 shrink-0"
+          style={{ borderBottom: '1px solid var(--border-primary)' }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+                Manage medicine
+              </h2>
+              <p className="text-sm mt-0.5 truncate" style={{ color: 'var(--text-secondary)' }}>
                 {item.name}
               </p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="ml-4 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors flex-shrink-0"
+              className="p-2 rounded-lg shrink-0"
+              style={{ color: 'var(--text-secondary)' }}
+              aria-label="Close"
             >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Tab bar inside header */}
-          <div className="flex gap-1 mt-5 p-1 bg-white/10 rounded-2xl relative z-10">
+          <div className="flex gap-1 mt-4 p-1 rounded-lg" style={{ background: 'var(--bg-field)' }}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-semibold transition-all ${
                   activeTab === tab.id
                     ? tab.danger
-                      ? 'bg-rose-500 text-white shadow-sm'
-                      : 'bg-white text-primary shadow-sm'
+                      ? 'bg-rose-500 text-white'
+                      : 'btn-primary text-white'
                     : tab.danger
-                    ? 'text-rose-200 hover:text-white hover:bg-white/10'
-                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                    ? 'text-rose-600 hover:bg-rose-50'
+                    : ''
                 }`}
+                style={
+                  activeTab === tab.id || tab.danger
+                    ? undefined
+                    : { color: 'var(--text-secondary)' }
+                }
               >
                 {tab.icon}
                 {tab.label}
@@ -402,7 +417,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50"
                   disabled={restockLoading}
                 >
                   {restockLoading ? 'Saving...' : 'Add Stock'}
@@ -471,7 +486,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50"
                   disabled={adjustLoading}
                 >
                   {adjustLoading ? 'Adjusting...' : 'Confirm Adjustment'}
@@ -493,7 +508,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   className={inputBase(formErrors.name)}
                 />
                 {formErrors.name && (
-                  <p className="mt-1 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-1">{formErrors.name}</p>
+                  <p className="mt-1 text-xs font-bold text-rose-500 px-1">{formErrors.name}</p>
                 )}
               </div>
 
@@ -507,7 +522,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   className={inputBase(formErrors.category)}
                 />
                 {formErrors.category && (
-                  <p className="mt-1 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-1">{formErrors.category}</p>
+                  <p className="mt-1 text-xs font-bold text-rose-500 px-1">{formErrors.category}</p>
                 )}
               </div>
 
@@ -544,7 +559,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   <option value="AGROVET">Agrovet</option>
                 </select>
                 {formErrors.department && (
-                  <p className="mt-1 text-[10px] font-bold text-rose-500 uppercase tracking-widest px-1">{formErrors.department}</p>
+                  <p className="mt-1 text-xs font-bold text-rose-500 px-1">{formErrors.department}</p>
                 )}
               </div>
 
@@ -559,7 +574,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   placeholder="e.g. 100"
                   className={inputBase(formErrors.buying_price)}
                 />
-                <p className="mt-1 text-[10px] text-slate-400 px-1">
+                <p className="mt-1 text-xs text-slate-400 px-1">
                   WSP auto-set to <span className="font-bold text-emerald-600">BP × 1.15</span>
                   &nbsp;·&nbsp; SP to <span className="font-bold text-rose-500">BP × 1.33</span>
                 </p>
@@ -661,7 +676,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="btn-primary flex-[2] px-6 py-4 rounded-2xl text-white font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50"
                   disabled={editLoading}
                 >
                   {editLoading ? 'Saving...' : 'Save Changes'}
@@ -692,7 +707,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
 
               {/* What will be deleted */}
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: 'var(--text-muted)' }}>What will be removed</p>
+                <p className="text-xs font-bold mb-3" style={{ color: 'var(--text-muted)' }}>What will be removed</p>
                 <ul className="space-y-2">
                   {[
                     { icon: '📦', label: 'All stock quantities across every branch' },
@@ -728,7 +743,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="flex-[2] px-6 py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="flex-[2] px-6 py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -768,7 +783,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
 
               {/* Summary of what happens */}
               <div className="rounded-2xl border p-4 space-y-3 mb-6" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>If you confirm, the following will happen</p>
+                <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>If you confirm, the following will happen</p>
                 {[
                   `"${item.name}" will be permanently deleted from inventory`,
                   'All branch stock quantities will be set to zero and removed',
@@ -797,7 +812,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   type="button"
                   onClick={handleDelete}
                   disabled={deleteLoading}
-                  className="flex-[1.5] py-3 px-5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-[1.5] py-3 px-5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {deleteLoading ? (
                     <>

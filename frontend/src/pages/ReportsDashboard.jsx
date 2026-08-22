@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import BranchSelector from '../components/BranchSelector';
 import { utils, writeFile } from 'xlsx';
 import {
-  DocumentTextIcon, ChartBarIcon, CurrencyDollarIcon,
+  ChartBarIcon, CurrencyDollarIcon,
   UserGroupIcon, CalendarDaysIcon, ArrowDownTrayIcon,
   ShoppingCartIcon, ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import EmptyState from '../components/ui/EmptyState';
 import { PanelSkeleton } from '../components/ui/Skeleton';
+import PageHeader from '../components/PageHeader';
 
 const fmt = (n) => Number(n || 0).toLocaleString();
 
@@ -80,7 +81,7 @@ const ReportsDashboard = () => {
   const totalStockValuation = valuationRows.reduce((sum, item) => sum + Number(item?.cost_value || 0), 0);
 
   const TH = ({ children, right }) => (
-    <th className={`px-4 py-3 text-[10px] font-bold uppercase tracking-wider ${right ? 'text-right' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+    <th className={`px-4 py-3 text-xs font-semibold ${right ? 'text-right' : ''}`} style={{ color: 'var(--text-secondary)' }}>
       {children}
     </th>
   );
@@ -114,18 +115,19 @@ const ReportsDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-display font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-            <DocumentTextIcon className="w-8 h-8" style={{ color: 'var(--color-primary)' }} />
-            Reports Hub
-          </h1>
-          <p className="mt-1 font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>Generate and export master reports.</p>
-        </div>
-        <button onClick={handleExportCSV} className="btn-primary px-4 py-2.5 rounded-xl font-bold text-sm shadow-premium flex items-center gap-2 text-white">
-          <ArrowDownTrayIcon className="w-5 h-5" /> Export as Excel
-        </button>
-      </div>
+      <PageHeader
+        title="Reports"
+        description="Generate and export sales, stock, expiry, and staff reports."
+        actions={
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="btn-primary px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 text-white"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4" /> Export Excel
+          </button>
+        }
+      />
 
       {/* Report type selector */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
@@ -136,18 +138,18 @@ const ReportsDashboard = () => {
             <button
               key={rep.id}
               onClick={() => setActiveReport(rep.id)}
-              className={`p-5 rounded-2xl text-left border transition-all ${isActive ? 'btn-primary text-white shadow-glow scale-[1.02]' : 'glass-card hover:scale-[1.01]'}`}
+              className={`p-4 rounded-xl text-left border transition-all ${isActive ? 'btn-primary text-white' : 'glass-card'}`}
               style={isActive ? {} : { borderColor: 'var(--border-primary)' }}
             >
-              <Icon className={`w-7 h-7 mb-3 ${isActive ? 'text-white' : ''}`} style={isActive ? {} : { color: 'var(--color-primary)' }} />
-              <h3 className="font-bold text-sm leading-tight">{rep.label}</h3>
+              <Icon className={`w-5 h-5 mb-2 ${isActive ? 'text-white' : ''}`} style={isActive ? {} : { color: 'var(--color-primary)' }} />
+              <h3 className="font-semibold text-sm leading-tight">{rep.label}</h3>
             </button>
           );
         })}
       </div>
 
       {/* Main panel */}
-      <div className="glass-card p-6 md:p-8 rounded-[2rem] border shadow-premium min-h-[50vh]" style={{ borderColor: 'var(--border-primary)' }}>
+      <div className="glass-card p-6 md:p-8 rounded-xl border shadow-premium min-h-[50vh]" style={{ borderColor: 'var(--border-primary)' }}>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 items-end mb-8 p-4 rounded-2xl border" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
@@ -206,7 +208,7 @@ const ReportsDashboard = () => {
                       <TD bold>{item.staff}</TD>
                       <TD>
                         {item.product}
-                        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)' }}>{item.sale_type}</span>
+                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: 'var(--brand-mist)', color: 'var(--color-primary)' }}>{item.sale_type}</span>
                       </TD>
                       <TD right bold>{item.quantity}</TD>
                       <TD right bold accent>{fmt(item.subtotal)}</TD>
