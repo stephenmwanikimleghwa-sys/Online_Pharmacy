@@ -24,6 +24,7 @@ const EMPTY_ROW = () => ({
   id: Date.now() + Math.random(),
   name: '',
   category: '',
+  department: 'CHEMIST',
   dosage_form: 'tablet',
   buying_price: '',
   retail_price: '',
@@ -239,6 +240,7 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
       const payload = rows.map(row => ({
         name: row.name.trim(),
         category: row.category.trim() || undefined,
+        department: row.department || 'CHEMIST',
         dosage_form: row.dosage_form || undefined,
         manufacturer: row.manufacturer.trim() || undefined,
         buying_price: parseFloat(row.buying_price),
@@ -359,6 +361,7 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                         Name <span className="text-rose-500">*</span>
                       </th>
                       <th className="px-3 py-3 text-xs font-bold text-slate-500 w-40">Category</th>
+                      <th className="px-3 py-3 text-xs font-bold text-slate-500 w-28">Dept</th>
                       <th className="px-3 py-3 text-xs font-bold text-slate-500 w-36">Dosage Form</th>
                       <th className="px-3 py-3 text-xs font-bold text-slate-500 w-36">Manufacturer</th>
                       <th className="px-3 py-3 text-xs font-bold text-slate-500 w-28">
@@ -409,6 +412,19 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                               className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                           )}
+                        </td>
+
+                        {/* Department */}
+                        <td className="px-3 py-2">
+                          <select
+                            value={row.department || 'CHEMIST'}
+                            onChange={e => updateRow(row.id, 'department', e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="CHEMIST">Chemist</option>
+                            <option value="AGROVET">Agrovet</option>
+                            <option value="OTHER">Other</option>
+                          </select>
                         </td>
 
                         {/* Dosage Form */}

@@ -28,31 +28,46 @@ const UserActivityLogs = () => {
   }, []);
 
   const formatDetails = (log) => {
-    if (!log.details || Object.keys(log.details).length === 0) return '—';
+    if (!log.details || typeof log.details !== 'object' || Object.keys(log.details).length === 0) {
+      return '—';
+    }
     const d = log.details;
     switch (log.event_type || log.action_type) {
       case 'SALE_MADE':
         return `Receipt #${d.dispensation_id || '?'} — KES ${Number(d.total_amount || 0).toLocaleString()}`;
       case 'USER_CREATED':
-        return `Created user: ${d.created_user} (${d.role})`;
+        return `Created user: ${d.created_user || '—'} (${d.role || '—'})`;
       case 'USER_DEACTIVATED':
       case 'USER_REACTIVATED':
       case 'PASSWORD_RESET':
-        return `Target user: ${d.target_user}`;
+        return `Target user: ${d.target_user || '—'}`;
       case 'PERMISSION_CHANGED':
-        return `Updated permissions for ${d.target_user}`;
+        return `Updated permissions for ${d.target_user || '—'}`;
       case 'PRODUCT_CREATED':
-        return `Added product: ${d.product_name || d.product_id}`;
+        return `Added product: ${d.product_name || d.product_id || '—'}`;
       case 'PRODUCT_EDITED':
-        return `Edited product: ${d.product_name || d.product_id}`;
+        return `Edited product: ${d.product_name || d.product_id || '—'}`;
       case 'PRODUCT_DELETED':
-        return `Deleted product: ${d.product_name || d.product_id}`;
+        return `Deleted product: ${d.product_name || d.product_id || '—'}`;
       case 'PRODUCT_RESTOCKED':
-        return `Restocked ${d.product_name} (${d.quantity_received} units from ${d.supplier})`;
+        return `Restocked ${d.product_name || 'item'} (${d.quantity_received ?? '?'} units from ${d.supplier || '—'})`;
       case 'BRANCH_SWITCHED':
-        return d.action || 'Switched branch';
-      default:
-        return JSON.stringify(d);
+        return d.action || `Switched to ${d.branch_name || d.to_branch || 'branch'}`;
+      case 'TRANSFER_REQUESTED':
+        return `Transfer requested: ${d.product_name || d.product_id || 'item'} × ${d.quantity ?? '?'}`;
+      case 'TRANSFER_APPROVED':
+        return `Transfer approved: ${d.product_name || d.product_id || 'item'} × ${d.quantity ?? '?'}`;
+      case 'STOCK_EXPIRED':
+        return `Expired: ${d.product_name || d.product_id || 'item'} (${d.quantity ?? '?'} units)`;
+      case 'LOGIN':
+        return d.action || 'Signed in';
+      default: {
+        try {
+          return JSON.stringify(d);
+        } catch {
+          return '—';
+        }
+      }
     }
   };
 

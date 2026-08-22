@@ -37,13 +37,22 @@ const AdminStock = () => {
 
 	const sanitizeItem = (item) => {
 		if (!item || typeof item !== 'object') return item;
+		const retail =
+			Number(
+				item.selling_price ??
+					item?.pricing_tier?.retail_price ??
+					item.price ??
+					0,
+			) || 0;
 		return {
 			...item,
 			id: item.id ?? item.pk ?? item.product_id ?? item.product?.id ?? item.name ?? String(Date.now()),
 			name: normalizeDisplayValue(item.name, ''),
 			category: getCategoryLabel(item.category),
-			price: Number(item.price ?? item?.pricing_tier?.price ?? 0) || 0,
-			stock_quantity: Number(item.stock_quantity ?? item.quantity ?? 0) || 0,
+			department: item.department || 'CHEMIST',
+			price: retail,
+			selling_price: retail,
+			stock_quantity: Number(item.stock_quantity ?? item.quantity ?? item.total_stock ?? 0) || 0,
 			expiry_date: item.expiry_date ?? item.expiryDate ?? '',
 			supplier: normalizeDisplayValue(item.supplier, ''),
 			description: normalizeDisplayValue(item.description, ''),
@@ -68,6 +77,7 @@ const AdminStock = () => {
 	const [form, setForm] = useState({
 		name: '',
 		category: '',
+		department: 'CHEMIST',
 		buying_price: '',
 		use_legacy_prices: false,
 		wholesale_price: '',
@@ -82,6 +92,7 @@ const AdminStock = () => {
 		reorder_threshold: 10,
 		image: null,
 	});
+	const [submitting, setSubmitting] = useState(false);
 
 	const [logEntries, setLogEntries] = useState([]);
 	const [selectedItemForLogs, setSelectedItemForLogs] = useState(null);
@@ -108,7 +119,7 @@ const AdminStock = () => {
 		const controller = new AbortController();
 		const timeout = setTimeout(() => {
 			fetchItems(controller.signal);
-		}, 50); // Very small delay to batch rapid changes
+		}, 250); // Debounce search/filter to avoid hammering the API
 		return () => {
 			clearTimeout(timeout);
 			controller.abort();
@@ -125,9 +136,10 @@ const AdminStock = () => {
 			}
 			setError('');
 
-			// Build query params - load ALL products (no pagination)
+			// Build query params — paginated so department/adjust/edit stay responsive
 			const params = {
-				per_page: 99999, // Load all products without pagination limit
+				per_page: 500,
+				page: 1,
 			};
 
 			// Add filters
@@ -192,6 +204,7 @@ const AdminStock = () => {
 		setForm({
 			name: '',
 			category: '',
+			department: 'CHEMIST',
 			buying_price: '',
 			use_legacy_prices: false,
 			wholesale_price: '',
@@ -219,6 +232,7 @@ const AdminStock = () => {
 		setForm({
 			name: item.name || '',
 			category: item.category || '',
+			department: item.department || 'CHEMIST',
 			buying_price: item.pricing_tier?.buying_price || '',
 			use_legacy_prices: item.pricing_tier?.use_legacy_prices || false,
 			wholesale_price: item.pricing_tier?.wholesale_price || '',
@@ -240,10 +254,11 @@ const AdminStock = () => {
 		setIsEditMode(false);
 		setEditingItem(null);
 		setForm({
-			name: item.name || '',
+			name: `${item.name || ''} (copy)`.trim(),
 			category: item.category || '',
+			department: item.department || 'CHEMIST',
 			buying_price: item.pricing_tier?.buying_price || '',
-			use_legacy_prices: item.pricing_tier?.use_legacy_prices || false,
+			use_legacy_prices: item.pricing_tier?.use_legacy_prices ?? true,
 			wholesale_price: item.pricing_tier?.wholesale_price || '',
 			retail_price: item.pricing_tier?.retail_price || '',
 			stock_quantity: item.stock_quantity || 0,
@@ -322,9 +337,16 @@ const AdminStock = () => {
 		e.preventDefault();
 		e.stopPropagation();
 		if (!validateForm()) return;
+		if (submitting) return;
+		setSubmitting(true);
 
 		try {
-			// Use FormData if image is present, otherwise use JSON
+			const department = form.department || 'CHEMIST';
+			const honorManual =
+				Boolean(form.use_legacy_prices) ||
+				Boolean(form.retail_price) ||
+				Boolean(form.wholesale_price);
+
 			let data;
 			let headers = {};
 
@@ -332,14 +354,13 @@ const AdminStock = () => {
 				data = new FormData();
 				data.append('name', form.name.trim());
 				data.append('category', form.category.trim());
+				data.append('department', department);
 				if (form.buying_price) data.append('buying_price', Number(form.buying_price));
-				
-				data.append('use_legacy_prices', form.use_legacy_prices);
-				if (form.use_legacy_prices) {
+				data.append('use_legacy_prices', honorManual);
+				if (honorManual) {
 					if (form.wholesale_price) data.append('wholesale_price', Number(form.wholesale_price));
 					if (form.retail_price) data.append('retail_price', Number(form.retail_price));
 				}
-
 				data.append('stock_quantity', Number(form.stock_quantity));
 				data.append('dosage_form', form.dosage_form);
 				data.append('strength', form.strength?.trim() || '');
@@ -354,10 +375,11 @@ const AdminStock = () => {
 				data = {
 					name: form.name.trim(),
 					category: form.category.trim(),
+					department,
 					...(form.buying_price ? { buying_price: Number(form.buying_price) } : {}),
-					use_legacy_prices: form.use_legacy_prices,
-					...(form.use_legacy_prices && form.wholesale_price ? { wholesale_price: Number(form.wholesale_price) } : {}),
-					...(form.use_legacy_prices && form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
+					use_legacy_prices: honorManual,
+					...(honorManual && form.wholesale_price ? { wholesale_price: Number(form.wholesale_price) } : {}),
+					...(honorManual && form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
 					stock_quantity: Number(form.stock_quantity),
 					dosage_form: form.dosage_form,
 					strength: form.strength?.trim() || '',
@@ -370,48 +392,55 @@ const AdminStock = () => {
 			}
 
 			if (isEditMode && editingItem) {
-				await api.patch(`/products/${editingItem.id}/`, data, { headers });
+				const response = await api.patch(`/products/${editingItem.id}/`, data, { headers });
+				const updated = response.data?.data || response.data;
+				setItems((prev) =>
+					prev.map((i) => (i.id === editingItem.id ? sanitizeItem({ ...i, ...updated }) : i)),
+				);
+				notify.success('Product Updated', 'Changes have been saved.');
 			} else {
-				// Optimistic UI: append a temporary item so user sees the new product immediately
 				const optimisticId = `tmp-${Date.now()}`;
 				const optimisticItem = {
 					id: optimisticId,
 					name: data instanceof FormData ? data.get('name') : data.name,
 					category: data instanceof FormData ? data.get('category') : data.category,
-					price: data instanceof FormData ? data.get('price') : data.price,
+					department: data instanceof FormData ? data.get('department') : data.department,
+					price: data instanceof FormData ? data.get('retail_price') : data.retail_price,
 					stock_quantity: data instanceof FormData ? data.get('stock_quantity') : data.stock_quantity,
 					expiry_date: data instanceof FormData ? data.get('expiry_date') : data.expiry_date,
 					description: data instanceof FormData ? data.get('description') : data.description,
 					supplier: data instanceof FormData ? data.get('supplier') : data.supplier,
 					optimistic: true,
 				};
-				setItems(prev => [optimisticItem, ...prev]);
+				setItems((prev) => [optimisticItem, ...prev]);
 				try {
 					const response = await api.post('/products/', data, { headers });
-					// Replace optimistic item with server response immediately
-					setItems(prev => prev.map(i => (i.id === optimisticId ? response.data : i)));
+					const created = response.data?.data || response.data;
+					setItems((prev) =>
+						prev.map((i) => (i.id === optimisticId ? sanitizeItem(created) : i)),
+					);
 					notify.success('Product Added', 'The product has been added to the system.');
-					// optionally fetch in background to refresh pagination/indices
-					fetchItems();
 				} catch (postErr) {
-					// Remove optimistic item on failure and show error toast
-					setItems(prev => prev.filter(i => i.id !== optimisticId));
-					notify.error('Add Failed', 'The product could not be added. Please try again.');
+					setItems((prev) => prev.filter((i) => i.id !== optimisticId));
+					const msg =
+						postErr?.response?.data?.name?.[0] ||
+						postErr?.response?.data?.error?.message ||
+						'The product could not be added. Please try again.';
+					notify.error('Add Failed', typeof msg === 'string' ? msg : 'The product could not be added.');
 					throw postErr;
 				}
 			}
 
 			setIsModalOpen(false);
 			setFormErrors({});
-			// refresh authoritative data (fetch will replace optimistic entry)
-			await fetchItems();
-			} catch (err) {
+		} catch (err) {
 			if (err.response?.data) {
-				// Handle validation errors from backend
 				setFormErrors(err.response.data);
 			} else {
 				setError('Failed to save item');
 			}
+		} finally {
+			setSubmitting(false);
 		}
 	};
 
@@ -432,9 +461,19 @@ const AdminStock = () => {
 				change_type: 'adjustment',
 				branch_id: selectedBranch !== 'all' ? selectedBranch : undefined,
 			});
+			setItems((prev) =>
+				prev.map((i) =>
+					i.id === item.id
+						? {
+								...i,
+								stock_quantity: Number(i.stock_quantity || 0) + qty,
+								in_stock: Number(i.stock_quantity || 0) + qty > 0,
+							}
+						: i,
+				),
+			);
 			setAdjustQty(0);
 			setAdjustReason('');
-			fetchItems();
 			openLogs(item);
 		} catch (err) {
 			setError('Failed to adjust stock');
@@ -653,6 +692,7 @@ const AdminStock = () => {
 				formErrors={formErrors}
 				onSubmit={handleSubmit}
 				categories={categories}
+				submitting={submitting}
 			/>
 
 			<BulkAddMedicineModal

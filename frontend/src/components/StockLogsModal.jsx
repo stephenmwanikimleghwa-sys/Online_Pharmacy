@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../services/inventoryService';
+import { unwrapList } from '../utils/parseApiData';
 
 const StockLogsModal = ({ item, onClose }) => {
   const [logs, setLogs] = useState([]);
@@ -13,11 +14,12 @@ const StockLogsModal = ({ item, onClose }) => {
   const fetchStockLogs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await inventoryService.getStockLogs(item.id);
-      setLogs(response.data || []);
+      setLogs(unwrapList(response.data));
     } catch (err) {
       setError('Failed to fetch stock logs');
-      } finally {
+    } finally {
       setLoading(false);
     }
   };

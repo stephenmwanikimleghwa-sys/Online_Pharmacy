@@ -14,6 +14,7 @@ export function unwrapList<T = unknown>(payload: unknown): T[] {
 
 export function getProductDisplayPrice(product: {
   price?: number | string;
+  selling_price?: number | string;
   pricing_tier?: {
     retail_price?: number | string;
     wholesale_price?: number | string;
@@ -21,7 +22,7 @@ export function getProductDisplayPrice(product: {
   } | null;
 }): number {
   const tier = product.pricing_tier;
-  const retail = tier?.retail_price;
+  const retail = product.selling_price ?? tier?.retail_price;
   if (retail !== undefined && retail !== null && retail !== "") {
     const n = Number(retail);
     if (!Number.isNaN(n) && n > 0) return n;

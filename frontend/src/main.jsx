@@ -13,30 +13,13 @@ import App from "./App.jsx";
 import { registerServiceWorker } from "./lib/serviceWorker";
 import "./index.css";
 
-const persister = createSyncStoragePersister({
-  // localStorage (not sessionStorage) so cached reads survive a tab close /
-  // machine reboot — essential for branches that lose connectivity for long
-  // stretches. maxAge below bounds how stale a restored cache may be, and
-  // logout (AuthContext) purges this key so a shared machine doesn't leak the
-  // previous user's data.
-  storage: window.localStorage,
-  key: "TRANSCOUNTY_QUERY_CACHE",
-  throttleTime: 1000,
-});
-
-persistQueryClient({
-  queryClient,
-  persister,
-  maxAge: 30 * 60 * 1000,
-  buster: import.meta.env.VITE_APP_VERSION || "1.0.0",
-});
-
 window.addEventListener("unhandledrejection", (event) => {
   // intentional log — unhandled promise rejections in production
   console.error("Unhandled rejection:", event.reason);
 });
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -54,8 +37,36 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>,
 );
 
-document.getElementById("splash")?.remove();
+// Drop splash as soon as React has committed — don't wait on fonts/API/sync.
+requestAnimationFrame(() => {
+  document.getElementById("splash")?.remove();
+});
 
-// Register the service worker (production only) for stale-while-revalidate
-// caching of API reads, so screens load instantly on slow connections.
-registerServiceWorker();
+// Persist query cache after first paint so large localStorage restores don't stall landing.
+const schedulePersist = (fn) => {
+  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    window.requestIdleCallback(fn, { timeout: 3000 });
+  } else {
+    window.setTimeout(fn, 500);
+  }
+};
+
+schedulePersist(() => {
+  const persister = createSyncStoragePersister({
+    storage: window.localStorage,
+    key: "TRANSCOUNTY_QUERY_CACHE",
+    throttleTime: 1000,
+  });
+
+  persistQueryClient({
+    queryClient,
+    persister,
+    maxAge: 30 * 60 * 1000,
+    buster: import.meta.env.VITE_APP_VERSION || "1.0.0",
+  });
+});
+
+// Service worker: register after idle so it doesn't compete with first paint.
+schedulePersist(() => {
+  registerServiceWorker();
+});

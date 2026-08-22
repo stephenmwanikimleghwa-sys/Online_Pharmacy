@@ -25,14 +25,15 @@ const CAPABILITIES = [
 ];
 
 const Home = () => {
-  const { isAuthenticated, getPostLoginPath, loading: authLoading } = useAuth();
+  const { isAuthenticated, getPostLoginPath } = useAuth();
   const { effectiveTheme, setTheme } = useTheme();
 
   useEffect(() => {
     document.title = 'Transcounty Pharmacy | Staff Ops';
   }, []);
 
-  if (!authLoading && isAuthenticated) {
+  // Redirect as soon as we know the session (including sync cache hydrate).
+  if (isAuthenticated) {
     return <Navigate to={getPostLoginPath()} replace />;
   }
 

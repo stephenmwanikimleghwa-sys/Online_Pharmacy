@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ImageWithFallback from './ImageWithFallback';
+import { getProductDisplayPrice } from '../utils/parseApiData';
 
 const ProductCard = ({ product }) => {
-  const { id, name, price, image, pharmacy, category, stock_quantity } = product;
-  const stock = Number(stock_quantity);
+  const { id, name, image, pharmacy, category, stock_quantity, total_stock } = product;
+  const displayPrice = getProductDisplayPrice(product);
+  const stock = Number(total_stock ?? stock_quantity);
   const hasStock = Number.isFinite(stock);
 
   return (
@@ -48,7 +50,7 @@ const ProductCard = ({ product }) => {
         <div className="flex items-end justify-between gap-2">
           <span className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>
             <span className="text-xs font-medium mr-0.5" style={{ color: 'var(--text-secondary)' }}>KSh</span>
-            {Number(price || 0).toLocaleString()}
+            {displayPrice.toLocaleString()}
           </span>
           {hasStock && (
             <span

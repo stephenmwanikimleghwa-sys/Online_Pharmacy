@@ -151,17 +151,33 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
         name: form.name,
         category: form.category,
         dosage_form: form.dosage_form,
-        department: form.department,
+        department: form.department || 'CHEMIST',
         strength: form.strength,
         description: form.description,
         reorder_threshold: form.reorder_threshold,
         expiry_date: form.expiry_date || null,
         supplier: form.supplier || null,
-        buying_price: Number(form.buying_price),
-        use_legacy_prices: form.use_legacy_prices,
-        ...(form.wholesale_price ? { wholesale_price: Number(form.wholesale_price) } : {}),
-        ...(form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
       };
+
+      const orig = item.pricing_tier || {};
+      const honorManual =
+        Boolean(form.use_legacy_prices) ||
+        Boolean(form.retail_price) ||
+        Boolean(form.wholesale_price);
+      const pricingChanged =
+        String(form.buying_price ?? '') !== String(orig.buying_price ?? '') ||
+        Boolean(form.use_legacy_prices) !== Boolean(orig.use_legacy_prices) ||
+        String(form.wholesale_price ?? '') !== String(orig.wholesale_price ?? '') ||
+        String(form.retail_price ?? '') !== String(orig.retail_price ?? '');
+
+      if (pricingChanged && form.buying_price !== '' && form.buying_price != null) {
+        payload.buying_price = Number(form.buying_price);
+        payload.use_legacy_prices = honorManual;
+        if (honorManual) {
+          if (form.wholesale_price) payload.wholesale_price = Number(form.wholesale_price);
+          if (form.retail_price) payload.retail_price = Number(form.retail_price);
+        }
+      }
       await api.patch(`/products/${item.id}/`, payload);
       notify.success('Medicine Updated', 'The product details have been saved.');
       onEdit?.();

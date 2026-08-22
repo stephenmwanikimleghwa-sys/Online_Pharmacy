@@ -5,6 +5,7 @@ import ImageWithFallback from "../components/ImageWithFallback";
 import api from '../services/api';
 import PageLoader from '../components/PageLoader';
 import PageHeader from '../components/PageHeader';
+import { getProductDisplayPrice } from '../utils/parseApiData';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -84,14 +85,14 @@ const ProductDetails = () => {
 
               <p className="text-2xl font-display font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
                 <span className="text-sm font-medium mr-1" style={{ color: 'var(--text-secondary)' }}>KSh</span>
-                {Number(product.price).toLocaleString()}
+                {getProductDisplayPrice(product).toLocaleString()}
               </p>
 
               {typeof product.stock_quantity !== 'undefined' && (
                 <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                   Stock:{' '}
                   <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {product.stock_quantity}
+                    {product.total_stock ?? product.stock_quantity}
                   </span>
                 </p>
               )}

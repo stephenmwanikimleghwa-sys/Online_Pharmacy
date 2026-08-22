@@ -11,9 +11,9 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
 import PageLoader from "./components/PageLoader";
 
+const Login = lazy(() => import("./pages/Login"));
 const PharmacistDashboard = lazy(() => import("./pages/PharmacistDashboard"));
 const RestockRequests = lazy(() => import("./pages/RestockRequests"));
 const AddPrescription = lazy(() => import("./pages/AddPrescription"));
@@ -48,11 +48,10 @@ const ClinicalDashboard = lazy(() => import('./pages/clinical/ClinicalDashboard'
 const ConsultationWorkflow = lazy(() => import('./pages/clinical/ConsultationWorkflow'));
 const ReturnsDashboard = lazy(() => import('./pages/inventory/ReturnsDashboard'));
 const StockReconciliation = lazy(() => import('./pages/inventory/StockReconciliation'));
-import NotFound from "./pages/NotFound";
-import BottomNav from "./components/BottomNav";
-import Footer from "./components/Footer";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/navbar/Sidebar";
+const NotFound = lazy(() => import("./pages/NotFound"));
+const BottomNav = lazy(() => import("./components/BottomNav"));
+const Navbar = lazy(() => import("./components/Navbar"));
+const Sidebar = lazy(() => import("./components/navbar/Sidebar"));
 import ScrollToTop from "./components/ScrollToTop";
 import "./App.css";
 
@@ -80,18 +79,25 @@ function AppLayout() {
   // Hide full sidebar/navbar chrome on the public home page when not logged in
   const isUnauthHome = location.pathname === "/" && !isAuthenticated;
   const showChrome = !isAuthPage && !isUnauthHome;
-  const showFooter = false; // Public footer lives on Home; ops screens stay uncluttered
 
   return (
     <>
       <ScrollToTop />
       <div className="flex h-[100dvh] w-full overflow-hidden" style={{ background: 'var(--bg-gradient)', backgroundAttachment: 'fixed' }}>
-        {showChrome && <Sidebar />}
+        {showChrome && (
+          <Suspense fallback={null}>
+            <Sidebar />
+          </Suspense>
+        )}
 
         <div data-scroll-root className="flex-1 flex flex-col w-full min-w-0 h-full overflow-y-auto overflow-x-hidden relative pb-16 md:pb-0">
-          {showChrome && <Navbar />}
+          {showChrome && (
+            <Suspense fallback={null}>
+              <Navbar />
+            </Suspense>
+          )}
 
-          <main key={location.pathname} className="main-content page-enter flex-auto flex-shrink-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <main key={location.pathname} className={`main-content page-enter flex-auto flex-shrink-0 w-full relative ${isUnauthHome ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}`}>
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
@@ -269,9 +275,12 @@ function AppLayout() {
               </Suspense>
             </ErrorBoundary>
           </main>
-          {showChrome && showFooter && <Footer />}
         </div>
-        {showChrome && <BottomNav />}
+        {showChrome && (
+          <Suspense fallback={null}>
+            <BottomNav />
+          </Suspense>
+        )}
       </div>
     </>
   );

@@ -127,14 +127,34 @@ const readStoredActiveBranch = (): BranchInfo | null => {
   }
 };
 
+/** Instant session hydrate so landing/dashboard aren't blocked on a cold API. */
+const readCachedProfileUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem("cached_profile");
+    if (!raw) return null;
+    const profileData = JSON.parse(raw) as Record<string, unknown>;
+    const role = normalizeUserRole(profileData);
+    return { ...profileData, role: role || (profileData.role as User["role"]) } as User;
+  } catch {
+    return null;
+  }
+};
+
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("access_token"));
-  const [loading, setLoading] = useState<boolean>(true);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("access_token"));
+  const [user, setUser] = useState<User | null>(() =>
+    localStorage.getItem("access_token") ? readCachedProfileUser() : null,
+  );
+  // Don't block first paint when we already have a cached profile for this token.
+  const [loading, setLoading] = useState<boolean>(() => {
+    const t = localStorage.getItem("access_token");
+    if (!t) return false;
+    return !readCachedProfileUser();
+  });
   const [activeBranch, setActiveBranchState] = useState<BranchInfo | null>(readStoredActiveBranch());
   const [allowedBranches, setAllowedBranches] = useState<BranchInfo[]>([]);
   const [requiresBranchSelection, setRequiresBranchSelection] = useState(false);
@@ -213,7 +233,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      setLoading(true);
+      // Cached user already painted the UI — refresh in the background without blocking.
+      const hasCachedSession = Boolean(user);
+      if (!hasCachedSession) {
+        setLoading(true);
+      }
+
       try {
         const response = await api.get("/auth/profile/");
         const profileData = (response.data?.user || response.data?.profile || response.data) as Record<
@@ -279,6 +304,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     verifyToken();
+    // Intentionally omit `user` — we only re-verify when the token changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, mergeUserFromProfile]);
 
   const switchBranch = async (branchId: number) => {

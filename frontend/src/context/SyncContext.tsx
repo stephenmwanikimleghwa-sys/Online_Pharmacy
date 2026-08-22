@@ -80,35 +80,32 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [refreshPending, syncNow],
   );
 
-  // Connectivity listeners + flush on reconnect.
+  // Connectivity listeners + flush on reconnect (not on every focus while idle).
   useEffect(() => {
     const onOnline = () => {
       setOnline(true);
       void syncNow();
     };
     const onOffline = () => setOnline(false);
-    const onFocus = () => {
-      if (navigator.onLine) void syncNow();
-    };
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    window.addEventListener("focus", onFocus);
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
-      window.removeEventListener("focus", onFocus);
     };
   }, [syncNow]);
 
-  // Periodic retry while online, and an initial flush on mount (covers ops left
-  // queued from a previous session that ended offline).
+  // Defer initial flush so landing/first paint aren't competing with IndexedDB + API.
   useEffect(() => {
     void refreshPending();
-    void syncNow();
+    const bootTimer = window.setTimeout(() => {
+      if (navigator.onLine) void syncNow();
+    }, 2500);
     timerRef.current = setInterval(() => {
       if (navigator.onLine) void syncNow();
     }, FLUSH_INTERVAL_MS);
     return () => {
+      window.clearTimeout(bootTimer);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [refreshPending, syncNow]);

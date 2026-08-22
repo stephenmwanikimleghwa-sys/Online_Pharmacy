@@ -28,9 +28,13 @@ const DispensingLogs = () => {
       if (branchFilter && user?.role === 'admin') params.branch = branchFilter;
       if (currentPage > 1) params.page = currentPage;
       const response = await api.get('/inventory/dispensations/', { params, skipGlobalErrorNotification: true });
-      const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
+      const payload = response.data?.data ?? response.data;
+      const data = Array.isArray(payload)
+        ? payload
+        : (payload?.results || payload?.dispensations || []);
       setLogs(data);
-      setTotalPages(Math.max(1, Math.ceil((response.data.count || data.length) / 20)));
+      const count = payload?.count ?? response.data?.count ?? data.length;
+      setTotalPages(Math.max(1, Math.ceil(Number(count) / 20)));
     } catch (error) {
       console.error("Error fetching logs:", error, error.response?.data);
     } finally {
@@ -173,7 +177,7 @@ const DispensingLogs = () => {
                       </div>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-slate-700">
-                      {log.sale_type === 'prescription' ? 'Prescription' : 'Walk-in'}
+                      {log.customer_name || log.patient_name || (log.sale_type === 'prescription' ? 'Prescription' : 'Walk-in')}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500">
                       {log.items?.length || 0} item(s)

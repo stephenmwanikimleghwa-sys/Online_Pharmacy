@@ -105,7 +105,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       }
       setSearching(true);
       try {
-        const products = await searchProducts(q, { branchId, perPage: 80, context: "inventory" });
+        const products = await searchProducts(q, { branchId, perPage: 80, context: "sales" });
         setSearchResults(sortForOTC(products));
         setOutOfStockHint(null);
         if (products.length === 0) {
@@ -130,7 +130,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
   const loadCatalog = useCallback(async () => {
     try {
-      const products = await fetchBranchCatalog({ branchId, perPage: 500, context: "inventory" });
+      const products = await fetchBranchCatalog({ branchId, perPage: 200, context: "sales" });
       const sorted = sortForOTC(products);
       setCatalog(sorted);
       if (!searchTerm.trim()) {

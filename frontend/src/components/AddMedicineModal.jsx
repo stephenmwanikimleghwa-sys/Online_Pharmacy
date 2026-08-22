@@ -21,7 +21,8 @@ export const AddMedicineModal = ({
   setForm,
   formErrors = {},
   onSubmit,
-  categories = []
+  categories = [],
+  submitting = false,
 }) => {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
@@ -478,9 +479,12 @@ export const AddMedicineModal = ({
             </button>
             <button
               type="submit"
-              className="flex-[2] px-5 py-2.5 btn-primary text-white rounded-lg font-semibold text-sm"
+              disabled={submitting}
+              className="flex-[2] px-5 py-2.5 btn-primary text-white rounded-lg font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isEditMode ? 'Save changes' : 'Add medicine'}
+              {submitting
+                ? (isEditMode ? 'Saving…' : 'Adding…')
+                : (isEditMode ? 'Save changes' : 'Add medicine')}
             </button>
           </div>
         </form>
