@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --mode development",
-    "build": "vite build --mode production",
+    "build": "vite build --mode production && node scripts/write-spa-fallbacks.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "serve": "node scripts/spa-server.mjs",

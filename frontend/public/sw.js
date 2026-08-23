@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pharmacy-aggregator-v5';
+const CACHE_NAME = 'pharmacy-aggregator-v6';
 // API reads live in a separate cache so we can wipe them on logout without
 // dropping the app shell. See CLEAR_API_CACHE message handler below.
 const API_CACHE_NAME = 'pharmacy-api-cache-v1';
@@ -110,19 +110,25 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isNavigationRequest(request)) {
+    // Prefer the SPA shell when the static host 404s deep links (Render CDN).
+    // Cache-first when possible so hard refresh still boots the app after first visit.
     event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
+      (async () => {
+        const shellPromise = serveSpaShell();
+        try {
+          const networkResponse = await fetch(request);
           if (networkResponse?.status === 404) {
-            return serveSpaShell();
+            return (await shellPromise) || networkResponse;
           }
           if (networkResponse?.ok && isCacheableRequest(request)) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
           return networkResponse;
-        })
-        .catch(() => serveSpaShell()),
+        } catch {
+          return (await shellPromise) || new Response('Offline', { status: 504, statusText: 'Offline' });
+        }
+      })(),
     );
     return;
   }

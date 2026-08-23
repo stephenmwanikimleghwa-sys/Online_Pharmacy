@@ -84,7 +84,7 @@ function AppLayout() {
 
         <div
           data-scroll-root
-          className="flex-1 flex flex-col w-full min-w-0 h-full overflow-y-auto overflow-x-hidden relative pb-16 md:pb-0"
+          className="flex-1 flex flex-col w-full min-w-0 h-full overflow-y-auto overflow-x-hidden relative pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0"
         >
           {showChrome && (
             <Suspense fallback={null}>
@@ -95,7 +95,7 @@ function AppLayout() {
           <main
             key={location.pathname}
             className={`main-content page-enter flex-auto flex-shrink-0 w-full relative ${
-              isUnauthHome ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+              isUnauthHome ? "" : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8"
             }`}
           >
             <ErrorBoundary>

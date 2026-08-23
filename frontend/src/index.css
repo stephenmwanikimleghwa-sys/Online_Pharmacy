@@ -507,7 +507,23 @@ html {
 
 .mobile-nav-link:hover {
   color: var(--color-highlight);
-  background: rgba(217, 70, 239, 0.08);
+  background: var(--brand-soft);
+}
+
+.mobile-nav-link-active {
+  color: var(--color-primary);
+  background: var(--brand-mist);
+}
+
+@keyframes mobileDrawerIn {
+  from {
+    opacity: 0.85;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 

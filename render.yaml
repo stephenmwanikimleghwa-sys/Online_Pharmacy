@@ -35,16 +35,23 @@ services:
       # CELERY_BROKER_URL / CELERY_RESULT_BACKEND here (and restore the redis
       # service below) to re-enable distributed cache + async task dispatch.
 
-  # Frontend — Node web service with SPA fallback (hard refresh must not 404).
-  # Static CDN rewrite rules from blueprint are often not applied on existing sites.
+  # Frontend — Static site (matches live online-pharmacy-1-np3y).
+  # SPA hard-refresh needs the rewrite below. Build also copies index.html into
+  # each known route folder (scripts/write-spa-fallbacks.mjs) as a belt-and-suspenders
+  # fix when dashboard rewrite rules were never applied.
   - type: web
     name: pharmacy-aggregator-frontend
-    runtime: node
-    region: ohio
-    plan: free
+    runtime: static
     buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && node scripts/spa-server.mjs
-    healthCheckPath: /healthz
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
     envVars:
       - key: NODE_VERSION
         value: "18.0.0"
