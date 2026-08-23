@@ -341,9 +341,10 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "config.exception_handlers.structured_exception_handler",
 }
 
-# JWT Settings
+# JWT Settings — access is short-lived; frontend silently refreshes via refresh token.
+# Pharmacy shifts are long: 2h access + 7d refresh avoids mid-shift kickouts when refresh works.
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
