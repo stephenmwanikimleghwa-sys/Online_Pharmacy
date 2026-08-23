@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
@@ -113,7 +113,21 @@ const getNavGroups = (user) => {
 const Sidebar = () => {
   const location = useLocation();
   const { user, activeBranch } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("transcounty_sidebar_collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("transcounty_sidebar_collapsed", isCollapsed ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [isCollapsed]);
   const { mainLinks, operationsLinks, adminLinks } = getNavGroups(user ?? null);
 
   const inventoryPrefetch = usePrefetchOnHover(
@@ -180,45 +194,63 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`hidden md:flex md:flex-col ${isCollapsed ? "w-[4.25rem]" : "w-56"} h-full nav-premium border-r z-40 transition-all duration-300 flex-shrink-0 relative overflow-hidden`}
+      className={`hidden md:flex md:flex-col ${isCollapsed ? "w-[4.5rem]" : "w-56"} h-full nav-premium border-r z-40 transition-[width] duration-200 ease-out flex-shrink-0 relative overflow-hidden`}
       style={{ borderColor: "var(--border-primary)" }}
     >
-      <button
-        type="button"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 btn-primary rounded-full p-1 shadow-md z-50 flex items-center justify-center"
-        style={{ width: 22, height: 22 }}
-        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-      >
-        {isCollapsed ? (
-          <ChevronRightIcon className="w-3 h-3 text-white" />
-        ) : (
-          <ChevronLeftIcon className="w-3 h-3 text-white" />
-        )}
-      </button>
-
+      {/* Header: compact brand + natural collapse control */}
       <div
-        className={`px-3 ${isCollapsed ? "py-4" : "pt-4 pb-3"} flex flex-col items-center gap-2 flex-shrink-0`}
+        className="flex-shrink-0 px-2.5 pt-3 pb-2"
         style={{ borderBottom: "1px solid var(--border-primary)" }}
       >
-        <Link
-          to="/"
-          className="flex flex-col items-center gap-1.5 group focus:outline-none focus-visible:ring-2 rounded-lg"
-          style={{ "--tw-ring-color": "var(--color-primary)" }}
-        >
-          <div
-            className={`${isCollapsed ? "w-9 h-9 text-sm" : "w-10 h-10 text-base"} nav-logo-mark flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform`}
+        <div className={`flex items-center ${isCollapsed ? "flex-col gap-2" : "gap-2"}`}>
+          <Link
+            to="/"
+            className={`flex items-center min-w-0 group focus:outline-none focus-visible:ring-2 rounded-lg ${
+              isCollapsed ? "justify-center" : "flex-1 gap-2"
+            }`}
+            style={{ "--tw-ring-color": "var(--color-primary)" }}
+            title="Transcounty Home"
           >
-            TP
-          </div>
-          {!isCollapsed && (
-            <span className="nav-brand-text font-bold text-sm tracking-tight group-hover:opacity-80 transition-opacity whitespace-nowrap">
-              Transcounty
-            </span>
-          )}
-        </Link>
+            <div className="w-7 h-7 text-[10px] leading-none nav-logo-mark flex items-center justify-center text-white font-bold flex-shrink-0">
+              TP
+            </div>
+            {!isCollapsed && (
+              <span className="nav-brand-text font-semibold text-[13px] tracking-tight truncate group-hover:opacity-80 transition-opacity">
+                Transcounty
+              </span>
+            )}
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsCollapsed((v) => !v)}
+            className="flex-shrink-0 p-1.5 rounded-md transition-colors"
+            style={{
+              color: "var(--text-secondary)",
+              background: "transparent",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--bg-field)";
+              e.currentTarget.style.color = "var(--text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--text-secondary)";
+            }}
+            title={isCollapsed ? "Expand menu" : "Collapse menu"}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!isCollapsed}
+          >
+            {isCollapsed ? (
+              <ChevronRightIcon className="w-4 h-4" />
+            ) : (
+              <ChevronLeftIcon className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+
         {!isCollapsed && (
-          <div className="w-full pt-1 flex justify-center">
+          <div className="mt-2.5 w-full flex justify-center">
             <BranchSelector />
           </div>
         )}
