@@ -37,11 +37,15 @@ function shouldShowGlobalToast(error: AxiosError, config: InternalAxiosRequestCo
   if (config?.skipGlobalErrorNotification) return false;
 
   const status = error.response?.status;
-  const method = config?.method?.toLowerCase() ?? "get";
+  const method = (config?.method?.toLowerCase() ?? "get") as string;
 
   // Permission and missing-resource GETs: show inline on the page, not popups.
   if (status === 403) return false;
   if (status === 404 && method === "get") return false;
+
+  // Background GETs failing while the API is cold should not spam toasts —
+  // pages already show their own empty/error states.
+  if (!error.response && method === "get") return false;
 
   return true;
 }
@@ -50,7 +54,11 @@ function emitGlobalError(display: ReturnType<typeof mapAxiosErrorToDisplay>) {
   if (!display) return;
   const key = `${display.title}:${display.message}`;
   const now = Date.now();
-  if (key === lastToastKey && now - lastToastAt < TOAST_COOLDOWN_MS) return;
+  const cooldown =
+    display.title === "Server Unreachable" || display.title === "No Internet Connection"
+      ? 60_000
+      : TOAST_COOLDOWN_MS;
+  if (key === lastToastKey && now - lastToastAt < cooldown) return;
   lastToastKey = key;
   lastToastAt = now;
   notifyError(display.title, display.message, display.actionLabel, display.action);

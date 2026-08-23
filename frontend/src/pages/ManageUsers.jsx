@@ -9,6 +9,7 @@ import RefreshIndicator from '../components/ui/RefreshIndicator';
 import { queryClient } from '../lib/queryClient';
 import { QUERY_KEYS } from '../lib/queryKeys';
 import { unwrapList } from '../utils/parseApiData';
+import { formatLoginAt } from '../utils/formatLoginAt';
 
 const DEFAULT_PERMISSION_FLAGS = {
   can_manage_users: false,
@@ -262,7 +263,7 @@ const ManageUsers = () => {
           <table className="w-full text-left">
             <thead>
               <tr style={{ background: 'var(--bg-field)' }}>
-                {["Username", "Email", "Role", "Status", "Actions"].map(h => (
+                {["Username", "Email", "Role", "Last login", "Status", "Actions"].map(h => (
                   <th key={h} className="px-8 py-5 text-xs font-bold"
                     style={{ color: 'var(--text-secondary)' }}>{h}</th>
                 ))}
@@ -291,6 +292,9 @@ const ManageUsers = () => {
                       style={getRoleStyle(user.role)}>
                       {user.role}
                     </span>
+                  </td>
+                  <td className="px-8 py-6 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    {formatLoginAt(user.last_login) || '—'}
                   </td>
                   <td className="px-8 py-6">
                     {user.is_active ? (

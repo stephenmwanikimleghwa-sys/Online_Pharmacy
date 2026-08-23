@@ -11,6 +11,7 @@ import {
 import MobileNav from "./navbar/MobileNav";
 import BranchSelector from "./BranchSelector";
 import SyncStatusIndicator from "./SyncStatusIndicator";
+import { formatLoginAt } from "../utils/formatLoginAt";
 
 const Navbar = () => {
   const { user, logout, loading } = useAuth();
@@ -110,6 +111,15 @@ const Navbar = () => {
             <div className="md:hidden">
               <BranchSelector />
             </div>
+            {user && formatLoginAt(user.session_started_at || user.last_login) ? (
+              <span
+                className="hidden sm:inline text-[11px] font-medium truncate max-w-[11rem]"
+                style={{ color: "var(--text-secondary)" }}
+                title="Signed in at"
+              >
+                Signed in {formatLoginAt(user.session_started_at || user.last_login)}
+              </span>
+            ) : null}
             {themeToggle}
             {logoutBtn}
           </div>

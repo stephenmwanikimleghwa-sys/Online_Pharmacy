@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -71,6 +72,8 @@ class UserLoginView(APIView):
                 
                 user = serializer.validated_data["user"]
                 user = User.objects.select_related("pharmacy", "branch").get(pk=user.pk)
+                update_last_login(None, user)
+                user.refresh_from_db(fields=["last_login"])
 
                 if not user.is_superuser and user.role not in (RoleChoices.ADMIN, RoleChoices.CUSTOMER):
                     if not get_allowed_branches(user).exists():

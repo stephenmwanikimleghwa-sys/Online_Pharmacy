@@ -36,6 +36,9 @@ export interface User {
   is_pharmacist?: boolean;
   is_customer?: boolean;
   user_type?: string;
+  last_login?: string | null;
+  last_activity?: string | null;
+  session_started_at?: string | null;
   [key: string]: unknown;
 }
 
@@ -128,16 +131,39 @@ const readStoredActiveBranch = (): BranchInfo | null => {
 };
 
 /** Instant session hydrate so landing/dashboard aren't blocked on a cold API. */
+const SESSION_STARTED_KEY = "session_started_at";
+
 const readCachedProfileUser = (): User | null => {
   try {
     const raw = localStorage.getItem("cached_profile");
     if (!raw) return null;
     const profileData = JSON.parse(raw) as Record<string, unknown>;
     const role = normalizeUserRole(profileData);
-    return { ...profileData, role: role || (profileData.role as User["role"]) } as User;
+    const sessionStarted =
+      (localStorage.getItem(SESSION_STARTED_KEY) as string | null) ||
+      (profileData.last_login as string | null) ||
+      null;
+    return {
+      ...profileData,
+      role: role || (profileData.role as User["role"]),
+      session_started_at: sessionStarted,
+    } as User;
   } catch {
     return null;
   }
+};
+
+const withSessionStarted = (user: User, forceNew = false): User => {
+  let started = forceNew ? null : localStorage.getItem(SESSION_STARTED_KEY);
+  if (!started) {
+    started = user.last_login || new Date().toISOString();
+    try {
+      localStorage.setItem(SESSION_STARTED_KEY, started);
+    } catch {
+      /* ignore */
+    }
+  }
+  return { ...user, session_started_at: started };
 };
 
 interface AuthProviderProps {
@@ -207,7 +233,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const mergeUserFromProfile = useCallback(
     (profileData: Record<string, unknown>, session?: BranchSessionPayload) => {
       const role = normalizeUserRole(profileData);
-      const merged: User = { ...profileData, role: role || (profileData.role as User["role"]) } as User;
+      const merged: User = withSessionStarted({
+        ...profileData,
+        role: role || (profileData.role as User["role"]),
+      } as User);
       setUser(merged);
       if (merged.role) {
         localStorage.setItem("user_role", merged.role);
@@ -389,7 +418,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         resolvedRole = role || ((loginUser as User).role as User["role"] | undefined) || null;
         if (!resolvedRole && loginRecord.is_admin) resolvedRole = "admin";
         if (!resolvedRole && loginRecord.is_pharmacist) resolvedRole = "pharmacist";
-        finalUser = { ...(loginUser as User), role: resolvedRole as User["role"] };
+        finalUser = withSessionStarted(
+          { ...(loginUser as User), role: resolvedRole as User["role"] },
+          true,
+        );
         setUser(finalUser);
         if (finalUser.role) {
           localStorage.setItem("user_role", finalUser.role);
@@ -509,6 +541,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_role");
     localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
+    localStorage.removeItem(SESSION_STARTED_KEY);
+    localStorage.removeItem("cached_profile");
     // The React Query cache is persisted to localStorage (see main.jsx) so it
     // survives reboots for offline reads; clear it on logout so the next user
     // on a shared machine can't see the previous user's cached data.

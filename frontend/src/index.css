@@ -658,6 +658,73 @@ html {
   color: var(--color-primary);
 }
 
+/* ---- Dark mode: force readable fields (Tailwind bg-white / browser defaults hide text) ---- */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="hidden"]):not([type="image"]),
+html.dark select,
+html.dark textarea,
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="hidden"]):not([type="image"]),
+.dark select,
+.dark textarea {
+  background-color: var(--bg-field) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+  color-scheme: dark;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.75;
+}
+
+html.dark option,
+.dark option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+html.dark input:-webkit-autofill,
+html.dark input:-webkit-autofill:hover,
+html.dark input:-webkit-autofill:focus,
+html.dark textarea:-webkit-autofill,
+html.dark select:-webkit-autofill,
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark textarea:-webkit-autofill,
+.dark select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary);
+  box-shadow: 0 0 0 1000px var(--bg-field) inset !important;
+  transition: background-color 99999s ease-out;
+}
+
+/* Hardcoded light panels that drown dark-mode text */
+html.dark .bg-white,
+.dark .bg-white {
+  background-color: var(--bg-card) !important;
+}
+html.dark .hover\:bg-white\/50:hover,
+.dark .hover\:bg-white\/50:hover {
+  background-color: var(--bg-field) !important;
+}
+html.dark .text-slate-700,
+html.dark .text-slate-800,
+html.dark .text-slate-900,
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-slate-900 {
+  color: var(--text-primary) !important;
+}
+html.dark .border-slate-200,
+html.dark .border-indigo-200,
+.dark .border-slate-200,
+.dark .border-indigo-200 {
+  border-color: var(--border-primary) !important;
+}
+
 /* ---- Alert boxes ---- */
 .alert-error {
   display: flex;

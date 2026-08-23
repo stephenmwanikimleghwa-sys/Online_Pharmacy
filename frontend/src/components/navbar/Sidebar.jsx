@@ -26,6 +26,7 @@ import {
   CubeIcon,
 } from "@heroicons/react/24/outline";
 import BranchSelector from "../BranchSelector";
+import { formatLoginAt } from "../../utils/formatLoginAt";
 
 const getDashboardHref = (role) => {
   switch (role) {
@@ -345,6 +346,15 @@ const Sidebar = () => {
                 >
                   {user.role}
                 </p>
+                {formatLoginAt(user.session_started_at || user.last_login) ? (
+                  <p
+                    className="text-[10px] truncate mt-0.5"
+                    style={{ color: "var(--text-secondary)" }}
+                    title="Signed in at"
+                  >
+                    In {formatLoginAt(user.session_started_at || user.last_login)}
+                  </p>
+                ) : null}
               </div>
             )}
           </Link>

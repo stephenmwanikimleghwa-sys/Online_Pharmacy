@@ -70,9 +70,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'must_change_password', 'can_process_sales', 'can_manage_inventory',
             'can_edit_prices', 'can_view_reports', 'can_manage_users',
             'can_delete_records', 'can_view_audit_logs', 'permission_flags',
-            'can_transfer_stock',
+            'can_transfer_stock', 'last_login', 'last_activity', 'date_joined',
         ]
-        read_only_fields = ['id', 'role', 'is_verified', 'full_name', 'branch_info']
+        read_only_fields = [
+            'id', 'role', 'is_verified', 'full_name', 'branch_info',
+            'last_login', 'last_activity', 'date_joined',
+        ]
 
     def get_pharmacy_name(self, obj):
         """Handle null pharmacy gracefully."""

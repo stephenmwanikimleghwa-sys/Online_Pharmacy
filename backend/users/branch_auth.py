@@ -143,4 +143,6 @@ def login_user_payload(user: User) -> dict[str, Any]:
         "first_name": user.first_name,
         "last_name": user.last_name,
         "home_branch": branch_to_dict(user.branch) if user.branch_id else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "last_activity": user.last_activity.isoformat() if getattr(user, "last_activity", None) else None,
     }
