@@ -23,13 +23,19 @@ from utils.filters import filter_products_by_branch_type
 @api_view(["GET"])
 @permission_classes([IsPharmacistOrAdmin])
 def inventory_summary(request):
-    """Get inventory summary for pharmacist dashboard."""
+    """Get inventory summary for pharmacist dashboard.
+
+    Counts are scoped to the active branch and that branch's sellable
+    product types (CHEMIST vs AGROVET). This keeps Peak Farm from counting
+    thousands of zero-qty chemist rows that only exist from legacy backfill.
+    """
     user = request.user
     is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
     branch_param = request.query_params.get('branch')
     
     qs = BranchStock.objects.filter(product__is_active=True)
     active = get_active_branch(request)
+    branch_for_type = None
 
     # Resolve the branch scope this request is counting over. The cache key must
     # include this scope so an admin viewing branch A never gets branch B's
@@ -37,14 +43,31 @@ def inventory_summary(request):
     if is_admin and branch_param and branch_param != 'all':
         qs = qs.filter(branch_id=branch_param)
         scope = f"branch_{branch_param}"
+        try:
+            branch_for_type = Branch.objects.filter(pk=int(branch_param)).first()
+        except (TypeError, ValueError):
+            branch_for_type = None
     elif active:
         qs = qs.filter(branch=active)
         scope = f"branch_{active.id}"
+        branch_for_type = active
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
         scope = f"branch_{user.branch_id}"
+        branch_for_type = user.branch
     else:
         scope = f"user_{user.id}_all"
+
+    # Only count products this branch type is meant to sell.
+    include_all = (request.query_params.get("scope") or "").strip().lower() == "all"
+    if branch_for_type and not include_all:
+        bt = getattr(branch_for_type, "branch_type", None)
+        if bt == "CHEMIST":
+            qs = qs.filter(product__product_type__in=["CHEMIST", "UNIVERSAL"])
+            scope = f"{scope}_chemist"
+        elif bt == "AGROVET":
+            qs = qs.filter(product__product_type__in=["AGROVET", "UNIVERSAL"])
+            scope = f"{scope}_agrovet"
 
     def _compute():
         return {
@@ -53,6 +76,7 @@ def inventory_summary(request):
                 quantity__lte=F('reorder_level'), quantity__gt=0
             ).count(),
             "outOfStockItems": qs.filter(quantity__lte=0).count(),
+            "branch_type": getattr(branch_for_type, "branch_type", None),
         }
 
     # Short TTL: these counts change on every sale/intake. 30s cuts repeated DB
@@ -115,7 +139,9 @@ def inventory_list(request):
             per_page = int(request.GET.get("per_page", 500))
         except (TypeError, ValueError):
             per_page = 500
-        per_page = max(1, min(per_page, 2000))
+        # Allow a higher cap when searching so staff can find products beyond page 1
+        max_page = 2000 if search else 500
+        per_page = max(1, min(per_page, max_page))
         page = request.GET.get("page", 1)
         paginator = Paginator(products, per_page)
         try:

@@ -22,12 +22,19 @@ export function useProducts(filters: Record<string, unknown> = {}) {
 
 export function useInventoryList(filters: Record<string, unknown> = {}) {
   const { activeBranch } = useActiveBranch();
-  const params = { per_page: 5000, ...filters };
+  const params = {
+    per_page: 500,
+    scope: "local",
+    ...filters,
+  };
   return useQuery({
     queryKey: QUERY_KEYS.inventory(activeBranch?.id, params),
     queryFn: async () => {
-      const res = await api.get('/inventory/list/', {
-        params,
+      const res = await api.get("/inventory/list/", {
+        params: {
+          ...params,
+          branch: activeBranch?.id,
+        },
         skipGlobalErrorNotification: true,
       });
       const data = res.data || {};
@@ -35,6 +42,8 @@ export function useInventoryList(filters: Record<string, unknown> = {}) {
       return {
         products,
         totalItems: data.totalItems ?? products.length,
+        totalPages: data.totalPages ?? 1,
+        currentPage: data.currentPage ?? 1,
         raw: data,
       };
     },

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
-import { useInventoryList } from '../hooks/useProducts';
+import { useInventoryList, useInventorySummary } from '../hooks/useProducts';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import RefreshIndicator from '../components/ui/RefreshIndicator';
 import inventoryService from '../services/inventoryService';
@@ -22,15 +22,6 @@ const InventoryManagement = () => {
   const navigate = useNavigate();
   useDocumentTitle('Inventory Management');
   const [activeTab, setActiveTab] = useState('inventory');
-  const {
-    data: inventoryData,
-    isLoading: loading,
-    isFetching,
-    error: inventoryError,
-    refetch: refetchInventory,
-  } = useInventoryList();
-  const inventory = inventoryData?.products ?? [];
-  const totalInventoryItems = inventoryData?.totalItems ?? inventory.length;
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -40,6 +31,40 @@ const InventoryManagement = () => {
   const BRANCH_COLUMNS = ['Transcounty Main', 'Transcounty Annex', 'Peakfarm'];
 
   const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const listFilters = useMemo(() => {
+    const params = {};
+    if (debouncedSearchTerm.trim()) {
+      params.search = debouncedSearchTerm.trim();
+      params.per_page = 200; // search across matches, not first catalog page
+    }
+    if (filter === 'low') params.low_stock = 'true';
+    if (filter === 'out') params.out_of_stock = 'true';
+    return params;
+  }, [debouncedSearchTerm, filter]);
+
+  const {
+    data: inventoryData,
+    isLoading: loading,
+    isFetching,
+    error: inventoryError,
+    refetch: refetchInventory,
+  } = useInventoryList(listFilters);
+
+  const {
+    data: summaryData,
+  } = useInventorySummary();
+
+  const inventory = inventoryData?.products ?? [];
+  const totalInventoryItems = summaryData?.totalProducts ?? inventoryData?.totalItems ?? inventory.length;
+  const needRestockCount = summaryData?.lowStockItems ?? 0;
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -66,13 +91,6 @@ const InventoryManagement = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
   const handleRestock = async (itemId, quantity, reason, branchId, options = {}) => {
     try {
       await inventoryService.restockInventory(itemId, quantity, reason, branchId, options);
@@ -92,13 +110,10 @@ const InventoryManagement = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let lowStockCount = 0;
     const expired = [];
     const expiringSoon = [];
 
     const withDerived = inventory.map((item) => {
-      if (item.is_low_stock && item.stock_quantity > 0) lowStockCount += 1;
-
       let daysLeft = null;
       if (item.expiry_date) {
         const exp = new Date(item.expiry_date);
@@ -111,22 +126,16 @@ const InventoryManagement = () => {
       return { ...item, _daysLeft: daysLeft };
     });
 
-    return { withDerived, lowStockCount, expired, expiringSoon };
+    return { withDerived, expired, expiringSoon };
   }, [inventory]);
 
+  // Search / low / out are applied on the server; only expiry stays client-side.
   const filteredInventory = useMemo(() => {
-    const loweredSearch = debouncedSearchTerm.toLowerCase();
-    return inventoryMetrics.withDerived.filter((item) => {
-      const name = (item.name || '').toLowerCase();
-      const matchesSearch = name.includes(loweredSearch);
-      const matchesFilter =
-        filter === 'all' ? true :
-          filter === 'low' ? (item.is_low_stock && item.stock_quantity > 0) :
-            filter === 'out' ? (item.stock_quantity === 0) :
-              filter === 'expiring' ? (item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry') : true;
-      return matchesSearch && matchesFilter;
-    });
-  }, [inventoryMetrics.withDerived, debouncedSearchTerm, filter]);
+    if (filter !== 'expiring') return inventoryMetrics.withDerived;
+    return inventoryMetrics.withDerived.filter(
+      (item) => item.expiry_status === 'expiring_soon' || item.expiry_status === 'near_expiry',
+    );
+  }, [inventoryMetrics.withDerived, filter]);
 
   const getBranchQty = (item, branchName) => {
     if (!branchName) return 0;
@@ -269,7 +278,7 @@ const InventoryManagement = () => {
                   <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000" 
-                      style={{ width: `${inventory.length > 0 ? Math.round(((inventory.length - inventoryMetrics.lowStockCount) / inventory.length) * 100) : 0}%` }}
+                      style={{ width: `${totalInventoryItems > 0 ? Math.round(((totalInventoryItems - needRestockCount) / totalInventoryItems) * 100) : 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -281,7 +290,7 @@ const InventoryManagement = () => {
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all group/stat">
                   <span className="text-rose-600 text-xs font-bold">Need restock</span>
                   <span className="font-display font-bold text-2xl text-rose-600 group-hover:scale-110 transition-transform">
-                    {inventoryMetrics.lowStockCount}
+                    {needRestockCount}
                   </span>
                 </div>
               </div>
