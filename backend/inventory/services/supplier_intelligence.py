@@ -298,7 +298,16 @@ def supplier_scorecard(supplier_id):
 
 
 def procurement_analytics():
+    """
+    Aggregate supplier spend / savings from Stock received history.
+
+    Uses a few bulk queries (not per-product loops) so ~1k intakes stay
+    well under Render request timeouts.
+    """
+    from django.db.models.functions import TruncMonth
+
     twelve_months_ago = timezone.now() - timedelta(days=365)
+    three_months_ago = timezone.now() - timedelta(days=90)
     intakes = StockIntake.objects.filter(received_date__gte=twelve_months_ago)
 
     spending_by_supplier = list(
@@ -310,52 +319,91 @@ def procurement_analytics():
 
     for row in spending_by_supplier:
         row["total_spent"] = float(row["total_spent"] or 0)
-        row["supplier_name"] = row["supplier__name"]
+        row["supplier_name"] = row.pop("supplier__name", None) or "Unknown"
         row["pct_of_total"] = (
             round(row["total_spent"] / total_spend * 100, 1) if total_spend else 0
         )
 
-    # Monthly average cost trend
-    monthly = {}
-    for intake in intakes.order_by("received_date"):
-        month_key = intake.received_date.strftime("%Y-%m")
-        if month_key not in monthly:
-            monthly[month_key] = []
-        monthly[month_key].append(float(intake.unit_cost))
-    price_trend = [
-        {"month": k, "avg_price": round(sum(v) / len(v), 2)}
-        for k, v in sorted(monthly.items())
-    ]
-
-    # Potential savings
-    product_ids = intakes.values_list("product_id", flat=True).distinct()
-    savings_rows = []
-    for pid in product_ids:
-        comp = compare_suppliers_for_product(pid)
-        if not comp or len(comp.get("comparison", [])) < 2:
+    monthly_qs = (
+        intakes.annotate(month=TruncMonth("received_date"))
+        .values("month")
+        .annotate(avg_price=Avg("unit_cost"))
+        .order_by("month")
+    )
+    price_trend = []
+    for row in monthly_qs:
+        month = row["month"]
+        if not month:
             continue
-        cheapest = comp["comparison"][0]
-        current = comp["comparison"][-1]
-        for row in comp["comparison"]:
-            if row["times_supplied"] >= current.get("times_supplied", 0):
-                current = row
+        price_trend.append(
+            {
+                "month": month.strftime("%Y-%m"),
+                "avg_price": round(float(row["avg_price"] or 0), 2),
+            }
+        )
+
+    # One pass over intake rows: last price + times supplied per product/supplier
+    intake_rows = intakes.values(
+        "product_id",
+        "product__name",
+        "supplier_id",
+        "supplier__name",
+        "unit_cost",
+        "received_date",
+    ).order_by("-received_date")
+
+    # product_id -> {supplier_id: {name, last_price, times}}
+    by_product = {}
+    product_names = {}
+    for r in intake_rows:
+        pid = r["product_id"]
+        sid = r["supplier_id"]
+        if pid is None or sid is None:
+            continue
+        product_names[pid] = r["product__name"] or f"Product #{pid}"
+        suppliers = by_product.setdefault(pid, {})
+        if sid not in suppliers:
+            suppliers[sid] = {
+                "supplier_id": sid,
+                "supplier_name": r["supplier__name"] or "Unknown",
+                "last_price": float(r["unit_cost"] or 0),
+                "times_supplied": 1,
+            }
+        else:
+            suppliers[sid]["times_supplied"] += 1
+
+    usage_map = {}
+    if by_product:
+        usage_map = {
+            row["product_id"]: float(row["t"] or 0)
+            for row in DispensationItem.objects.filter(
+                dispensation__dispensed_at__gte=three_months_ago,
+                product_id__in=list(by_product.keys()),
+            )
+            .values("product_id")
+            .annotate(t=Sum("quantity"))
+        }
+
+    savings_rows = []
+    supplier_sole_counts = {}
+    for pid, suppliers in by_product.items():
+        ranked = sorted(suppliers.values(), key=lambda x: x["last_price"])
+        if len(ranked) == 1:
+            sid = ranked[0]["supplier_id"]
+            supplier_sole_counts[sid] = supplier_sole_counts.get(sid, 0) + 1
+            continue
+        if len(ranked) < 2:
+            continue
+        cheapest = ranked[0]
+        current = max(ranked, key=lambda x: x["times_supplied"])
         if cheapest["supplier_id"] == current["supplier_id"]:
             continue
-        monthly_usage = suggested_order_quantity(pid, None) / 2 if False else 0
-        three_months_ago = timezone.now() - timedelta(days=90)
-        usage = (
-            DispensationItem.objects.filter(
-                product_id=pid,
-                dispensation__dispensed_at__gte=three_months_ago,
-            ).aggregate(t=Sum("quantity"))["t"]
-            or 0
-        )
-        monthly_usage = float(usage) / 3.0
+        monthly_usage = usage_map.get(pid, 0.0) / 3.0
         monthly_saving = (current["last_price"] - cheapest["last_price"]) * monthly_usage
         savings_rows.append(
             {
                 "product_id": pid,
-                "product_name": comp["product"]["name"],
+                "product_name": product_names.get(pid, f"Product #{pid}"),
                 "current_supplier": current["supplier_name"],
                 "current_price": current["last_price"],
                 "cheapest_supplier": cheapest["supplier_name"],
@@ -365,29 +413,26 @@ def procurement_analytics():
                 "annual_saving": round(monthly_saving * 12, 2),
             }
         )
+
     savings_rows.sort(key=lambda x: x["annual_saving"], reverse=True)
+    # Keep response light for the UI
+    savings_rows = savings_rows[:50]
     total_annual = sum(r["annual_saving"] for r in savings_rows)
 
-    # Supplier dependency
-    product_supplier_counts = {}
-    for intake in intakes:
-        key = intake.product_id
-        product_supplier_counts.setdefault(key, set()).add(intake.supplier_id)
-    supplier_product_share = {}
-    for pid, sids in product_supplier_counts.items():
-        if len(sids) == 1:
-            sid = list(sids)[0]
-            supplier_product_share[sid] = supplier_product_share.get(sid, 0) + 1
-    total_unique = len(product_supplier_counts) or 1
+    total_unique = len(by_product) or 1
+    supplier_names = {
+        s["supplier_id"]: s["supplier_name"] for s in spending_by_supplier
+    }
     dependency_alerts = []
-    for sid, count in supplier_product_share.items():
+    for sid, count in supplier_sole_counts.items():
         pct = count / total_unique * 100
         if pct > 40:
-            from inventory.models.supplier import Supplier
-
-            name = Supplier.objects.filter(pk=sid).values_list("name", flat=True).first()
             dependency_alerts.append(
-                {"supplier_id": sid, "supplier_name": name, "pct": round(pct, 1)}
+                {
+                    "supplier_id": sid,
+                    "supplier_name": supplier_names.get(sid) or f"Supplier #{sid}",
+                    "pct": round(pct, 1),
+                }
             )
 
     return {

@@ -117,7 +117,24 @@ const SupplierIntelligence = () => {
       }
       setInsight(parts.join(" "));
     } catch (err) {
-      setAnalyticsError("Could not analyse supplier prices. Please try again.");
+      const status = err?.response?.status;
+      const detail =
+        err?.response?.data?.detail ||
+        err?.response?.data?.error?.message ||
+        err?.message;
+      if (status === 403) {
+        setAnalyticsError("You do not have permission to view supplier price analysis.");
+      } else if (status === 404) {
+        setAnalyticsError("Supplier analysis is not available on the server yet. Try again after the next update.");
+      } else if (!err?.response) {
+        setAnalyticsError("Could not reach the server. Check your connection and try again.");
+      } else {
+        setAnalyticsError(
+          typeof detail === "string" && detail
+            ? detail
+            : "Could not analyse supplier prices. Please try again.",
+        );
+      }
       setInsight("");
     } finally {
       setLoadingAnalytics(false);

@@ -140,15 +140,20 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="procurement-analytics")
     def procurement_analytics_view(self, request):
-        user = request.user
-        role = getattr(user, "role", None)
-        if not (
-            user.is_superuser
-            or role in ("admin", "auditor", "pharmacist")
-            or getattr(user, "can_view_reports", False)
-        ):
-            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
-        return Response(procurement_analytics())
+        # Access already gated by IsPharmacistOrAdmin on the viewset.
+        # Keep this endpoint fast — the old per-product loop timed out on Render.
+        try:
+            return Response(procurement_analytics())
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).exception("procurement_analytics failed")
+            return Response(
+                {
+                    "detail": "Could not analyse supplier prices right now. Please try again in a moment."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @action(detail=True, methods=["get"], url_path="products-supplied")
     def products_supplied(self, request, pk=None):
