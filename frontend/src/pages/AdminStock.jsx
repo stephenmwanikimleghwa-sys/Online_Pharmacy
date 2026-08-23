@@ -57,6 +57,8 @@ const AdminStock = () => {
 			supplier: normalizeDisplayValue(item.supplier, ''),
 			description: normalizeDisplayValue(item.description, ''),
 			reorder_threshold: Number(item.reorder_threshold ?? 10) || 10,
+			referral_only: Boolean(item.referral_only),
+			available_at: Array.isArray(item.available_at) ? item.available_at : [],
 		};
 	};
 
@@ -101,6 +103,8 @@ const AdminStock = () => {
 
 	// Categories list (derived from items)
 	const [categories, setCategories] = useState([]);
+	/** local = this branch type only; referral = other dept (refer / request); all = full catalog */
+	const [catalogScope, setCatalogScope] = useState('local');
 
 	// Check if user is logged in and has required role
 	useEffect(() => {
@@ -124,7 +128,7 @@ const AdminStock = () => {
 			clearTimeout(timeout);
 			controller.abort();
 		};
-	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category]);
+	}, [searchQuery, filters.lowStock, filters.outOfStock, filters.category, catalogScope]);
 
 	const fetchItems = async (signal) => {
 		const currentRequestId = ++requestIdRef.current;
@@ -140,6 +144,7 @@ const AdminStock = () => {
 			const params = {
 				per_page: 500,
 				page: 1,
+				scope: catalogScope,
 			};
 
 			// Add filters
@@ -502,6 +507,32 @@ const AdminStock = () => {
 						<h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Inventory control</h1>
 					</div>
 					<p className="text-lg text-slate-500 font-medium">Add, edit, and manage pharmaceutical products in your inventory.</p>
+					<div className="mt-4 inline-flex rounded-xl border overflow-hidden text-xs font-bold" style={{ borderColor: 'var(--border-primary)' }}>
+						{[
+							{ id: 'local', label: 'This department' },
+							{ id: 'referral', label: 'Other dept (refer)' },
+							{ id: 'all', label: 'All products' },
+						].map((opt) => (
+							<button
+								key={opt.id}
+								type="button"
+								onClick={() => setCatalogScope(opt.id)}
+								className="px-3 py-2 transition-colors"
+								style={
+									catalogScope === opt.id
+										? { background: 'var(--btn-gradient)', color: '#fff' }
+										: { color: 'var(--text-secondary)', background: 'var(--bg-card)' }
+								}
+							>
+								{opt.label}
+							</button>
+						))}
+					</div>
+					{catalogScope === 'referral' && (
+						<p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+							These items belong to the other department. Do not sell them here — refer the customer to the listed branch, or create a restock request so they can collect at Peak Farm / chemist when stock arrives.
+						</p>
+					)}
 				</div>
 				<div className="flex flex-wrap gap-3">
 					<button
@@ -609,6 +640,16 @@ const AdminStock = () => {
 									<tr key={String(item.id ?? `row-${idx}`)} className="border-b hover:bg-primary/5 transition-colors group" style={{ borderColor: 'var(--border-primary)' }}>
 										<td className={`px-3 py-3 font-semibold text-sm sticky left-0 z-10 group-hover:bg-primary/5 transition-colors min-w-[12rem] ${out ? 'text-slate-400' : 'text-slate-800'}`} style={{ background: 'var(--bg-primary)' }}>
 											{normalizeDisplayValue(item.name)} {item.optimistic && <span className="ml-2 text-xs text-slate-400">(Saving...)</span>}
+											{item.referral_only && (
+												<p className="mt-1 text-[11px] font-medium text-amber-700">
+													Refer only
+													{item.available_at?.length
+														? ` — ${item.available_at
+																.map((b) => `${b.branch_name} (${b.quantity})`)
+																.join(', ')}`
+														: ' — not in stock at matching branches'}
+												</p>
+											)}
 										</td>
 										<td className="px-3 py-3 text-xs text-slate-600 max-w-[10rem] truncate">
 											{normalizeDisplayValue(item.category) || '—'}

@@ -13,21 +13,28 @@ import {
   HomeIcon, ShoppingBagIcon, ChartBarIcon, ClipboardDocumentListIcon, Squares2X2Icon,
   ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon, BuildingOffice2Icon,
   BanknotesIcon, DocumentPlusIcon, UserGroupIcon, ArrowUturnLeftIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import BranchSelector from "../BranchSelector";
 
 const getDashboardHref = (role) => {
   switch (role) {
-    case 'admin':      return '/admin/dashboard';
-    case 'pharmacist': return '/branch/dashboard';
-    case 'cashier':    return '/cashier/dashboard';
-    case 'auditor':    return '/reports';
-    case 'customer':   return '/customer/dashboard';
-    default:           return '/account';
+    case "admin":
+      return "/admin/dashboard";
+    case "pharmacist":
+      return "/branch/dashboard";
+    case "cashier":
+      return "/cashier/dashboard";
+    case "auditor":
+      return "/reports";
+    case "customer":
+      return "/customer/dashboard";
+    default:
+      return "/account";
   }
 };
 
+/** Compact labels — keep the nav scannable without vertical scroll on typical laptop heights. */
 const getNavGroups = (user) => {
   const mainLinks = [];
 
@@ -45,34 +52,32 @@ const getNavGroups = (user) => {
 
   if (user?.role === "admin") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
-      { to: "/inventory/control", label: "Inventory Control", icon: ClipboardDocumentListIcon },
-      { to: "/customers", label: "Customers", icon: UserGroupIcon },
+      { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
-      { to: "/purchase-orders", label: "Purchase Orders", icon: DocumentPlusIcon },
-      { to: "/reports", label: "Reports Panel", icon: ChartBarIcon },
+      { to: "/customers", label: "Customers", icon: UserGroupIcon },
+      { to: "/purchase-orders", label: "Purchases", icon: DocumentPlusIcon },
+      { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
       { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
-      { to: "/reconciliation", label: "Reconciliation", icon: ExclamationTriangleIcon },
-      { to: "/clinical", label: "Clinical Services", icon: UserGroupIcon },
+      { to: "/reconciliation", label: "Reconcile", icon: ExclamationTriangleIcon },
+      { to: "/clinical", label: "Clinical", icon: UserGroupIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
       { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
     );
     adminLinks.push(
-      { to: "/admin/branches", label: "Branches Overview", icon: BuildingOffice2Icon },
-      { to: "/admin/users", label: "User Management", icon: ShieldCheckIcon },
+      { to: "/admin/branches", label: "Branches", icon: BuildingOffice2Icon },
+      { to: "/admin/users", label: "Users", icon: ShieldCheckIcon },
       { to: "/dispensing-logs", label: "Audit Logs", icon: DocumentDuplicateIcon },
     );
   } else if (user?.role === "pharmacist") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
-      { to: "/inventory/control", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
       { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
-      { to: "/reconciliation", label: "Reconciliation", icon: ExclamationTriangleIcon },
-      { to: "/clinical", label: "Clinical Services", icon: UserGroupIcon },
+      { to: "/reconciliation", label: "Reconcile", icon: ExclamationTriangleIcon },
+      { to: "/clinical", label: "Clinical", icon: UserGroupIcon },
       { to: "/documents", label: "Documents", icon: DocumentTextIcon },
       { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
       { to: "/dispensing-logs", label: "Logs", icon: DocumentDuplicateIcon },
@@ -81,7 +86,7 @@ const getNavGroups = (user) => {
     operationsLinks.push({ to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon });
   } else if (user?.role === "auditor") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
     );
@@ -95,17 +100,17 @@ const getNavGroups = (user) => {
 };
 
 const Sidebar = () => {
-  const location  = useLocation();
-  const navigate  = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { effectiveTheme, setTheme } = useTheme();
   const { user, logout, activeBranch } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { mainLinks, operationsLinks, adminLinks } = getNavGroups(user ?? null);
 
   const inventoryPrefetch = usePrefetchOnHover(
-    QUERY_KEYS.inventory(activeBranch?.id, { per_page: 5000 }),
+    QUERY_KEYS.inventory(activeBranch?.id, { per_page: 500 }),
     async () => {
-      const res = await api.get('/inventory/list/', { params: { per_page: 5000 } });
+      const res = await api.get("/inventory/list/", { params: { per_page: 500 } });
       const data = res.data || {};
       return data.products || data.results || unwrapList(data);
     },
@@ -113,26 +118,26 @@ const Sidebar = () => {
   );
   const suppliersPrefetch = usePrefetchOnHover(
     QUERY_KEYS.suppliers,
-    () => api.get('/inventory/suppliers/').then((r) => r.data),
+    () => api.get("/inventory/suppliers/").then((r) => r.data),
     STALE_TIMES.SLOW,
   );
   const customersPrefetch = usePrefetchOnHover(
     QUERY_KEYS.customers,
     async () => {
-      const res = await api.get('/auth/customers/');
+      const res = await api.get("/auth/customers/");
       return unwrapList(res.data);
     },
     STALE_TIMES.SLOW,
   );
   const reportsPrefetch = usePrefetchOnHover(
     QUERY_KEYS.dashboardGlobal,
-    () => api.get('/dashboard/global-overview/').then((r) => r.data),
+    () => api.get("/dashboard/global-overview/").then((r) => r.data),
     STALE_TIMES.FAST,
   );
   const logsPrefetch = usePrefetchOnHover(
     QUERY_KEYS.dispensingLogs({}),
     async () => {
-      const res = await api.get('/inventory/dispensations/', { params: {} });
+      const res = await api.get("/inventory/dispensations/", { params: {} });
       return unwrapList(res.data);
     },
     STALE_TIMES.MEDIUM,
@@ -140,207 +145,209 @@ const Sidebar = () => {
   const usersPrefetch = usePrefetchOnHover(
     QUERY_KEYS.users,
     async () => {
-      const res = await api.get('/auth/admin/users/');
+      const res = await api.get("/auth/admin/users/");
       return unwrapList(res.data);
     },
     STALE_TIMES.SLOW,
   );
 
   const getLinkPrefetch = (to) => {
-    if (to.includes('/inventory/management') || to.includes('/inventory/control')) return inventoryPrefetch;
-    if (to === '/customers') return customersPrefetch;
-    if (to === '/reports' || to.includes('/reports')) return reportsPrefetch;
-    if (to === '/dispensing-logs') return logsPrefetch;
-    if (to === '/admin/users') return usersPrefetch;
-    if (to.includes('supplier')) return suppliersPrefetch;
+    if (to.includes("/inventory/management") || to.includes("/inventory/control")) {
+      return inventoryPrefetch;
+    }
+    if (to === "/customers") return customersPrefetch;
+    if (to === "/reports" || to.includes("/reports")) return reportsPrefetch;
+    if (to === "/dispensing-logs") return logsPrefetch;
+    if (to === "/admin/users") return usersPrefetch;
+    if (to.includes("supplier")) return suppliersPrefetch;
     return {};
   };
+
   const sections = [
     { title: "Main", links: mainLinks },
-    { title: "Operations", links: operationsLinks },
+    { title: "Ops", links: operationsLinks },
     { title: "Admin", links: adminLinks },
-  ].filter(section => section.links.length > 0);
+  ].filter((section) => section.links.length > 0);
 
   const onLogoutClick = () => {
     if (logout) logout();
-    else navigate('/login');
+    else navigate("/login");
   };
 
   return (
     <div
-      className={`hidden md:flex md:flex-col ${isCollapsed ? 'w-20' : 'w-64'} h-full nav-premium border-r z-40 transition-all duration-300 flex-shrink-0 relative overflow-visible`}
-      style={{ borderColor: 'var(--border-primary)', boxShadow: '4px 0 24px rgba(124,58,237,0.08)' }}
+      className={`hidden md:flex md:flex-col ${isCollapsed ? "w-[4.25rem]" : "w-56"} h-full nav-premium border-r z-40 transition-all duration-300 flex-shrink-0 relative overflow-hidden`}
+      style={{ borderColor: "var(--border-primary)" }}
     >
-      {/* Collapse toggle */}
       <button
+        type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 btn-primary rounded-full p-1 shadow-lg z-50 flex items-center justify-center"
-        style={{ width: 24, height: 24 }}
+        className="absolute -right-3 top-6 btn-primary rounded-full p-1 shadow-md z-50 flex items-center justify-center"
+        style={{ width: 22, height: 22 }}
         title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
       >
-        {isCollapsed
-          ? <ChevronRightIcon className="w-3.5 h-3.5 text-white" />
-          : <ChevronLeftIcon  className="w-3.5 h-3.5 text-white" />
-        }
+        {isCollapsed ? (
+          <ChevronRightIcon className="w-3 h-3 text-white" />
+        ) : (
+          <ChevronLeftIcon className="w-3 h-3 text-white" />
+        )}
       </button>
 
-      {/* Ambient top glow */}
+      {/* Brand — compact */}
       <div
-        className="absolute top-0 right-0 w-full h-32 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, rgba(124,58,237,0.08), transparent)' }}
-      />
-
-      {/* Brand / Logo */}
-      <div
-        className="p-6 pb-8 sticky top-0 z-10 flex flex-col items-center justify-center gap-3"
-        style={{ borderBottom: '1px solid var(--border-primary)' }}
+        className={`px-3 ${isCollapsed ? "py-3" : "pt-3 pb-2"} flex flex-col items-center gap-1.5 flex-shrink-0`}
+        style={{ borderBottom: "1px solid var(--border-primary)" }}
       >
         <Link
           to="/"
-          className="flex flex-col items-center gap-2 group focus:outline-none focus-visible:ring-2 rounded-xl"
-          style={{ '--tw-ring-color': 'var(--color-primary)' }}
+          className="flex flex-col items-center gap-1 group focus:outline-none focus-visible:ring-2 rounded-lg"
+          style={{ "--tw-ring-color": "var(--color-primary)" }}
         >
           <div
-            className={`${isCollapsed ? 'w-10 h-10' : 'w-14 h-14'} nav-logo-mark flex items-center justify-center text-white font-bold text-lg group-hover:scale-105 transition-all duration-300`}
+            className={`${isCollapsed ? "w-9 h-9 text-sm" : "w-10 h-10 text-base"} nav-logo-mark flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform`}
           >
             TP
           </div>
           {!isCollapsed && (
-            <span
-              className="nav-brand-text font-bold text-lg tracking-tight group-hover:opacity-80 transition-opacity whitespace-nowrap"
-            >
+            <span className="nav-brand-text font-bold text-sm tracking-tight group-hover:opacity-80 transition-opacity whitespace-nowrap">
               Transcounty
             </span>
           )}
         </Link>
-        {/* Branch Selector — only for admin, only when expanded */}
         {!isCollapsed && (
-          <div style={{ paddingTop: '8px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <div className="w-full pt-1 flex justify-center">
             <BranchSelector />
           </div>
         )}
       </div>
 
-      {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 space-y-4">
+      {/* Nav — fills remaining height; scrolls only if viewport is very short */}
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-2">
         {sections.map((section) => (
-          <div key={section.title} className="space-y-1.5">
+          <div key={section.title} className="space-y-0.5">
             {!isCollapsed && (
-              <p className="px-3 text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>
+              <p
+                className="px-2.5 pt-0.5 pb-0.5 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 {section.title}
               </p>
             )}
             {section.links.map(({ to, label, icon: Icon }) => {
-              const active = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
+              const active =
+                location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
               const prefetchHandlers = getLinkPrefetch(to);
               return (
                 <Link
                   key={to}
                   to={to}
-                  title={isCollapsed ? label : ""}
+                  title={label}
                   {...prefetchHandlers}
-                  className={`flex items-center ${isCollapsed ? 'justify-center p-3' : 'px-4 py-3'} rounded-xl text-sm font-semibold transition-all duration-200 group`}
+                  className={`flex items-center ${
+                    isCollapsed ? "justify-center p-2" : "px-2.5 py-1.5"
+                  } rounded-lg text-[13px] font-medium transition-colors duration-150 group`}
                   style={
                     active
                       ? {
-                          color: '#ffffff',
-                          background: 'var(--btn-gradient)',
-                          boxShadow: '0 4px 14px rgba(124,58,237,0.25)',
+                          color: "#ffffff",
+                          background: "var(--btn-gradient)",
                         }
                       : {
-                          color: 'var(--text-primary)',
-                          background: 'transparent',
-                          border: '1px solid transparent',
+                          color: "var(--text-primary)",
+                          background: "transparent",
                         }
                   }
-                  onMouseEnter={e => {
+                  onMouseEnter={(e) => {
                     if (!active) {
-                      e.currentTarget.style.background = 'var(--bg-field)';
-                      e.currentTarget.style.borderColor = 'var(--border-primary)';
-                      e.currentTarget.style.color = 'var(--color-highlight)';
+                      e.currentTarget.style.background = "var(--bg-field)";
+                      e.currentTarget.style.color = "var(--color-highlight)";
                     }
                   }}
-                  onMouseLeave={e => {
+                  onMouseLeave={(e) => {
                     if (!active) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.borderColor = 'transparent';
-                      e.currentTarget.style.color = 'var(--text-primary)';
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "var(--text-primary)";
                     }
                   }}
                 >
                   <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform ${active ? 'scale-110' : 'group-hover:scale-110'} ${!isCollapsed ? 'mr-3' : ''}`}
+                    className={`w-[1.125rem] h-[1.125rem] flex-shrink-0 ${!isCollapsed ? "mr-2.5" : ""}`}
                   />
-                  {!isCollapsed && <span className="truncate whitespace-nowrap">{label}</span>}
+                  {!isCollapsed && <span className="truncate leading-tight">{label}</span>}
                 </Link>
               );
             })}
           </div>
         ))}
-      </div>
+      </nav>
 
-      {/* Footer — user actions */}
+      {/* Footer — tight */}
       <div
-        className="p-4 sticky bottom-0 z-10"
+        className="px-2 py-2 flex-shrink-0 space-y-1.5"
         style={{
-          borderTop: '1px solid var(--border-primary)',
-          background: 'var(--bg-card)',
-          backdropFilter: 'blur(18px)',
+          borderTop: "1px solid var(--border-primary)",
+          background: "var(--bg-card)",
         }}
       >
-        {/* Offline-sync status: always visible so staff trust that a sale
-            recorded offline is safely queued and will upload. */}
         {user ? (
-          <div className={`mb-3 flex ${isCollapsed ? 'justify-center' : ''}`}>
+          <div className={`flex ${isCollapsed ? "justify-center" : ""}`}>
             <SyncStatusIndicator />
           </div>
         ) : null}
 
-        {/* Theme + Logout row */}
-        <div className={`flex items-center ${isCollapsed ? 'flex-col space-y-2' : 'justify-between gap-2'} mb-3`}>
+        <div
+          className={`flex items-center ${isCollapsed ? "flex-col gap-1" : "justify-between gap-1.5"}`}
+        >
           <button
-            onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
-            className="form-cancel-btn flex items-center justify-center flex-1 py-2"
+            type="button"
+            onClick={() => setTheme(effectiveTheme === "dark" ? "light" : "dark")}
+            className="form-cancel-btn flex items-center justify-center flex-1 py-1.5"
             aria-label="Toggle Dark Mode"
             title="Toggle Theme"
           >
-            {effectiveTheme === 'dark'
-              ? <SunIcon  className="w-5 h-5" />
-              : <MoonIcon className="w-5 h-5" />
-            }
+            {effectiveTheme === "dark" ? (
+              <SunIcon className="w-4 h-4" />
+            ) : (
+              <MoonIcon className="w-4 h-4" />
+            )}
           </button>
           <button
+            type="button"
             onClick={onLogoutClick}
-            className="nav-logout-btn flex items-center justify-center flex-1 py-2"
+            className="nav-logout-btn flex items-center justify-center flex-1 py-1.5"
             title="Logout"
           >
-            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            <ArrowRightOnRectangleIcon className="w-4 h-4" />
           </button>
         </div>
 
-        {/* User Card */}
         {user ? (
           <Link
             to="/account"
             title={isCollapsed ? "Manage Account" : ""}
-            className={`data-cell flex items-center gap-3 ${isCollapsed ? 'p-2 justify-center' : 'p-3'} rounded-xl transition-all group`}
+            className={`data-cell flex items-center gap-2 ${
+              isCollapsed ? "p-1.5 justify-center" : "px-2 py-1.5"
+            } rounded-lg transition-colors group`}
           >
-            <div className="nav-avatar w-8 h-8 flex-shrink-0">
+            <div className="nav-avatar w-7 h-7 text-xs flex-shrink-0">
               {user.username?.[0]?.toUpperCase() ?? "?"}
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 overflow-hidden">
-                <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                <p className="text-xs font-bold truncate" style={{ color: "var(--text-primary)" }}>
                   {user.username}
                 </p>
-                <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-[10px] font-semibold truncate capitalize" style={{ color: "var(--text-secondary)" }}>
                   {user.role}
                 </p>
               </div>
             )}
           </Link>
         ) : (
-          <Link to="/login" className="btn-primary nav-cta-btn flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm">
+          <Link
+            to="/login"
+            className="btn-primary nav-cta-btn flex items-center justify-center gap-2 w-full py-2 rounded-lg text-xs"
+          >
             {isCollapsed ? "→" : "Sign In"}
           </Link>
         )}

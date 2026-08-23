@@ -196,6 +196,10 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             data['use_legacy_prices'] = True
         if not data.get('department'):
             data['department'] = 'CHEMIST'
+        # Keep sellability (product_type) aligned with department when not UNIVERSAL.
+        dept = data.get('department')
+        if dept in ('CHEMIST', 'AGROVET') and data.get('product_type') != 'UNIVERSAL':
+            data['product_type'] = dept
         return data
 
     def validate_name(self, value: str) -> str:

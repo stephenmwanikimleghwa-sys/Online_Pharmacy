@@ -22,6 +22,7 @@ import logging
 from decimal import Decimal
 from utils.response import api_response
 from users.utils import log_activity
+from utils.filters import filter_products_by_branch_type
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +240,7 @@ def search_products(request: Request) -> Response:
             branch_stocks__branch=active_branch,
             branch_stocks__quantity__gt=0,
         ).distinct()
+        products = filter_products_by_branch_type(products, active_branch)
 
     if query:
         products = products.filter(
@@ -354,6 +356,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                     branch_stocks__branch=active_branch,
                     branch_stocks__quantity__gt=0,
                 ).distinct()
+                queryset = filter_products_by_branch_type(queryset, active_branch)
             else:
                 queryset = queryset.none()
         # RULE 5: public store shows products with stock in at least one branch

@@ -67,10 +67,12 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="procurement-analytics")
     def procurement_analytics_view(self, request):
+        user = request.user
+        role = getattr(user, "role", None)
         if not (
-            request.user.is_superuser
-            or getattr(request.user, "role", None) == "admin"
-            or getattr(request.user, "can_view_reports", False)
+            user.is_superuser
+            or role in ("admin", "auditor", "pharmacist")
+            or getattr(user, "can_view_reports", False)
         ):
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
         return Response(procurement_analytics())

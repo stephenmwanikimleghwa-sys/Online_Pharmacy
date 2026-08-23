@@ -313,15 +313,26 @@ class ReportsHubViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def staff_activity(self, request):
         from inventory.models.dispensing import Dispensation
+        from users.active_branch import get_active_branch
         
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
+        branch_id = request.query_params.get('branch_id')
         
         qs = Dispensation.objects.all()
         if start_date:
             qs = qs.filter(dispensed_at__date__gte=start_date)
         if end_date:
             qs = qs.filter(dispensed_at__date__lte=end_date)
+
+        user = request.user
+        is_admin = user.is_superuser or getattr(user, 'role', None) == 'admin'
+        if branch_id and branch_id != 'all':
+            qs = qs.filter(branch_id=branch_id)
+        elif not is_admin:
+            active = get_active_branch(request) or getattr(user, 'branch', None)
+            if active:
+                qs = qs.filter(branch_id=active.id)
             
         activity = (
             qs.values('dispensed_by__username')

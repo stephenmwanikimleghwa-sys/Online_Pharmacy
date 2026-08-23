@@ -18,6 +18,7 @@ from config.api_responses import ApiErrorCode, api_error, api_validation_error
 from users.utils import log_activity
 from utils.cached_view import cached_view
 from ..models.stock_intake import StockIntake
+from utils.filters import filter_products_by_branch_type
 
 @api_view(["GET"])
 @permission_classes([IsPharmacistOrAdmin])
@@ -87,6 +88,28 @@ def inventory_list(request):
         if category:
             products = products.filter(category=category)
 
+        # Default: only products for this branch type (CHEMIST vs AGROVET).
+        # scope=all → full catalog (admins / HQ). scope=referral → other dept only.
+        active_branch = get_active_branch(request)
+        scope = (request.GET.get("scope") or "local").strip().lower()
+        branch_for_type = active_branch
+        if is_admin and branch_param and branch_param != "all":
+            try:
+                branch_for_type = Branch.objects.filter(pk=int(branch_param)).first() or active_branch
+            except (TypeError, ValueError):
+                branch_for_type = active_branch
+        elif not branch_for_type and not is_admin and getattr(user, "branch", None):
+            branch_for_type = user.branch
+
+        if scope == "referral" and branch_for_type:
+            bt = getattr(branch_for_type, "branch_type", None)
+            if bt == "AGROVET":
+                products = products.filter(product_type="CHEMIST")
+            elif bt == "CHEMIST":
+                products = products.filter(product_type="AGROVET")
+        elif scope != "all" and branch_for_type:
+            products = filter_products_by_branch_type(products, branch_for_type)
+
         # Cap page size — dumping the full catalog freezes stock management / OTC
         try:
             per_page = int(request.GET.get("per_page", 500))
@@ -107,7 +130,6 @@ def inventory_list(request):
         serialized_products = ProductSerializer(products_page, many=True).data
         
         target_branch_id = None
-        active_branch = get_active_branch(request)
         if is_admin and branch_param and branch_param != 'all':
             target_branch_id = int(branch_param)
         elif active_branch:
@@ -120,7 +142,7 @@ def inventory_list(request):
         products_by_id = {p.id: p for p in products_page}
         
         # Bulk fetch all branch stocks for these products
-        all_branch_stocks = BranchStock.objects.filter(product_id__in=products_by_id.keys())
+        all_branch_stocks = BranchStock.objects.filter(product_id__in=products_by_id.keys()).select_related("branch")
         
         # Build lookup dict: product_id -> {branch_id -> stock}
         branch_stocks_by_product = {}
@@ -148,6 +170,20 @@ def inventory_list(request):
             p_data['stock_quantity'] = float(qty)
             p_data['is_low_stock'] = float(qty) <= float(r_lvl)
             p_data['in_stock'] = float(qty) > 0
+            p_data['sellable_here'] = scope != 'referral'
+            if scope == 'referral':
+                # Where the customer can pick up / be referred (matching product type branches)
+                avail = []
+                for bid, bs in branch_stocks_by_product.get(product_id, {}).items():
+                    if bs.quantity > 0 and bs.branch:
+                        avail.append({
+                            'branch_id': bs.branch_id,
+                            'branch_name': bs.branch.name,
+                            'branch_type': getattr(bs.branch, 'branch_type', None),
+                            'quantity': float(bs.quantity),
+                        })
+                p_data['available_at'] = avail
+                p_data['referral_only'] = True
 
         # Filter post-serialization for low/out-of-stock if requested
         low_stock = request.GET.get("low_stock")

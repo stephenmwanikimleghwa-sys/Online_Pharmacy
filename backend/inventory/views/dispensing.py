@@ -26,6 +26,8 @@ from ..serializers.dispensing import (
     DispensationItemSerializer
 )
 from config.api_responses import ApiErrorCode, api_error, api_success
+from utils.filters import validate_product_for_branch
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuditorOrAdmin]
@@ -151,6 +153,15 @@ def dispense_otc(request):
         # but fall back to aggregate branch stock for legacy data.
         for item in items_data:
             product = get_object_or_404(Product, pk=item['product_id'])
+            try:
+                validate_product_for_branch(product, active_branch)
+            except DjangoValidationError as exc:
+                msg = "; ".join(getattr(exc, "messages", None) or [str(exc)])
+                return api_error(
+                    ApiErrorCode.VALIDATION_ERROR,
+                    msg,
+                    details={"product_id": product.id, "code": getattr(exc, "code", None)},
+                )
             branch_stock, _ = BranchStock.objects.get_or_create(
                 product=product, branch=active_branch, defaults={'quantity': 0, 'reorder_level': 0}
             )

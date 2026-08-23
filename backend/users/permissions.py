@@ -45,14 +45,41 @@ class IsOwnerOrAdmin(permissions.BasePermission):
 
 class IsAuditorOrAdmin(permissions.BasePermission):
     """
-    Allows access to users who can view reports.
+    Staff who may view operational reports (valuation, staff activity, analytics).
+    Admins, auditors, and pharmacists have access by role; others need can_view_reports.
     """
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or 
-            request.user.role == RoleChoices.ADMIN or 
-            request.user.can_view_reports
-        )
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_superuser:
+            return True
+        role = getattr(user, "role", None)
+        if role in (
+            RoleChoices.ADMIN,
+            RoleChoices.AUDITOR,
+            RoleChoices.PHARMACIST,
+        ):
+            return True
+        return bool(getattr(user, "can_view_reports", False))
+
+
+class CanViewReports(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_superuser:
+            return True
+        role = getattr(user, "role", None)
+        if role in (
+            RoleChoices.ADMIN,
+            RoleChoices.AUDITOR,
+            RoleChoices.PHARMACIST,
+        ):
+            return True
+        return bool(getattr(user, "can_view_reports", False))
+
 
 # Granular Permission Classes
 
@@ -67,10 +94,6 @@ class CanManageInventory(permissions.BasePermission):
 class CanEditPrices(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and (request.user.is_superuser or request.user.can_edit_prices)
-
-class CanViewReports(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and (request.user.is_superuser or request.user.can_view_reports)
 
 class CanManageUsers(permissions.BasePermission):
     def has_permission(self, request, view):
