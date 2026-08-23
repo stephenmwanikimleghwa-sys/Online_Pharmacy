@@ -110,7 +110,9 @@ export function useLowStockAlerts(branchId?: number) {
     queryFn: () =>
       api
         .get('/inventory/low-stock/', {
-          params: branchId ? { branch: branchId } : {},
+          params: branchId
+            ? { branch: branchId, limit: 25, with_suggestions: true }
+            : { limit: 25, with_suggestions: true },
         })
         .then((r) => r.data),
     staleTime: STALE_TIMES.MEDIUM,

@@ -82,7 +82,7 @@ const AdminDashboard = () => {
     isFetching: fetchingExpiry,
   } = useExpiryAlerts(activeBranch?.id);
 
-  const lowStockAlerts = unwrapList(lowStockData);
+  const lowStockAlerts = unwrapList(lowStockData?.results ?? lowStockData);
   const expirySummary = expiryData?.summary || {};
   const expiryAlertItems = [
     ...(expiryData?.critical || []),
@@ -163,6 +163,10 @@ const AdminDashboard = () => {
 
   const branches = globalData?.branches || [];
   const totals = globalData?.totals || {};
+  const lowStockTotal =
+    Number(lowStockData?.count) ||
+    Number(branches.find((b) => b.id === activeBranch?.id)?.low_stock_count) ||
+    lowStockAlerts.length;
   // Per-branch revenue makes a lightweight distribution sparkline on the revenue card.
   const revenueTrend = branches.map((b) => Number(b.today_revenue) || 0);
 
@@ -440,7 +444,7 @@ const AdminDashboard = () => {
                 <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(245, 158, 11, 0.16)' }}>
                   <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
                 </span>
-                Low stock ({loadingLowStock ? '…' : lowStockAlerts.length})
+                Low stock ({loadingLowStock ? '…' : lowStockTotal})
               </h3>
               {loadingLowStock ? (
                 <div className="space-y-3">
@@ -452,8 +456,9 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               ) : lowStockAlerts.length ? (
-                <ul className="space-y-3 max-h-64 overflow-y-auto">
-                  {lowStockAlerts.slice(0, 8).map((item) => {
+                <>
+                <ul className="space-y-3 max-h-80 overflow-y-auto">
+                  {lowStockAlerts.map((item) => {
                     const intel = item.reorder_intelligence || {};
                     const best = intel.best_supplier || {};
                     const qty =
@@ -512,6 +517,21 @@ const AdminDashboard = () => {
                     );
                   })}
                 </ul>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <span>
+                      Showing {lowStockAlerts.length} of {lowStockTotal}
+                      {lowStockTotal > lowStockAlerts.length ? ' (most urgent first)' : ''}
+                    </span>
+                    <div className="flex gap-3">
+                      <Link to="/supplier-intelligence" className="font-semibold" style={{ color: 'var(--color-primary)' }}>
+                        Restock tips
+                      </Link>
+                      <Link to="/inventory/management?filter=low" className="font-semibold" style={{ color: 'var(--color-primary)' }}>
+                        View all
+                      </Link>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <EmptyState compact tone="positive" icon={CheckCircleIcon} title="Stock levels healthy" message="No low-stock alerts for this branch." />
               )}

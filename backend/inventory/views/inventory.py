@@ -290,9 +290,9 @@ def low_stock_items(request):
         request.query_params.get("with_suggestions", "true").lower() != "false"
     )
     try:
-        limit = min(int(request.query_params.get("limit") or 80), 200)
+        limit = min(int(request.query_params.get("limit") or 40), 200)
     except (TypeError, ValueError):
-        limit = 80
+        limit = 40
 
     qs = (
         BranchStock.objects.filter(
@@ -308,6 +308,7 @@ def low_stock_items(request):
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
 
+    total = qs.count()
     rows = list(qs[:limit])
     branch_id = None
     if is_admin and branch_param and branch_param != "all":
@@ -328,7 +329,7 @@ def low_stock_items(request):
             include_comparison=False,
         )
 
-    data = []
+    results = []
     for bs in rows:
         qty = float(bs.quantity)
         level = float(bs.reorder_level or 0)
@@ -345,9 +346,15 @@ def low_stock_items(request):
         }
         if with_suggestions:
             item["reorder_intelligence"] = intel_map.get(bs.product_id)
-        data.append(item)
+        results.append(item)
 
-    return Response(data)
+    return Response(
+        {
+            "count": total,
+            "limit": limit,
+            "results": results,
+        }
+    )
 
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])

@@ -24,7 +24,11 @@ const InventoryManagement = () => {
   const [activeTab, setActiveTab] = useState('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const f = params.get('filter');
+    return f === 'low' || f === 'out' || f === 'expiring' ? f : 'all';
+  });
   const [selectedItem, setSelectedItem] = useState(null);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);

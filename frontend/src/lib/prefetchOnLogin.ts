@@ -67,7 +67,11 @@ export async function prefetchOnLogin(activeBranchId?: number, role?: string) {
       queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.lowStockAlerts(activeBranchId),
         queryFn: () =>
-          api.get('/inventory/low-stock/', { params: { branch: activeBranchId } }).then((r) => r.data),
+          api
+            .get('/inventory/low-stock/', {
+              params: { branch: activeBranchId, limit: 25, with_suggestions: true },
+            })
+            .then((r) => r.data),
         staleTime: STALE_TIMES.MEDIUM,
       }),
       queryClient.prefetchQuery({

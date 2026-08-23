@@ -44,11 +44,16 @@ def build_global_overview(user):
         .annotate(count=Count('id'), revenue=Sum('total_amount'))
     }
 
-    # Single bulk query: low stock count per branch
+    # Single bulk query: low stock count per branch (active products only)
     low_stock_map = {
         ls['branch_id']: ls['count']
         for ls in BranchStock.objects
-        .filter(branch_id__in=branch_ids, quantity__lte=F('reorder_level'), quantity__gt=0)
+        .filter(
+            branch_id__in=branch_ids,
+            product__is_active=True,
+            quantity__lte=F('reorder_level'),
+            quantity__gt=0,
+        )
         .values('branch_id')
         .annotate(count=Count('id'))
     }
@@ -121,15 +126,14 @@ def build_branch_operations(branch):
     sixty_days = today + timedelta(days=60)
 
     low_stock_items = []
-    for bs in (
-        BranchStock.objects.filter(
-            branch=branch,
-            quantity__lte=F("reorder_level"),
-            quantity__gt=0,
-        )
-        .select_related("product")
-        .order_by("quantity")[:20]
-    ):
+    low_stock_qs = BranchStock.objects.filter(
+        branch=branch,
+        product__is_active=True,
+        quantity__lte=F("reorder_level"),
+        quantity__gt=0,
+    )
+    low_stock_count = low_stock_qs.count()
+    for bs in low_stock_qs.select_related("product").order_by("quantity")[:20]:
         low_stock_items.append(
             {
                 "product_id": bs.product_id,
@@ -238,7 +242,7 @@ def build_branch_operations(branch):
     return {
         "branch": {"id": branch.id, "name": branch.name, "type": branch.branch_type},
         "low_stock_alerts": low_stock_items,
-        "low_stock_count": len(low_stock_items),
+        "low_stock_count": low_stock_count,
         "expiry_alerts": expiry_items,
         "expiry_count": len(expiry_items),
         "expiry_summary": expiry_summary,
