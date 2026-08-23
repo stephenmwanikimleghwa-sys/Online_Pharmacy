@@ -154,9 +154,10 @@ class SupplierViewSet(viewsets.ModelViewSet):
         Admin-only: low/out-of-stock across all branches, grouped by branch.
         Active branch is listed first. Includes Supplier Intel reorder tips.
         """
-        from django.db.models import F
+        from django.db.models import Count, Exists, F, OuterRef, Q
         from products.models import BranchStock
         from users.active_branch import get_active_branch
+        from users.models import Branch
         from inventory.services.supplier_intelligence import (
             bulk_reorder_intelligence,
             bulk_suggested_order_quantities,
@@ -165,125 +166,149 @@ class SupplierViewSet(viewsets.ModelViewSet):
         user = request.user
         is_admin = user.is_superuser or getattr(user, "role", None) == "admin"
         if not is_admin:
-            return Response({"detail": "Only admins can view network restock needs."}, status=403)
+            return Response(
+                {"detail": "Only admins can view network restock needs."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-        active = get_active_branch(request)
-        active_id = active.id if active else None
         try:
-            per_branch = min(int(request.query_params.get("per_branch") or 80), 200)
-        except (TypeError, ValueError):
-            per_branch = 80
+            active = get_active_branch(request)
+            active_id = active.id if active else None
+            try:
+                per_branch = min(int(request.query_params.get("per_branch") or 60), 150)
+            except (TypeError, ValueError):
+                per_branch = 60
 
-        qs = (
-            BranchStock.objects.filter(
-                product__is_active=True,
-                quantity__lte=F("reorder_level"),
+            # Only flag out-of-stock when this branch has received that product before.
+            # Avoids thousands of never-stocked zero rows (one BranchStock per product/branch).
+            had_intake_here = StockIntake.objects.filter(
+                product_id=OuterRef("product_id"),
+                branch_id=OuterRef("branch_id"),
             )
-            .select_related("product", "branch")
-            .order_by("quantity", "product__name")
-        )
+            base_filter = Q(product__is_active=True) & Q(quantity__lte=F("reorder_level")) & (
+                Q(quantity__gt=0) | Exists(had_intake_here)
+            )
 
-        # Collect per branch (cap rows per branch for response size)
-        by_branch = {}
-        for bs in qs.iterator(chunk_size=500):
-            bid = bs.branch_id
-            if bid is None:
-                continue
-            bucket = by_branch.setdefault(
-                bid,
-                {
+            count_rows = (
+                BranchStock.objects.filter(base_filter)
+                .values("branch_id")
+                .annotate(
+                    total=Count("id"),
+                    out_count=Count("id", filter=Q(quantity__lte=0)),
+                )
+            )
+            count_map = {r["branch_id"]: r for r in count_rows}
+
+            branch_ids = [bid for bid in count_map.keys() if bid is not None]
+            branch_name_map = {
+                b.id: b.name
+                for b in Branch.objects.filter(id__in=branch_ids).only("id", "name")
+            }
+
+            by_branch = {}
+            all_product_ids = []
+            for bid in branch_ids:
+                stats = count_map[bid]
+                rows = list(
+                    BranchStock.objects.filter(base_filter, branch_id=bid)
+                    .select_related("product")
+                    .order_by("quantity", "product__name")[:per_branch]
+                )
+                by_branch[bid] = {
                     "branch_id": bid,
-                    "branch_name": bs.branch.name if bs.branch else f"Branch #{bid}",
+                    "branch_name": branch_name_map.get(bid) or f"Branch #{bid}",
                     "is_active": bid == active_id,
-                    "items": [],
-                    "total": 0,
-                    "out_count": 0,
-                },
+                    "total": int(stats["total"] or 0),
+                    "out_count": int(stats["out_count"] or 0),
+                    "items": rows,
+                }
+                all_product_ids.extend(bs.product_id for bs in rows)
+
+            unique_pids = list({pid for pid in all_product_ids})
+            intel_map = (
+                bulk_reorder_intelligence(unique_pids, active_id, include_comparison=False)
+                if unique_pids
+                else {}
             )
-            bucket["total"] += 1
-            qty = float(bs.quantity)
-            if qty <= 0:
-                bucket["out_count"] += 1
-            if len(bucket["items"]) < per_branch:
-                bucket["items"].append(bs)
 
-        all_product_ids = []
-        for bucket in by_branch.values():
-            all_product_ids.extend(bs.product_id for bs in bucket["items"])
-        unique_pids = list({pid for pid in all_product_ids})
+            qty_by_branch = {}
+            for bid, bucket in by_branch.items():
+                pids = [bs.product_id for bs in bucket["items"]]
+                qty_by_branch[bid] = (
+                    bulk_suggested_order_quantities(pids, bid) if pids else {}
+                )
 
-        intel_map = bulk_reorder_intelligence(
-            unique_pids, active_id, include_comparison=False
-        )
-
-        # Branch-specific suggested quantities
-        qty_by_branch = {}
-        for bid, bucket in by_branch.items():
-            pids = [bs.product_id for bs in bucket["items"]]
-            qty_by_branch[bid] = bulk_suggested_order_quantities(pids, bid)
-
-        branches_out = []
-        for bid, bucket in by_branch.items():
-            items = []
-            for bs in bucket["items"]:
-                intel = intel_map.get(bs.product_id) or {}
-                best = intel.get("best_supplier") or {}
-                qty = float(bs.quantity)
-                level = float(bs.reorder_level or 0)
-                items.append(
+            branches_out = []
+            for bid, bucket in by_branch.items():
+                items = []
+                for bs in bucket["items"]:
+                    intel = intel_map.get(bs.product_id) or {}
+                    best = intel.get("best_supplier") or {}
+                    qty = float(bs.quantity)
+                    level = float(bs.reorder_level or 0)
+                    items.append(
+                        {
+                            "product_id": bs.product_id,
+                            "product_name": bs.product.name,
+                            "branch_id": bs.branch_id,
+                            "branch_name": bucket["branch_name"],
+                            "stock_quantity": qty,
+                            "reorder_level": level,
+                            "urgency": "out" if qty <= 0 else "low",
+                            "suggested_quantity": qty_by_branch.get(bid, {}).get(
+                                bs.product_id, intel.get("suggested_quantity")
+                            ),
+                            "recommended_supplier_id": best.get("supplier_id"),
+                            "recommended_supplier_name": best.get("supplier_name"),
+                            "recommended_unit_price": best.get("last_price"),
+                            "reason": intel.get("reason") or "",
+                        }
+                    )
+                branches_out.append(
                     {
-                        "product_id": bs.product_id,
-                        "product_name": bs.product.name,
-                        "branch_id": bs.branch_id,
+                        "branch_id": bucket["branch_id"],
                         "branch_name": bucket["branch_name"],
-                        "stock_quantity": qty,
-                        "reorder_level": level,
-                        "urgency": "out" if qty <= 0 else "low",
-                        "suggested_quantity": qty_by_branch.get(bid, {}).get(
-                            bs.product_id, intel.get("suggested_quantity")
-                        ),
-                        "recommended_supplier_id": best.get("supplier_id"),
-                        "recommended_supplier_name": best.get("supplier_name"),
-                        "recommended_unit_price": best.get("last_price"),
-                        "reason": intel.get("reason") or "",
+                        "is_active": bucket["is_active"],
+                        "count": bucket["total"],
+                        "out_count": bucket["out_count"],
+                        "listed": len(items),
+                        "items": items,
                     }
                 )
-            branches_out.append(
+
+            branches_out.sort(
+                key=lambda b: (
+                    0 if b["is_active"] else 1,
+                    -b["count"],
+                    b["branch_name"] or "",
+                )
+            )
+            total = sum(b["count"] for b in branches_out)
+            out_total = sum(b["out_count"] for b in branches_out)
+            summary = (
+                f"{total} product(s) need restock across {len(branches_out)} branch(es)"
+                + (f" ({out_total} out of stock)" if out_total else "")
+                + ". Order from your current branch first; switch branch to restock elsewhere."
+            )
+            return Response(
                 {
-                    "branch_id": bucket["branch_id"],
-                    "branch_name": bucket["branch_name"],
-                    "is_active": bucket["is_active"],
-                    "count": bucket["total"],
-                    "out_count": bucket["out_count"],
-                    "listed": len(items),
-                    "items": items,
+                    "summary": summary,
+                    "total_count": total,
+                    "active_branch_id": active_id,
+                    "active_branch_name": active.name if active else None,
+                    "branches": branches_out,
                 }
             )
+        except Exception:
+            import logging
 
-        # Active branch first, then by count desc, then name
-        branches_out.sort(
-            key=lambda b: (
-                0 if b["is_active"] else 1,
-                -b["count"],
-                b["branch_name"] or "",
+            logging.getLogger(__name__).exception("restock_needs failed")
+            return Response(
+                {
+                    "detail": "Could not load restock needs right now. Please try again in a moment."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        )
-        total = sum(b["count"] for b in branches_out)
-        out_total = sum(b["out_count"] for b in branches_out)
-        summary = (
-            f"{total} product(s) need restock across {len(branches_out)} branch(es)"
-            + (f" ({out_total} out of stock)" if out_total else "")
-            + ". Order from your current branch first; switch branch to restock elsewhere."
-        )
-        return Response(
-            {
-                "summary": summary,
-                "total_count": total,
-                "active_branch_id": active_id,
-                "active_branch_name": active.name if active else None,
-                "branches": branches_out,
-            }
-        )
 
     @action(detail=False, methods=["get"], url_path="procurement-analytics")
     def procurement_analytics_view(self, request):

@@ -51,10 +51,19 @@ const RestocksHub = () => {
       setData(res.data || null);
     } catch (err) {
       setData(null);
-      setError(
+      const detail =
         err?.response?.data?.detail ||
-          "Could not load restock needs. Please try again.",
-      );
+        err?.response?.data?.error?.message ||
+        (err?.response?.status === 404
+          ? "Restock needs is not on the server yet. Wait for the latest deploy, then refresh."
+          : null) ||
+        (err?.response?.status === 403
+          ? "Only admins can open network Restocks."
+          : null) ||
+        (!err?.response
+          ? "Could not reach the server. Check your connection and try again."
+          : null);
+      setError(detail || "Could not load restock needs. Please try again.");
     } finally {
       setLoading(false);
     }
