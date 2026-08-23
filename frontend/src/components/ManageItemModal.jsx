@@ -25,6 +25,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
   const [supplierId, setSupplierId] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [branches, setBranches] = useState([]);
+  const [unitCost, setUnitCost] = useState('');
   const [suppliers, setSuppliers] = useState([]);
   const [restockLoading, setRestockLoading] = useState(false);
 
@@ -101,7 +102,10 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
 
     loadBranches();
     loadSuppliers();
-  }, [user]);
+    const defaultCost =
+      item?.pricing_tier?.buying_price ?? item?.buying_price ?? item?.cost_price ?? '';
+    setUnitCost(defaultCost !== '' && defaultCost != null ? String(defaultCost) : '');
+  }, [user, item]);
 
   // ── Restock submit ────────────────────────────────────────────────────────
   const handleRestock = async (e) => {
@@ -122,7 +126,11 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
         qty,
         reason,
         parseInt(selectedBranch, 10),
-        { supplier_id: supplierId || undefined, expiry_date: expiryDate || undefined }
+        {
+          supplier_id: supplierId || undefined,
+          expiry_date: expiryDate || undefined,
+          unit_cost: unitCost !== '' ? parseFloat(unitCost) : undefined,
+        }
       );
       notify.success('Stock Updated', 'Inventory levels have been updated for this product.');
       onClose();
@@ -408,6 +416,24 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   className="form-input w-full"
                   placeholder={`Number of ${getProductUnitLabel(item, 2)}...`}
                 />
+              </div>
+
+              {/* Unit cost — saved on Stock received log */}
+              <div>
+                <label className="form-label">Unit cost (KES)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={unitCost}
+                  onChange={(e) => setUnitCost(e.target.value)}
+                  className="form-input w-full"
+                  placeholder="Cost per unit from supplier"
+                />
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Used for the Stock received total. Defaults to the product buying price.
+                </p>
               </div>
 
               {/* Notes */}

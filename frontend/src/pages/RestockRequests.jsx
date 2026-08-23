@@ -3,14 +3,22 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranchParam } from '../hooks/useBranchParam';
 import { Dialog, Transition as HeadlessTransition } from '@headlessui/react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 const STATUS_COLORS = {
-  pending: 'bg-amber-50 text-amber-600 border-amber-100',
-  approved: 'bg-indigo-50 text-primary border-indigo-100',
+  pending: 'bg-amber-50 text-amber-700 border-amber-100',
+  approved: 'bg-teal-50 text-teal-700 border-teal-100',
   rejected: 'bg-rose-50 text-rose-600 border-rose-100',
   completed: 'bg-emerald-50 text-emerald-600 border-emerald-100',
   cancelled: 'bg-slate-50 text-slate-400 border-slate-200',
+};
+
+const STATUS_LABELS = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 const RestockRequests = () => {
@@ -36,7 +44,6 @@ const RestockRequests = () => {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // Fetch restock requests with pagination and filters
   const fetchRequests = async () => {
     try {
       setLoading(true);
@@ -51,32 +58,27 @@ const RestockRequests = () => {
       const data = response.data;
       const results = Array.isArray(data) ? data : data?.results || [];
       setRequests(results);
-      // Derive the page count from the page size the server actually used
-      // rather than a hardcoded divisor. This previously divided by 10 while
-      // the backend paged by 20, so the pager advertised twice as many pages as
-      // existed and the back half of the range led to empty tables.
-      // Only a page with a `next` link is known to be full, so only then does
-      // its length reveal the page size; without one we are on the last page.
       const count = Array.isArray(data) ? results.length : data?.count ?? results.length;
       if (!Array.isArray(data) && data?.next && results.length > 0) {
         setTotalPages(Math.max(1, Math.ceil(count / results.length)));
       } else {
         setTotalPages(Math.max(1, currentPage));
       }
+      setError('');
     } catch (err) {
-      setError('Failed to load restock requests');
+      setError('Could not load stock requests. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch products for the select dropdown
   const fetchProducts = async () => {
     try {
       const response = await api.get('/inventory/');
       setProducts(response.data.products || []);
     } catch (err) {
-      }
+      /* ignore — dropdown stays empty */
+    }
   };
 
   useEffect(() => {
@@ -89,9 +91,9 @@ const RestockRequests = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.product) errors.product = 'Product is required';
+    if (!formData.product) errors.product = 'Choose a product';
     if (!formData.requested_quantity || formData.requested_quantity <= 0) {
-      errors.requested_quantity = 'Quantity must be greater than zero';
+      errors.requested_quantity = 'Enter how many you need';
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -117,7 +119,7 @@ const RestockRequests = () => {
       });
       fetchRequests();
     } catch (err) {
-      setError('Failed to create restock request');
+      setError('Could not create the stock request.');
       if (err.response?.data) {
         setFormErrors(err.response.data);
       }
@@ -125,156 +127,156 @@ const RestockRequests = () => {
   };
 
   const handleStatusUpdate = async (requestId, action) => {
-    if (!window.confirm(`Confirm security action: ${action.toUpperCase()}?`)) return;
+    const labels = {
+      approve: 'approve this request',
+      reject: 'reject this request',
+      complete: 'mark this request as received / complete',
+      cancel: 'cancel this request',
+    };
+    if (!window.confirm(`Are you sure you want to ${labels[action] || action}?`)) return;
 
     try {
       await api.post(`/inventory/restock-requests/${requestId}/${action}/`);
       fetchRequests();
     } catch (err) {
-      setError(`Failed to ${action} request`);
+      setError(`Could not ${action} this request.`);
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-      {/* Header Section */}
-      <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+      <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-glow">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
-            <h1 className="text-4xl font-display font-bold text-slate-900 tracking-tight">Supply <span className="text-primary">Requisitions</span></h1>
+            <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Restock requests
+            </h1>
           </div>
-          <p className="text-lg text-slate-500 font-medium">Coordinate procurement channels and restock logistics across the network.</p>
+          <p className="text-base font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Ask for more stock from a supplier, then approve and complete when it arrives.
+          </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-6 py-3.5 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2 group"
-        >
-          <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs font-semibold leading-none mt-0.5">Approve restock</span>
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="px-5 py-3.5 btn-primary text-white rounded-2xl shadow-premium hover:shadow-glow transition-all active:scale-[0.98] flex items-center gap-2"
+          >
+            <PlusIcon className="w-5 h-5" />
+            <span className="text-xs font-bold">Request stock</span>
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 animate-shake">
-          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          </div>
+        <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4">
           <p className="text-rose-900 font-bold text-sm tracking-tight">{typeof error === 'string' ? error : (error?.message || JSON.stringify(error))}</p>
         </div>
       )}
 
-      {/* Filters Bento */}
-      <div className="glass-card rounded-xl p-8 border border-white/60 shadow-premium mb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <label className="block text-xs font-bold text-slate-400 mb-3 px-1">Protocol Status</label>
+      <div className="glass-card rounded-xl p-6 border shadow-premium mb-8" style={{ borderColor: 'var(--border-primary)' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label className="block text-xs font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>Status</label>
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+              className="form-input w-full"
             >
-              <option value="">Full Range View</option>
-              {['pending', 'approved', 'rejected', 'completed', 'cancelled'].map(s => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)} Channel</option>
+              <option value="">All statuses</option>
+              {['pending', 'approved', 'rejected', 'completed', 'cancelled'].map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
               ))}
             </select>
           </div>
 
           <div className="lg:col-span-2">
-            <label className="block text-xs font-bold text-slate-400 mb-3 px-1">Asset Filter</label>
+            <label className="block text-xs font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>Product</label>
             <select
               value={filters.product}
               onChange={(e) => setFilters({ ...filters, product: e.target.value })}
-              className="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200/60 rounded-2xl focus:outline-none focus:ring-4 /10 focus:border-indigo-500 transition-all font-bold text-slate-700 shadow-sm appearance-none"
+              className="form-input w-full"
             >
-              <option value="">Across Entire Inventory</option>
+              <option value="">All products</option>
               {products.map((product) => (
                 <option key={product.id} value={product.id}>{product.name}</option>
               ))}
             </select>
           </div>
-          <div className="flex items-end justify-end">
-            <span className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)' }}>Live updates</span>
-          </div>
         </div>
       </div>
 
-      {/* Requests Table Container */}
-      <div className="glass-card rounded-xl border border-white/60 shadow-premium overflow-hidden">
+      <div className="glass-card rounded-xl border shadow-premium overflow-hidden" style={{ borderColor: 'var(--border-primary)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50">
-                {['Asset Details', 'Requested By', 'Volume', 'Status', 'Timestamp', 'Security Actions'].map((header) => (
-                  <th key={header} className="px-8 py-5 text-xs font-bold text-slate-400">{header}</th>
+              <tr className="border-b" style={{ borderColor: 'var(--border-primary)', background: 'var(--bg-field)' }}>
+                {['Product', 'Requested by', 'Qty', 'Status', 'Date', 'Actions'].map((header) => (
+                  <th key={header} className="px-6 py-4 text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{header}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-40">
-                      <div className="w-10 h-10 border-[3px] border-indigo-600 border-t-transparent rounded-xl animate-spin shadow-glow-indigo"></div>
-                      <p className="text-xs font-bold text-slate-500">Retrieving Requisitions...</p>
-                    </div>
+                  <td colSpan="6" className="px-6 py-16 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Loading…
                   </td>
                 </tr>
               ) : requests.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-40">
-                      <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center">
-                        <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      </div>
-                      <p className="text-slate-500 font-display font-semibold">No restock requests right now.</p>
-                    </div>
+                  <td colSpan="6" className="px-6 py-16 text-center">
+                    <p className="font-semibold" style={{ color: 'var(--text-secondary)' }}>No restock requests yet.</p>
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(true)}
+                      className="mt-3 text-sm font-bold text-primary underline"
+                    >
+                      Request stock
+                    </button>
                   </td>
                 </tr>
               ) : (
                 requests.map((request) => (
-                  <tr key={request.id} className="hover:bg-indigo-50/30 transition-colors group">
-                    <td className="px-8 py-6">
-                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors">{request.product_details?.name}</p>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-tight mt-0.5">{request.supplier || 'Generic Channel'}</p>
+                  <tr key={request.id} className="border-b last:border-0" style={{ borderColor: 'var(--border-primary)' }}>
+                    <td className="px-6 py-5">
+                      <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{request.product_details?.name || '—'}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{request.supplier || 'No supplier noted'}</p>
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-200">
-                          {request.requested_by_username?.[0]?.toUpperCase()}
-                        </div>
-                        <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{request.requested_by_username}</span>
-                      </div>
+                    <td className="px-6 py-5 text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                      {request.requested_by_username || '—'}
                     </td>
-                    <td className="px-8 py-6">
-                      <p className="text-lg font-display font-bold text-slate-900">{request.requested_quantity}</p>
-                      <p className="text-xs font-bold text-slate-400 mt-0.5">Units Requested</p>
+                    <td className="px-6 py-5">
+                      <p className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>{request.requested_quantity}</p>
                     </td>
-                    <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-xl text-xs font-bold border shadow-sm ${STATUS_COLORS[request.status]}`}>
-                        {request.status_display}
+                    <td className="px-6 py-5">
+                      <span className={`px-3 py-1 rounded-xl text-xs font-bold border ${STATUS_COLORS[request.status] || STATUS_COLORS.pending}`}>
+                        {request.status_display || STATUS_LABELS[request.status] || request.status}
                       </span>
                     </td>
-                    <td className="px-8 py-6">
-                      <p className="text-xs font-bold text-slate-500">{new Date(request.created_at).toLocaleDateString()}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{new Date(request.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <td className="px-6 py-5 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                      {new Date(request.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
+                    <td className="px-6 py-5">
+                      <div className="flex flex-wrap items-center gap-2">
                         {request.status === 'pending' && (
                           <>
                             <button
+                              type="button"
                               onClick={() => handleStatusUpdate(request.id, 'approve')}
-                              className="px-3 py-1.5 bg-indigo-50 text-primary rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+                              style={{ background: 'var(--btn-gradient)' }}
                             >
+                              <CheckIcon className="w-3.5 h-3.5" />
                               Approve
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleStatusUpdate(request.id, 'reject')}
-                              className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-all border border-rose-100 shadow-sm"
+                              className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold border border-rose-100"
                             >
                               Reject
                             </button>
@@ -282,18 +284,21 @@ const RestockRequests = () => {
                         )}
                         {request.status === 'approved' && (
                           <button
+                            type="button"
                             onClick={() => handleStatusUpdate(request.id, 'complete')}
-                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm"
+                            className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100"
                           >
-                            Execute/Complete
+                            Mark received
                           </button>
                         )}
                         {['pending', 'approved'].includes(request.status) && (
                           <button
+                            type="button"
                             onClick={() => handleStatusUpdate(request.id, 'cancel')}
-                            className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all border border-slate-200 shadow-sm"
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold border"
+                            style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)' }}
                           >
-                            Void
+                            Cancel
                           </button>
                         )}
                       </div>
@@ -305,141 +310,136 @@ const RestockRequests = () => {
           </table>
         </div>
 
-        {/* Pagination Section */}
-        <div className="px-10 py-6 border-t flex items-center justify-between" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
+        <div className="px-6 py-5 border-t flex items-center justify-between" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
           <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
-            Protocol Page <span style={{ color: 'var(--text-primary)' }}>{currentPage}</span> of <span style={{ color: 'var(--text-primary)' }}>{totalPages}</span>
+            Page {currentPage} of {totalPages}
           </p>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
+              type="button"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="form-cancel-btn px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40"
+              className="form-cancel-btn px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-40"
             >
-              Previous Sequence
+              Previous
             </button>
             <button
+              type="button"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="form-cancel-btn px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40"
+              className="form-cancel-btn px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-40"
             >
-              Next Sequence
+              Next
             </button>
           </div>
         </div>
       </div>
 
-      {/* Requisition Modal - Premium Split Layout Pattern */}
       <HeadlessTransition show={isModalOpen} as={React.Fragment}>
         <Dialog
           as="div"
-          className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm p-4 flex items-center justify-center"
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm p-4 flex items-center justify-center"
           onClose={() => setIsModalOpen(false)}
         >
           <HeadlessTransition.Child
             as={React.Fragment}
-            enter="ease-out duration-300"
+            enter="ease-out duration-200"
             enterFrom="opacity-0 scale-95"
             enterTo="opacity-100 scale-100"
-            leave="ease-in duration-200"
+            leave="ease-in duration-150"
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <div className="bg-white rounded-xl shadow-premium max-w-2xl w-full overflow-hidden flex flex-col md:flex-row border-[8px] border-white ring-1 ring-slate-200 animate-scale-up">
-              {/* Visual Panel */}
-              <div className="md:w-1/3 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 btn-primary/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-                <div>
-                  <div className="w-12 h-12 btn-primary rounded-2xl flex items-center justify-center mb-6 shadow-glow-indigo">
-                    <PlusIcon className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-display font-bold leading-tight">Approve restock</h2>
-                  <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">Initialize the procurement protocol for inventory assets.</p>
-                </div>
-                <div className="text-xs font-bold text-indigo-400 opacity-40">System Release 12.0</div>
+            <div
+              className="rounded-2xl shadow-premium max-w-lg w-full overflow-hidden border"
+              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+            >
+              <div className="px-6 py-5 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                <h2 className="text-xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Request stock</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  Tell your team what to order from a supplier.
+                </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="md:w-2/3 p-10 bg-slate-50/30">
-                <div className="space-y-6">
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <div>
+                  <label className="form-label">Product *</label>
+                  <select
+                    value={formData.product}
+                    onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                    className={`form-input w-full ${formErrors.product ? 'border-rose-300' : ''}`}
+                  >
+                    <option value="">Select product…</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>{product.name}</option>
+                    ))}
+                  </select>
+                  {formErrors.product && <p className="mt-1 text-xs font-bold text-rose-500">{formErrors.product}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Target Asset</label>
-                    <select
-                      value={formData.product}
-                      onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                      className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm appearance-none ${formErrors.product ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
-                    >
-                      <option value="">Identify Asset...</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>{product.name}</option>
-                      ))}
-                    </select>
-                    {formErrors.product && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.product}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Protocol Volume</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.requested_quantity}
-                        onChange={(e) => setFormData({ ...formData, requested_quantity: e.target.value })}
-                        className={`form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm ${formErrors.requested_quantity ? 'border-rose-300 ring-4 ring-rose-500/5' : ''}`}
-                        placeholder="Quantity..."
-                      />
-                      {formErrors.requested_quantity && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.requested_quantity}</p>}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Estimated Commitment</label>
-                      <input
-                        type="number"
-                        step="0.01" inputMode="decimal"
-                        min="0"
-                        value={formData.estimated_cost}
-                        onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
-                        className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
-                        placeholder="KES Value..."
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Procurement Vendor</label>
+                    <label className="form-label">Quantity *</label>
                     <input
-                      type="text"
-                      value={formData.supplier}
-                      onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                      className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-bold shadow-sm"
-                      placeholder="Supplier identity..."
+                      type="number"
+                      min="1"
+                      value={formData.requested_quantity}
+                      onChange={(e) => setFormData({ ...formData, requested_quantity: e.target.value })}
+                      className={`form-input w-full ${formErrors.requested_quantity ? 'border-rose-300' : ''}`}
+                      placeholder="How many?"
                     />
+                    {formErrors.requested_quantity && <p className="mt-1 text-xs font-bold text-rose-500">{formErrors.requested_quantity}</p>}
                   </div>
-
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 px-1">Strategic Notes</label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={3}
-                      className="form-input w-full px-5 py-4 rounded-2xl focus:outline-none transition-all font-medium shadow-sm"
-                      placeholder="Contextual details for procurement review..."
+                    <label className="form-label">Est. cost (KES)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      inputMode="decimal"
+                      min="0"
+                      value={formData.estimated_cost}
+                      onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
+                      className="form-input w-full"
+                      placeholder="Optional"
                     />
                   </div>
                 </div>
 
-                <div className="mt-8 flex gap-4">
+                <div>
+                  <label className="form-label">Supplier</label>
+                  <input
+                    type="text"
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    className="form-input w-full"
+                    placeholder="Who will supply this?"
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label">Notes</label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={3}
+                    className="form-input w-full"
+                    placeholder="Any extra details…"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="form-cancel-btn flex-1 px-6 py-4 rounded-2xl font-bold text-xs transition-all"
+                    className="form-cancel-btn flex-1 px-4 py-3 rounded-xl font-bold text-xs"
                   >
-                    Abort
+                    Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-6 py-4 btn-primary text-white rounded-2xl  shadow-premium hover:shadow-glow font-bold text-xs transition-all active:scale-[0.98]"
+                    className="flex-[2] px-4 py-3 btn-primary text-white rounded-xl font-bold text-xs"
                   >
-                    Finalize Requisition
+                    Submit request
                   </button>
                 </div>
               </form>

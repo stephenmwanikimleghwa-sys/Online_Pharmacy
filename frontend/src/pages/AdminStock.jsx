@@ -539,7 +539,7 @@ const AdminStock = () => {
 						onClick={() => navigate('/admin/restock-requests')}
 						className="px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs shadow-sm hover:shadow-card hover:bg-slate-50 transition-all active:scale-[0.98]"
 					>
-						Restock Requests
+						Request / approve stock
 					</button>
 					<button
 						onClick={(e) => { e.preventDefault(); setIsBulkModalOpen(true); }}

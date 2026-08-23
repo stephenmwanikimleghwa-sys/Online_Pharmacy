@@ -136,7 +136,7 @@ const StockIntakeLog = () => {
             { label: 'Deliveries', value: summary.total_records, accent: 'indigo', icon: InboxStackIcon },
             { label: 'Units received', value: summary.total_quantity_received, accent: 'emerald', icon: CubeIcon },
             { label: 'Total Cost', value: `KES ${parseFloat(summary.total_cost).toLocaleString()}`, accent: 'primary', icon: BanknotesIcon },
-            { label: 'Suppliers', value: summary.distributors, accent: 'amber', icon: BuildingStorefrontIcon },
+            { label: 'Suppliers', value: summary.suppliers ?? summary.distributors, accent: 'amber', icon: BuildingStorefrontIcon },
           ].map((stat, i) => (
             <StatCard
               key={i}
@@ -212,15 +212,24 @@ const StockIntakeLog = () => {
                       <p className="text-xs font-semibold tracking-tight mt-0.5" style={{ color: 'var(--text-secondary)' }}>Batch: {record.batch_number || 'ST-ALPHA'}</p>
                     </td>
                     <td className="px-8 py-6">
-                      <span className="px-3 py-1 border rounded-xl text-xs font-bold shadow-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>{record.distributor_name}</span>
+                      <span className="px-3 py-1 border rounded-xl text-xs font-bold shadow-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
+                        {record.supplier_name || record.distributor_name || '—'}
+                      </span>
                     </td>
                     <td className="px-8 py-6">
                       <p className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>{record.quantity_received}</p>
                       <p className="text-xs font-bold mt-0.5" style={{ color: 'var(--text-secondary)' }}>Units</p>
                     </td>
-                    <td className="px-8 py-6 font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>KES {parseFloat(record.unit_cost).toLocaleString()}</td>
+                    <td className="px-8 py-6 font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      KES {Number(record.unit_cost || record.cost_price || 0).toLocaleString()}
+                    </td>
                     <td className="px-8 py-6">
-                      <p className="font-display font-bold text-primary">KES {parseFloat(record.total_cost).toLocaleString()}</p>
+                      <p className="font-display font-bold text-primary">
+                        KES {Number(
+                          record.total_cost
+                          || (Number(record.unit_cost || record.cost_price || 0) * Number(record.quantity_received || 0))
+                        ).toLocaleString()}
+                      </p>
                     </td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-xl text-xs font-bold border ${record.expiry_date && new Date(record.expiry_date) < new Date()

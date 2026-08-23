@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+from decimal import Decimal
 from django.db.models import Q, Count, F, Min, Sum
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -377,6 +378,7 @@ def restock_inventory(request, pk):
     branch_id = request.data.get("branch_id")
     supplier_id_raw = request.data.get("supplier_id")
     expiry_date_raw = request.data.get("expiry_date")
+    unit_cost_raw = request.data.get("unit_cost", request.data.get("cost_price"))
 
     try:
         quantity = int(quantity_raw)
@@ -385,6 +387,15 @@ def restock_inventory(request, pk):
 
     if quantity <= 0:
         return api_validation_error("Quantity must be at least 1.")
+
+    unit_cost = None
+    if unit_cost_raw not in (None, ""):
+        try:
+            unit_cost = Decimal(str(unit_cost_raw))
+            if unit_cost < 0:
+                return api_validation_error("Unit cost cannot be negative.")
+        except Exception:
+            return api_validation_error("Unit cost must be a valid number.")
 
     branch = None
     if branch_id not in (None, ""):
@@ -435,12 +446,24 @@ def restock_inventory(request, pk):
                     return api_validation_error("Please provide a valid expiry date.")
 
             if supplier is not None:
+                resolved_cost = unit_cost
+                if resolved_cost is None or resolved_cost == 0:
+                    try:
+                        from products.models import PricingTier
+                        tier = PricingTier.objects.filter(product=product).first()
+                        if tier and tier.buying_price:
+                            resolved_cost = Decimal(str(tier.buying_price))
+                    except Exception:
+                        resolved_cost = Decimal("0")
+                if resolved_cost is None:
+                    resolved_cost = Decimal("0")
+
                 intake = StockIntake(
                     product=product,
                     branch=branch,
                     supplier=supplier,
                     quantity_received=quantity,
-                    unit_cost=0,
+                    unit_cost=resolved_cost,
                     expiry_date=expiry_date,
                     received_by=request.user,
                     notes=reason,

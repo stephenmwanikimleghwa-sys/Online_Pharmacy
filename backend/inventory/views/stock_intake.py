@@ -31,30 +31,39 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
             return StockIntake.objects.none()
             
         user = self.request.user
-        queryset = StockIntake.objects.select_related('product', 'received_by', 'branch').all()
+            queryset = StockIntake.objects.select_related(
+                "product", "received_by", "branch", "supplier"
+            ).all()
 
         # Customers see nothing
-        user_role = getattr(user, 'role', None)
-        if user_role == 'customer':
+        user_role = getattr(user, "role", None)
+        if user_role == "customer":
             return queryset.none()
 
         # ---- Branch scoping ----
-        is_admin = user.is_superuser or user_role == 'admin'
-        branch_param = self.request.query_params.get('branch')
-        if is_admin and branch_param and branch_param != 'all':
+        is_admin = user.is_superuser or user_role == "admin"
+        branch_param = self.request.query_params.get("branch")
+        if is_admin and branch_param and branch_param != "all":
             queryset = queryset.filter(branch_id=branch_param)
         elif not is_admin and user.branch:
             queryset = queryset.filter(branch=user.branch)
 
         # Filter by product if provided
-        product_id = self.request.query_params.get('product_id')
+        product_id = self.request.query_params.get("product_id")
         if product_id:
             queryset = queryset.filter(product_id=product_id)
 
-        # Filter by supplier
-        supplier_id = self.request.query_params.get('supplier_id')
+        # Filter by supplier id or name search (UI uses "distributor" as the search box)
+        supplier_id = self.request.query_params.get("supplier_id")
+        distributor = (
+            self.request.query_params.get("distributor")
+            or self.request.query_params.get("supplier")
+            or ""
+        ).strip()
         if supplier_id:
             queryset = queryset.filter(supplier_id=supplier_id)
+        elif distributor:
+            queryset = queryset.filter(supplier__name__icontains=distributor)
 
         # Filter by date range
         start_date = self.request.query_params.get('start_date')
@@ -93,6 +102,8 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
             'total_quantity_received': queryset.aggregate(Sum('quantity_received'))['quantity_received__sum'] or 0,
             'total_cost': queryset.aggregate(Sum('total_cost'))['total_cost__sum'] or 0,
             'suppliers': queryset.values_list('supplier_id', flat=True).distinct().count(),
+            # Alias kept for older frontends that read `distributors`
+            'distributors': queryset.values_list('supplier_id', flat=True).distinct().count(),
         }
         
         return Response(summary_data)
@@ -159,9 +170,9 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                 for p_data in products_data:
                     product_id = p_data.get('product_id')
                     quantity_received = int(p_data.get('quantity_received', 0))
-                    cost_price = float(p_data.get('cost_price', 0))
-                    selling_price = float(p_data.get('selling_price', 0))
-                    wholesale_price = float(p_data.get('wholesale_price', 0))
+                    cost_price = float(p_data.get('cost_price', 0) or 0)
+                    selling_price = float(p_data.get('selling_price', 0) or 0)
+                    wholesale_price = float(p_data.get('wholesale_price', 0) or 0)
                     expiry_date = p_data.get('expiry_date') or None
                     batch_number = p_data.get('batch_number', '')
 
@@ -187,6 +198,15 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                             department=department,
                             created_by=request.user
                         )
+
+                    # If cost was left blank, use the product's known buying price
+                    if cost_price <= 0:
+                        try:
+                            tier = PricingTier.objects.filter(product=product).first()
+                            if tier and tier.buying_price:
+                                cost_price = float(tier.buying_price)
+                        except Exception:
+                            pass
 
                     # Update pricing — honor explicit selling/wholesale prices (manual)
                     bp = cost_price or 0
