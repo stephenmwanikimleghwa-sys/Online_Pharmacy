@@ -12,9 +12,10 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Default to light for first paint so empty #root never flashes black on dark OS themes.
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('theme') as Theme;
-    return saved || 'system';
+    return saved || 'light';
   });
 
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');

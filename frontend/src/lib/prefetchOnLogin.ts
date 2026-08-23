@@ -50,10 +50,10 @@ export async function prefetchOnLogin(activeBranchId?: number, role?: string) {
         staleTime: STALE_TIMES.FAST,
       }),
       queryClient.prefetchQuery({
-        queryKey: QUERY_KEYS.inventory(activeBranchId, { per_page: 5000 }),
+        queryKey: QUERY_KEYS.inventory(activeBranchId, { per_page: 500 }),
         queryFn: async () => {
           const res = await api.get('/inventory/list/', {
-            params: { per_page: 5000 },
+            params: { per_page: 500 },
             skipGlobalErrorNotification: true,
           });
           const data = res.data || {};

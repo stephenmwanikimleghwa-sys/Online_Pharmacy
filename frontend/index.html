@@ -12,7 +12,6 @@
     <title>Transcounty Pharmacy | Staff Ops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Non-blocking font load: avoids CSS @import stall on first paint -->
     <link
       rel="preload"
       as="style"
@@ -31,51 +30,63 @@
       />
     </noscript>
   </head>
-  <body>
-    <div id="splash" style="position:fixed; inset:0; background:#eef2f1; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'DM Sans', system-ui, sans-serif; z-index:9999;">
-      <div style="width:48px; height:48px; background:#0f6b63; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:15px; font-family:Outfit, system-ui, sans-serif; margin-bottom:16px;">
+  <body style="margin:0;background:#eef2f1;min-height:100vh;">
+    <div id="splash" style="position:fixed;inset:0;background:#eef2f1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui,sans-serif;z-index:9999;">
+      <div style="width:48px;height:48px;background:#0f6b63;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;margin-bottom:16px;">
         TP
       </div>
-      <p style="color:#14201e; font-size:15px; margin:0 0 16px; font-weight:600; letter-spacing:-0.02em;">
+      <p style="color:#14201e;font-size:15px;margin:0 0 16px;font-weight:600;">
         Transcounty Pharmacy
       </p>
-      <div style="width:120px; height:3px; background:rgba(15, 107, 99, 0.12); border-radius:2px; overflow:hidden;">
-        <div id="splash-bar" style="height:100%; width:30%; background:#0f6b63; border-radius:2px; animation:splashload 1.5s ease-in-out infinite;"></div>
+      <div style="width:120px;height:3px;background:rgba(15,107,99,0.12);border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:30%;background:#0f6b63;border-radius:2px;animation:splashload 1.5s ease-in-out infinite;"></div>
       </div>
     </div>
     <style>
       @keyframes splashload {
-        0%{transform:translateX(-200%)}
-        100%{transform:translateX(400%)}
+        0% { transform: translateX(-200%); }
+        100% { transform: translateX(400%); }
       }
     </style>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Never leave users on the splash forever (slow JS / cold CDN / parse error).
       (function () {
-        var hide = function () {
+        function hideSplash() {
           var el = document.getElementById("splash");
           if (el) el.remove();
-        };
-        // React removes splash on first paint; this is a hard safety net.
-        setTimeout(hide, 2500);
-        window.addEventListener("load", function () {
-          setTimeout(hide, 500);
-        });
+        }
+        var tries = 0;
+        function tick() {
+          tries += 1;
+          var root = document.getElementById("root");
+          if (root && root.childNodes && root.childNodes.length > 0) {
+            hideSplash();
+            return;
+          }
+          if (tries < 100) {
+            setTimeout(tick, 100);
+            return;
+          }
+          hideSplash();
+          if (root && root.childNodes.length === 0) {
+            root.innerHTML =
+              '<div style="padding:2rem;font-family:system-ui;text-align:center;color:#14201e">' +
+              "<p style=\"font-weight:700;margin-bottom:0.5rem\">Transcounty could not start</p>" +
+              "<p style=\"margin-bottom:1rem;color:#475569\">Refresh the page. If it keeps failing, clear site data for this site.</p>" +
+              '<button onclick="location.reload()" style="background:#0f6b63;color:#fff;border:0;padding:0.75rem 1.25rem;border-radius:0.5rem;font-weight:600;cursor:pointer">Refresh</button>' +
+              "</div>";
+          }
+        }
+        setTimeout(tick, 50);
       })();
-      // Kill stale service workers that cached broken shells / 404 SPA routes.
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (reg) {
-            reg.unregister();
-          });
+          regs.forEach(function (reg) { reg.unregister(); });
         });
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {
-            keys.forEach(function (k) {
-              caches.delete(k);
-            });
+            keys.forEach(function (k) { caches.delete(k); });
           });
         }
       }

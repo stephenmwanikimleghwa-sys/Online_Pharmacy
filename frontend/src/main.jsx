@@ -12,12 +12,19 @@ import { SyncProvider } from "./context/SyncContext";
 import App from "./App.jsx";
 import "./index.css";
 
+// Prefer light shell until ThemeProvider runs
+document.documentElement.classList.add("light");
+
 window.addEventListener("unhandledrejection", (event) => {
-  // intentional log — unhandled promise rejections in production
   console.error("Unhandled rejection:", event.reason);
 });
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+const rootEl = document.getElementById("root");
+if (!rootEl) {
+  throw new Error("Root element #root not found");
+}
+
+const root = ReactDOM.createRoot(rootEl);
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -36,9 +43,11 @@ root.render(
   </React.StrictMode>,
 );
 
-// Drop splash as soon as React has committed — don't wait on fonts/API/sync.
+// Drop splash after React has committed real content (double rAF ≈ after paint).
 requestAnimationFrame(() => {
-  document.getElementById("splash")?.remove();
+  requestAnimationFrame(() => {
+    document.getElementById("splash")?.remove();
+  });
 });
 
 // Persist query cache after first paint so large localStorage restores don't stall landing.
@@ -51,18 +60,27 @@ const schedulePersist = (fn) => {
 };
 
 schedulePersist(() => {
-  const persister = createSyncStoragePersister({
-    storage: window.localStorage,
-    key: "TRANSCOUNTY_QUERY_CACHE",
-    throttleTime: 1000,
-  });
+  try {
+    const persister = createSyncStoragePersister({
+      storage: window.localStorage,
+      key: "TRANSCOUNTY_QUERY_CACHE",
+      throttleTime: 1000,
+    });
 
-  persistQueryClient({
-    queryClient,
-    persister,
-    maxAge: 30 * 60 * 1000,
-    buster: import.meta.env.VITE_APP_VERSION || "1.0.0",
-  });
+    persistQueryClient({
+      queryClient,
+      persister,
+      maxAge: 30 * 60 * 1000,
+      buster: import.meta.env.VITE_APP_VERSION || "1.0.1",
+    });
+  } catch (err) {
+    console.warn("[query-persist] skipped:", err);
+    try {
+      localStorage.removeItem("TRANSCOUNTY_QUERY_CACHE");
+    } catch {
+      /* ignore */
+    }
+  }
 });
 
 // Service worker intentionally not registered — it previously cached broken

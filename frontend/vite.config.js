@@ -43,9 +43,6 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Heavy one-off libraries — only loaded on demand
-          if (id.includes('node_modules/xlsx')) return 'excel';
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'charts';
           // UI framework chunks
           if (id.includes('node_modules/@headlessui')) return 'ui';
           if (id.includes('node_modules/@heroicons')) return 'icons';
@@ -57,7 +54,8 @@ export default defineConfig(({ mode }) => {
           if (id.includes('node_modules/react-dom')) return 'react-dom';
           if (id.includes('node_modules/react-router-dom') || id.includes('node_modules/react-router')) return 'router';
           if (id.includes('node_modules/react')) return 'react';
-          // Everything else from node_modules into a shared vendor chunk
+          // Do not force-split recharts/xlsx here — let them ride with their lazy page
+          // chunks so the landing entry does not modulepreload a 260KB charts file.
           if (id.includes('node_modules')) return 'vendor';
         }
       }
