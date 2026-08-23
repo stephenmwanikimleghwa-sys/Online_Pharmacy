@@ -3,6 +3,9 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AccessDenied from './AccessDenied';
 
+// Lazy page components are already wrapped by <Suspense> in App.jsx.
+// Do not nest another Suspense here — and never reference Suspense without importing it.
+
 interface ProtectedRouteProps {
   element?: React.ElementType;
   children?: React.ReactNode;
@@ -48,18 +51,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const renderProtected = () => {
     if (Element) {
-      return (
-        <Suspense
-          fallback={
-            <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
-              <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin" aria-hidden />
-              <p className="text-sm font-medium text-neutral-500">Loading...</p>
-            </div>
-          }
-        >
-          <Element />
-        </Suspense>
-      );
+      return <Element />;
     }
     return <>{children}</>;
   };

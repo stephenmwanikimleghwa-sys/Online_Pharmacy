@@ -72,17 +72,17 @@ export class ErrorBoundary extends Component<Props, State> {
               We encountered an unexpected error. Please try again or contact support if the problem persists.
             </p>
 
-            {import.meta.env.DEV && this.state.error && (
+            {this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="cursor-pointer text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                  Error Details
+                  Error details
                 </summary>
                 <div className="mt-2 p-4 rounded-lg overflow-auto max-h-48"
                   style={{ background: 'var(--bg-field)', border: '1px solid var(--border-primary)' }}>
                   <p className="text-xs font-mono mb-2" style={{ color: '#f87171' }}>
                     {this.state.error.toString()}
                   </p>
-                  {this.state.errorInfo && (
+                  {import.meta.env.DEV && this.state.errorInfo && (
                     <pre className="text-xs whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
                       {this.state.errorInfo.componentStack}
                     </pre>

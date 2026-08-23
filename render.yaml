@@ -61,6 +61,7 @@ services:
         name: Cache-Control
         value: public, max-age=3600
     routes:
+      # SPA fallback — without this, /login and other deep links return plain "Not Found"
       - type: rewrite
         source: /*
         destination: /index.html
