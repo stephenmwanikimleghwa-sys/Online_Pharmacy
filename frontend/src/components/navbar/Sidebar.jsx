@@ -1,19 +1,29 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import SyncStatusIndicator from "../SyncStatusIndicator";
 import api from "../../services/api";
 import { usePrefetchOnHover } from "../../hooks/usePrefetchOnHover";
 import { QUERY_KEYS } from "../../lib/queryKeys";
 import { STALE_TIMES } from "../../lib/staleTimes";
 import { unwrapList } from "../../utils/parseApiData";
 import {
-  SunIcon, MoonIcon, ArrowRightOnRectangleIcon, ChevronLeftIcon, ChevronRightIcon,
-  HomeIcon, ShoppingBagIcon, ChartBarIcon, ClipboardDocumentListIcon, Squares2X2Icon,
-  ShieldCheckIcon, DocumentTextIcon, DocumentDuplicateIcon, BuildingOffice2Icon,
-  BanknotesIcon, DocumentPlusIcon, UserGroupIcon, ArrowUturnLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  HomeIcon,
+  ShoppingBagIcon,
+  ChartBarIcon,
+  ClipboardDocumentListIcon,
+  Squares2X2Icon,
+  ShieldCheckIcon,
+  DocumentTextIcon,
+  DocumentDuplicateIcon,
+  BuildingOffice2Icon,
+  BanknotesIcon,
+  DocumentPlusIcon,
+  UserGroupIcon,
+  ArrowUturnLeftIcon,
   ExclamationTriangleIcon,
+  CubeIcon,
 } from "@heroicons/react/24/outline";
 import BranchSelector from "../BranchSelector";
 
@@ -34,7 +44,6 @@ const getDashboardHref = (role) => {
   }
 };
 
-/** Compact labels — keep the nav scannable without vertical scroll on typical laptop heights. */
 const getNavGroups = (user) => {
   const mainLinks = [];
 
@@ -53,6 +62,7 @@ const getNavGroups = (user) => {
   if (user?.role === "admin") {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/control", label: "Inventory Control", icon: CubeIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/purchase-orders", label: "Purchases", icon: DocumentPlusIcon },
@@ -72,6 +82,7 @@ const getNavGroups = (user) => {
   } else if (user?.role === "pharmacist") {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/control", label: "Inventory Control", icon: CubeIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
@@ -101,9 +112,7 @@ const getNavGroups = (user) => {
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { effectiveTheme, setTheme } = useTheme();
-  const { user, logout, activeBranch } = useAuth();
+  const { user, activeBranch } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { mainLinks, operationsLinks, adminLinks } = getNavGroups(user ?? null);
 
@@ -169,11 +178,6 @@ const Sidebar = () => {
     { title: "Admin", links: adminLinks },
   ].filter((section) => section.links.length > 0);
 
-  const onLogoutClick = () => {
-    if (logout) logout();
-    else navigate("/login");
-  };
-
   return (
     <div
       className={`hidden md:flex md:flex-col ${isCollapsed ? "w-[4.25rem]" : "w-56"} h-full nav-premium border-r z-40 transition-all duration-300 flex-shrink-0 relative overflow-hidden`}
@@ -193,14 +197,13 @@ const Sidebar = () => {
         )}
       </button>
 
-      {/* Brand — compact */}
       <div
-        className={`px-3 ${isCollapsed ? "py-3" : "pt-3 pb-2"} flex flex-col items-center gap-1.5 flex-shrink-0`}
+        className={`px-3 ${isCollapsed ? "py-4" : "pt-4 pb-3"} flex flex-col items-center gap-2 flex-shrink-0`}
         style={{ borderBottom: "1px solid var(--border-primary)" }}
       >
         <Link
           to="/"
-          className="flex flex-col items-center gap-1 group focus:outline-none focus-visible:ring-2 rounded-lg"
+          className="flex flex-col items-center gap-1.5 group focus:outline-none focus-visible:ring-2 rounded-lg"
           style={{ "--tw-ring-color": "var(--color-primary)" }}
         >
           <div
@@ -221,13 +224,12 @@ const Sidebar = () => {
         )}
       </div>
 
-      {/* Nav — fills remaining height; scrolls only if viewport is very short */}
-      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-2">
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2.5 py-3 space-y-3">
         {sections.map((section) => (
-          <div key={section.title} className="space-y-0.5">
+          <div key={section.title} className="space-y-1">
             {!isCollapsed && (
               <p
-                className="px-2.5 pt-0.5 pb-0.5 text-[10px] font-bold uppercase tracking-wider"
+                className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider"
                 style={{ color: "var(--text-secondary)" }}
               >
                 {section.title}
@@ -244,7 +246,7 @@ const Sidebar = () => {
                   title={label}
                   {...prefetchHandlers}
                   className={`flex items-center ${
-                    isCollapsed ? "justify-center p-2" : "px-2.5 py-1.5"
+                    isCollapsed ? "justify-center p-2.5" : "px-2.5 py-2"
                   } rounded-lg text-[13px] font-medium transition-colors duration-150 group`}
                   style={
                     active
@@ -281,55 +283,23 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      {/* Footer — tight */}
+      {/* Account only — theme / logout live in the top-right navbar */}
       <div
-        className="px-2 py-2 flex-shrink-0 space-y-1.5"
+        className="px-2.5 py-3 flex-shrink-0"
         style={{
           borderTop: "1px solid var(--border-primary)",
           background: "var(--bg-card)",
         }}
       >
         {user ? (
-          <div className={`flex ${isCollapsed ? "justify-center" : ""}`}>
-            <SyncStatusIndicator />
-          </div>
-        ) : null}
-
-        <div
-          className={`flex items-center ${isCollapsed ? "flex-col gap-1" : "justify-between gap-1.5"}`}
-        >
-          <button
-            type="button"
-            onClick={() => setTheme(effectiveTheme === "dark" ? "light" : "dark")}
-            className="form-cancel-btn flex items-center justify-center flex-1 py-1.5"
-            aria-label="Toggle Dark Mode"
-            title="Toggle Theme"
-          >
-            {effectiveTheme === "dark" ? (
-              <SunIcon className="w-4 h-4" />
-            ) : (
-              <MoonIcon className="w-4 h-4" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={onLogoutClick}
-            className="nav-logout-btn flex items-center justify-center flex-1 py-1.5"
-            title="Logout"
-          >
-            <ArrowRightOnRectangleIcon className="w-4 h-4" />
-          </button>
-        </div>
-
-        {user ? (
           <Link
             to="/account"
             title={isCollapsed ? "Manage Account" : ""}
-            className={`data-cell flex items-center gap-2 ${
-              isCollapsed ? "p-1.5 justify-center" : "px-2 py-1.5"
+            className={`data-cell flex items-center gap-2.5 ${
+              isCollapsed ? "p-2 justify-center" : "px-2.5 py-2"
             } rounded-lg transition-colors group`}
           >
-            <div className="nav-avatar w-7 h-7 text-xs flex-shrink-0">
+            <div className="nav-avatar w-8 h-8 text-xs flex-shrink-0">
               {user.username?.[0]?.toUpperCase() ?? "?"}
             </div>
             {!isCollapsed && (
@@ -337,7 +307,10 @@ const Sidebar = () => {
                 <p className="text-xs font-bold truncate" style={{ color: "var(--text-primary)" }}>
                   {user.username}
                 </p>
-                <p className="text-[10px] font-semibold truncate capitalize" style={{ color: "var(--text-secondary)" }}>
+                <p
+                  className="text-[10px] font-semibold truncate capitalize"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   {user.role}
                 </p>
               </div>
