@@ -182,21 +182,215 @@ def last_price_for_supplier_product(product_id, supplier_id):
 
 def suggested_order_quantity(product_id, branch_id):
     """Average monthly sales over last 3 months × 2, rounded up to nearest 50."""
+    qty_map = bulk_suggested_order_quantities([product_id], branch_id)
+    return qty_map.get(product_id, 100)
+
+
+def bulk_suggested_order_quantities(product_ids, branch_id=None):
+    """Map product_id -> suggested order qty using one usage query."""
+    ids = [int(pid) for pid in product_ids if pid is not None]
+    if not ids:
+        return {}
     three_months_ago = timezone.now() - timedelta(days=90)
-    total_sold = (
-        DispensationItem.objects.filter(
-            product_id=product_id,
-            dispensation__branch_id=branch_id,
-            dispensation__dispensed_at__gte=three_months_ago,
-        ).aggregate(total=Sum("quantity"))["total"]
-        or 0
+    qs = DispensationItem.objects.filter(
+        product_id__in=ids,
+        dispensation__dispensed_at__gte=three_months_ago,
     )
-    monthly_avg = float(total_sold) / 3.0
-    suggested = monthly_avg * 2
-    if suggested <= 0:
-        suggested = 100
-    rounded = int((suggested + 49) // 50) * 50
-    return max(rounded, 50)
+    if branch_id is not None:
+        qs = qs.filter(dispensation__branch_id=branch_id)
+    usage = {
+        row["product_id"]: float(row["t"] or 0)
+        for row in qs.values("product_id").annotate(t=Sum("quantity"))
+    }
+    out = {}
+    for pid in ids:
+        monthly_avg = usage.get(pid, 0.0) / 3.0
+        suggested = monthly_avg * 2
+        if suggested <= 0:
+            suggested = 100
+        rounded = int((suggested + 49) // 50) * 50
+        out[pid] = max(rounded, 50)
+    return out
+
+
+def _reason_for_reorder(cheapest, usual_supplier):
+    if cheapest and usual_supplier and cheapest["supplier_id"] != usual_supplier["supplier_id"]:
+        save = round(
+            float(usual_supplier["last_price"]) - float(cheapest["last_price"]), 2
+        )
+        if save > 0:
+            return (
+                f"Order from {cheapest['supplier_name']} — they were cheapest at "
+                f"KES {cheapest['last_price']:,.2f}. Last time you used "
+                f"{usual_supplier['supplier_name']} at KES {usual_supplier['last_price']:,.2f} "
+                f"(save about KES {save:,.2f} per unit)."
+            )
+        return (
+            f"Order from {cheapest['supplier_name']} — best recorded price "
+            f"KES {cheapest['last_price']:,.2f}."
+        )
+    if cheapest:
+        times = cheapest.get("times_supplied") or 0
+        reason = (
+            f"Order from {cheapest['supplier_name']} — best price in your history "
+            f"(KES {cheapest['last_price']:,.2f}"
+            + (f", bought {times} time(s)" if times else "")
+            + ")."
+        )
+        if cheapest.get("trend") == "RISING":
+            reason += " Note: their price has been rising lately."
+        elif cheapest.get("trend") == "FALLING":
+            reason += " Good news: their price has been falling."
+        return reason
+    if usual_supplier:
+        return (
+            f"Order from {usual_supplier['supplier_name']} — they supplied this last "
+            f"(KES {usual_supplier['last_price']:,.2f}). No other supplier history yet to compare."
+        )
+    return (
+        "No supplier history for this product yet. Choose any supplier when you create the order, "
+        "and record the delivery under Stock received so next time we can recommend the cheapest."
+    )
+
+
+def bulk_reorder_intelligence(product_ids, branch_id=None, include_comparison=False):
+    """
+    Build reorder tips for many products with a few queries (not N+1).
+
+    Returns {product_id: intelligence_dict}.
+    """
+    ids = list({int(pid) for pid in product_ids if pid is not None})
+    empty = {
+        "suggested_quantity": 100,
+        "best_supplier": None,
+        "usual_supplier": None,
+        "alternative_supplier": None,
+        "reason": _reason_for_reorder(None, None),
+    }
+    if include_comparison:
+        empty["comparison"] = None
+    if not ids:
+        return {}
+
+    qty_map = bulk_suggested_order_quantities(ids, branch_id)
+
+    intake_rows = (
+        StockIntake.objects.filter(product_id__in=ids)
+        .values(
+            "product_id",
+            "supplier_id",
+            "supplier__name",
+            "unit_cost",
+            "received_date",
+        )
+        .order_by("-received_date")
+    )
+
+    # product -> supplier_id -> stats (first sighting = latest price)
+    by_product = {pid: {} for pid in ids}
+    usual = {}
+    for r in intake_rows:
+        pid = r["product_id"]
+        sid = r["supplier_id"]
+        if pid not in by_product or sid is None:
+            continue
+        if pid not in usual:
+            usual[pid] = {
+                "supplier_id": sid,
+                "supplier_name": r["supplier__name"] or "Unknown",
+                "last_price": float(r["unit_cost"] or 0),
+                "last_date": r["received_date"].date().isoformat()
+                if r["received_date"]
+                else None,
+            }
+        suppliers = by_product[pid]
+        if sid not in suppliers:
+            suppliers[sid] = {
+                "supplier_id": sid,
+                "supplier_name": r["supplier__name"] or "Unknown",
+                "last_price": float(r["unit_cost"] or 0),
+                "prices": [float(r["unit_cost"] or 0)],
+                "times_supplied": 1,
+            }
+        else:
+            suppliers[sid]["times_supplied"] += 1
+            suppliers[sid]["prices"].append(float(r["unit_cost"] or 0))
+
+    result = {}
+    for pid in ids:
+        suppliers = by_product.get(pid) or {}
+        ranked = []
+        for row in suppliers.values():
+            prices = row["prices"]
+            last_price = prices[0]
+            avg_price = sum(prices) / len(prices)
+            ranked.append(
+                {
+                    "supplier_id": row["supplier_id"],
+                    "supplier_name": row["supplier_name"],
+                    "last_price": round(last_price, 2),
+                    "average_price": round(avg_price, 2),
+                    "times_supplied": row["times_supplied"],
+                    "trend": _price_trend(last_price, avg_price),
+                    "is_cheapest": False,
+                    "savings_vs_expensive": 0,
+                }
+            )
+        ranked.sort(key=lambda x: x["last_price"])
+        if ranked:
+            min_p = ranked[0]["last_price"]
+            max_p = ranked[-1]["last_price"]
+            for row in ranked:
+                row["is_cheapest"] = row["last_price"] == min_p
+                row["savings_vs_expensive"] = round(max_p - row["last_price"], 2)
+
+        cheapest = ranked[0] if ranked else None
+        alt = ranked[1] if len(ranked) > 1 else None
+        usual_supplier = usual.get(pid)
+        recommended = cheapest
+        if not recommended and usual_supplier:
+            recommended = {
+                "supplier_id": usual_supplier["supplier_id"],
+                "supplier_name": usual_supplier["supplier_name"],
+                "last_price": usual_supplier["last_price"],
+                "average_price": usual_supplier["last_price"],
+                "times_supplied": 1,
+                "trend": "STABLE",
+                "is_cheapest": True,
+                "savings_vs_expensive": 0,
+            }
+
+        intel = {
+            "suggested_quantity": qty_map.get(pid, 100),
+            "best_supplier": recommended,
+            "usual_supplier": usual_supplier,
+            "alternative_supplier": alt,
+            "reason": _reason_for_reorder(cheapest, usual_supplier),
+        }
+        if include_comparison:
+            intel["comparison"] = {
+                "product": {"id": pid, "name": None},
+                "comparison": ranked,
+                "cheapest_supplier": cheapest["supplier_name"] if cheapest else None,
+                "most_expensive_supplier": ranked[-1]["supplier_name"] if ranked else None,
+            }
+        result[pid] = intel
+    return result
+
+
+def low_stock_reorder_suggestion(product_id, branch_id, include_comparison=True):
+    """Single-product wrapper used by detail-style callers."""
+    data = bulk_reorder_intelligence(
+        [product_id], branch_id, include_comparison=include_comparison
+    )
+    return data.get(product_id) or {
+        "suggested_quantity": 100,
+        "best_supplier": None,
+        "usual_supplier": None,
+        "alternative_supplier": None,
+        "reason": _reason_for_reorder(None, None),
+        "comparison": None,
+    }
 
 
 def supplier_scorecard(supplier_id):

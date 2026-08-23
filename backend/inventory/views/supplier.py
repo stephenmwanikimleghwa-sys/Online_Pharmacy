@@ -14,6 +14,8 @@ from inventory.services.supplier_intelligence import (
     supplier_scorecard,
     procurement_analytics,
     suggested_order_quantity,
+    bulk_reorder_intelligence,
+    low_stock_reorder_suggestion,
 )
 from config.api_responses import api_success, api_validation_error
 from users.utils import log_activity
@@ -99,9 +101,17 @@ class SupplierViewSet(viewsets.ModelViewSet):
             qs = qs.filter(branch_id=active.id)
 
         limit = min(int(request.query_params.get("limit") or 40), 100)
+        rows = list(qs[:limit])
+        intel_map = bulk_reorder_intelligence(
+            [bs.product_id for bs in rows],
+            # Prefer active/request branch; per-row branch used as fallback below
+            active.id if active else (rows[0].branch_id if rows else None),
+            include_comparison=False,
+        )
         suggestions = []
-        for bs in qs[:limit]:
-            intel = low_stock_reorder_suggestion(bs.product_id, bs.branch_id)
+        for bs in rows:
+            intel = intel_map.get(bs.product_id) or {}
+            # If row branch differs, still fine — qty tip is branch-scoped via active
             best = intel.get("best_supplier") or {}
             qty = float(bs.quantity)
             level = float(bs.reorder_level or 0)
@@ -253,89 +263,3 @@ class SupplierViewSet(viewsets.ModelViewSet):
             data={"receipt": receipt, "new_balance": str(locked_supplier.balance)},
             extra={"receipt": receipt, "new_balance": str(locked_supplier.balance)},
         )
-
-
-def low_stock_reorder_suggestion(product_id, branch_id):
-    """Recommend who to reorder from, with a plain-English reason."""
-    from inventory.models.stock_intake import StockIntake
-
-    comparison = compare_suppliers_for_product(product_id)
-    ranked = (comparison or {}).get("comparison") or []
-    cheapest = ranked[0] if ranked else None
-    alt = ranked[1] if len(ranked) > 1 else None
-    suggested_qty = suggested_order_quantity(product_id, branch_id)
-
-    last_intake = (
-        StockIntake.objects.filter(product_id=product_id)
-        .select_related("supplier")
-        .order_by("-received_date")
-        .first()
-    )
-    usual_supplier = None
-    if last_intake and last_intake.supplier_id:
-        usual_supplier = {
-            "supplier_id": last_intake.supplier_id,
-            "supplier_name": last_intake.supplier.name,
-            "last_price": float(last_intake.unit_cost),
-            "last_date": last_intake.received_date.date().isoformat(),
-        }
-
-    reason = ""
-    recommended = cheapest
-    if cheapest and usual_supplier and cheapest["supplier_id"] != usual_supplier["supplier_id"]:
-        save = round(
-            float(usual_supplier["last_price"]) - float(cheapest["last_price"]), 2
-        )
-        if save > 0:
-            reason = (
-                f"Order from {cheapest['supplier_name']} — they were cheapest at "
-                f"KES {cheapest['last_price']:,.2f}. Last time you used "
-                f"{usual_supplier['supplier_name']} at KES {usual_supplier['last_price']:,.2f} "
-                f"(save about KES {save:,.2f} per unit)."
-            )
-        else:
-            reason = (
-                f"Order from {cheapest['supplier_name']} — best recorded price "
-                f"KES {cheapest['last_price']:,.2f}."
-            )
-    elif cheapest:
-        times = cheapest.get("times_supplied") or 0
-        reason = (
-            f"Order from {cheapest['supplier_name']} — best price in your history "
-            f"(KES {cheapest['last_price']:,.2f}"
-            + (f", bought {times} time(s)" if times else "")
-            + ")."
-        )
-        if cheapest.get("trend") == "RISING":
-            reason += " Note: their price has been rising lately."
-        elif cheapest.get("trend") == "FALLING":
-            reason += " Good news: their price has been falling."
-    elif usual_supplier:
-        recommended = {
-            "supplier_id": usual_supplier["supplier_id"],
-            "supplier_name": usual_supplier["supplier_name"],
-            "last_price": usual_supplier["last_price"],
-            "average_price": usual_supplier["last_price"],
-            "times_supplied": 1,
-            "trend": "STABLE",
-            "is_cheapest": True,
-            "savings_vs_expensive": 0,
-        }
-        reason = (
-            f"Order from {usual_supplier['supplier_name']} — they supplied this last "
-            f"(KES {usual_supplier['last_price']:,.2f}). No other supplier history yet to compare."
-        )
-    else:
-        reason = (
-            "No supplier history for this product yet. Choose any supplier when you create the order, "
-            "and record the delivery under Stock received so next time we can recommend the cheapest."
-        )
-
-    return {
-        "suggested_quantity": suggested_qty,
-        "best_supplier": recommended,
-        "usual_supplier": usual_supplier,
-        "alternative_supplier": alt,
-        "reason": reason,
-        "comparison": comparison,
-    }

@@ -280,78 +280,111 @@ def inventory_list(request):
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
 def low_stock_items(request):
-    """Get list of low stock items."""
-    from django.db.models import Prefetch
-    
+    """Get list of low stock items (lean payload; optional bulk reorder tips)."""
+    from inventory.services.supplier_intelligence import bulk_reorder_intelligence
+
     user = request.user
-    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
-    branch_param = request.query_params.get('branch')
+    is_admin = getattr(user, "role", None) == "admin" or user.is_superuser
+    branch_param = request.query_params.get("branch")
+    with_suggestions = (
+        request.query_params.get("with_suggestions", "true").lower() != "false"
+    )
+    try:
+        limit = min(int(request.query_params.get("limit") or 80), 200)
+    except (TypeError, ValueError):
+        limit = 80
 
     qs = (
-        BranchStock.objects
-        .filter(
+        BranchStock.objects.filter(
             product__is_active=True,
             quantity__lte=F("reorder_level"),
-            quantity__gt=0
+            quantity__gt=0,
         )
-        .select_related("product", "product__pharmacy", "product__pricing_tier")
-        .prefetch_related("product__branch_stocks__branch")
-        .order_by("quantity")
+        .select_related("product")
+        .order_by("quantity", "product__name")
     )
-    if is_admin and branch_param and branch_param != 'all':
+    if is_admin and branch_param and branch_param != "all":
         qs = qs.filter(branch_id=branch_param)
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
-    
-    data = []
-    from inventory.views.supplier import low_stock_reorder_suggestion
+
+    rows = list(qs[:limit])
     branch_id = None
-    if is_admin and branch_param and branch_param != 'all':
-        branch_id = int(branch_param)
+    if is_admin and branch_param and branch_param != "all":
+        try:
+            branch_id = int(branch_param)
+        except (TypeError, ValueError):
+            branch_id = None
     elif not is_admin and user.branch:
         branch_id = user.branch.id
+    elif rows:
+        branch_id = rows[0].branch_id
 
-    for bs in qs:
-        prod_data = ProductSerializer(bs.product).data
-        prod_data['stock_quantity'] = float(bs.quantity)
-        prod_data['reorder_level'] = float(bs.reorder_level)
-        if request.query_params.get('with_suggestions', 'true').lower() != 'false':
-            prod_data['reorder_intelligence'] = low_stock_reorder_suggestion(
-                bs.product_id, branch_id or bs.branch_id
-            )
-        data.append(prod_data)
-        
+    intel_map = {}
+    if with_suggestions and rows:
+        intel_map = bulk_reorder_intelligence(
+            [bs.product_id for bs in rows],
+            branch_id,
+            include_comparison=False,
+        )
+
+    data = []
+    for bs in rows:
+        qty = float(bs.quantity)
+        level = float(bs.reorder_level or 0)
+        item = {
+            "id": bs.product_id,
+            "product_id": bs.product_id,
+            "name": bs.product.name,
+            "product_name": bs.product.name,
+            "stock_quantity": qty,
+            "quantity": qty,
+            "reorder_level": level,
+            "reorder_threshold": level,
+            "branch_id": bs.branch_id,
+        }
+        if with_suggestions:
+            item["reorder_intelligence"] = intel_map.get(bs.product_id)
+        data.append(item)
+
     return Response(data)
 
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
 def out_of_stock_items(request):
-    """Get list of out of stock items."""
+    """Get list of out of stock items (lean payload)."""
     user = request.user
-    is_admin = getattr(user, 'role', None) == 'admin' or user.is_superuser
-    branch_param = request.query_params.get('branch')
+    is_admin = getattr(user, "role", None) == "admin" or user.is_superuser
+    branch_param = request.query_params.get("branch")
+    try:
+        limit = min(int(request.query_params.get("limit") or 80), 200)
+    except (TypeError, ValueError):
+        limit = 80
 
     qs = (
-        BranchStock.objects
-        .filter(
-            product__is_active=True,
-            quantity__lte=0
-        )
-        .select_related("product", "product__pharmacy", "product__pricing_tier")
-        .prefetch_related("product__branch_stocks__branch")
+        BranchStock.objects.filter(product__is_active=True, quantity__lte=0)
+        .select_related("product")
         .order_by("product__name")
     )
-    if is_admin and branch_param and branch_param != 'all':
+    if is_admin and branch_param and branch_param != "all":
         qs = qs.filter(branch_id=branch_param)
     elif not is_admin and user.branch:
         qs = qs.filter(branch=user.branch)
-    
+
     data = []
-    for bs in qs:
-        prod_data = ProductSerializer(bs.product).data
-        prod_data['stock_quantity'] = float(bs.quantity)
-        data.append(prod_data)
-        
+    for bs in qs[:limit]:
+        qty = float(bs.quantity)
+        data.append(
+            {
+                "id": bs.product_id,
+                "product_id": bs.product_id,
+                "name": bs.product.name,
+                "product_name": bs.product.name,
+                "stock_quantity": qty,
+                "quantity": qty,
+                "branch_id": bs.branch_id,
+            }
+        )
     return Response(data)
 
 @api_view(["GET"])
