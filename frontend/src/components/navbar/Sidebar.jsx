@@ -62,8 +62,10 @@ const getNavGroups = (user) => {
 
   if (user?.role === "admin") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
-      { to: "/inventory/control", label: "Inventory Control", icon: CubeIcon },
+      // Stock hub: list, suppliers, batches, intake, transfers
+      { to: "/inventory/management", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      // Product CRUD: add / edit / deactivate medicines
+      { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/purchase-orders", label: "Purchases", icon: DocumentPlusIcon },
@@ -82,8 +84,8 @@ const getNavGroups = (user) => {
     );
   } else if (user?.role === "pharmacist") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
-      { to: "/inventory/control", label: "Inventory Control", icon: CubeIcon },
+      { to: "/inventory/management", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
@@ -98,7 +100,7 @@ const getNavGroups = (user) => {
     operationsLinks.push({ to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon });
   } else if (user?.role === "auditor") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory Control", icon: ClipboardDocumentListIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
     );
