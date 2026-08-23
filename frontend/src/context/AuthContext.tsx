@@ -303,6 +303,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (error) {
         const hasResponse = !!(error as { response?: unknown })?.response;
         if (isAuthRejection(error)) {
+          // Access may have expired — try one silent refresh before forcing login.
+          try {
+            const { refreshAccessToken } = await import("../services/api");
+            const access = await refreshAccessToken();
+            if (access) {
+              const retry = await api.get("/auth/profile/", {
+                skipGlobalErrorNotification: true,
+              });
+              const profileData = (retry.data?.user || retry.data?.profile || retry.data) as Record<
+                string,
+                unknown
+              >;
+              try { localStorage.setItem("cached_profile", JSON.stringify(profileData)); } catch { /* non-fatal */ }
+              mergeUserFromProfile(profileData, {
+                allowed_branches: profileData.allowed_branches as BranchInfo[] | undefined,
+                requires_branch_selection: profileData.requires_branch_selection as boolean | undefined,
+                active_branch: profileData.active_branch as BranchInfo | null | undefined,
+              });
+              return;
+            }
+          } catch {
+            /* fall through to logout */
+          }
           notifyError(
             "Session Expired",
             "You were logged out after a period of inactivity. Please log in again.",
