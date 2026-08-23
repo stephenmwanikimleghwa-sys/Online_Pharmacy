@@ -31,9 +31,9 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
             return StockIntake.objects.none()
             
         user = self.request.user
-            queryset = StockIntake.objects.select_related(
-                "product", "received_by", "branch", "supplier"
-            ).all()
+        queryset = StockIntake.objects.select_related(
+            "product", "received_by", "branch", "supplier"
+        ).all()
 
         # Customers see nothing
         user_role = getattr(user, "role", None)
