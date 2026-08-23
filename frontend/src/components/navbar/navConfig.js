@@ -15,6 +15,7 @@ import {
   UserGroupIcon,
   ArrowUturnLeftIcon,
   CubeIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 
 export const getDashboardHref = (role) => {
@@ -53,6 +54,7 @@ export const getNavGroups = (user) => {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
+      { to: "/restocks", label: "Restocks", icon: ShoppingCartIcon },
       { to: "/supplier-intelligence", label: "Supplier Intel", icon: LightBulbIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },

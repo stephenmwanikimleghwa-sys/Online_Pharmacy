@@ -45,6 +45,7 @@ const ConsultationWorkflow = lazy(() => import("./pages/clinical/ConsultationWor
 const StockAdjustments = lazy(() => import("./pages/StockAdjustments"));
 const ComplianceHub = lazy(() => import("./pages/ComplianceHub"));
 const SupplierIntelligence = lazy(() => import("./pages/SupplierIntelligence"));
+const RestocksHub = lazy(() => import("./pages/RestocksHub"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BottomNav = lazy(() => import("./components/BottomNav"));
 const Navbar = lazy(() => import("./components/Navbar"));
@@ -150,6 +151,16 @@ function AppLayout() {
                       <ProtectedRoute
                         element={SupplierIntelligence}
                         allowedRoles={["admin", "pharmacist", "auditor"]}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/restocks"
+                    element={
+                      <ProtectedRoute
+                        element={RestocksHub}
+                        allowedRoles={["admin"]}
+                        requiresActiveBranch
                       />
                     }
                   />

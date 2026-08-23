@@ -20,6 +20,9 @@ export const getProcurementAnalytics = () =>
 export const getReorderSuggestions = (params = {}) =>
   api.get('/inventory/suppliers/reorder-suggestions/', { params });
 
+export const getRestockNeeds = (params = {}) =>
+  api.get('/inventory/suppliers/restock-needs/', { params });
+
 export const listPurchaseOrders = (params = {}) =>
   api.get('/purchase-orders/', { params });
 

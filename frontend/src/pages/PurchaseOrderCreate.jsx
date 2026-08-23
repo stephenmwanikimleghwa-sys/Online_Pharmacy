@@ -57,6 +57,7 @@ const PurchaseOrderCreate = () => {
     const price = searchParams.get('price') || '';
     const reason = searchParams.get('reason') || '';
     const notes = searchParams.get('notes') || '';
+    const intendedBranch = searchParams.get('branch') || '';
 
     if (!supplier && !product) return;
 
@@ -88,10 +89,19 @@ const PurchaseOrderCreate = () => {
       (Array.isArray(products) ? products : []).find((p) => String(p.id) === String(product))
         ?.name || '';
 
+    const branchMismatch =
+      intendedBranch &&
+      activeBranch?.id &&
+      String(intendedBranch) !== String(activeBranch.id);
+
     if (supplier || product) {
       setPrefillNote(
         [
-          'Pre-filled from Supplier Intel.',
+          'Pre-filled from Restocks / Supplier Intel.',
+          activeBranch?.name ? `Recording under branch: ${activeBranch.name}.` : '',
+          branchMismatch
+            ? 'Warning: this order was meant for a different branch — switch branch before submitting.'
+            : '',
           supplierName ? `Supplier: ${supplierName}.` : '',
           productName ? `Product: ${productName}.` : '',
           reason || '',
@@ -100,7 +110,7 @@ const PurchaseOrderCreate = () => {
           .join(' '),
       );
     }
-  }, [ready, searchParams, suppliers, products, activeBranch?.name]);
+  }, [ready, searchParams, suppliers, products, activeBranch?.name, activeBranch?.id]);
 
   const totalEstimated = useMemo(
     () => rows.reduce((sum, row) => {
@@ -133,6 +143,18 @@ const PurchaseOrderCreate = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const intendedBranch = searchParams.get('branch') || '';
+    if (
+      intendedBranch &&
+      activeBranch?.id &&
+      String(intendedBranch) !== String(activeBranch.id)
+    ) {
+      notify.warning(
+        'Wrong branch',
+        `This restock is for another branch. Switch to that branch first, then create the order.`,
+      );
+      return;
+    }
     if (!header.supplier) {
       notify.warning('Incomplete', 'Please select a supplier.');
       return;

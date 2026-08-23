@@ -46,7 +46,7 @@ const buildReorderUrl = (s) => {
  */
 const SupplierIntelligence = () => {
   const navigate = useNavigate();
-  const { activeBranch } = useAuth();
+  const { user, activeBranch } = useAuth();
   const { data: suppliersRaw, isLoading: loadingSuppliers } = useSuppliers();
   const suppliers = unwrapList(suppliersRaw);
 
@@ -222,17 +222,28 @@ const SupplierIntelligence = () => {
         title="Supplier intelligence"
         description="Who to buy from when stock runs low, who is cheapest, and how much you could save. Built from Stock received history."
         actions={
-          <button
-            type="button"
-            onClick={() => {
-              runAnalysis();
-              loadReorderSuggestions();
-            }}
-            disabled={loadingAnalytics || loadingReorder}
-            className="btn-primary px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-          >
-            {loadingAnalytics || loadingReorder ? "Analysing…" : "Run analysis"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {user?.role === "admin" ? (
+              <Link
+                to="/restocks"
+                className="px-4 py-2.5 rounded-xl text-sm font-bold border"
+                style={{ borderColor: "var(--border-primary)", color: "var(--text-primary)" }}
+              >
+                All restocks
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                runAnalysis();
+                loadReorderSuggestions();
+              }}
+              disabled={loadingAnalytics || loadingReorder}
+              className="btn-primary px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+            >
+              {loadingAnalytics || loadingReorder ? "Analysing…" : "Run analysis"}
+            </button>
+          </div>
         }
       />
 

@@ -48,6 +48,7 @@ const SPA_ROUTES = [
   "/reports",
   "/dispensing-logs",
   "/supplier-intelligence",
+  "/restocks",
   "/otc-sales",
   "/customers",
   "/cashier/dashboard",

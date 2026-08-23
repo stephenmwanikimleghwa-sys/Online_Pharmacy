@@ -523,11 +523,14 @@ const AdminDashboard = () => {
                       {lowStockTotal > lowStockAlerts.length ? ' (most urgent first)' : ''}
                     </span>
                     <div className="flex gap-3">
+                      <Link to="/restocks" className="font-semibold" style={{ color: 'var(--color-primary)' }}>
+                        All restocks
+                      </Link>
                       <Link to="/supplier-intelligence" className="font-semibold" style={{ color: 'var(--color-primary)' }}>
                         Restock tips
                       </Link>
                       <Link to="/inventory/management?filter=low" className="font-semibold" style={{ color: 'var(--color-primary)' }}>
-                        View all
+                        View inventory
                       </Link>
                     </div>
                   </div>
