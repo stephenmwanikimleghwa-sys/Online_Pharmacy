@@ -144,6 +144,17 @@ export function mapAxiosErrorToDisplay(
       };
     }
 
+    // Online but API unreachable — usually Render free-tier cold start, not "no internet".
+    if (!isOffline) {
+      return {
+        title: "Server Unreachable",
+        message:
+          "Could not reach the API. The backend may be waking up after idle — wait ~30–60 seconds and tap Retry.",
+        actionLabel: retryAction ? "Retry" : undefined,
+        action: retryAction,
+      };
+    }
+
     return {
       title: "No Internet Connection",
       message:

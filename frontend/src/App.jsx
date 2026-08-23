@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import PageLoader from "./components/PageLoader";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { resolveApiBaseUrl } from "./config/apiBaseUrl";
 import "./App.css";
 
 const Login = lazy(() => import("./pages/Login"));
@@ -56,8 +57,11 @@ function AppLayout() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
+    const apiBase = resolveApiBaseUrl().replace(/\/$/, "");
+    const healthUrl = `${apiBase}/health/`;
     const pingInterval = setInterval(() => {
-      fetch("/api/health/").catch(() => {});
+      // Keep the Render API free-tier instance warm — never toast on failure.
+      fetch(healthUrl, { method: "GET", mode: "cors" }).catch(() => {});
     }, 14 * 60 * 1000);
     return () => clearInterval(pingInterval);
   }, []);

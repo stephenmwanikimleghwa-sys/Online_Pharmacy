@@ -31,7 +31,7 @@ const api: AxiosInstance = axios.create({
 
 let lastToastKey = "";
 let lastToastAt = 0;
-const TOAST_COOLDOWN_MS = 4000;
+const TOAST_COOLDOWN_MS = 12000;
 
 function shouldShowGlobalToast(error: AxiosError, config: InternalAxiosRequestConfig | undefined): boolean {
   if (config?.skipGlobalErrorNotification) return false;

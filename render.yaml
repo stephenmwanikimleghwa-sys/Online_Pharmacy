@@ -35,36 +35,22 @@ services:
       # CELERY_BROKER_URL / CELERY_RESULT_BACKEND here (and restore the redis
       # service below) to re-enable distributed cache + async task dispatch.
 
-  # Frontend Service (Static Site) — must call the Django backend URL, not same-origin /api
+  # Frontend — Node web service with SPA fallback (hard refresh must not 404).
+  # Static CDN rewrite rules from blueprint are often not applied on existing sites.
   - type: web
     name: pharmacy-aggregator-frontend
-    runtime: static
+    runtime: node
+    region: ohio
+    plan: free
     buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: ./frontend/dist
+    startCommand: cd frontend && node scripts/spa-server.mjs
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_VERSION
         value: "18.0.0"
       # Required at build time (also defaulted in frontend/vite.config.js if missing)
       - key: VITE_API_BASE_URL
         value: https://online-pharmacy-sn88.onrender.com/api
-    headers:
-      # Hashed assets (Vite adds content hashes) — cache aggressively
-      - path: /assets/*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
-      # index.html must always be fresh so new deployments take effect
-      - path: /index.html
-        name: Cache-Control
-        value: no-cache
-      # Fallback for other files
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=3600
-    routes:
-      # SPA fallback — without this, /login and other deep links return plain "Not Found"
-      - type: rewrite
-        source: /*
-        destination: /index.html
 
   # Redis service and Celery worker removed 2026-07-22.
   #
