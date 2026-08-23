@@ -115,7 +115,7 @@ const DispensingLogsPage = () => {
   const [activeTab, setActiveTab] = useState('dispensing');
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="space-y-6">
       <div className="flex gap-2 p-1.5 rounded-2xl border w-fit" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
         <button
           onClick={() => setActiveTab('dispensing')}

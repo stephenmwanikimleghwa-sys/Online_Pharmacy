@@ -15,14 +15,11 @@ import {
   ClipboardDocumentListIcon,
   Squares2X2Icon,
   ShieldCheckIcon,
-  DocumentTextIcon,
-  DocumentDuplicateIcon,
   BuildingOffice2Icon,
   BanknotesIcon,
   DocumentPlusIcon,
   UserGroupIcon,
   ArrowUturnLeftIcon,
-  ExclamationTriangleIcon,
   CubeIcon,
 } from "@heroicons/react/24/outline";
 import BranchSelector from "../BranchSelector";
@@ -62,45 +59,37 @@ const getNavGroups = (user) => {
 
   if (user?.role === "admin") {
     operationsLinks.push(
-      // Stock hub: list, suppliers, batches, intake, transfers
-      { to: "/inventory/management", label: "Inventory Control", icon: ClipboardDocumentListIcon },
-      // Product CRUD: add / edit / deactivate medicines
+      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/purchase-orders", label: "Purchases", icon: DocumentPlusIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
-      { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
-      { to: "/reconciliation", label: "Reconcile", icon: ExclamationTriangleIcon },
+      { to: "/stock-adjustments", label: "Stock Adjustments", icon: ArrowUturnLeftIcon },
       { to: "/clinical", label: "Clinical", icon: UserGroupIcon },
-      { to: "/documents", label: "Documents", icon: DocumentTextIcon },
-      { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
+      { to: "/compliance", label: "Compliance", icon: ShieldCheckIcon },
     );
     adminLinks.push(
       { to: "/admin/branches", label: "Branches", icon: BuildingOffice2Icon },
       { to: "/admin/users", label: "Users", icon: ShieldCheckIcon },
-      { to: "/dispensing-logs", label: "Audit Logs", icon: DocumentDuplicateIcon },
     );
   } else if (user?.role === "pharmacist") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
-      { to: "/returns", label: "Returns", icon: ArrowUturnLeftIcon },
-      { to: "/reconciliation", label: "Reconcile", icon: ExclamationTriangleIcon },
+      { to: "/stock-adjustments", label: "Stock Adjustments", icon: ArrowUturnLeftIcon },
       { to: "/clinical", label: "Clinical", icon: UserGroupIcon },
-      { to: "/documents", label: "Documents", icon: DocumentTextIcon },
-      { to: "/licensing", label: "Licensing", icon: ShieldCheckIcon },
-      { to: "/dispensing-logs", label: "Logs", icon: DocumentDuplicateIcon },
+      { to: "/compliance", label: "Compliance", icon: ShieldCheckIcon },
     );
   } else if (user?.role === "cashier") {
     operationsLinks.push({ to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon });
   } else if (user?.role === "auditor") {
     operationsLinks.push(
-      { to: "/inventory/management", label: "Inventory Control", icon: ClipboardDocumentListIcon },
+      { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
     );
@@ -160,14 +149,6 @@ const Sidebar = () => {
     () => api.get("/dashboard/global-overview/").then((r) => r.data),
     STALE_TIMES.FAST,
   );
-  const logsPrefetch = usePrefetchOnHover(
-    QUERY_KEYS.dispensingLogs({}),
-    async () => {
-      const res = await api.get("/inventory/dispensations/", { params: {} });
-      return unwrapList(res.data);
-    },
-    STALE_TIMES.MEDIUM,
-  );
   const usersPrefetch = usePrefetchOnHover(
     QUERY_KEYS.users,
     async () => {
@@ -183,7 +164,6 @@ const Sidebar = () => {
     }
     if (to === "/customers") return customersPrefetch;
     if (to === "/reports" || to.includes("/reports")) return reportsPrefetch;
-    if (to === "/dispensing-logs") return logsPrefetch;
     if (to === "/admin/users") return usersPrefetch;
     if (to.includes("supplier")) return suppliersPrefetch;
     return {};

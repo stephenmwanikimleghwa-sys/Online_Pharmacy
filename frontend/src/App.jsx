@@ -21,8 +21,6 @@ const ValidatePrescription = lazy(() => import("./pages/ValidatePrescription"));
 const DispensePrescription = lazy(() => import("./pages/DispensePrescription"));
 const InventoryManagement = lazy(() => import("./pages/InventoryManagement"));
 const ReportsDashboard = lazy(() => import("./pages/ReportsDashboard"));
-const DispensingLogsPage = lazy(() => import("./pages/DispensingLogsPage"));
-const PharmacyLicensing = lazy(() => import("./pages/PharmacyLicensing"));
 const CashierDashboard = lazy(() => import("./pages/CashierDashboard"));
 const ForcePasswordChange = lazy(() => import("./pages/ForcePasswordChange"));
 const Products = lazy(() => import("./pages/Products"));
@@ -39,14 +37,13 @@ const BranchSelectionScreen = lazy(() => import("./pages/BranchSelectionScreen")
 const StockIntakeLog = lazy(() => import("./pages/StockIntakeLog"));
 const OTCSales = lazy(() => import("./pages/OTCSales"));
 const Customers = lazy(() => import("./pages/Customers"));
-const DocumentRegistry = lazy(() => import("./pages/DocumentRegistry"));
 const ManageUsers = lazy(() => import("./pages/ManageUsers"));
 const FinancialDashboard = lazy(() => import("./pages/finance/FinancialDashboard"));
 const QuotationsDashboard = lazy(() => import("./pages/finance/QuotationsDashboard"));
 const ClinicalDashboard = lazy(() => import("./pages/clinical/ClinicalDashboard"));
 const ConsultationWorkflow = lazy(() => import("./pages/clinical/ConsultationWorkflow"));
-const ReturnsDashboard = lazy(() => import("./pages/inventory/ReturnsDashboard"));
-const StockReconciliation = lazy(() => import("./pages/inventory/StockReconciliation"));
+const StockAdjustments = lazy(() => import("./pages/StockAdjustments"));
+const ComplianceHub = lazy(() => import("./pages/ComplianceHub"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BottomNav = lazy(() => import("./components/BottomNav"));
 const Navbar = lazy(() => import("./components/Navbar"));
@@ -147,20 +144,24 @@ function AppLayout() {
                     }
                   />
                   <Route
-                    path="/returns"
+                    path="/stock-adjustments"
                     element={
-                      <ProtectedRoute element={ReturnsDashboard} allowedRoles={["admin", "pharmacist"]} />
+                      <ProtectedRoute element={StockAdjustments} allowedRoles={["admin", "pharmacist"]} />
                     }
                   />
+                  <Route path="/returns" element={<Navigate to="/stock-adjustments?tab=returns" replace />} />
                   <Route
                     path="/reconciliation"
+                    element={<Navigate to="/stock-adjustments?tab=reconcile" replace />}
+                  />
+                  <Route
+                    path="/compliance"
                     element={
-                      <ProtectedRoute
-                        element={StockReconciliation}
-                        allowedRoles={["admin", "pharmacist"]}
-                      />
+                      <ProtectedRoute element={ComplianceHub} allowedRoles={["admin", "pharmacist"]} />
                     }
                   />
+                  <Route path="/documents" element={<Navigate to="/compliance?tab=documents" replace />} />
+                  <Route path="/licensing" element={<Navigate to="/compliance?tab=licensing" replace />} />
                   <Route
                     path="/users"
                     element={<ProtectedRoute element={ManageUsers} allowedRoles={["admin"]} />}
@@ -283,10 +284,8 @@ function AppLayout() {
                     }
                   />
                   <Route
-                    path="/documents"
-                    element={
-                      <ProtectedRoute element={DocumentRegistry} allowedRoles={["admin", "pharmacist"]} />
-                    }
+                    path="/dispensing-logs"
+                    element={<Navigate to="/reports?section=logs" replace />}
                   />
                   <Route
                     path="/otc-sales"
@@ -305,18 +304,6 @@ function AppLayout() {
                         element={Customers}
                         allowedRoles={["admin", "pharmacist", "cashier"]}
                       />
-                    }
-                  />
-                  <Route
-                    path="/dispensing-logs"
-                    element={
-                      <ProtectedRoute element={DispensingLogsPage} allowedRoles={["admin", "pharmacist"]} />
-                    }
-                  />
-                  <Route
-                    path="/licensing"
-                    element={
-                      <ProtectedRoute element={PharmacyLicensing} allowedRoles={["admin", "pharmacist"]} />
                     }
                   />
                   <Route

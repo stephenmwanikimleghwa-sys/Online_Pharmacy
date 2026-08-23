@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import reportsHubService from '../services/reportsHubService';
 import { useAuth } from '../context/AuthContext';
@@ -7,17 +8,32 @@ import { utils, writeFile } from 'xlsx';
 import {
   ChartBarIcon, CurrencyDollarIcon,
   UserGroupIcon, CalendarDaysIcon, ArrowDownTrayIcon,
-  ShoppingCartIcon, ExclamationTriangleIcon,
+  ShoppingCartIcon, ExclamationTriangleIcon, DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import EmptyState from '../components/ui/EmptyState';
 import { PanelSkeleton } from '../components/ui/Skeleton';
 import PageHeader from '../components/PageHeader';
 
+const DispensingLogsPage = lazy(() => import('./DispensingLogsPage'));
+
 const fmt = (n) => Number(n || 0).toLocaleString();
 
 const ReportsDashboard = () => {
   const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const section = useMemo(() => {
+    const raw = (params.get('section') || 'reports').toLowerCase();
+    return raw === 'logs' ? 'logs' : 'reports';
+  }, [params]);
+
+  const setSection = (id) => {
+    const next = new URLSearchParams(params);
+    if (id === 'reports') next.delete('section');
+    else next.set('section', id);
+    setParams(next, { replace: true });
+  };
+
   const [activeReport, setActiveReport] = useState('sales');
   const [filters, setFilters] = useState({
     startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
@@ -31,27 +47,27 @@ const ReportsDashboard = () => {
   const { data: salesData, isLoading: loadingSales, error: salesError, refetch: refetchSales } = useQuery({
     queryKey: ['salesReport', filters],
     queryFn: () => reportsHubService.getSalesReport({ start_date: filters.startDate, end_date: filters.endDate, branch_id: filters.branchId, staff_id: filters.staffId, product_id: filters.productId }),
-    enabled: activeReport === 'sales',
+    enabled: section === 'reports' && activeReport === 'sales',
   });
   const { data: valuationData, isLoading: loadingValuation, error: valuationError, refetch: refetchValuation } = useQuery({
     queryKey: ['stockValuation', filters.branchId],
     queryFn: () => reportsHubService.getStockValuation({ branch_id: filters.branchId }),
-    enabled: activeReport === 'valuation',
+    enabled: section === 'reports' && activeReport === 'valuation',
   });
   const { data: expiryData, isLoading: loadingExpiry, error: expiryError, refetch: refetchExpiry } = useQuery({
     queryKey: ['expiryReport', filters.days],
     queryFn: () => reportsHubService.getExpiryReport({ days: filters.days }),
-    enabled: activeReport === 'expiry',
+    enabled: section === 'reports' && activeReport === 'expiry',
   });
   const { data: staffData, isLoading: loadingStaff, error: staffError, refetch: refetchStaff } = useQuery({
     queryKey: ['staffActivity', filters],
     queryFn: () => reportsHubService.getStaffActivity({ start_date: filters.startDate, end_date: filters.endDate }),
-    enabled: activeReport === 'staff',
+    enabled: section === 'reports' && activeReport === 'staff',
   });
   const { data: procurementData, isLoading: loadingProcurement, error: procurementError, refetch: refetchProcurement } = useQuery({
     queryKey: ['procurementAnalytics'],
     queryFn: () => reportsHubService.getProcurementAnalytics(),
-    enabled: activeReport === 'procurement',
+    enabled: section === 'reports' && activeReport === 'procurement',
   });
 
   const handleExportCSV = () => {
@@ -117,18 +133,55 @@ const ReportsDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       <PageHeader
         title="Reports"
-        description="Generate and export sales, stock, expiry, and staff reports."
+        description="Generate reports and review audit / dispensing logs."
         actions={
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            className="btn-primary px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 text-white"
-          >
-            <ArrowDownTrayIcon className="w-4 h-4" /> Export Excel
-          </button>
+          section === 'reports' ? (
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="btn-primary px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 text-white"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" /> Export Excel
+            </button>
+          ) : null
         }
       />
 
+      <div
+        className="mb-6 inline-flex p-1 rounded-xl border"
+        style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}
+      >
+        {[
+          { id: 'reports', label: 'Reports', icon: ChartBarIcon },
+          { id: 'logs', label: 'Audit logs', icon: DocumentDuplicateIcon },
+        ].map((t) => {
+          const Icon = t.icon;
+          const active = section === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setSection(t.id)}
+              className="px-5 py-2.5 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-2"
+              style={
+                active
+                  ? { background: 'var(--btn-gradient)', color: '#fff' }
+                  : { color: 'var(--text-secondary)', background: 'transparent' }
+              }
+            >
+              <Icon className="w-4 h-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {section === 'logs' ? (
+        <Suspense fallback={<PanelSkeleton rows={8} />}>
+          <DispensingLogsPage />
+        </Suspense>
+      ) : (
+        <>
       {/* Report type selector */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {reports.map(rep => {
@@ -357,6 +410,8 @@ const ReportsDashboard = () => {
 
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };
