@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { PlusIcon, TrashIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
@@ -18,26 +18,89 @@ const PurchaseOrderCreate = () => {
   const { user, activeBranch } = useAuth();
   const { notify } = useNotification();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [prefillNote, setPrefillNote] = useState('');
   const [header, setHeader] = useState({
     supplier: '',
     expected_delivery: '',
     notes: '',
   });
   const [rows, setRows] = useState([emptyRow()]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'pharmacist') {
       navigate('/');
       return;
     }
-    api.get('/inventory/suppliers/').then((r) => setSuppliers(r.data?.results || r.data || []));
-    api.get('/products/', { params: { context: 'inventory', page_size: 500 } }).then((r) => {
-      setProducts(r.data?.results || r.data?.data || r.data || []);
+    Promise.all([
+      api.get('/inventory/suppliers/').then((r) => r.data?.results || r.data || []),
+      api.get('/products/', { params: { context: 'inventory', page_size: 500 } }).then((r) =>
+        r.data?.results || r.data?.data || r.data || []
+      ),
+    ]).then(([supplierList, productList]) => {
+      setSuppliers(Array.isArray(supplierList) ? supplierList : []);
+      setProducts(Array.isArray(productList) ? productList : []);
+      setReady(true);
     });
   }, [user, navigate]);
+
+  // Prefill from Supplier Intel "Order from …" links
+  useEffect(() => {
+    if (!ready) return;
+    const supplier = searchParams.get('supplier') || '';
+    const product = searchParams.get('product') || '';
+    const qty = searchParams.get('qty') || '';
+    const price = searchParams.get('price') || '';
+    const reason = searchParams.get('reason') || '';
+    const notes = searchParams.get('notes') || '';
+
+    if (!supplier && !product) return;
+
+    setHeader((h) => ({
+      ...h,
+      supplier: supplier || h.supplier,
+      notes:
+        notes ||
+        reason ||
+        h.notes ||
+        `Reorder — stock low at ${activeBranch?.name || 'branch'}`,
+    }));
+
+    if (product) {
+      setRows([
+        {
+          id: Date.now() + Math.random(),
+          product_id: String(product),
+          quantity_ordered: qty || '50',
+          estimated_unit_price: price || '',
+        },
+      ]);
+    }
+
+    const supplierName =
+      (Array.isArray(suppliers) ? suppliers : []).find((s) => String(s.id) === String(supplier))
+        ?.name || '';
+    const productName =
+      (Array.isArray(products) ? products : []).find((p) => String(p.id) === String(product))
+        ?.name || '';
+
+    if (supplier || product) {
+      setPrefillNote(
+        [
+          'Pre-filled from Supplier Intel.',
+          supplierName ? `Supplier: ${supplierName}.` : '',
+          productName ? `Product: ${productName}.` : '',
+          reason || '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+    }
+  }, [ready, searchParams, suppliers, products, activeBranch?.name]);
 
   const totalEstimated = useMemo(
     () => rows.reduce((sum, row) => {
@@ -54,7 +117,7 @@ const PurchaseOrderCreate = () => {
       const updated = { ...r, [field]: value };
       if (field === 'product_id' && value) {
         const product = products.find((p) => p.id === parseInt(value, 10));
-        if (product?.pricing_tier?.buying_price) {
+        if (product?.pricing_tier?.buying_price && !updated.estimated_unit_price) {
           updated.estimated_unit_price = product.pricing_tier.buying_price;
         }
       }
@@ -103,8 +166,21 @@ const PurchaseOrderCreate = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-2">New Purchase Order</h1>
-      <p className="text-sm text-gray-500 mb-6">Add one or more products to the same supplier order.</p>
+      <h1 className="text-2xl font-bold mb-2">New purchase order</h1>
+      <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+        Order stock from a supplier. Fields may be filled in from Supplier Intel.
+      </p>
+
+      {prefillNote ? (
+        <div
+          className="mb-6 rounded-xl border p-4 flex gap-3 text-sm"
+          style={{ background: 'var(--brand-mist)', borderColor: 'var(--brand-border-soft)' }}
+          role="status"
+        >
+          <LightBulbIcon className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
+          <p style={{ color: 'var(--text-primary)' }}>{prefillNote}</p>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-6 glass-card p-6 rounded-2xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -144,13 +220,13 @@ const PurchaseOrderCreate = () => {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold">Order lines</h2>
-            <button type="button" onClick={addRow} className="text-sm font-semibold text-indigo-600 flex items-center gap-1">
+            <button type="button" onClick={addRow} className="text-sm font-semibold text-primary flex items-center gap-1">
               <PlusIcon className="w-4 h-4" /> Add product
             </button>
           </div>
-          <div className="overflow-x-auto border rounded-xl">
+          <div className="overflow-x-auto border rounded-xl" style={{ borderColor: 'var(--border-primary)' }}>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-gray-500 text-xs uppercase">
+              <thead className="text-left text-xs uppercase" style={{ background: 'var(--bg-field)', color: 'var(--text-secondary)' }}>
                 <tr>
                   <th className="px-3 py-2">Product</th>
                   <th className="px-3 py-2 w-28">Qty</th>
@@ -162,8 +238,9 @@ const PurchaseOrderCreate = () => {
               <tbody>
                 {rows.map((row) => {
                   const lineTotal = (parseFloat(row.quantity_ordered) || 0) * (parseFloat(row.estimated_unit_price) || 0);
+                  const productInList = products.some((p) => String(p.id) === String(row.product_id));
                   return (
-                    <tr key={row.id} className="border-t">
+                    <tr key={row.id} className="border-t" style={{ borderColor: 'var(--border-primary)' }}>
                       <td className="px-3 py-2">
                         <select
                           className="form-input w-full min-w-[200px]"
@@ -172,6 +249,9 @@ const PurchaseOrderCreate = () => {
                           required
                         >
                           <option value="">Select product</option>
+                          {!productInList && row.product_id ? (
+                            <option value={row.product_id}>Product #{row.product_id}</option>
+                          ) : null}
                           {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                       </td>

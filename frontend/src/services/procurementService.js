@@ -17,6 +17,9 @@ export const getSupplierScorecard = (supplierId) =>
 export const getProcurementAnalytics = () =>
   api.get('/inventory/suppliers/procurement-analytics/');
 
+export const getReorderSuggestions = (params = {}) =>
+  api.get('/inventory/suppliers/reorder-suggestions/', { params });
+
 export const listPurchaseOrders = (params = {}) =>
   api.get('/purchase-orders/', { params });
 

@@ -1,16 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LightBulbIcon,
   MagnifyingGlassIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import {
   compareSupplierPrices,
   getProcurementAnalytics,
+  getReorderSuggestions,
 } from "../services/procurementService";
 import { searchProducts } from "../services/productService";
+import { useAuth } from "../context/AuthContext";
 import { useSuppliers } from "../hooks/useSuppliers";
 import { unwrapList } from "../utils/parseApiData";
 import SupplierPriceComparison from "../components/SupplierPriceComparison";
@@ -20,19 +23,38 @@ import { PanelSkeleton } from "../components/ui/Skeleton";
 import { queryClient } from "../lib/queryClient";
 import { QUERY_KEYS } from "../lib/queryKeys";
 
-const money = (n) => `KES ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+const money = (n) =>
+  `KES ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+const buildReorderUrl = (s) => {
+  const params = new URLSearchParams();
+  if (s.recommended_supplier_id) params.set("supplier", String(s.recommended_supplier_id));
+  if (s.product_id) params.set("product", String(s.product_id));
+  if (s.suggested_quantity) params.set("qty", String(s.suggested_quantity));
+  if (s.recommended_unit_price != null) params.set("price", String(s.recommended_unit_price));
+  if (s.reason) params.set("reason", s.reason.slice(0, 280));
+  params.set(
+    "notes",
+    `Smart reorder: ${s.product_name} (stock ${s.stock_quantity}, reorder at ${s.reorder_level})`,
+  );
+  return `/purchase-orders/new?${params.toString()}`;
+};
 
 /**
  * Dedicated Supplier Intelligence hub.
  * Uses Stock received history to compare prices and highlight savings.
  */
 const SupplierIntelligence = () => {
+  const navigate = useNavigate();
+  const { activeBranch } = useAuth();
   const { data: suppliersRaw, isLoading: loadingSuppliers } = useSuppliers();
   const suppliers = unwrapList(suppliersRaw);
 
   const [analytics, setAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
   const [analyticsError, setAnalyticsError] = useState("");
+  const [reorderData, setReorderData] = useState(null);
+  const [loadingReorder, setLoadingReorder] = useState(true);
   const [productQuery, setProductQuery] = useState("");
   const [productOptions, setProductOptions] = useState([]);
   const [searchingProducts, setSearchingProducts] = useState(false);
@@ -42,6 +64,20 @@ const SupplierIntelligence = () => {
   const [compareError, setCompareError] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [insight, setInsight] = useState("");
+
+  const loadReorderSuggestions = async () => {
+    setLoadingReorder(true);
+    try {
+      const params = {};
+      if (activeBranch?.id) params.branch = activeBranch.id;
+      const res = await getReorderSuggestions(params);
+      setReorderData(res.data || null);
+    } catch {
+      setReorderData(null);
+    } finally {
+      setLoadingReorder(false);
+    }
+  };
 
   const runAnalysis = async () => {
     setLoadingAnalytics(true);
@@ -59,22 +95,24 @@ const SupplierIntelligence = () => {
       const parts = [];
       if (topSpend) {
         parts.push(
-          `You spent the most with ${topSpend.supplier_name} (${money(topSpend.total_spent)}).`
+          `You spent the most with ${topSpend.supplier_name} (${money(topSpend.total_spent)}).`,
         );
       }
       if (savings > 0 && top) {
         parts.push(
-          `Biggest saving chance: buy ${top.product_name} from ${top.cheapest_supplier} instead of ${top.current_supplier} — about ${money(top.annual_saving)} per year.`
+          `Biggest saving chance: buy ${top.product_name} from ${top.cheapest_supplier} instead of ${top.current_supplier} — about ${money(top.annual_saving)} per year.`,
         );
-        parts.push(`Across all products, switching to cheaper suppliers could save about ${money(savings)} per year.`);
+        parts.push(
+          `Across all products, switching to cheaper suppliers could save about ${money(savings)} per year.`,
+        );
       } else {
         parts.push(
-          "No clear price gaps found yet. Record more Stock received deliveries with unit costs from different suppliers to unlock savings tips."
+          "No clear price gaps found yet. Record more Stock received deliveries with unit costs from different suppliers to unlock savings tips.",
         );
       }
       if (deps.length) {
         parts.push(
-          `Watch: ${deps.map((d) => d.supplier_name).join(", ")} supply a large share of your products — consider a backup supplier.`
+          `Watch: ${deps.map((d) => d.supplier_name).join(", ")} supply a large share of your products — consider a backup supplier.`,
         );
       }
       setInsight(parts.join(" "));
@@ -88,7 +126,8 @@ const SupplierIntelligence = () => {
 
   useEffect(() => {
     runAnalysis();
-  }, []);
+    loadReorderSuggestions();
+  }, [activeBranch?.id]);
 
   useEffect(() => {
     if (productQuery.trim().length < 2) {
@@ -164,15 +203,18 @@ const SupplierIntelligence = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 animate-fade-in space-y-6">
       <PageHeader
         title="Supplier intelligence"
-        description="See who sells cheapest, where you spend most, and how much you could save. Built from Stock received history."
+        description="Who to buy from when stock runs low, who is cheapest, and how much you could save. Built from Stock received history."
         actions={
           <button
             type="button"
-            onClick={runAnalysis}
-            disabled={loadingAnalytics}
+            onClick={() => {
+              runAnalysis();
+              loadReorderSuggestions();
+            }}
+            disabled={loadingAnalytics || loadingReorder}
             className="btn-primary px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
           >
-            {loadingAnalytics ? "Analysing…" : "Run analysis"}
+            {loadingAnalytics || loadingReorder ? "Analysing…" : "Run analysis"}
           </button>
         }
       />
@@ -221,11 +263,100 @@ const SupplierIntelligence = () => {
           </p>
         </div>
         <div className="glass-card rounded-xl border p-4" style={{ borderColor: "var(--border-primary)" }}>
-          <p className="text-xs font-bold mb-1" style={{ color: "var(--text-secondary)" }}>Suppliers tracked</p>
+          <p className="text-xs font-bold mb-1" style={{ color: "var(--text-secondary)" }}>Need restock now</p>
           <p className="text-2xl font-display font-bold" style={{ color: "var(--text-primary)" }}>
-            {loadingSuppliers ? "…" : suppliers.length}
+            {loadingReorder ? "…" : reorderData?.count ?? 0}
           </p>
         </div>
+      </div>
+
+      <div className="glass-card rounded-xl border p-5 space-y-4" style={{ borderColor: "var(--border-primary)" }}>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <ShoppingCartIcon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+              <h2 className="font-display font-bold text-lg" style={{ color: "var(--text-primary)" }}>
+                Restock suggestions
+              </h2>
+            </div>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              {reorderData?.summary ||
+                "Low and out-of-stock items with a recommended supplier and why."}
+            </p>
+          </div>
+        </div>
+
+        {loadingReorder ? (
+          <PanelSkeleton rows={4} />
+        ) : !(reorderData?.suggestions || []).length ? (
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Stock looks healthy for this branch — no low-stock items right now.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {(reorderData.suggestions || []).slice(0, 15).map((s) => (
+              <li
+                key={`${s.product_id}-${s.branch_id}`}
+                className="rounded-xl border p-4 flex flex-col lg:flex-row lg:items-center gap-3"
+                style={{ borderColor: "var(--border-primary)", background: "var(--bg-field)" }}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <p className="font-bold truncate" style={{ color: "var(--text-primary)" }}>
+                      {s.product_name}
+                    </p>
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        s.urgency === "out"
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {s.urgency === "out" ? "Out of stock" : "Low stock"}
+                    </span>
+                  </div>
+                  <p className="text-xs mb-2" style={{ color: "var(--text-secondary)" }}>
+                    On hand: <strong>{s.stock_quantity}</strong> · Reorder at{" "}
+                    <strong>{s.reorder_level}</strong>
+                    {s.recommended_supplier_name
+                      ? ` · Suggested qty: ${s.suggested_quantity}`
+                      : ""}
+                  </p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                    {s.reason || "No supplier recommendation yet."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 flex-shrink-0">
+                  {s.recommended_supplier_id ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate(buildReorderUrl(s))}
+                      className="btn-primary px-4 py-2.5 rounded-xl text-xs font-bold text-white"
+                    >
+                      Order from {s.recommended_supplier_name}
+                    </button>
+                  ) : (
+                    <Link
+                      to="/purchase-orders/new"
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold border"
+                      style={{ borderColor: "var(--border-primary)", color: "var(--text-primary)" }}
+                    >
+                      Create order
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleCompare(s.product_id)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold border"
+                    style={{ borderColor: "var(--border-primary)", color: "var(--text-secondary)" }}
+                  >
+                    Compare prices
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="glass-card rounded-xl border p-5 space-y-4" style={{ borderColor: "var(--border-primary)" }}>

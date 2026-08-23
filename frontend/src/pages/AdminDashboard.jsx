@@ -452,13 +452,65 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               ) : lowStockAlerts.length ? (
-                <ul className="space-y-2 max-h-48 overflow-y-auto">
-                  {lowStockAlerts.map((item) => (
-                    <li key={item.product_id ?? item.id} className="flex justify-between text-sm py-2 border-b last:border-0" style={{ borderColor: 'var(--border-primary)' }}>
-                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{item.product_name ?? item.name}</span>
-                      <span className="text-rose-500 font-bold">{item.quantity ?? item.stock_quantity} left</span>
-                    </li>
-                  ))}
+                <ul className="space-y-3 max-h-64 overflow-y-auto">
+                  {lowStockAlerts.slice(0, 8).map((item) => {
+                    const intel = item.reorder_intelligence || {};
+                    const best = intel.best_supplier || {};
+                    const qty =
+                      intel.suggested_quantity ||
+                      Math.max(
+                        50,
+                        Math.ceil((Number(item.reorder_level) || 0) * 2) -
+                          (Number(item.quantity ?? item.stock_quantity) || 0),
+                      );
+                    const orderParams = new URLSearchParams();
+                    if (best.supplier_id) orderParams.set('supplier', String(best.supplier_id));
+                    if (item.product_id ?? item.id) {
+                      orderParams.set('product', String(item.product_id ?? item.id));
+                    }
+                    orderParams.set('qty', String(qty));
+                    if (best.last_price != null) orderParams.set('price', String(best.last_price));
+                    if (intel.reason) orderParams.set('reason', String(intel.reason).slice(0, 280));
+                    return (
+                      <li
+                        key={item.product_id ?? item.id}
+                        className="py-2 border-b last:border-0 space-y-1.5"
+                        style={{ borderColor: 'var(--border-primary)' }}
+                      >
+                        <div className="flex justify-between gap-3 text-sm">
+                          <span className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                            {item.product_name ?? item.name}
+                          </span>
+                          <span className="text-rose-500 font-bold flex-shrink-0">
+                            {item.quantity ?? item.stock_quantity} left
+                          </span>
+                        </div>
+                        {intel.reason ? (
+                          <p className="text-xs leading-snug" style={{ color: 'var(--text-secondary)' }}>
+                            {intel.reason}
+                          </p>
+                        ) : null}
+                        <div className="flex flex-wrap gap-2">
+                          {best.supplier_id ? (
+                            <button
+                              type="button"
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg text-white btn-primary"
+                              onClick={() => navigate(`/purchase-orders/new?${orderParams.toString()}`)}
+                            >
+                              Order from {best.supplier_name}
+                            </button>
+                          ) : null}
+                          <Link
+                            to="/supplier-intelligence"
+                            className="text-xs font-semibold px-2.5 py-1 rounded-lg border"
+                            style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+                          >
+                            Supplier Intel
+                          </Link>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <EmptyState compact tone="positive" icon={CheckCircleIcon} title="Stock levels healthy" message="No low-stock alerts for this branch." />
