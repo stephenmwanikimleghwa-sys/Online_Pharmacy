@@ -124,8 +124,8 @@ const SupplierList = () => {
   return (
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader
-        title="Suppliers"
-        description="Distributors, payables, and credit payments."
+        title="Suppliers & intelligence"
+        description="Open a supplier to see prices paid, compare vendors, and view their scorecard. Also manage payables here."
         actions={
           <>
             <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
@@ -231,15 +231,20 @@ const SupplierList = () => {
                   {supplier.phone || 'No phone'}
                 </p>
 
-                <div className="pt-2 border-t border-slate-100">
-                  <p className="text-xs font-bold text-slate-400 mb-1">Balance</p>
-                  <p className={`font-display font-bold text-xl ${
-                    isDebt ? 'text-rose-600' :
-                    isCredit ? 'text-emerald-600' :
-                    'text-slate-900'
-                  }`}>
-                    KES {Math.abs(bal).toLocaleString(undefined, {minimumFractionDigits: 2})}
-                  </p>
+                <div className="pt-2 border-t border-slate-100 flex items-end justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 mb-1">Balance</p>
+                    <p className={`font-display font-bold text-xl ${
+                      isDebt ? 'text-rose-600' :
+                      isCredit ? 'text-emerald-600' :
+                      'text-slate-900'
+                    }`}>
+                      KES {Math.abs(bal).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-primary opacity-80 group-hover:opacity-100">
+                    Prices &amp; score →
+                  </span>
                 </div>
               </button>
             )

@@ -11,7 +11,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
   const { notify } = useNotification();
   const [loading, setLoading] = useState(true);
   const [ledgerData, setLedgerData] = useState({ debt_transactions: [], purchase_history: [] });
-  const [activeTab, setActiveTab] = useState('debt');
+  const [activeTab, setActiveTab] = useState('products');
   const [productsSupplied, setProductsSupplied] = useState([]);
   const [scorecard, setScorecard] = useState(null);
   const [compareProduct, setCompareProduct] = useState(null);
@@ -124,7 +124,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
             <div className="min-w-0">
               <h2 className="text-lg font-display font-bold truncate" style={{ color: 'var(--text-primary)' }}>{supplier.name}</h2>
               <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
-                {supplier.contact_person || 'No contact'} · {supplier.phone || 'No phone'}
+                Supplier intelligence · {supplier.contact_person || 'No contact'} · {supplier.phone || 'No phone'}
               </p>
             </div>
           </div>
@@ -234,31 +234,35 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
             )}
           </div>
 
-          {/* Right Content (Ledger & Tabs) */}
-          <div className="w-full md:w-2/3 p-8">
-            <div className="flex border-b border-slate-200 mb-6">
-              <button 
-                onClick={() => setActiveTab('debt')} 
-                className={`pb-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'debt' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-              >
-                Credit Ledger
-              </button>
-              <button onClick={() => setActiveTab('purchases')} className={`pb-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'purchases' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                Transactions
-              </button>
-              <button onClick={() => setActiveTab('products')} className={`pb-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'products' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                Products
-              </button>
-              <button onClick={() => setActiveTab('compare')} className={`pb-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'compare' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                Compare
-              </button>
-              <button onClick={() => setActiveTab('scorecard')} className={`pb-4 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'scorecard' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                Scorecard
-              </button>
+          <div className="w-full md:w-2/3 p-6 sm:p-8">
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-secondary)' }}>
+              Supplier intelligence
+            </p>
+            <div className="flex flex-wrap gap-1 border-b border-slate-200 mb-6 overflow-x-auto">
+              {[
+                { id: 'products', label: 'Products & prices' },
+                { id: 'compare', label: 'Compare suppliers' },
+                { id: 'scorecard', label: 'Scorecard' },
+                { id: 'debt', label: 'Credit ledger' },
+                { id: 'purchases', label: 'Purchases' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             <div className="overflow-x-auto">
-              {loading ? (
+              {loading && activeTab !== 'products' && activeTab !== 'compare' && activeTab !== 'scorecard' ? (
                 <div className="flex justify-center py-10">
                   <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
@@ -297,7 +301,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                 )
               ) : activeTab === 'purchases' ? (
                 ledgerData.purchase_history.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400">No purchases found.</div>
+                  <div className="text-center py-10 text-slate-400">No purchases found. Record deliveries under Stock received to build history.</div>
                 ) : (
                   <table className="w-full text-left">
                     <thead>
@@ -329,7 +333,10 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                 )
               ) : activeTab === 'products' ? (
                 productsSupplied.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400">No products supplied yet.</div>
+                  <div className="text-center py-10 text-slate-400 space-y-2">
+                    <p>No price history yet for this supplier.</p>
+                    <p className="text-xs">Record deliveries in <strong>Stock received</strong> with a unit cost — intelligence builds from that.</p>
+                  </div>
                 ) : (
                   <table className="w-full text-left text-sm">
                     <thead>
@@ -346,7 +353,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                           <td className="px-3 py-2">{row.last_date}</td>
                           <td className="px-3 py-2">{row.times_bought}</td>
                           <td className="px-3 py-2">KES {row.avg_price}</td>
-                          <td className="px-3 py-2">{row.trend === 'RISING' ? '↑' : row.trend === 'FALLING' ? '↓' : '→'}</td>
+                          <td className="px-3 py-2">{row.trend === 'RISING' ? '↑ Rising' : row.trend === 'FALLING' ? '↓ Falling' : '→ Stable'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -354,20 +361,44 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
                 )
               ) : activeTab === 'compare' ? (
                 <div className="space-y-4">
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Pick a product to see which supplier sold it cheapest (uses Stock received history).
+                  </p>
                   <select className="form-input w-full" value={compareProduct || ''} onChange={async (e) => {
                     const pid = e.target.value; setCompareProduct(pid);
-                    if (pid) { const res = await compareSupplierPrices(pid); setCompareData(res.data); }
+                    if (pid) {
+                      try {
+                        const res = await compareSupplierPrices(pid);
+                        setCompareData(res.data);
+                      } catch {
+                        setCompareData(null);
+                      }
+                    } else {
+                      setCompareData(null);
+                    }
                   }}>
                     <option value="">Select product to compare suppliers</option>
                     {productsSupplied.map((p) => <option key={p.product_id} value={p.product_id}>{p.product_name}</option>)}
                   </select>
                   {compareData && <SupplierPriceComparison data={compareData} />}
+                  {!compareProduct && productsSupplied.length === 0 && (
+                    <p className="text-sm text-slate-400">No products to compare yet for this supplier.</p>
+                  )}
                 </div>
-              ) : activeTab === 'scorecard' && scorecard ? (
-                <div className="space-y-4 text-sm">
-                  <p className="text-2xl font-bold">Overall: {scorecard.overall_score}/100</p>
-                  <p>Cheapest on {scorecard.products_cheapest} products · Potential monthly savings KES {Number(scorecard.potential_monthly_savings).toLocaleString()}</p>
-                </div>
+              ) : activeTab === 'scorecard' ? (
+                scorecard ? (
+                  <div className="space-y-4 text-sm">
+                    <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Overall: {scorecard.overall_score}/100
+                    </p>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      Cheapest on {scorecard.products_cheapest} products · Potential monthly savings KES{' '}
+                      {Number(scorecard.potential_monthly_savings || 0).toLocaleString()}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-10 text-slate-400">Loading scorecard…</div>
+                )
               ) : (
                 <div className="text-center py-10 text-slate-400">Select a tab.</div>
               )}
@@ -385,6 +416,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
             </div>
 
           </div>
+
         </div>
 
       </div>
