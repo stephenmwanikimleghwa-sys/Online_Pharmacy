@@ -22,7 +22,8 @@ const Navbar = () => {
     navigate("/");
   };
 
-  if (loading) {
+  // Keep chrome visible while session refreshes — never blank the whole nav.
+  if (loading && !user) {
     return (
       <nav className="nav-premium sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

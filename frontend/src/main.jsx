@@ -10,7 +10,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { SyncProvider } from "./context/SyncContext";
 import App from "./App.jsx";
-import { registerServiceWorker } from "./lib/serviceWorker";
 import "./index.css";
 
 window.addEventListener("unhandledrejection", (event) => {
@@ -66,7 +65,5 @@ schedulePersist(() => {
   });
 });
 
-// Service worker: register after idle so it doesn't compete with first paint.
-schedulePersist(() => {
-  registerServiceWorker();
-});
+// Service worker intentionally not registered — it previously cached broken
+// SPA shells and competed with first paint. Offline queue uses IndexedDB instead.

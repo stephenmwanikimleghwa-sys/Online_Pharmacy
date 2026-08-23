@@ -40,18 +40,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
+  // Token without a resolvable user (expired session / unreachable API with no cache)
+  // must not spin forever — send them to sign in.
   if (!user) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
-        <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin" aria-hidden />
-        <p className="text-sm font-medium text-neutral-500">Loading your session...</p>
-      </div>
-    );
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   const renderProtected = () => {
     if (Element) {
-      return <Element />;
+      return (
+        <Suspense
+          fallback={
+            <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
+              <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin" aria-hidden />
+              <p className="text-sm font-medium text-neutral-500">Loading...</p>
+            </div>
+          }
+        >
+          <Element />
+        </Suspense>
+      );
     }
     return <>{children}</>;
   };

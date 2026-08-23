@@ -239,8 +239,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(true);
       }
 
+      const controller = new AbortController();
+      // Cold Render backends can take a long time; don't leave the UI stuck forever.
+      const timeoutId = window.setTimeout(() => controller.abort(), 12_000);
+
       try {
-        const response = await api.get("/auth/profile/");
+        const response = await api.get("/auth/profile/", {
+          signal: controller.signal,
+          timeout: 12_000,
+          skipGlobalErrorNotification: true,
+        });
         const profileData = (response.data?.user || response.data?.profile || response.data) as Record<
           string,
           unknown
@@ -285,8 +293,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
           try { localStorage.removeItem("cached_profile"); } catch { /* non-fatal */ }
         } else if (!hasResponse) {
-          // Network failure (offline or server unreachable). Hydrate from the
-          // last-known profile so the app stays usable without a round-trip.
+          // Network failure / timeout. Hydrate from cache when possible.
           try {
             const raw = localStorage.getItem("cached_profile");
             if (raw) {
@@ -296,11 +303,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 requires_branch_selection: false,
                 active_branch: readStoredActiveBranch(),
               });
+            } else if (!hasCachedSession) {
+              // Stale token, no cache, API unreachable — clear so landing/login can show.
+              setToken(null);
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("refresh_token");
             }
           } catch { /* cached data unreadable — stay logged out */ }
         }
+      } finally {
+        window.clearTimeout(timeoutId);
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     verifyToken();

@@ -99,180 +99,18 @@ function AppLayout() {
 
           <main key={location.pathname} className={`main-content page-enter flex-auto flex-shrink-0 w-full relative ${isUnauthHome ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}`}>
             <ErrorBoundary>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route
-                    path="/inventory"
-                    element={<Navigate to="/inventory/management" replace />}
-                  />
-                  <Route path="/password-reset" element={<PasswordResetRequest />} />
-                  <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
-                  <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />
-                  <Route
-                    path="/branch/select"
-                    element={<ProtectedRoute element={BranchSelectionScreen} allowedRoles={["admin"]} />}
-                  />
-
-                  {/* Protected Routes */}
-                  <Route path="/products" element={<ProtectedRoute element={Products} />} />
-                  <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
-                  <Route path="/financials" element={<ProtectedRoute element={FinancialDashboard} allowFinancials={true} />} />
-                  <Route path="/quotations" element={<ProtectedRoute element={QuotationsDashboard} />} />
-                  <Route path="/clinical" element={<ProtectedRoute element={ClinicalDashboard} allowedRoles={['admin', 'pharmacist']} />} />
-                  <Route path="/clinical/:id" element={<ProtectedRoute element={ConsultationWorkflow} allowedRoles={['admin', 'pharmacist']} />} />
-                  <Route path="/returns" element={<ProtectedRoute element={ReturnsDashboard} allowedRoles={['admin', 'pharmacist']} />} />
-                  <Route path="/reconciliation" element={<ProtectedRoute element={StockReconciliation} allowedRoles={['admin', 'pharmacist']} />} />
-                  <Route path="/users" element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />} />
-
-                  {/* Protected Customer Routes */}
-                  <Route
-                    path="/inventory/control"
-                    element={<ProtectedRoute element={AdminStock} allowedRoles={["admin", "pharmacist", "cashier"]} requiresActiveBranch />}
-                  />
-                  <Route
-                    path="/customer/dashboard"
-                    element={<ProtectedRoute element={UserAccount} allowedRoles={['customer']} />}
-                  />
-                  <Route
-                    path="/account"
-                    element={<ProtectedRoute element={UserAccount} />}
-                  />
-
-                  {/* Protected Pharmacist Routes */}
-                  <Route
-                    path="/pharmacist/dashboard"
-                    element={<Navigate to="/branch/dashboard" replace />}
-                  />
-                  <Route
-                    path="/branch/dashboard"
-                    element={
-                      <ProtectedRoute
-                        element={PharmacistDashboard}
-                        allowedRoles={['pharmacist']}
-                        requiresActiveBranch
-                      />
-                    }
-                  />
-                  <Route
-                    path="/prescriptions/add"
-                    element={<ProtectedRoute element={AddPrescription} allowedRoles={['pharmacist']} />}
-                  />
-                  <Route
-                    path="/prescriptions/:id/validate"
-                    element={<ProtectedRoute element={ValidatePrescription} allowedRoles={['pharmacist']} />}
-                  />
-                  <Route
-                    path="/prescriptions/:id/dispense"
-                    element={
-                      <ProtectedRoute
-                        element={DispensePrescription}
-                        allowedRoles={['pharmacist', 'admin']}
-                        requiresActiveBranch
-                      />
-                    }
-                  />
-                  <Route
-                    path="/inventory/management"
-                    element={
-                      <ProtectedRoute 
-                        element={InventoryManagement} 
-                        allowedRoles={['admin', 'pharmacist', 'auditor']}
-                        deniedTitle="Access Denied"
-                        deniedMessage="Access Denied — Inventory Management is only available to administrators, pharmacists, and auditors."
-                      />
-                    }
-                  />
-                  <Route
-                    path="/stock-intake"
-                    element={
-                      <ProtectedRoute
-                        element={StockIntakeLog}
-                        allowedRoles={['pharmacist', 'admin']}
-                        requiresActiveBranch
-                      />
-                    }
-                  />
-
-                  <Route
-                    path="/purchase-orders"
-                    element={
-                      <ProtectedRoute
-                        element={PurchaseOrders}
-                        allowedRoles={['pharmacist', 'admin']}
-                        requiresActiveBranch
-                      />
-                    }
-                  />
-                  <Route
-                    path="/purchase-orders/new"
-                    element={
-                      <ProtectedRoute
-                        element={PurchaseOrderCreate}
-                        allowedRoles={['pharmacist', 'admin']}
-                        requiresActiveBranch
-                      />
-                    }
-                  />
-
-                  {/* Protected Admin Routes */}
-                  <Route
-                    path="/admin/dashboard"
-                    element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
-                  />
-                  <Route
-                    path="/admin/branches"
-                    element={<ProtectedRoute element={BranchesOverview} allowedRoles={['admin']} />}
-                  />
-                  <Route
-                    path="/admin/users"
-                    element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />}
-                  />
-                  <Route
-                    path="/admin/restock-requests"
-                    element={<ProtectedRoute element={RestockRequests} allowedRoles={['admin', 'pharmacist']} />}
-                  />
-                  <Route
-                    path="/reports"
-                    element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor', 'cashier']} />}
-                  />
-                  <Route
-                    path="/documents"
-                    element={<ProtectedRoute element={DocumentRegistry} allowedRoles={['admin', 'pharmacist']} />}
-                  />
-                  <Route
-                    path="/otc-sales"
-                    element={
-                      <ProtectedRoute
-                        element={OTCSales}
-                        allowedRoles={['admin', 'pharmacist', 'cashier']}
-                        requiresActiveBranch
-                      />
-                    }
-                  />
-                  <Route
-                    path="/customers"
-                    element={<ProtectedRoute element={Customers} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
-                  />
-                  <Route
-                    path="/dispensing-logs"
-                    element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
-                  />
-                  <Route
-                    path="/licensing"
-                    element={<ProtectedRoute element={PharmacyLicensing} allowedRoles={['admin', 'pharmacist']} />}
-                  />
-                  <Route
-                    path="/cashier/dashboard"
-                    element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
-                  />
-
-                  {/* Catch-all — stay in SPA instead of redirecting to home */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+              <Routes>
+                {/* Eager landing — never blocked by lazy chunk / PageLoader */}
+                <Route path="/" element={<Home />} />
+                <Route
+                  path="*"
+                  element={
+                    <Suspense fallback={<PageLoader />}>
+                      <AppRoutes />
+                    </Suspense>
+                  }
+                />
+              </Routes>
             </ErrorBoundary>
           </main>
         </div>
@@ -283,6 +121,167 @@ function AppLayout() {
         )}
       </div>
     </>
+  );
+}
+
+/** All non-landing routes (lazy pages). Isolated so `/` never waits on them. */
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/inventory" element={<Navigate to="/inventory/management" replace />} />
+      <Route path="/password-reset" element={<PasswordResetRequest />} />
+      <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
+      <Route path="/force-password-change" element={<ProtectedRoute element={ForcePasswordChange} />} />
+      <Route
+        path="/branch/select"
+        element={<ProtectedRoute element={BranchSelectionScreen} allowedRoles={["admin"]} />}
+      />
+
+      <Route path="/products" element={<ProtectedRoute element={Products} />} />
+      <Route path="/products/:id" element={<ProtectedRoute element={ProductDetails} />} />
+      <Route path="/financials" element={<ProtectedRoute element={FinancialDashboard} allowFinancials={true} />} />
+      <Route path="/quotations" element={<ProtectedRoute element={QuotationsDashboard} />} />
+      <Route path="/clinical" element={<ProtectedRoute element={ClinicalDashboard} allowedRoles={['admin', 'pharmacist']} />} />
+      <Route path="/clinical/:id" element={<ProtectedRoute element={ConsultationWorkflow} allowedRoles={['admin', 'pharmacist']} />} />
+      <Route path="/returns" element={<ProtectedRoute element={ReturnsDashboard} allowedRoles={['admin', 'pharmacist']} />} />
+      <Route path="/reconciliation" element={<ProtectedRoute element={StockReconciliation} allowedRoles={['admin', 'pharmacist']} />} />
+      <Route path="/users" element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />} />
+
+      <Route
+        path="/inventory/control"
+        element={<ProtectedRoute element={AdminStock} allowedRoles={["admin", "pharmacist", "cashier"]} requiresActiveBranch />}
+      />
+      <Route
+        path="/customer/dashboard"
+        element={<ProtectedRoute element={UserAccount} allowedRoles={['customer']} />}
+      />
+      <Route path="/account" element={<ProtectedRoute element={UserAccount} />} />
+
+      <Route path="/pharmacist/dashboard" element={<Navigate to="/branch/dashboard" replace />} />
+      <Route
+        path="/branch/dashboard"
+        element={
+          <ProtectedRoute
+            element={PharmacistDashboard}
+            allowedRoles={['pharmacist']}
+            requiresActiveBranch
+          />
+        }
+      />
+      <Route
+        path="/prescriptions/add"
+        element={<ProtectedRoute element={AddPrescription} allowedRoles={['pharmacist']} />}
+      />
+      <Route
+        path="/prescriptions/:id/validate"
+        element={<ProtectedRoute element={ValidatePrescription} allowedRoles={['pharmacist']} />}
+      />
+      <Route
+        path="/prescriptions/:id/dispense"
+        element={
+          <ProtectedRoute
+            element={DispensePrescription}
+            allowedRoles={['pharmacist', 'admin']}
+            requiresActiveBranch
+          />
+        }
+      />
+      <Route
+        path="/inventory/management"
+        element={
+          <ProtectedRoute
+            element={InventoryManagement}
+            allowedRoles={['admin', 'pharmacist', 'auditor']}
+            deniedTitle="Access Denied"
+            deniedMessage="Access Denied — Inventory Management is only available to administrators, pharmacists, and auditors."
+          />
+        }
+      />
+      <Route
+        path="/stock-intake"
+        element={
+          <ProtectedRoute
+            element={StockIntakeLog}
+            allowedRoles={['pharmacist', 'admin']}
+            requiresActiveBranch
+          />
+        }
+      />
+      <Route
+        path="/purchase-orders"
+        element={
+          <ProtectedRoute
+            element={PurchaseOrders}
+            allowedRoles={['pharmacist', 'admin']}
+            requiresActiveBranch
+          />
+        }
+      />
+      <Route
+        path="/purchase-orders/new"
+        element={
+          <ProtectedRoute
+            element={PurchaseOrderCreate}
+            allowedRoles={['pharmacist', 'admin']}
+            requiresActiveBranch
+          />
+        }
+      />
+
+      <Route
+        path="/admin/dashboard"
+        element={<ProtectedRoute element={AdminDashboard} allowedRoles={['admin']} />}
+      />
+      <Route
+        path="/admin/branches"
+        element={<ProtectedRoute element={BranchesOverview} allowedRoles={['admin']} />}
+      />
+      <Route
+        path="/admin/users"
+        element={<ProtectedRoute element={ManageUsers} allowedRoles={['admin']} />}
+      />
+      <Route
+        path="/admin/restock-requests"
+        element={<ProtectedRoute element={RestockRequests} allowedRoles={['admin', 'pharmacist']} />}
+      />
+      <Route
+        path="/reports"
+        element={<ProtectedRoute element={ReportsDashboard} allowedRoles={['admin', 'pharmacist', 'auditor', 'cashier']} />}
+      />
+      <Route
+        path="/documents"
+        element={<ProtectedRoute element={DocumentRegistry} allowedRoles={['admin', 'pharmacist']} />}
+      />
+      <Route
+        path="/otc-sales"
+        element={
+          <ProtectedRoute
+            element={OTCSales}
+            allowedRoles={['admin', 'pharmacist', 'cashier']}
+            requiresActiveBranch
+          />
+        }
+      />
+      <Route
+        path="/customers"
+        element={<ProtectedRoute element={Customers} allowedRoles={['admin', 'pharmacist', 'cashier']} />}
+      />
+      <Route
+        path="/dispensing-logs"
+        element={<ProtectedRoute element={DispensingLogsPage} allowedRoles={['admin', 'pharmacist']} />}
+      />
+      <Route
+        path="/licensing"
+        element={<ProtectedRoute element={PharmacyLicensing} allowedRoles={['admin', 'pharmacist']} />}
+      />
+      <Route
+        path="/cashier/dashboard"
+        element={<ProtectedRoute element={CashierDashboard} allowedRoles={['cashier']} />}
+      />
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

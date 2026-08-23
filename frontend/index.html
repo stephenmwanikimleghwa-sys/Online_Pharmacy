@@ -52,11 +52,32 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Service worker disabled: it cached 404s for SPA routes like /branch/select on Render.
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((regs) => {
-          regs.forEach((reg) => reg.unregister());
+      // Never leave users on the splash forever (slow JS / cold CDN / parse error).
+      (function () {
+        var hide = function () {
+          var el = document.getElementById("splash");
+          if (el) el.remove();
+        };
+        // React removes splash on first paint; this is a hard safety net.
+        setTimeout(hide, 2500);
+        window.addEventListener("load", function () {
+          setTimeout(hide, 500);
         });
+      })();
+      // Kill stale service workers that cached broken shells / 404 SPA routes.
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) {
+            reg.unregister();
+          });
+        });
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) {
+              caches.delete(k);
+            });
+          });
+        }
       }
     </script>
   </body>
