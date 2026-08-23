@@ -124,8 +124,8 @@ const SupplierList = () => {
   return (
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader
-        title="Suppliers & intelligence"
-        description="Open a supplier to see prices paid, compare vendors, and view their scorecard. Also manage payables here."
+        title="Suppliers"
+        description="Supplier contacts and money you still owe them. For price tips, open Supplier Intel in the sidebar."
         actions={
           <>
             <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
@@ -144,6 +144,14 @@ const SupplierList = () => {
         }
       />
 
+      <div
+        className="rounded-xl border px-4 py-3 text-sm"
+        style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+      >
+        Balance KES 0 means you do not owe them right now. That is normal when deliveries were marked <strong>Paid</strong>.
+        Amounts only appear when stock is received <strong>on credit</strong>.
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="glass-card rounded-xl p-4 border" style={{ borderColor: 'var(--border-primary)' }}>
           <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Active suppliers</p>
@@ -151,12 +159,12 @@ const SupplierList = () => {
         </div>
 
         <div className="glass-card rounded-xl p-4 border" style={{ borderColor: 'rgba(244,63,94,0.25)' }}>
-          <p className="text-xs font-semibold mb-2" style={{ color: '#e11d48' }}>Payables (AP)</p>
+          <p className="text-xs font-semibold mb-2" style={{ color: '#e11d48' }}>Still to pay</p>
           <p className="text-2xl font-display font-bold text-rose-600">KES {totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
 
         <div className="glass-card rounded-xl p-4 border" style={{ borderColor: 'rgba(16,185,129,0.25)' }}>
-          <p className="text-xs font-semibold mb-2" style={{ color: '#059669' }}>Supplier credit</p>
+          <p className="text-xs font-semibold mb-2" style={{ color: '#059669' }}>Credit with suppliers</p>
           <p className="text-2xl font-display font-bold text-emerald-600">KES {totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
       </div>
@@ -243,7 +251,7 @@ const SupplierList = () => {
                     </p>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wide text-primary opacity-80 group-hover:opacity-100">
-                    Prices &amp; score →
+                    Open →
                   </span>
                 </div>
               </button>

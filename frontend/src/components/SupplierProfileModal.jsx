@@ -129,13 +129,17 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <button type="button" onClick={() => onEdit(supplier)} className="p-2 rounded-lg" style={{ color: 'var(--color-primary)' }} title="Edit supplier">
-              <PencilIcon className="w-5 h-5" />
-            </button>
-            <button type="button" onClick={() => onDelete(supplier.id)} className="p-2 rounded-lg text-rose-500" title="Delete supplier">
-              <TrashIcon className="w-5 h-5" />
-            </button>
-            <button type="button" onClick={onClose} className="p-2 rounded-lg" style={{ color: 'var(--text-secondary)' }} aria-label="Close">
+            {typeof onEdit === "function" ? (
+              <button type="button" onClick={() => onEdit(supplier)} className="p-2 rounded-lg" style={{ color: "var(--color-primary)" }} title="Edit supplier">
+                <PencilIcon className="w-5 h-5" />
+              </button>
+            ) : null}
+            {typeof onDelete === "function" ? (
+              <button type="button" onClick={() => onDelete(supplier.id)} className="p-2 rounded-lg text-rose-500" title="Delete supplier">
+                <TrashIcon className="w-5 h-5" />
+              </button>
+            ) : null}
+            <button type="button" onClick={onClose} className="p-2 rounded-lg" style={{ color: "var(--text-secondary)" }} aria-label="Close">
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>

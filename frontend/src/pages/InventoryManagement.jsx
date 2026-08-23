@@ -170,7 +170,7 @@ const InventoryManagement = () => {
         <div className="flex p-1.5 rounded-xl w-full lg:w-auto shadow-inner border backdrop-blur-md" style={{ background: 'var(--bg-field)', borderColor: 'var(--border-primary)' }}>
           {[
             { id: 'inventory', label: 'Stock list' },
-            { id: 'suppliers', label: 'Supplier intel' },
+            { id: 'suppliers', label: 'Suppliers' },
             { id: 'batches', label: 'Batches' },
             { id: 'intake', label: 'Stock received' },
             { id: 'transfers', label: 'Transfers' },

@@ -2,6 +2,7 @@
  * Shared sidebar / mobile drawer navigation groups.
  */
 import {
+  LightBulbIcon,
   HomeIcon,
   ShoppingBagIcon,
   ChartBarIcon,
@@ -52,6 +53,7 @@ export const getNavGroups = (user) => {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
+      { to: "/supplier-intelligence", label: "Supplier Intel", icon: LightBulbIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/customers", label: "Customers", icon: UserGroupIcon },
       { to: "/purchase-orders", label: "Purchases", icon: DocumentPlusIcon },
@@ -69,6 +71,7 @@ export const getNavGroups = (user) => {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
       { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
+      { to: "/supplier-intelligence", label: "Supplier Intel", icon: LightBulbIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
@@ -84,6 +87,7 @@ export const getNavGroups = (user) => {
   } else if (user?.role === "auditor") {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
+      { to: "/supplier-intelligence", label: "Supplier Intel", icon: LightBulbIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
     );

@@ -110,10 +110,12 @@ const Customers = () => {
         <div>
           <h1 className="text-3xl font-display font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             <UserGroupIcon className="w-8 h-8" style={{ color: 'var(--color-primary)' }} />
-            Customers & Debt
+            Customers
             <RefreshIndicator isFetching={isFetching} isLoading={isLoading} />
           </h1>
-          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Manage credit clients, view transaction ledgers, and process debt payments.</p>
+          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            People who buy on credit. KES 0 means they do not owe you anything right now.
+          </p>
         </div>
       </div>
 
@@ -124,7 +126,7 @@ const Customers = () => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-600" style={{ background: 'rgba(99,102,241,0.12)' }}>
               <UserGroupIcon className="w-5 h-5" />
             </div>
-            <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>Total Clients</p>
+            <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>Customers</p>
           </div>
           <p className="text-3xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>{customers.length}</p>
         </div>
@@ -134,7 +136,7 @@ const Customers = () => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-600" style={{ background: 'rgba(244,63,94,0.12)' }}>
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
-            <p className="text-xs font-bold" style={{ color: '#e11d48' }}>Outstanding AR</p>
+            <p className="text-xs font-bold" style={{ color: '#e11d48' }}>They still owe you</p>
           </div>
           <p className="text-3xl font-display font-bold text-rose-600">KES {totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
@@ -144,7 +146,7 @@ const Customers = () => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600" style={{ background: 'rgba(16,185,129,0.12)' }}>
               <CurrencyDollarIcon className="w-5 h-5" />
             </div>
-            <p className="text-xs font-bold" style={{ color: '#059669' }}>Store Credit Owned</p>
+            <p className="text-xs font-bold" style={{ color: '#059669' }}>Store credit you owe them</p>
           </div>
           <p className="text-3xl font-display font-bold text-emerald-600">KES {totalCredit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
         </div>
@@ -169,9 +171,9 @@ const Customers = () => {
             onChange={(e) => setFilterDebt(e.target.value)}
             className="form-input w-full pl-11 pr-4 py-3 rounded-xl transition-all outline-none appearance-none"
           >
-            <option value="all">All Customers</option>
-            <option value="debt">With Outstanding Debt</option>
-            <option value="cleared">Cleared / Negative</option>
+            <option value="all">All customers</option>
+            <option value="debt">Still owe money</option>
+            <option value="cleared">No debt</option>
           </select>
         </div>
         <div className="w-full md:w-auto">
@@ -267,7 +269,7 @@ const Customers = () => {
             <div className="px-8 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)' }}>
               <div>
                 <h2 className="text-2xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>Add Customer</h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Create a new credit customer record.</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Add someone who can buy on credit.</p>
               </div>
               <button
                 type="button"
@@ -319,7 +321,7 @@ const Customers = () => {
               </div>
               <div>
                 <label className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Opening balance (optional)
+                  Starting debt (optional)
                   <input
                     type="number"
                     step="0.01"

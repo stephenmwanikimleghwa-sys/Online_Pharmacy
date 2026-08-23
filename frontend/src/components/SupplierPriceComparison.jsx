@@ -55,8 +55,8 @@ const SupplierPriceComparison = ({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-bold">💊 {product.name}</h3>
-        <p className="text-sm text-gray-500">Supplier Price Comparison — based on purchase history</p>
+        <h3 className="text-lg font-bold">{product.name}</h3>
+        <p className="text-sm text-gray-500">Who sold this cheapest (from your past purchases)</p>
       </div>
 
       <div className="overflow-x-auto">
