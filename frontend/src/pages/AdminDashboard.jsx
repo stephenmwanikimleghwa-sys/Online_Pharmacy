@@ -501,6 +501,9 @@ const AdminDashboard = () => {
                   <ShoppingBagIcon className="w-5 h-5 text-indigo-500" />
                 </span>
                 Last 5 transactions
+                <span className="ml-2 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  (this branch · live sales)
+                </span>
               </h3>
               {branchOps.recent_transactions?.length ? (
                 <div className="overflow-x-auto">
