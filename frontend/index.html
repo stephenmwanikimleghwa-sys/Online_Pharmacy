@@ -70,10 +70,16 @@
           }
           hideSplash();
           if (root && root.childNodes.length === 0) {
+            var detail = window.__TRANSCOUNTY_BOOT_ERROR || "";
             root.innerHTML =
-              '<div style="padding:2rem;font-family:system-ui;text-align:center;color:#14201e">' +
+              '<div style="padding:2rem;font-family:system-ui;text-align:center;color:#14201e;max-width:28rem;margin:0 auto">' +
               "<p style=\"font-weight:700;margin-bottom:0.5rem\">Transcounty could not start</p>" +
-              "<p style=\"margin-bottom:1rem;color:#475569\">Refresh the page. If it keeps failing, clear site data for this site.</p>" +
+              "<p style=\"margin-bottom:1rem;color:#475569\">Hard-refresh (Ctrl+Shift+R) or clear site data for this site, then open the link again.</p>" +
+              (detail
+                ? '<pre style="text-align:left;font-size:11px;background:#fff;border:1px solid #cbd5e1;padding:0.75rem;border-radius:0.5rem;overflow:auto;margin-bottom:1rem;color:#b91c1c">' +
+                  String(detail).slice(0, 400).replace(/</g, "&lt;") +
+                  "</pre>"
+                : "") +
               '<button onclick="location.reload()" style="background:#0f6b63;color:#fff;border:0;padding:0.75rem 1.25rem;border-radius:0.5rem;font-weight:600;cursor:pointer">Refresh</button>' +
               "</div>";
           }
@@ -90,6 +96,15 @@
           });
         }
       }
+      window.addEventListener("error", function (ev) {
+        window.__TRANSCOUNTY_BOOT_ERROR =
+          (ev && ev.message) || (ev && ev.error && ev.error.message) || "script error";
+      });
+      window.addEventListener("unhandledrejection", function (ev) {
+        var r = ev && ev.reason;
+        window.__TRANSCOUNTY_BOOT_ERROR =
+          (r && r.message) || String(r || "unhandled rejection");
+      });
     </script>
   </body>
 </html>

@@ -50,12 +50,24 @@ export default defineConfig(({ mode }) => {
           if (id.includes('node_modules/@tanstack')) return 'query';
           // Date utilities
           if (id.includes('node_modules/date-fns')) return 'utils';
-          // Core React runtime
-          if (id.includes('node_modules/react-dom')) return 'react-dom';
-          if (id.includes('node_modules/react-router-dom') || id.includes('node_modules/react-router')) return 'router';
-          if (id.includes('node_modules/react')) return 'react';
-          // Do not force-split recharts/xlsx here — let them ride with their lazy page
-          // chunks so the landing entry does not modulepreload a 260KB charts file.
+          // react-router before the react/ match (path contains "react")
+          if (
+            id.includes('node_modules/react-router-dom') ||
+            id.includes('node_modules/react-router')
+          ) {
+            return 'router';
+          }
+          // Keep react + react-dom + scheduler together. Splitting them put
+          // scheduler in vendor and created a circular init where react-dom
+          // saw undefined React (__SECRET_INTERNALS…) → blank "could not start".
+          if (
+            id.includes('node_modules/react-dom') ||
+            id.includes('node_modules/scheduler') ||
+            id.includes('/node_modules/react/')
+          ) {
+            return 'react';
+          }
+          // Do not force-split recharts/xlsx — keep them with lazy page chunks.
           if (id.includes('node_modules')) return 'vendor';
         }
       }
