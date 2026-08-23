@@ -106,9 +106,9 @@ const Sidebar = () => {
             style={{ "--tw-ring-color": "var(--color-primary)" }}
             title="Transcounty Home"
           >
-            <div className="w-7 h-7 text-[10px] leading-none nav-logo-mark flex items-center justify-center text-white font-bold flex-shrink-0">
+            <span className="nav-logo-mark" aria-hidden>
               TP
-            </div>
+            </span>
             {!isCollapsed && (
               <span className="nav-brand-text font-semibold text-[13px] tracking-tight truncate group-hover:opacity-80 transition-opacity">
                 Transcounty

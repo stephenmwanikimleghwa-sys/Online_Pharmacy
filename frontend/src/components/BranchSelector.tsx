@@ -42,7 +42,8 @@ const BranchSelector: React.FC = () => {
   if (!isAdmin) {
     return (
       <span
-        className="text-sm font-semibold text-gray-700 dark:text-gray-200 px-3 py-1.5"
+        className="text-xs font-semibold truncate max-w-[7rem] px-1.5 py-1"
+        style={{ color: "var(--text-secondary)" }}
         title="Your assigned branch"
       >
         {displayBranchName}

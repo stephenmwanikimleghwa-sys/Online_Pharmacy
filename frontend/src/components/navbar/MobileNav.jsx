@@ -2,14 +2,18 @@ import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   ArrowRightOnRectangleIcon,
+  MoonIcon,
+  SunIcon,
   UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { getNavGroups } from "./navConfig";
 import { formatLoginAt } from "../../utils/formatLoginAt";
+import { useTheme } from "../../context/ThemeContext";
 
 const MobileNav = ({ isOpen, user, handleLogout, onClose }) => {
   const location = useLocation();
+  const { setTheme, effectiveTheme } = useTheme();
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -53,18 +57,23 @@ const MobileNav = ({ isOpen, user, handleLogout, onClose }) => {
         }}
       >
         <div
-          className="flex items-center justify-between px-4 py-3.5 flex-shrink-0"
+          className="flex items-center justify-between px-4 py-3.5 flex-shrink-0 gap-2"
           style={{ borderBottom: "1px solid var(--border-primary)" }}
         >
-          <div className="min-w-0">
-            <p className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>
-              {user ? `${user.first_name || user.username || "Staff"}` : "Menu"}
-            </p>
-            {user && formatLoginAt(user.session_started_at || user.last_login) ? (
-              <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-secondary)" }}>
-                Signed in {formatLoginAt(user.session_started_at || user.last_login)}
+          <div className="min-w-0 flex items-center gap-2.5">
+            <span className="nav-logo-mark" aria-hidden>
+              TP
+            </span>
+            <div className="min-w-0">
+              <p className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>
+                {user ? `${user.first_name || user.username || "Staff"}` : "Menu"}
               </p>
-            ) : null}
+              {user && formatLoginAt(user.session_started_at || user.last_login) ? (
+                <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                  Signed in {formatLoginAt(user.session_started_at || user.last_login)}
+                </p>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
@@ -119,33 +128,48 @@ const MobileNav = ({ isOpen, user, handleLogout, onClose }) => {
           )}
         </div>
 
-        {user ? (
-          <div
-            className="flex-shrink-0 px-3 py-3 space-y-1"
-            style={{ borderTop: "1px solid var(--border-primary)" }}
+        <div
+          className="flex-shrink-0 px-3 py-3 space-y-1"
+          style={{ borderTop: "1px solid var(--border-primary)" }}
+        >
+          <button
+            type="button"
+            onClick={() => setTheme(effectiveTheme === "dark" ? "light" : "dark")}
+            className={`${linkClass(false)} w-full text-left`}
+            aria-label="Toggle theme"
           >
-            <Link
-              to="/account"
-              onClick={onClose}
-              className={linkClass(location.pathname.startsWith("/account"))}
-            >
-              <UserCircleIcon className="h-5 w-5" />
-              Profile
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                handleLogout();
-                onClose?.();
-              }}
-              className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold w-full text-left"
-              style={{ color: "#dc2626" }}
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              Log out
-            </button>
-          </div>
-        ) : null}
+            {effectiveTheme === "dark" ? (
+              <SunIcon className="h-5 w-5" />
+            ) : (
+              <MoonIcon className="h-5 w-5" />
+            )}
+            {effectiveTheme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+          {user ? (
+            <>
+              <Link
+                to="/account"
+                onClick={onClose}
+                className={linkClass(location.pathname.startsWith("/account"))}
+              >
+                <UserCircleIcon className="h-5 w-5" />
+                Profile
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  handleLogout();
+                  onClose?.();
+                }}
+                className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-semibold w-full text-left"
+                style={{ color: "#dc2626" }}
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                Log out
+              </button>
+            </>
+          ) : null}
+        </div>
       </aside>
     </div>
   );

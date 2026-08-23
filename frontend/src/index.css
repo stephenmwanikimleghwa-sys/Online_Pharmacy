@@ -208,10 +208,21 @@ body {
 }
 
 .nav-logo-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.625rem;
   background: var(--color-primary);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  overflow: hidden;
   box-shadow: none;
 }
 
@@ -331,21 +342,19 @@ html {
   opacity: 1;
 }
 
-.nav-logo-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--color-primary);
-  box-shadow: none;
-}
-
 .nav-brand-text {
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.02em;
   transition: color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .nav-brand-text {
+    font-size: 1.05rem;
+  }
 }
 
 .nav-premium a:hover .nav-brand-text {

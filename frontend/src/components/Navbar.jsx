@@ -49,8 +49,9 @@ const Navbar = () => {
     <button
       type="button"
       onClick={handleLogout}
-      className="nav-logout-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold"
+      className="nav-logout-btn flex items-center justify-center gap-2 p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-semibold flex-shrink-0"
       title="Log out"
+      aria-label="Log out"
     >
       <ArrowRightOnRectangleIcon className="w-5 h-5" />
       <span className="hidden sm:inline">Log out</span>
@@ -90,14 +91,14 @@ const Navbar = () => {
             </button>
             <Link
               to="/"
-              className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 rounded-xl"
+              className="flex items-center gap-2 min-w-0 group focus:outline-none focus-visible:ring-2 rounded-xl"
               aria-label="Transcounty Pharmacy - Home"
               style={{ "--tw-ring-color": "var(--color-primary)" }}
             >
-              <div className="nav-logo-mark w-8 h-8 text-xs group-hover:scale-105 transition-transform" aria-hidden>
+              <span className="nav-logo-mark" aria-hidden>
                 TP
-              </div>
-              <span className="nav-brand-text text-sm font-bold">Transcounty</span>
+              </span>
+              <span className="nav-brand-text truncate">Transcounty</span>
             </Link>
           </div>
 
@@ -107,13 +108,13 @@ const Navbar = () => {
           </div>
 
           {/* Top-right actions — theme + logout (desktop + mobile) */}
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="md:hidden">
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-auto min-w-0 flex-shrink-0">
+            <div className="md:hidden max-w-[7.5rem] truncate">
               <BranchSelector />
             </div>
             {user && formatLoginAt(user.session_started_at || user.last_login) ? (
               <span
-                className="hidden sm:inline text-[11px] font-medium truncate max-w-[11rem]"
+                className="hidden lg:inline text-[11px] font-medium truncate max-w-[11rem]"
                 style={{ color: "var(--text-secondary)" }}
                 title="Signed in at"
               >
