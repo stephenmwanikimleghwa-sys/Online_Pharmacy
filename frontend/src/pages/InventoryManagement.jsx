@@ -273,7 +273,7 @@ const InventoryManagement = () => {
                 <div className="mb-2">
                   <div className="flex justify-between text-xs font-bold text-muted mb-1">
                     <span>Stock Health</span>
-                    <span>{inventory.length > 0 ? Math.round(((inventory.length - inventoryMetrics.lowStockCount) / inventory.length) * 100) : 0}%</span>
+                    <span>{totalInventoryItems > 0 ? Math.round(((totalInventoryItems - needRestockCount) / totalInventoryItems) * 100) : 0}%</span>
                   </div>
                   <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
                     <div 
