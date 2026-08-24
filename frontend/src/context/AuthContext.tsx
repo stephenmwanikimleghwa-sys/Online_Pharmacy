@@ -305,9 +305,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (isAuthRejection(error)) {
           // Access may have expired — try one silent refresh before forcing login.
           try {
-            const { refreshAccessToken } = await import("../services/api");
+            const { refreshAccessToken, scheduleProactiveRefresh } = await import("../services/api");
             const access = await refreshAccessToken();
             if (access) {
+              setToken(access);
+              scheduleProactiveRefresh();
               const retry = await api.get("/auth/profile/", {
                 skipGlobalErrorNotification: true,
               });
@@ -328,7 +330,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
           notifyError(
             "Session Expired",
-            "You were logged out after a period of inactivity. Please log in again.",
+            "Your login session could not be renewed. Please log in again.",
             "Log In Again",
             () => {
               window.location.href = "/login";
@@ -345,7 +347,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem(ACTIVE_BRANCH_STORAGE_KEY);
           try { localStorage.removeItem("cached_profile"); } catch { /* non-fatal */ }
         } else if (!hasResponse) {
-          // Network failure / timeout. Hydrate from cache when possible.
+          // Network failure / timeout (cold API). Keep tokens — never logout for connectivity.
           try {
             const raw = localStorage.getItem("cached_profile");
             if (raw) {
@@ -355,13 +357,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 requires_branch_selection: false,
                 active_branch: readStoredActiveBranch(),
               });
-            } else if (!hasCachedSession) {
-              // Stale token, no cache, API unreachable — clear so landing/login can show.
-              setToken(null);
-              localStorage.removeItem("access_token");
-              localStorage.removeItem("refresh_token");
             }
-          } catch { /* cached data unreadable — stay logged out */ }
+            // No cache yet: stay "loading finished" with token intact so ProtectedRoute
+            // keeps the user in-app; pages will retry when the API wakes up.
+          } catch { /* cached data unreadable — keep tokens */ }
         }
       } finally {
         window.clearTimeout(timeoutId);
@@ -391,6 +390,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (tokens?.refresh) {
         localStorage.setItem("refresh_token", tokens.refresh);
       }
+      try {
+        const { scheduleProactiveRefresh } = await import("../services/api");
+        scheduleProactiveRefresh();
+      } catch { /* non-fatal */ }
       if (branch) {
         setActiveBranch(branch);
         notifySuccess(
@@ -470,6 +473,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (refresh) {
         localStorage.setItem("refresh_token", refresh);
       }
+      try {
+        const { scheduleProactiveRefresh } = await import("../services/api");
+        scheduleProactiveRefresh();
+      } catch { /* non-fatal */ }
 
       if (finalUser?.role?.toString?.().toLowerCase?.() === "pharmacist") {
         needsBranchSelection = false;

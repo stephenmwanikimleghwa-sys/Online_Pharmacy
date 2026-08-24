@@ -3,8 +3,8 @@ Logout view that blacklists the submitted refresh token.
 
 SECURITY (C5): Tokens must be revocable. The simplejwt token_blacklist app
 is already installed. Calling logout() blacklists the refresh token, meaning
-it cannot be used to obtain new access tokens. The short-lived access token
-(15 minutes) will naturally expire.
+it cannot be used to obtain new access tokens. The access token will
+naturally expire (see SIMPLE_JWT ACCESS_TOKEN_LIFETIME).
 """
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated

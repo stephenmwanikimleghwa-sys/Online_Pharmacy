@@ -341,13 +341,14 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "config.exception_handlers.structured_exception_handler",
 }
 
-# JWT Settings — access is short-lived; frontend silently refreshes via refresh token.
-# Pharmacy shifts are long: 2h access + 7d refresh avoids mid-shift kickouts when refresh works.
+# JWT Settings — access lasts a full pharmacy shift; frontend also refreshes proactively.
+# BLACKLIST_AFTER_ROTATION=False: multi-tab refresh races were logging staff out mid-shift.
+# Explicit logout still blacklists the refresh token via LogoutView.
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "BLACKLIST_AFTER_ROTATION": False,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
