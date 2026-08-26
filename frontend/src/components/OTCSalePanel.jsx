@@ -31,6 +31,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [discount, setDiscount] = useState("");
   const [completing, setCompleting] = useState(false);
   const [saleError, setSaleError] = useState("");
   const [lastOrder, setLastOrder] = useState(null);
@@ -133,18 +134,20 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       const products = await fetchBranchCatalog({ branchId, perPage: 200, context: "sales" });
       const sorted = sortForOTC(products);
       setCatalog(sorted);
-      if (!searchTerm.trim()) {
-        setSearchResults(sorted);
-      }
     } catch {
       setCatalog([]);
-      setSearchResults([]);
     }
-  }, [branchId, searchTerm, sortForOTC]);
+  }, [branchId, sortForOTC]);
 
   useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
+
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults(catalog);
+    }
+  }, [catalog, searchTerm]);
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -272,8 +275,17 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     setSelectedItems(selectedItems.filter((item) => item.id !== productId));
   };
 
-  const calculateTotal = () =>
-    selectedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const calculateTotal = () => {
+    const subtotal = selectedItems.reduce(
+      (sum, item) => sum + item.unitPrice * (parseInt(item.quantity, 10) || 0),
+      0,
+    );
+    const disc = Math.max(0, parseFloat(discount) || 0);
+    return Math.max(0, subtotal - disc);
+  };
+
+  const calculateSubtotal = () =>
+    selectedItems.reduce((sum, item) => sum + item.unitPrice * (parseInt(item.quantity, 10) || 0), 0);
 
   const handleCompleteSale = async () => {
     setSaleError("");
@@ -317,7 +329,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         customer_id: setup.customerType === 'credit' ? setup.creditCustomerId : null,
         patient_name: setup.patientName,
         pricing_tier: setup.pricingTier.toUpperCase(),
-        discount: 0,
+        discount: Math.max(0, parseFloat(discount) || 0),
         branch_id: branchId,
       };
 
@@ -401,7 +413,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                 customer_id: null,
                 patient_name: setup.patientName,
                 pricing_tier: setup.pricingTier.toUpperCase(),
-                discount: 0,
+                discount: Math.max(0, parseFloat(discount) || 0),
                 branch_id: branchId,
               },
               branchId,
@@ -689,7 +701,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                     <div className="mt-1">{stockBadge(qty)}</div>
                     <button
                       type="button"
-                      onClick={() => void addToSale(product)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        void addToSale(product);
+                      }}
                       className="mt-2 text-xs font-semibold text-indigo-600"
                     >
                       + Add to cart
@@ -752,6 +767,18 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         </div>
         <div className="border-t pt-4" style={{ borderColor: "var(--border-primary)" }}>
           <div className="mb-3">
+            <label className="form-label text-xs">Discount (KES)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+              placeholder="e.g. 50"
+              className="form-input w-full"
+            />
+          </div>
+          <div className="mb-3">
             <label className="form-label text-xs">Payment method</label>
             <select
               value={paymentMethod}
@@ -767,6 +794,16 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
               <option value="other">Other</option>
             </select>
           </div>
+          <div className="flex justify-between mb-1 text-sm" style={{ color: "var(--text-secondary)" }}>
+            <span>Subtotal</span>
+            <span>{fmt(calculateSubtotal())}</span>
+          </div>
+          {(parseFloat(discount) || 0) > 0 && (
+            <div className="flex justify-between mb-1 text-sm text-emerald-600">
+              <span>Discount</span>
+              <span>-{fmt(parseFloat(discount) || 0)}</span>
+            </div>
+          )}
           <div className="flex justify-between mb-4">
             <span className="font-bold">Total</span>
             <span className="text-xl font-bold text-primary">{fmt(calculateTotal())}</span>

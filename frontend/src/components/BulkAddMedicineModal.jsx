@@ -433,7 +433,6 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                           >
                             <option value="CHEMIST">Chemist</option>
                             <option value="AGROVET">Agrovet</option>
-                            <option value="OTHER">Other</option>
                           </select>
                         </td>
 

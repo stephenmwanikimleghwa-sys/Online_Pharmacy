@@ -167,7 +167,7 @@ function AppLayout() {
                   <Route
                     path="/stock-adjustments"
                     element={
-                      <ProtectedRoute element={StockAdjustments} allowedRoles={["admin", "pharmacist"]} />
+                      <ProtectedRoute element={StockAdjustments} allowedRoles={["admin"]} />
                     }
                   />
                   <Route path="/returns" element={<Navigate to="/stock-adjustments?tab=returns" replace />} />
@@ -193,7 +193,7 @@ function AppLayout() {
                     element={
                       <ProtectedRoute
                         element={AdminStock}
-                        allowedRoles={["admin", "pharmacist", "cashier"]}
+                        allowedRoles={["admin"]}
                         requiresActiveBranch
                       />
                     }
@@ -251,7 +251,7 @@ function AppLayout() {
                     element={
                       <ProtectedRoute
                         element={StockIntakeLog}
-                        allowedRoles={["pharmacist", "admin"]}
+                        allowedRoles={["admin"]}
                         requiresActiveBranch
                       />
                     }
@@ -261,7 +261,7 @@ function AppLayout() {
                     element={
                       <ProtectedRoute
                         element={PurchaseOrders}
-                        allowedRoles={["pharmacist", "admin"]}
+                        allowedRoles={["admin"]}
                         requiresActiveBranch
                       />
                     }
@@ -271,7 +271,7 @@ function AppLayout() {
                     element={
                       <ProtectedRoute
                         element={PurchaseOrderCreate}
-                        allowedRoles={["pharmacist", "admin"]}
+                        allowedRoles={["admin"]}
                         requiresActiveBranch
                       />
                     }

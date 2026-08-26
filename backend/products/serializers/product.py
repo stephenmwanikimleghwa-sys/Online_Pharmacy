@@ -196,8 +196,17 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             data['use_legacy_prices'] = True
         if not data.get('department'):
             data['department'] = 'CHEMIST'
+        dept = (data.get('department') or 'CHEMIST').upper()
+        # Never persist OTHER — it hides products from both branch types incorrectly.
+        if dept == 'OTHER':
+            dept = 'CHEMIST'
+            data['department'] = 'CHEMIST'
+        if dept not in ('CHEMIST', 'AGROVET'):
+            raise serializers.ValidationError(
+                {'department': 'Department must be CHEMIST or AGROVET.'}
+            )
+        data['department'] = dept
         # Keep sellability (product_type) aligned with department when not UNIVERSAL.
-        dept = data.get('department')
         if dept in ('CHEMIST', 'AGROVET') and data.get('product_type') != 'UNIVERSAL':
             data['product_type'] = dept
         return data
@@ -245,7 +254,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             else:
                 validated_data['price'] = buying_price * Decimal('1.33')
 
-        stock_qty = validated_data.get('stock_quantity', 0) or 0
+        stock_qty = validated_data.pop('stock_quantity', 0) or 0
+        reorder = validated_data.get('reorder_threshold', 10) or 10
         product = super().create(validated_data)
 
         if buying_price is not None:
@@ -261,19 +271,32 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                     tier.retail_price = retail_price
             tier.save()
 
-        # Stock the active session branch (Peakfarm/Annex), not only home branch.
+        # Stock ONLY the active session branch. Never overwrite an existing row's qty
+        # (shared-catalog BranchStock rows must stay branch-isolated).
         request = self.context.get('request')
         user = getattr(request, 'user', None) if request else None
         branch = getattr(request, 'active_branch', None) if request else None
         if branch is None and user is not None:
             branch = getattr(user, 'branch', None)
         if branch is not None:
+            from decimal import Decimal
             from products.models import BranchStock
-            BranchStock.objects.get_or_create(
+            bs, created = BranchStock.objects.get_or_create(
                 product=product,
                 branch=branch,
-                defaults={'quantity': stock_qty},
+                defaults={
+                    'quantity': Decimal(str(stock_qty)),
+                    'reorder_level': Decimal(str(reorder)),
+                },
             )
+            if not created:
+                # Existing row: update reorder only — never clobber quantity.
+                updates = []
+                if bs.reorder_level is None or float(bs.reorder_level) == 0:
+                    bs.reorder_level = Decimal(str(reorder))
+                    updates.append('reorder_level')
+                if updates:
+                    bs.save(update_fields=updates)
 
         return product
 
@@ -360,12 +383,18 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         use_legacy_prices = validated_data.pop('use_legacy_prices', None)
         wholesale_price = validated_data.pop('wholesale_price', None)
         retail_price = validated_data.pop('retail_price', None)
+        # Stock lives on BranchStock — never overwrite qty via product edit.
+        validated_data.pop('stock_quantity', None)
+        reorder = validated_data.get('reorder_threshold', None)
 
         # Preserve explicit WP/RP when the client sends them (Manual pricing)
         if retail_price is not None or wholesale_price is not None:
             use_legacy_prices = True
 
         dept = validated_data.get('department', instance.department)
+        if dept == 'OTHER':
+            dept = 'CHEMIST'
+            validated_data['department'] = 'CHEMIST'
         if (
             dept in ('CHEMIST', 'AGROVET')
             and validated_data.get('product_type', instance.product_type) != 'UNIVERSAL'
@@ -373,6 +402,19 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             validated_data['product_type'] = dept
 
         product = super().update(instance, validated_data)
+
+        if reorder is not None:
+            request = self.context.get('request')
+            branch = getattr(request, 'active_branch', None) if request else None
+            if branch is None and request is not None:
+                user = getattr(request, 'user', None)
+                branch = getattr(user, 'branch', None) if user else None
+            if branch is not None:
+                from decimal import Decimal
+                from products.models import BranchStock
+                BranchStock.objects.filter(product=product, branch=branch).update(
+                    reorder_level=Decimal(str(reorder))
+                )
 
         if buying_price is not None or use_legacy_prices is not None:
             try:

@@ -12,7 +12,7 @@ from products.serializers import (
     ProductCreateSerializer,
     ProductUpdateSerializer,
 )
-from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin
+from users.permissions import IsPharmacistOrAdmin, IsOwnerOrAdmin, CanManageCatalog, CanEditPrices
 from users.active_branch import get_active_branch
 # Pharmacy import removed - single pharmacy app
 from rest_framework.request import Request
@@ -379,9 +379,39 @@ class ProductViewSet(viewsets.ModelViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsPharmacistOrAdmin()]
-        return [permissions.AllowAny()]
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'bulk_create']:
+            # Cashiers may sell but must not create/edit catalog products or prices.
+            return [permissions.IsAuthenticated(), CanManageCatalog()]
+        return [permissions.IsAuthenticated()]
+
+    def _strip_price_fields_if_unauthorized(self, data):
+        """Drop price mutations unless the user may edit prices or manage catalog."""
+        if (
+            CanEditPrices().has_permission(self.request, self)
+            or CanManageCatalog().has_permission(self.request, self)
+        ):
+            return data
+        blocked = (
+            "price",
+            "buying_price",
+            "wholesale_price",
+            "retail_price",
+            "use_legacy_prices",
+        )
+        if hasattr(data, "keys"):
+            for key in blocked:
+                if key in data:
+                    if hasattr(data, "_mutable"):
+                        mutable = data._mutable
+                        data._mutable = True
+                        data.pop(key, None)
+                        data._mutable = mutable
+                    else:
+                        try:
+                            data.pop(key, None)
+                        except TypeError:
+                            pass
+        return data
 
     def get_serializer_class(self) -> Any:
         """
@@ -404,6 +434,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return api_response(data=serializer.data, message="Products retrieved successfully")
 
     def create(self, request, *args, **kwargs):
+        self._strip_price_fields_if_unauthorized(request.data)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -431,6 +462,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return api_response(data=serializer.data, message="Product retrieved successfully")
 
     def update(self, request, *args, **kwargs):
+        self._strip_price_fields_if_unauthorized(request.data)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)

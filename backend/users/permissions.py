@@ -83,17 +83,42 @@ class CanViewReports(permissions.BasePermission):
 
 # Granular Permission Classes
 
+class CanManageCatalog(permissions.BasePermission):
+    """
+    Create/edit/delete products and mutate catalog prices.
+    Admin only — pharmacists sell and view stock; they do not own the catalog.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return bool(
+            user.is_superuser or getattr(user, "role", None) == RoleChoices.ADMIN
+        )
+
+
 class CanProcessSales(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and (request.user.is_superuser or request.user.can_process_sales)
 
 class CanManageInventory(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (request.user.is_superuser or request.user.can_manage_inventory)
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_superuser or getattr(user, "role", None) == RoleChoices.ADMIN:
+            return True
+        return bool(getattr(user, "can_manage_inventory", False))
 
 class CanEditPrices(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (request.user.is_superuser or request.user.can_edit_prices)
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_superuser or getattr(user, "role", None) == RoleChoices.ADMIN:
+            return True
+        return bool(getattr(user, "can_edit_prices", False))
 
 class CanManageUsers(permissions.BasePermission):
     def has_permission(self, request, view):

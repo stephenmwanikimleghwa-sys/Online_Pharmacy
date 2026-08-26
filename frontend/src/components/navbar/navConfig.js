@@ -72,12 +72,9 @@ export const getNavGroups = (user) => {
   } else if (user?.role === "pharmacist") {
     operationsLinks.push(
       { to: "/inventory/management", label: "Inventory Management", icon: ClipboardDocumentListIcon },
-      { to: "/inventory/control", label: "Manage Products", icon: CubeIcon },
-      { to: "/supplier-intelligence", label: "Supplier Intel", icon: LightBulbIcon },
       { to: "/otc-sales", label: "OTC Sales", icon: ShoppingBagIcon },
       { to: "/reports", label: "Reports", icon: ChartBarIcon },
       { to: "/quotations", label: "Quotations", icon: DocumentPlusIcon },
-      { to: "/stock-adjustments", label: "Stock Adjustments", icon: ArrowUturnLeftIcon },
       { to: "/clinical", label: "Clinical", icon: UserGroupIcon },
       { to: "/compliance", label: "Compliance", icon: ShieldCheckIcon },
     );

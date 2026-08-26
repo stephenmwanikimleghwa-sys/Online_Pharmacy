@@ -14,15 +14,23 @@ const ClinicalDashboard = () => {
   const [showNewModal, setShowNewModal] = useState(false);
   const [searchPatient, setSearchPatient] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [creatingPatient, setCreatingPatient] = useState(false);
 
-  const { data: patientsSearch } = useQuery({
+  const { data: patientsSearch, isFetching: searchingPatients } = useQuery({
     queryKey: ['patients', searchPatient],
     queryFn: async () => {
-      if (searchPatient.length < 3) return { results: [] };
-      const res = await api.get(`/patients/api/patients/?search=${searchPatient}`);
-      return res.data;
+      if (searchPatient.trim().length < 2) return { results: [] };
+      const res = await api.get('/patients/patients/', {
+        params: { search: searchPatient.trim() },
+        skipGlobalErrorNotification: true,
+      });
+      const payload = res.data?.results ?? res.data?.data ?? res.data ?? [];
+      return { results: Array.isArray(payload) ? payload : [] };
     },
-    enabled: searchPatient.length >= 3,
+    enabled: searchPatient.trim().length >= 2,
   });
 
   const { data: consultations, isLoading } = useQuery({
@@ -37,13 +45,52 @@ const ClinicalDashboard = () => {
       setShowNewModal(false);
       setSelectedPatient(null);
       setSearchPatient('');
+      setNewFirstName('');
+      setNewLastName('');
+      setNewPhone('');
       notify.success('Consultation started', 'You can now record notes and prescriptions.');
+    },
+    onError: () => {
+      notify.error('Could not start', 'Failed to create the consultation. Try again.');
     },
   });
 
+  const registerAndSelectPatient = async () => {
+    const first = newFirstName.trim() || searchPatient.trim().split(/\s+/)[0] || '';
+    const last =
+      newLastName.trim() ||
+      searchPatient.trim().split(/\s+/).slice(1).join(' ') ||
+      'Patient';
+    if (!first) {
+      notify.warning('Name required', 'Enter the patient first name to continue.');
+      return;
+    }
+    setCreatingPatient(true);
+    try {
+      const res = await api.post(
+        '/patients/patients/',
+        {
+          first_name: first,
+          last_name: last,
+          phone_number: newPhone.trim() || '0000000000',
+          gender: 'PREFER_NOT_TO_SAY',
+          date_of_birth: '2000-01-01',
+        },
+        { skipGlobalErrorNotification: true },
+      );
+      const patient = res.data?.data ?? res.data;
+      setSelectedPatient(patient);
+      notify.success('Patient registered', `${first} ${last} is ready for consultation.`);
+    } catch {
+      notify.error('Registration failed', 'Could not create the patient record.');
+    } finally {
+      setCreatingPatient(false);
+    }
+  };
+
   const handleCreate = () => {
-    if (!selectedPatient) {
-      notify.warning('Patient required', 'Select a patient before starting a consultation.');
+    if (!selectedPatient?.id) {
+      notify.warning('Patient required', 'Search and select a patient, or register a new one.');
       return;
     }
     createMutation.mutate({
@@ -161,10 +208,17 @@ const ClinicalDashboard = () => {
               <input
                 type="text"
                 className="form-input w-full"
-                placeholder="Name or phone…"
+                placeholder="Type name or phone…"
+                autoFocus
                 value={searchPatient}
-                onChange={(e) => setSearchPatient(e.target.value)}
+                onChange={(e) => {
+                  setSearchPatient(e.target.value);
+                  setSelectedPatient(null);
+                }}
               />
+              {searchingPatients && (
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Searching…</p>
+              )}
 
               {patientsSearch?.results?.length > 0 && !selectedPatient && (
                 <div
@@ -175,7 +229,10 @@ const ClinicalDashboard = () => {
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => setSelectedPatient(p)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setSelectedPatient(p);
+                      }}
                       className="w-full text-left px-4 py-3 border-b last:border-0 transition-colors hover:opacity-80"
                       style={{ borderColor: 'var(--border-primary)' }}
                     >
@@ -190,6 +247,45 @@ const ClinicalDashboard = () => {
                 </div>
               )}
             </div>
+
+            {!selectedPatient && (
+              <div className="mb-4 p-3 rounded-lg border space-y-2" style={{ borderColor: 'var(--border-primary)' }}>
+                <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                  Or register a new patient
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    className="form-input w-full"
+                    placeholder="First name"
+                    value={newFirstName}
+                    onChange={(e) => setNewFirstName(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className="form-input w-full"
+                    placeholder="Last name"
+                    value={newLastName}
+                    onChange={(e) => setNewLastName(e.target.value)}
+                  />
+                </div>
+                <input
+                  type="text"
+                  className="form-input w-full"
+                  placeholder="Phone (optional)"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={registerAndSelectPatient}
+                  disabled={creatingPatient || (!newFirstName.trim() && !searchPatient.trim())}
+                  className="btn-primary w-full py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                >
+                  {creatingPatient ? 'Saving…' : 'Register & select'}
+                </button>
+              </div>
+            )}
 
             {selectedPatient && (
               <div
@@ -220,10 +316,10 @@ const ClinicalDashboard = () => {
               <button
                 type="button"
                 onClick={handleCreate}
-                disabled={!selectedPatient || createMutation.isLoading}
+                disabled={!selectedPatient?.id || createMutation.isLoading}
                 className="btn-primary px-6 py-2 rounded-lg font-semibold disabled:opacity-50"
               >
-                Start
+                {createMutation.isLoading ? 'Starting…' : 'Start'}
               </button>
             </div>
           </div>

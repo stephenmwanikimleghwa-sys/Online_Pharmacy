@@ -91,6 +91,7 @@ urlpatterns += [
     path("api/purchase-orders/", include("inventory.purchase_order_urls")),
     path("api/finance/", include("finance.urls")),
     path("api/clinical/", include("clinical.urls")),
+    path("api/patients/", include("patients.urls")),
     # path("api/dispensing-logs/", include("dispensing_logs.urls")), # Deprecated in favor of products.StockLog
     path("api/reports/", include("reports.urls")),
     path("api/dashboard/", include("dashboard.urls")),

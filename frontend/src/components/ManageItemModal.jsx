@@ -14,9 +14,10 @@ import api from '../services/api';
 const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
   const { notify } = useNotification();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.is_admin || user?.is_superuser;
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('restock');
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'restock' : 'edit');
 
   // ── Restock state ─────────────────────────────────────────────────────────
   const [quantity, setQuantity] = useState('');
@@ -249,7 +250,8 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
   };
 
   // ── Tabs config ───────────────────────────────────────────────────────────
-  const tabs = [
+  const tabs = isAdmin
+    ? [
     {
       id: 'restock',
       label: 'Restock',
@@ -291,7 +293,8 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
       ),
       danger: true,
     },
-  ];
+  ]
+    : [];
 
   const inputBase = (hasError) =>
     `form-input w-full ${hasError ? 'border-rose-300 ring-4 ring-rose-500/5 border-rose-400' : ''}`;
@@ -329,6 +332,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
             </button>
           </div>
 
+          {isAdmin && (
           <div className="flex gap-1 mt-4 p-1 rounded-lg" style={{ background: 'var(--bg-field)' }}>
             {tabs.map((tab) => (
               <button
@@ -355,13 +359,41 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
               </button>
             ))}
           </div>
+          )}
         </div>
 
         {/* ── Tab content ── */}
         <div className="overflow-y-auto flex-1" style={{ background: 'var(--bg-card)' }}>
 
+          {!isAdmin && (
+            <div className="p-8 space-y-4">
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Restock, price edits, and catalog changes are admin-only. Ask an administrator if this item needs updating.
+              </p>
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Stock</dt>
+                  <dd className="font-bold">{item.stock_quantity ?? item.quantity ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Price</dt>
+                  <dd className="font-bold">{item.selling_price ?? item.price ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Category</dt>
+                  <dd className="font-bold">{item.category || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Department</dt>
+                  <dd className="font-bold">{item.department || '—'}</dd>
+                </div>
+              </dl>
+              <button type="button" onClick={onClose} className="form-cancel-btn w-full">Close</button>
+            </div>
+          )}
+
           {/* ── RESTOCK TAB ── */}
-          {activeTab === 'restock' && (
+          {isAdmin && activeTab === 'restock' && (
             <form onSubmit={handleRestock} className="p-8 space-y-6">
               {/* Branch */}
               <div>
@@ -469,7 +501,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
           )}
 
           {/* ── ADJUST TAB ── */}
-          {activeTab === 'adjust' && (
+          {isAdmin && activeTab === 'adjust' && (
             <form onSubmit={handleAdjust} className="p-8 space-y-6">
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
                 <p className="text-xs font-bold text-amber-800">Use <strong>negative numbers</strong> to remove stock (e.g. <code>-5</code>) and <strong>positive</strong> to add.</p>
@@ -538,7 +570,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
           )}
 
           {/* ── EDIT TAB ── */}
-          {activeTab === 'edit' && (
+          {isAdmin && activeTab === 'edit' && (
             <form onSubmit={handleEditSubmit} className="p-8 space-y-5">
               {/* Name */}
               <div>
@@ -728,7 +760,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
           )}
 
           {/* ── DELETE TAB ── */}
-          {activeTab === 'delete' && (
+          {isAdmin && activeTab === 'delete' && (
             <div className="p-8 space-y-5">
 
               {/* Medicine identity card */}

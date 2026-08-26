@@ -11,34 +11,54 @@ import PageHeader from '../../components/PageHeader';
 
 const CreateQuotationModal = ({ isOpen, onClose }) => {
   const { notify } = useNotification();
-  const { user } = useAuth();
+  const { user, activeBranch } = useAuth();
   const queryClient = useQueryClient();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [branchId, setBranchId] = useState(user?.branch?.id || '');
+  const [branchId, setBranchId] = useState(activeBranch?.id || user?.branch?.id || '');
   const [items, setItems] = useState([]);
   
-  // Search products
+  // Search products via inventory list (catalog for active/selected branch)
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: searchResults } = useQuery({
-    queryKey: ['productsSearch', searchTerm, branchId],
+  const { data: searchResults, isFetching: searchingCatalog } = useQuery({
+    queryKey: ['quotationProducts', searchTerm, branchId],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return { results: [] };
-      const res = await api.get(`/inventory/stock/?search=${searchTerm}&branch_id=${branchId}`);
-      return res.data;
+      const res = await api.get('/inventory/list/', {
+        params: {
+          search: searchTerm,
+          branch: branchId || undefined,
+          per_page: 40,
+          scope: 'local',
+        },
+        skipGlobalErrorNotification: true,
+      });
+      const products = res.data?.products || res.data?.results || res.data?.data || [];
+      return {
+        results: (Array.isArray(products) ? products : []).map((p) => ({
+          id: p.id,
+          product: {
+            id: p.id,
+            name: p.name,
+            price: p.selling_price ?? p.price ?? 0,
+          },
+          quantity: p.stock_quantity ?? p.quantity ?? 0,
+        })),
+      };
     },
-    enabled: searchTerm.length >= 2 && !!branchId
+    enabled: searchTerm.length >= 2,
   });
 
-  const addItem = (product) => {
-    // Determine price
-    const unitPrice = product.product?.price || 0;
+  const addItem = (row) => {
+    const productId = row.product?.id || row.id;
+    const unitPrice = Number(row.product?.price || 0);
+    const name = row.product?.name || row.name;
     
-    const existing = items.find(i => i.product === product.product.id);
+    const existing = items.find(i => i.product === productId);
     if (existing) {
-      setItems(items.map(i => i.product === product.product.id ? { ...i, quantity: i.quantity + 1 } : i));
+      setItems(items.map(i => i.product === productId ? { ...i, quantity: i.quantity + 1 } : i));
     } else {
-      setItems([...items, { product: product.product.id, name: product.product.name, quantity: 1, unit_price: unitPrice }]);
+      setItems([...items, { product: productId, name, quantity: 1, unit_price: unitPrice }]);
     }
     setSearchTerm('');
   };
@@ -109,15 +129,37 @@ const CreateQuotationModal = ({ isOpen, onClose }) => {
           
           <div className="mb-6 relative">
              <label className="block text-xs font-bold text-slate-500 mb-1">Search Products</label>
-             <input type="text" className="form-input w-full rounded-xl" placeholder="Type to search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+             <input
+               type="text"
+               className="form-input w-full rounded-xl"
+               placeholder="Type product name…"
+               value={searchTerm}
+               onChange={e => setSearchTerm(e.target.value)}
+               autoComplete="off"
+             />
+             {searchingCatalog && (
+               <p className="text-xs text-slate-400 mt-1">Searching catalog…</p>
+             )}
              {searchResults?.results?.length > 0 && (
                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                  {searchResults.results.map(prod => (
-                   <button key={prod.id} type="button" onClick={() => addItem(prod)} className="w-full text-left px-4 py-2 hover:bg-indigo-50 border-b border-slate-50 last:border-0 text-sm font-medium text-slate-700">
-                     {prod.product.name} <span className="text-slate-400 text-xs ml-2">Stock: {prod.quantity}</span>
+                   <button
+                     key={prod.id}
+                     type="button"
+                     onMouseDown={(e) => {
+                       e.preventDefault();
+                       addItem(prod);
+                     }}
+                     className="w-full text-left px-4 py-2 hover:bg-indigo-50 border-b border-slate-50 last:border-0 text-sm font-medium text-slate-700"
+                   >
+                     {prod.product.name}{' '}
+                     <span className="text-slate-400 text-xs ml-2">Stock: {prod.quantity}</span>
                    </button>
                  ))}
                </div>
+             )}
+             {searchTerm.length >= 2 && !searchingCatalog && searchResults?.results?.length === 0 && (
+               <p className="text-xs text-slate-400 mt-1">No matching products in this branch catalog.</p>
              )}
           </div>
 

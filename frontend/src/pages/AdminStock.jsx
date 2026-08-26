@@ -318,7 +318,7 @@ const AdminStock = () => {
 			}
 		}
 
-		if (!form.stock_quantity || isNaN(form.stock_quantity) || Number(form.stock_quantity) < 0) {
+		if (!isEditMode && (!form.stock_quantity && form.stock_quantity !== 0 || isNaN(form.stock_quantity) || Number(form.stock_quantity) < 0)) {
 			errors.stock_quantity = 'Stock quantity must be zero or positive';
 		}
 
@@ -346,6 +346,18 @@ const AdminStock = () => {
 		e.stopPropagation();
 		if (!validateForm()) return;
 		if (submitting) return;
+		// Hard-block duplicate names on create (modal also disables submit).
+		if (!isEditMode) {
+			const name = form.name?.trim()?.toLowerCase();
+			const existing = items.find((i) => (i.name || '').trim().toLowerCase() === name);
+			if (existing) {
+				setFormErrors((prev) => ({
+					...prev,
+					name: `A product named "${existing.name}" already exists. Restock or edit it instead.`,
+				}));
+				return;
+			}
+		}
 		setSubmitting(true);
 
 		try {
@@ -369,7 +381,10 @@ const AdminStock = () => {
 					if (form.wholesale_price) data.append('wholesale_price', Number(form.wholesale_price));
 					if (form.retail_price) data.append('retail_price', Number(form.retail_price));
 				}
-				data.append('stock_quantity', Number(form.stock_quantity));
+				if (!isEditMode) {
+					data.append('stock_quantity', Number(form.stock_quantity) || 0);
+				}
+				data.append('reorder_threshold', Number(form.reorder_threshold) || 10);
 				data.append('dosage_form', form.dosage_form);
 				data.append('strength', form.strength?.trim() || '');
 				data.append('shelf_location', form.shelf_location?.trim() || '');
@@ -388,7 +403,8 @@ const AdminStock = () => {
 					use_legacy_prices: honorManual,
 					...(honorManual && form.wholesale_price ? { wholesale_price: Number(form.wholesale_price) } : {}),
 					...(honorManual && form.retail_price ? { retail_price: Number(form.retail_price) } : {}),
-					stock_quantity: Number(form.stock_quantity),
+					...(!isEditMode ? { stock_quantity: Number(form.stock_quantity) || 0 } : {}),
+					reorder_threshold: Number(form.reorder_threshold) || 10,
 					dosage_form: form.dosage_form,
 					strength: form.strength?.trim() || '',
 					shelf_location: form.shelf_location?.trim() || '',

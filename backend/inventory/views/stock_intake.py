@@ -76,10 +76,10 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-received_date')
 
     def create(self, request, *args, **kwargs):
-        """Create a new stock intake record."""
-        if request.user.role not in ['admin', 'pharmacist']:
+        """Create a new stock intake record. Admin only."""
+        if request.user.role != 'admin' and not request.user.is_superuser:
             return Response(
-                {'detail': 'Only admins and pharmacists can record stock intake.'},
+                {'detail': 'Only admins can record stock intake.'},
                 status=status.HTTP_403_FORBIDDEN
             )
         denied = require_active_branch(request)
@@ -113,7 +113,13 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
         """
         Create multiple stock intake records under a single invoice.
         Updates product pricing, branch stock, and supplier credit exactly once if CREDIT.
+        Admin only.
         """
+        if request.user.role != 'admin' and not getattr(request.user, 'is_superuser', False):
+            return Response(
+                {'detail': 'Only admins can record stock intake.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         from django.db import transaction
         from users.models import Branch
         from products.models import Product, PricingTier, BranchStock, StockLog
@@ -190,18 +196,18 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                         if not product_name:
                             continue
                         department = (p_data.get('department') or 'CHEMIST').upper()
-                        if department not in ('CHEMIST', 'AGROVET', 'OTHER'):
-                            department = 'CHEMIST'
-                        # Sellability must match department or AGROVET branches hide the product.
-                        product_type = department if department in ('CHEMIST', 'AGROVET') else 'CHEMIST'
-                        category = (p_data.get('category') or '').strip() or None
+                        if department not in ('CHEMIST', 'AGROVET'):
+                            # Prefer active branch type when intake used to send OTHER.
+                            branch_type = getattr(branch, 'branch_type', None) or 'CHEMIST'
+                            department = 'AGROVET' if branch_type == 'AGROVET' else 'CHEMIST'
+                        product_type = department
+                        category = (p_data.get('category') or '').strip() or ''
                         product = Product.objects.create(
                             name=product_name,
                             price=selling_price or cost_price or 0,
                             department=department,
                             product_type=product_type,
-                            category=category or '',
-                            created_by=request.user,
+                            category=category,
                         )
 
                     # If cost was left blank, use the product's known buying price

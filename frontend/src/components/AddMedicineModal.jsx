@@ -198,7 +198,7 @@ export const AddMedicineModal = ({
                 )}
               </div>
 
-              {/* Duplicate warning banner */}
+              {/* Duplicate warning banner — submit is blocked until the name is unique */}
               {duplicateMatch && !isEditMode && (
                 <div className="mt-3 flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
                   <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -207,7 +207,7 @@ export const AddMedicineModal = ({
                       "{duplicateMatch.name}" already exists in the system.
                     </p>
                     <p className="text-xs text-amber-600 mt-0.5">
-                      Adding again may create a duplicate. Consider using <span className="font-bold">Restock</span> or <span className="font-bold">Edit</span> instead. Fields have been pre-filled from the existing record.
+                      Duplicate products are not allowed. Use <span className="font-bold">Restock</span> or <span className="font-bold">Edit</span> on the existing item instead.
                     </p>
                   </div>
                 </div>
@@ -357,18 +357,20 @@ export const AddMedicineModal = ({
               )}
             </div>
 
-            {/* Stock Quantity */}
-            <div>
-              <label className="form-label">Initial Stock Qty</label>
-              <input
-                name="stock_quantity"
-                type="number"
-                value={form.stock_quantity}
-                onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
-                className={inputBase(formErrors.stock_quantity)}
-              />
-              {formErrors.stock_quantity && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.stock_quantity}</p>}
-            </div>
+            {/* Stock Quantity — create only; edits must use Restock so other branches are not overwritten */}
+            {!isEditMode && (
+              <div>
+                <label className="form-label">Initial Stock Qty (this branch only)</label>
+                <input
+                  name="stock_quantity"
+                  type="number"
+                  value={form.stock_quantity}
+                  onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
+                  className={inputBase(formErrors.stock_quantity)}
+                />
+                {formErrors.stock_quantity && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.stock_quantity}</p>}
+              </div>
+            )}
 
             {/* Reorder Threshold */}
             <div>
@@ -376,10 +378,14 @@ export const AddMedicineModal = ({
               <input
                 name="reorder_threshold"
                 type="number"
+                min="1"
                 value={form.reorder_threshold}
                 onChange={(e) => setForm({ ...form, reorder_threshold: e.target.value })}
                 className={inputBase(formErrors.reorder_threshold)}
               />
+              <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                Low-stock alert when quantity at this branch reaches this level.
+              </p>
               {formErrors.reorder_threshold && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.reorder_threshold}</p>}
             </div>
 
@@ -479,7 +485,7 @@ export const AddMedicineModal = ({
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || (!isEditMode && Boolean(duplicateMatch))}
               className="flex-[2] px-5 py-2.5 btn-primary text-white rounded-lg font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting

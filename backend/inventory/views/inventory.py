@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
+from users.permissions import IsPharmacistOrAdmin, IsAdminUser, IsAuditorOrAdmin
 # Phase 6: Inventory management with department and branch stock filtering
 from users.active_branch import get_active_branch
 from products.models import Product, StockLog, BranchStock
@@ -409,9 +409,9 @@ def inventory_detail(request, pk):
     return Response(data)
 
 @api_view(["POST"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAdminUser])
 def restock_inventory(request, pk):
-    """Restock an inventory item (manual adjustment)."""
+    """Restock an inventory item (manual adjustment). Admin only."""
     product = get_object_or_404(Product, pk=pk)
     quantity_raw = request.data.get("quantity")
     reason = request.data.get("reason", "Restock")
@@ -512,6 +512,16 @@ def restock_inventory(request, pk):
                 intake._skip_credit = True
                 intake.save()
 
+                # Keep catalog buying price in sync when a unit cost is provided.
+                if unit_cost is not None and unit_cost > 0:
+                    from products.models import PricingTier
+                    tier, _ = PricingTier.objects.get_or_create(
+                        product=product,
+                        defaults={'buying_price': unit_cost},
+                    )
+                    tier.buying_price = unit_cost
+                    tier.save()
+
                 log_activity(
                     user=request.user,
                     event_type='PRODUCT_RESTOCKED',
@@ -536,6 +546,15 @@ def restock_inventory(request, pk):
                 previous_quantity = branch_stock.quantity
                 branch_stock.quantity += quantity
                 branch_stock.save()
+
+                if unit_cost is not None and unit_cost > 0:
+                    from products.models import PricingTier
+                    tier, _ = PricingTier.objects.get_or_create(
+                        product=product,
+                        defaults={'buying_price': unit_cost},
+                    )
+                    tier.buying_price = unit_cost
+                    tier.save()
 
                 if expiry_date and (
                     product.expiry_date is None or expiry_date < product.expiry_date
@@ -578,9 +597,9 @@ def restock_inventory(request, pk):
     return Response(ProductSerializer(product, context={'request': request}).data)
 
 @api_view(["POST"])
-@permission_classes([IsPharmacistOrAdmin])
+@permission_classes([IsAdminUser])
 def adjust_inventory(request, pk):
-    """Adjust an inventory item's stock by positive or negative amount."""
+    """Adjust an inventory item's stock by positive or negative amount. Admin only."""
     product = get_object_or_404(Product, pk=pk)
     quantity_raw = request.data.get("quantity")
     reason = request.data.get("reason", "Adjustment")
