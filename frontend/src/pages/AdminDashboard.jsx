@@ -263,7 +263,7 @@ const AdminDashboard = () => {
                 </div>
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <dt className="text-xs" style={{ color: 'var(--text-secondary)' }}>Products</dt>
+                    <dt className="text-xs" style={{ color: 'var(--text-secondary)' }}>In stock</dt>
                     <dd className="font-bold" style={{ color: 'var(--text-primary)' }}>{products}</dd>
                   </div>
                   <div>

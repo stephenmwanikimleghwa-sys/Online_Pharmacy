@@ -14,7 +14,10 @@ import { inventoryService } from '../services/inventoryService';
 const AdminStock = () => {
 	const { notify } = useNotification();
 	const navigate = useNavigate();
-	const { user } = useAuth();
+	const { user, activeBranch } = useAuth();
+	const defaultDepartment =
+		(activeBranch?.type || '').toUpperCase() === 'AGROVET' ? 'AGROVET' : 'CHEMIST';
+
 	const [items, setItems] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -49,7 +52,7 @@ const AdminStock = () => {
 			id: item.id ?? item.pk ?? item.product_id ?? item.product?.id ?? item.name ?? String(Date.now()),
 			name: normalizeDisplayValue(item.name, ''),
 			category: getCategoryLabel(item.category),
-			department: item.department || 'CHEMIST',
+			department: item.department || defaultDepartment,
 			price: retail,
 			selling_price: retail,
 			stock_quantity: Number(item.stock_quantity ?? item.quantity ?? item.total_stock ?? 0) || 0,
@@ -79,7 +82,7 @@ const AdminStock = () => {
 	const [form, setForm] = useState({
 		name: '',
 		category: '',
-		department: 'CHEMIST',
+		department: defaultDepartment,
 		buying_price: '',
 		use_legacy_prices: false,
 		wholesale_price: '',
@@ -209,7 +212,7 @@ const AdminStock = () => {
 		setForm({
 			name: '',
 			category: '',
-			department: 'CHEMIST',
+			department: defaultDepartment,
 			buying_price: '',
 			use_legacy_prices: false,
 			wholesale_price: '',

@@ -74,7 +74,11 @@ class SwitchBranchView(APIView):
             user=request.user,
             event_type='BRANCH_SWITCHED',
             branch=branch,
-            details_dict={'action': 'User switched active branch'},
+            details_dict={
+                'action': f'Switched active branch to {branch.name}',
+                'branch_name': branch.name,
+                'branch_id': branch.id,
+            },
             ip_address=_client_ip(request),
         )
 

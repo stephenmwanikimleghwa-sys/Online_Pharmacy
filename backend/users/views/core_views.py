@@ -89,6 +89,41 @@ class UserLoginView(APIView):
                     session["active_branch"]["id"] if session["active_branch"] else None
                 )
                 tokens = issue_tokens(user, active_branch_id=active_branch_id)
+
+                # JWT login never fires Django's user_logged_in signal — record
+                # LOGIN (and branch when already known) so Annex/Peakfarm activity shows up.
+                from django.utils import timezone
+                from users.models import Branch
+                from users.utils import log_activity
+
+                branch_obj = None
+                if active_branch_id:
+                    branch_obj = Branch.objects.filter(pk=active_branch_id).first()
+                xff = request.META.get("HTTP_X_FORWARDED_FOR")
+                login_ip = (
+                    xff.split(",")[0].strip()
+                    if xff
+                    else request.META.get("REMOTE_ADDR")
+                )
+                log_activity(
+                    user=user,
+                    event_type="LOGIN",
+                    branch=branch_obj,
+                    ip_address=login_ip,
+                    details_dict={
+                        "action": "Signed in",
+                        "branch_name": (
+                            session["active_branch"]["name"]
+                            if session.get("active_branch")
+                            else None
+                        ),
+                        "requires_branch_selection": session.get(
+                            "requires_branch_selection"
+                        ),
+                    },
+                )
+                User.objects.filter(pk=user.pk).update(last_activity=timezone.now())
+
                 return api_success(
                     f"Welcome back, {user.username}.",
                     data={

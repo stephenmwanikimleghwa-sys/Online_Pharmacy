@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
 import { notifyApiError } from '../utils/notifyApiError';
+import { useAuth } from '../context/AuthContext';
 import { XMarkIcon, PlusIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const DOSAGE_FORMS = [
@@ -20,11 +21,11 @@ const DOSAGE_FORMS = [
   { value: 'other', label: 'Other' },
 ];
 
-const EMPTY_ROW = () => ({
+const emptyRow = (department = 'CHEMIST') => ({
   id: Date.now() + Math.random(),
   name: '',
   category: '',
-  department: 'CHEMIST',
+  department,
   dosage_form: 'tablet',
   buying_price: '',
   retail_price: '',
@@ -177,16 +178,25 @@ const NameAutocompleteCell = ({ row, updateRow, hasError, errorMsg }) => {
 
 const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) => {
   const { notify } = useNotification();
+  const { activeBranch } = useAuth();
+  const defaultDepartment =
+    (activeBranch?.type || '').toUpperCase() === 'AGROVET' ? 'AGROVET' : 'CHEMIST';
   const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState([EMPTY_ROW()]);
+  const [rows, setRows] = useState(() => [emptyRow(defaultDepartment)]);
   const [rowErrors, setRowErrors] = useState({});
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    setRows([emptyRow(defaultDepartment)]);
+    setRowErrors({});
+  }, [isOpen, defaultDepartment]);
 
   if (!isOpen) return null;
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const addRow = () => {
-    setRows(prev => [...prev, EMPTY_ROW()]);
+    setRows(prev => [...prev, emptyRow(defaultDepartment)]);
   };
 
   const removeRow = (id) => {
@@ -265,7 +275,7 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
       );
       onSuccess?.();
       // Reset and close
-      setRows([EMPTY_ROW()]);
+      setRows([emptyRow(defaultDepartment)]);
       setRowErrors({});
       onClose();
     } catch (err) {

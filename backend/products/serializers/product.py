@@ -261,10 +261,12 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                     tier.retail_price = retail_price
             tier.save()
 
-        # Ensure branch stock row exists so inventory/OTC see the product
+        # Stock the active session branch (Peakfarm/Annex), not only home branch.
         request = self.context.get('request')
         user = getattr(request, 'user', None) if request else None
-        branch = getattr(user, 'branch', None) if user else None
+        branch = getattr(request, 'active_branch', None) if request else None
+        if branch is None and user is not None:
+            branch = getattr(user, 'branch', None)
         if branch is not None:
             from products.models import BranchStock
             BranchStock.objects.get_or_create(
@@ -362,6 +364,13 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         # Preserve explicit WP/RP when the client sends them (Manual pricing)
         if retail_price is not None or wholesale_price is not None:
             use_legacy_prices = True
+
+        dept = validated_data.get('department', instance.department)
+        if (
+            dept in ('CHEMIST', 'AGROVET')
+            and validated_data.get('product_type', instance.product_type) != 'UNIVERSAL'
+        ):
+            validated_data['product_type'] = dept
 
         product = super().update(instance, validated_data)
 

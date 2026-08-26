@@ -244,22 +244,23 @@ class ReportsHubViewSet(viewsets.ViewSet):
             
         data = []
         for stock in qs:
-            # We get pricing from the Product's pricing_tier or fallback
+            # PricingTier is OneToOne with related_name='pricing_tier' (not pricingtier_set).
             buying_price = 0
-            retail_price = stock.product.price
-            
-            # Using hasattr since pricing_tier is a related object if it exists (but actually it's OneToOne on product?)
-            # Wait, PricingTier has product ForeignKey.
-            pricing_tier = stock.product.pricingtier_set.first() if hasattr(stock.product, 'pricingtier_set') else None
-            
+            retail_price = stock.product.price or 0
+            pricing_tier = getattr(stock.product, 'pricing_tier', None)
+
             if pricing_tier:
-                buying_price = pricing_tier.buying_price
-                retail_price = pricing_tier.retail_price
-                
+                if pricing_tier.buying_price is not None:
+                    buying_price = pricing_tier.buying_price
+                if pricing_tier.retail_price is not None:
+                    retail_price = pricing_tier.retail_price
+                elif pricing_tier.use_legacy_prices and pricing_tier.retail_price:
+                    retail_price = pricing_tier.retail_price
+
             qty = stock.quantity
             cost_value = qty * buying_price
             retail_value = qty * retail_price
-            
+
             data.append({
                 'product': stock.product.name,
                 'branch': stock.branch.name,
@@ -269,7 +270,7 @@ class ReportsHubViewSet(viewsets.ViewSet):
                 'cost_value': cost_value,
                 'retail_value': retail_value,
             })
-            
+
         return Response({'valuation': data})
 
     @action(detail=False, methods=['get'])

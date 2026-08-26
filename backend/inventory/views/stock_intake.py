@@ -192,11 +192,16 @@ class StockIntakeViewSet(viewsets.ModelViewSet):
                         department = (p_data.get('department') or 'CHEMIST').upper()
                         if department not in ('CHEMIST', 'AGROVET', 'OTHER'):
                             department = 'CHEMIST'
+                        # Sellability must match department or AGROVET branches hide the product.
+                        product_type = department if department in ('CHEMIST', 'AGROVET') else 'CHEMIST'
+                        category = (p_data.get('category') or '').strip() or None
                         product = Product.objects.create(
                             name=product_name,
                             price=selling_price or cost_price or 0,
                             department=department,
-                            created_by=request.user
+                            product_type=product_type,
+                            category=category or '',
+                            created_by=request.user,
                         )
 
                     # If cost was left blank, use the product's known buying price
