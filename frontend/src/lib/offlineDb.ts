@@ -35,6 +35,9 @@ const STORE = "outbox";
  * (browser crash / closed tab mid-flush would otherwise hide them forever). */
 const STALE_SYNCING_MS = 2 * 60 * 1000;
 
+/** After this many apply attempts, stop auto-retrying — staff must retry from the inspector. */
+export const MAX_AUTO_RETRY_ATTEMPTS = 5;
+
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDb(): Promise<IDBDatabase> {
@@ -130,12 +133,27 @@ export async function recoverStaleSyncingOps(): Promise<number> {
   return recovered;
 }
 
-/** Ops eligible for the next flush attempt. */
+function isAutoRetryEligible(op: OutboxOp): boolean {
+  if (op.status === "pending") return true;
+  if (op.status === "failed" && op.attempts < MAX_AUTO_RETRY_ATTEMPTS) return true;
+  return false;
+}
+
+/** Ops eligible for the next automatic flush attempt. */
 export async function getUnsyncedOps(): Promise<OutboxOp[]> {
   await recoverStaleSyncingOps();
   const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
   return all
-    .filter((o) => o.status === "pending" || o.status === "failed")
+    .filter(isAutoRetryEligible)
+    .sort((a, b) => a.created_at - b.created_at);
+}
+
+/** All queued ops for the inspector (pending, failed, syncing). */
+export async function listOutboxOps(): Promise<OutboxOp[]> {
+  await recoverStaleSyncingOps();
+  const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
+  return all
+    .filter((o) => o.status === "pending" || o.status === "failed" || o.status === "syncing")
     .sort((a, b) => a.created_at - b.created_at);
 }
 
@@ -149,8 +167,16 @@ export async function countPending(): Promise<number> {
 
 export async function countFailed(): Promise<number> {
   const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
-  // Permanent apply failures after repeated attempts — surface in the sync pill.
-  return all.filter((o) => o.status === "failed" && o.attempts >= 5).length;
+  return all.filter(
+    (o) => o.status === "failed" && o.attempts >= MAX_AUTO_RETRY_ATTEMPTS,
+  ).length;
+}
+
+export async function getPermanentlyFailedOps(): Promise<OutboxOp[]> {
+  const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
+  return all.filter(
+    (o) => o.status === "failed" && o.attempts >= MAX_AUTO_RETRY_ATTEMPTS,
+  );
 }
 
 export async function markSyncing(client_uuid: string): Promise<void> {
@@ -183,6 +209,27 @@ export async function markFailed(client_uuid: string, error: string): Promise<vo
   await tx("readwrite", (store) => store.put(existing));
 }
 
+/** Reset a stuck/failed op so the next flush will try it again. */
+export async function retryOp(client_uuid: string): Promise<void> {
+  const existing = await tx<OutboxOp | undefined>("readonly", (store) =>
+    store.get(client_uuid),
+  );
+  if (!existing) return;
+  existing.status = "pending";
+  existing.attempts = 0;
+  existing.last_error = undefined;
+  await tx("readwrite", (store) => store.put(existing));
+}
+
+/** Reset every permanently failed op for a manual "retry all" from the inspector. */
+export async function retryAllFailed(): Promise<number> {
+  const failed = await getPermanentlyFailedOps();
+  for (const op of failed) {
+    await retryOp(op.client_uuid);
+  }
+  return failed.length;
+}
+
 /** Remove an op once the server has acknowledged it (applied or duplicate). */
 export async function removeOp(client_uuid: string): Promise<void> {
   await tx("readwrite", (store) => store.delete(client_uuid));
@@ -196,4 +243,33 @@ export async function removeOp(client_uuid: string): Promise<void> {
  * logout via queryClient.clear() + clearApiCache(). */
 export async function clearOutbox(): Promise<void> {
   await tx("readwrite", (store) => store.clear());
+}
+
+/** Short human summary for inspector rows. */
+export function summarizeOutboxOp(op: OutboxOp): string {
+  const payload = (op.payload ?? {}) as Record<string, unknown>;
+  if (op.op_type === "sale") {
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    const mode = typeof payload.payment_mode === "string" ? payload.payment_mode : "";
+    const name =
+      typeof payload.patient_name === "string" && payload.patient_name
+        ? ` · ${payload.patient_name}`
+        : "";
+    return `Sale · ${items.length} item(s)${mode ? ` · ${mode}` : ""}${name}`;
+  }
+  if (op.op_type === "intake") {
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    const inv =
+      typeof payload.invoice_number === "string" && payload.invoice_number
+        ? ` · inv ${payload.invoice_number}`
+        : "";
+    return `Stock intake · ${items.length} line(s)${inv}`;
+  }
+  if (op.op_type === "adjustment") {
+    const qty = payload.quantity ?? payload.change_amount ?? "?";
+    const reason =
+      typeof payload.reason === "string" && payload.reason ? ` · ${payload.reason}` : "";
+    return `Stock adjust · qty ${qty}${reason}`;
+  }
+  return op.op_type;
 }

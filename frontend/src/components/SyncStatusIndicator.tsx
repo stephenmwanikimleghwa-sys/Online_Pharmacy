@@ -1,11 +1,13 @@
 import StatusDot from "./ui/StatusDot";
 import { useSync } from "../context/SyncContext";
+import SyncOutboxInspector from "./SyncOutboxInspector";
 
 /**
  * Compact offline-sync status pill for the app chrome.
  *
  * Shows connectivity and the outbox state so branch staff can trust that a sale
- * recorded offline is safely queued and will upload. States:
+ * recorded offline is safely queued and will upload. Click opens the queue
+ * inspector. States:
  *  - offline               → "Offline" (queued writes will sync on reconnect)
  *  - failed > 0            → "Sync failed N" (needs attention)
  *  - online, pending > 0   → "Syncing N…" (flush in progress or scheduled)
@@ -22,8 +24,17 @@ function relativeTime(ts: number | null): string {
 }
 
 export default function SyncStatusIndicator({ className = "" }: { className?: string }) {
-  const { online, pending, failed, syncing, lastSyncedAt, lastDiscrepancies, syncNow } =
-    useSync();
+  const {
+    online,
+    pending,
+    failed,
+    syncing,
+    lastSyncedAt,
+    lastDiscrepancies,
+    inspectorOpen,
+    openInspector,
+    closeInspector,
+  } = useSync();
 
   let tone: "operational" | "warning" | "critical" | "idle";
   let label: string;
@@ -34,18 +45,18 @@ export default function SyncStatusIndicator({ className = "" }: { className?: st
     label = pending > 0 ? `Offline · ${pending} queued` : "Offline";
     title =
       pending > 0
-        ? `No connection. ${pending} change(s) saved locally and will upload when you're back online.`
-        : "No connection. Your work is saved locally.";
+        ? `No connection. ${pending} change(s) saved locally. Click to view queue.`
+        : "No connection. Click to view sync queue.";
   } else if (failed > 0) {
     tone = "critical";
     label = `Sync failed · ${failed}`;
     title =
       `${failed} change(s) could not upload after repeated tries. ` +
-      `Sales/stock may be missing from reports until this is fixed. Click to retry.`;
+      `Sales/stock may be missing from reports. Click to view queue.`;
   } else if (pending > 0 || syncing) {
     tone = "warning";
     label = `Syncing ${pending || ""}`.trim() + "…";
-    title = `Uploading ${pending} queued change(s) to the server.`;
+    title = `Uploading ${pending} queued change(s). Click to view queue.`;
     if (lastDiscrepancies > 0) {
       title += ` ${lastDiscrepancies} oversell discrepancy(ies) were logged for reconciliation.`;
     }
@@ -53,20 +64,23 @@ export default function SyncStatusIndicator({ className = "" }: { className?: st
     tone = "operational";
     const rel = relativeTime(lastSyncedAt);
     label = "Synced";
-    title = rel ? `All changes uploaded. Last sync ${rel}.` : "All changes uploaded.";
+    title = rel
+      ? `All changes uploaded. Last sync ${rel}. Click to view queue.`
+      : "All changes uploaded. Click to view queue.";
   }
 
   return (
-    <button
-      type="button"
-      className={`inline-flex items-center rounded-full px-2.5 py-1 ${className}`}
-      style={{ background: "var(--surface-2, rgba(0,0,0,0.04))" }}
-      title={title}
-      onClick={() => {
-        if (online) void syncNow();
-      }}
-    >
-      <StatusDot tone={tone} label={label} title={title} />
-    </button>
+    <>
+      <button
+        type="button"
+        className={`inline-flex items-center rounded-full px-2.5 py-1 ${className}`}
+        style={{ background: "var(--surface-2, rgba(0,0,0,0.04))" }}
+        title={title}
+        onClick={() => openInspector()}
+      >
+        <StatusDot tone={tone} label={label} title={title} />
+      </button>
+      <SyncOutboxInspector isOpen={inspectorOpen} onClose={closeInspector} />
+    </>
   );
 }
