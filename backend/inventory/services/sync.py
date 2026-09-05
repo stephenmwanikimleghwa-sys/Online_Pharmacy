@@ -202,6 +202,24 @@ def _apply_sale(payload, branch, user, source_op):
         timestamp=timezone.now(),
     )
 
+    # Match online dispense_otc so synced offline sales appear in audit logs.
+    from users.utils import log_activity
+
+    items_count = dispensation.items.count()
+    log_activity(
+        user=user,
+        event_type="SALE_MADE",
+        branch=branch,
+        details_dict={
+            "dispensation_id": dispensation.id,
+            "total_amount": float(dispensation.total_amount),
+            "items_count": items_count,
+            "payment_mode": payment_mode,
+            "offline_sync": True,
+            "source_client_uuid": getattr(source_op, "client_uuid", None),
+        },
+    )
+
     return {
         "server_id": str(dispensation.id),
         "discrepancy": had_discrepancy,
