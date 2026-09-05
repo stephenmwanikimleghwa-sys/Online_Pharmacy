@@ -419,6 +419,22 @@ class SupplierViewSet(viewsets.ModelViewSet):
                 "cashier": request.user.username,
             }
 
+            branch = get_active_branch(request)
+            log_activity(
+                user=request.user,
+                event_type="SUPPLIER_PAYMENT",
+                branch=branch,
+                details_dict={
+                    "supplier_id": locked_supplier.id,
+                    "supplier_name": locked_supplier.name,
+                    "transaction_id": tx.id,
+                    "amount": amount,
+                    "payment_mode": payment_mode,
+                    "invoice_number": invoice_number,
+                    "balance_after": float(locked_supplier.balance),
+                },
+            )
+
         return api_success(
             f"KES {amount:,.2f} paid to {locked_supplier.name}. "
             f"Remaining balance: KES {float(locked_supplier.balance):,.2f}.",

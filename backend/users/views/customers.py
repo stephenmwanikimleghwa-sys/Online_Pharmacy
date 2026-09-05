@@ -8,6 +8,8 @@ from django.db import transaction
 from django.db.models import Prefetch
 
 from users.models import User, CustomerDebtTransaction, RoleChoices
+from users.utils import log_activity
+from users.active_branch import get_active_branch
 from inventory.models import Dispensation
 from config.api_responses import api_success, api_validation_error
 
@@ -196,6 +198,20 @@ class CustomerViewSet(viewsets.GenericViewSet):
                 'cashier': request.user.username,
                 'branch_name': branch_name,
             }
+
+            log_activity(
+                user=request.user,
+                event_type='CUSTOMER_PAYMENT',
+                branch=tx.branch or get_active_branch(request),
+                details_dict={
+                    'customer_id': locked_customer.id,
+                    'customer_name': locked_customer.full_name or locked_customer.username,
+                    'transaction_id': tx.id,
+                    'amount': amount,
+                    'payment_mode': payment_mode,
+                    'balance_after': float(locked_customer.credit_balance),
+                },
+            )
 
         customer_name = locked_customer.full_name or locked_customer.username
         return api_success(

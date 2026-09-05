@@ -2,8 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin
+from users.permissions import IsPharmacistOrAdmin, IsAuditorOrAdmin, IsAdminUser
 from users.active_branch import get_active_branch, require_active_branch, resolve_request_branch, filter_queryset_for_branch
+from users.utils import log_activity
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Sum, Count, Q, F
@@ -17,7 +18,7 @@ from ..models.dispensing import (
     DispensationItem
 )
 from ..models.batch import Batch
-from products.models import Product, BranchStock, resolve_unit_price
+from products.models import Product, BranchStock, StockLog, resolve_unit_price
 
 from ..serializers.dispensing import (
     PrescriptionSerializer,
@@ -93,6 +94,8 @@ class DispensationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [IsPharmacistOrAdmin()]
+        if self.action == 'void_sale':
+            return [IsAdminUser()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -109,6 +112,129 @@ class DispensationViewSet(viewsets.ModelViewSet):
             if dispensation.prescription:
                 dispensation.prescription.status = 'dispensed'
                 dispensation.prescription.save()
+
+    @action(detail=True, methods=['post'])
+    def void_sale(self, request, pk=None):
+        """
+        Admin-only: reverse a sale — restore stock, reverse cash/credit, mark voided.
+        Idempotent when notes already contain [VOIDED].
+        """
+        dispensation = self.get_object()
+
+        if dispensation.notes and '[VOIDED]' in dispensation.notes:
+            return api_success(
+                "Sale was already voided.",
+                data=self.get_serializer(dispensation).data,
+                extra={"duplicate": True},
+            )
+
+        blocking_returns = dispensation.returns.filter(
+            status__in=('pending', 'approved')
+        ).exists()
+        if blocking_returns:
+            return api_error(
+                ApiErrorCode.VALIDATION_ERROR,
+                "Cannot void a sale that has a pending or approved return. "
+                "Reject the return first, or leave the approved return as the reversal.",
+                http_status=400,
+            )
+
+        with transaction.atomic():
+            branch = dispensation.branch
+            items = list(dispensation.items.select_related('product'))
+
+            for item in items:
+                if not branch:
+                    break
+                branch_stock, _ = BranchStock.objects.select_for_update().get_or_create(
+                    product=item.product,
+                    branch=branch,
+                    defaults={'quantity': 0},
+                )
+                prev_qty = branch_stock.quantity
+                new_qty = prev_qty + item.quantity
+                StockLog.objects.create(
+                    product=item.product,
+                    branch=branch,
+                    previous_quantity=prev_qty,
+                    new_quantity=new_qty,
+                    change_amount=item.quantity,
+                    change_type='adjustment',
+                    reason=f'Void sale #{dispensation.id}',
+                    logged_by=request.user,
+                )
+                branch_stock.quantity = new_qty
+                branch_stock.save(update_fields=['quantity'])
+
+                if item.batch_number:
+                    batch = (
+                        Batch.objects.select_for_update()
+                        .filter(
+                            product=item.product,
+                            branch=branch,
+                            batch_number=item.batch_number,
+                        )
+                        .first()
+                    )
+                    if batch is not None:
+                        batch.quantity_remaining = (batch.quantity_remaining or 0) + item.quantity
+                        batch.save(update_fields=['quantity_remaining'])
+
+            total_amount = float(dispensation.total_amount or 0)
+            if dispensation.payment_mode == 'CREDIT' and dispensation.customer_id:
+                from users.models import CustomerDebtTransaction
+
+                customer = dispensation.customer
+                customer.credit_balance = float(customer.credit_balance) - total_amount
+                customer.save(update_fields=['credit_balance'])
+                CustomerDebtTransaction.objects.create(
+                    customer=customer,
+                    transaction_type='ADJUSTMENT',
+                    amount=-total_amount,
+                    balance_after=customer.credit_balance,
+                    description=f"Void Dispensation #{dispensation.id}",
+                    branch=branch,
+                    created_by=request.user,
+                )
+            else:
+                from inventory.models.finance import CashFlow
+
+                CashFlow.objects.create(
+                    netflow=-total_amount,
+                    paymentmode=dispensation.payment_mode or 'CASH',
+                    explanation=f"Void Dispensation #{dispensation.id}",
+                    branch=branch,
+                    timestamp=timezone.now(),
+                )
+
+            stamp = timezone.now().strftime('%Y-%m-%d %H:%M')
+            void_note = f"[VOIDED] by {request.user.username} at {stamp}"
+            dispensation.notes = (
+                f"{dispensation.notes.strip()}\n{void_note}".strip()
+                if dispensation.notes
+                else void_note
+            )
+            dispensation.save(update_fields=['notes'])
+
+            log_activity(
+                user=request.user,
+                event_type='SALE_VOIDED',
+                branch=branch,
+                details_dict={
+                    'dispensation_id': dispensation.id,
+                    'total_amount': total_amount,
+                    'items_count': len(items),
+                    'payment_mode': dispensation.payment_mode,
+                    'customer_id': dispensation.customer_id,
+                },
+            )
+
+        payload = self.get_serializer(dispensation).data
+        return api_success(
+            f"Sale #{dispensation.id} voided. Stock restored and financials reversed.",
+            data=payload,
+            extra={"dispensation": payload},
+        )
 
 @api_view(['POST'])
 @permission_classes([IsPharmacistOrAdmin])
