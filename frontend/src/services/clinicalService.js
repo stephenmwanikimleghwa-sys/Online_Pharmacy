@@ -11,7 +11,9 @@ const getConsultation = async (id) => {
 };
 
 const createConsultation = async (data) => {
-  const response = await api.post('/clinical/consultations/', data);
+  const response = await api.post('/clinical/consultations/', data, {
+    skipGlobalErrorNotification: true,
+  });
   return response.data;
 };
 

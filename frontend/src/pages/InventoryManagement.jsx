@@ -48,6 +48,7 @@ const InventoryManagement = () => {
     if (debouncedSearchTerm.trim()) {
       params.search = debouncedSearchTerm.trim();
       params.per_page = 200; // search across matches, not first catalog page
+      params.scope = 'all'; // name search across chemist/agrovet
     }
     if (filter === 'low') params.low_stock = 'true';
     if (filter === 'out') params.out_of_stock = 'true';
@@ -80,7 +81,7 @@ const InventoryManagement = () => {
 
   useEffect(() => {
     if (inventoryError) {
-      notify.error('Could Not Load Inventory', 'Inventory data could not be loaded. Please try again.');
+      notifyApiError(notify, inventoryError, 'Could Not Load Inventory', 'Inventory data could not be loaded. Please try again.');
     }
   }, [inventoryError, notify]);
 

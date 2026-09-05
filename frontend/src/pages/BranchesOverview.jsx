@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 import {
   BuildingOffice2Icon,
   CurrencyDollarIcon,
@@ -159,7 +160,7 @@ const BranchesOverview = () => {
       setBranches(res.data?.branches || []);
       setTotals(res.data?.totals || null);
     } catch (err) {
-      setError('Failed to load branch overview. Please try again.');
+      setError(getApiErrorDisplay(err, 'Load Failed', 'Failed to load branch overview. Please try again.').message);
       } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 import {
   listPurchaseOrders,
   markPurchaseOrderSent,
@@ -34,8 +35,9 @@ const PurchaseOrders = () => {
       setLoading(true);
       const res = await listPurchaseOrders(statusFilter ? { status: statusFilter } : {});
       setOrders(res.data?.results || res.data || []);
-    } catch {
+    } catch (err) {
       setOrders([]);
+      notifyApiError(notify, err, 'Load Failed', 'Could not load purchase orders.');
     } finally {
       setLoading(false);
     }
@@ -54,8 +56,8 @@ const PurchaseOrders = () => {
       await markPurchaseOrderSent(id);
       notify.success('Sent', 'Purchase order marked as sent.');
       void load();
-    } catch {
-      notify.error('Failed', 'Could not update order.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Failed', 'Could not update order.');
     }
   };
 
@@ -71,8 +73,8 @@ const PurchaseOrders = () => {
       setCancelCandidate(null);
       setCancelReason('');
       void load();
-    } catch {
-      notify.error('Failed', 'Could not cancel order.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Failed', 'Could not cancel order.');
     } finally {
       setCancelling(false);
     }

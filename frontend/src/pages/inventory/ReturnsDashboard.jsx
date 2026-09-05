@@ -5,6 +5,7 @@ import returnService from '../../services/returnService';
 import api from '../../services/api';
 import { PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError } from '../../utils/notifyApiError';
 import PageHeader from '../../components/PageHeader';
 
 const ReturnsDashboard = () => {
@@ -67,7 +68,7 @@ const ReturnsDashboard = () => {
       setDispensationId('');
       notify.success('Return Submitted', 'The return request is pending approval.');
     },
-    onError: () => notify.error('Return Failed', 'Could not initiate this return.'),
+    onError: (err) => notifyApiError(notify, err, 'Return Failed', 'Could not initiate this return.'),
   });
 
   const handleCreate = () => {
@@ -99,7 +100,8 @@ const ReturnsDashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(['returns']);
       notify.success('Return Approved', 'Stock and records have been updated.');
-    }
+    },
+    onError: (err) => notifyApiError(notify, err, 'Approval Failed', 'Could not approve this return.'),
   });
 
   const rejectMutation = useMutation({
@@ -107,7 +109,8 @@ const ReturnsDashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(['returns']);
       notify.info('Return Rejected', 'The return request was rejected.');
-    }
+    },
+    onError: (err) => notifyApiError(notify, err, 'Rejection Failed', 'Could not reject this return.'),
   });
 
   return (

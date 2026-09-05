@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 
 const AddPrescription = () => {
   const { notify } = useNotification();
@@ -86,7 +87,7 @@ const AddPrescription = () => {
       await prescriptionService.addPrescription(formData);
       navigate('/pharmacist/dashboard');
     } catch (error) {
-      notify.error('Save Failed', 'The prescription could not be saved. Please try again.');
+      notifyApiError(notify, error, 'Save Failed', 'The prescription could not be saved. Please try again.');
     } finally {
       setLoading(false);
     }

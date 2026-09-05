@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 import { useSync } from '../context/SyncContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -64,7 +65,7 @@ const AdjustStockModal = ({ item, onClose, onSuccess }) => {
         await queueOffline();
         return;
       }
-      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to adjust stock');
+      setError(getApiErrorDisplay(err, 'Adjust Failed', 'Failed to adjust stock').message);
     } finally {
       setLoading(false);
     }

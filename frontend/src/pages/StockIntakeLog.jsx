@@ -7,6 +7,7 @@ import StockIntakeBulkModal from '../components/StockIntakeBulkModal';
 import StatCard from '../components/ui/StatCard';
 import { PanelSkeleton } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const StockIntakeLog = () => {
   const { user, activeBranch } = useAuth();
@@ -67,7 +68,7 @@ const StockIntakeLog = () => {
       setHasPrev(Array.isArray(data) ? false : Boolean(data?.previous));
       setError(null);
     } catch (err) {
-      setError('Could not load deliveries. Please try again.');
+      setError(getApiErrorDisplay(err, 'Load Failed', 'Could not load deliveries. Please try again.').message);
     } finally {
       setLoading(false);
     }

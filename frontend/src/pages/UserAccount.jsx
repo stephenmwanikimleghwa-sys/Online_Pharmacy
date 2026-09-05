@@ -9,7 +9,7 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useNotification } from "../context/NotificationContext";
-import { notifyApiError } from "../utils/notifyApiError";
+import { notifyApiError, getApiErrorDisplay } from "../utils/notifyApiError";
 
 const UserAccount = () => {
   const { notify } = useNotification();
@@ -41,7 +41,7 @@ const UserAccount = () => {
         setProfile(profileRes.data);
         setError(null);
       } catch (err) {
-        setError("Failed to load account data");
+        setError(getApiErrorDisplay(err, "Load Failed", "Failed to load account data").message);
         } finally {
         setLoading(false);
       }

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, BranchInfo } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
+import { extractStructuredError, mapBusinessErrorCode } from '../utils/apiErrorDisplay';
 
 const BranchSelector: React.FC = () => {
   const {
@@ -63,7 +65,20 @@ const BranchSelector: React.FC = () => {
       // Keep this client-side; avoid hard reload that can 404 on deep routes.
       navigate(`${location.pathname}${location.search}`, { replace: true });
     } else {
-      notify.error('Branch Switch Failed', `Could not switch to ${selectedBranch.name}. Please try again.`);
+      const structured = extractStructuredError(result.error);
+      const mapped = structured?.code
+        ? mapBusinessErrorCode(structured.code, structured.message ?? "", structured.details ?? {})
+        : null;
+      if (mapped) {
+        notify.error(mapped.title, mapped.message);
+      } else {
+        notifyApiError(
+          notify,
+          result.error,
+          'Branch Switch Failed',
+          `Could not switch to ${selectedBranch.name}. Please try again.`,
+        );
+      }
     }
   };
 

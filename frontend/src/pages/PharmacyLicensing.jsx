@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import pharmacyService from '../services/pharmacyService';
 import { formatDate } from '../utils/displayHelpers';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const PharmacyLicensing = () => {
     const [documents, setDocuments] = useState([]);
@@ -47,21 +48,7 @@ const PharmacyLicensing = () => {
             const data = await pharmacyService.getDocuments();
             setDocuments(Array.isArray(data) ? data : []);
         } catch (err) {
-            const status = err.response?.status;
-            const detail = err.response?.data?.detail;
-            let message = 'Could not load your documents. Please try again.';
-            if (status === 401 || status === 403) {
-                message = 'You do not have permission to view these documents. Please log in as a pharmacist or admin.';
-            } else if (status === 404) {
-                message = 'Documents endpoint not found. Please contact your system administrator.';
-            } else if (detail && typeof detail === 'string') {
-                message = detail;
-            } else if (!navigator.onLine) {
-                message = 'You appear to be offline. Please check your internet connection and try again.';
-            } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-                message = 'The request timed out. The server may be starting up — please wait a moment and try again.';
-            }
-            setError(message);
+            setError(getApiErrorDisplay(err, 'Load Failed', 'Could not load your documents. Please try again.').message);
         } finally {
             setLoading(false);
         }
@@ -87,7 +74,7 @@ const PharmacyLicensing = () => {
             setFormData({ title: '', document_type: 'license', expiry_date: '', file: null });
             fetchDocuments();
         } catch (err) {
-            setError('Upload failed. Please try again.');
+            setError(getApiErrorDisplay(err, 'Upload Failed', 'Upload failed. Please try again.').message);
         } finally {
             setUploading(false);
         }
@@ -99,7 +86,7 @@ const PharmacyLicensing = () => {
             await pharmacyService.deleteDocument(id);
             setDocuments(documents.filter(doc => doc.id !== id));
         } catch (err) {
-            setError('Failed to delete document.');
+            setError(getApiErrorDisplay(err, 'Delete Failed', 'Failed to delete document.').message);
         }
     };
 
@@ -116,8 +103,8 @@ const PharmacyLicensing = () => {
             setPharmacy(updated);
             setProfileSaved(true);
             setTimeout(() => setProfileSaved(false), 3000);
-        } catch {
-            setError('Failed to save pharmacy profile. Please try again.');
+        } catch (err) {
+            setError(getApiErrorDisplay(err, 'Save Failed', 'Failed to save pharmacy profile. Please try again.').message);
         } finally {
             setProfileSaving(false);
         }

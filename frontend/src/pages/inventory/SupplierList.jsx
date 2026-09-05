@@ -4,13 +4,13 @@ import SupplierProfileModal from '../../components/SupplierProfileModal';
 import { MagnifyingGlassIcon, TruckIcon, FunnelIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, DialogBackdrop } from '@headlessui/react';
 import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError, getApiErrorDisplay } from '../../utils/notifyApiError';
 import { useSuppliers } from '../../hooks/useSuppliers';
 import RefreshIndicator from '../../components/ui/RefreshIndicator';
 import PageHeader from '../../components/PageHeader';
 import { queryClient } from '../../lib/queryClient';
 import { QUERY_KEYS } from '../../lib/queryKeys';
 import { unwrapList } from '../../utils/parseApiData';
-import { formatFieldErrors } from '../../services/apiErrors';
 
 const SupplierList = () => {
   const { notify } = useNotification();
@@ -81,13 +81,7 @@ const SupplierList = () => {
           setSelectedSupplier({...selectedSupplier, ...formData});
       }
     } catch (err) {
-      // Surface the backend's real message (e.g. a duplicate-name validation
-      // error) instead of a generic failure, so the user knows what to fix.
-      const detail = formatFieldErrors(err?.response?.data);
-      notify.error(
-        'Save Failed',
-        detail || 'The supplier could not be saved. Please try again.',
-      );
+      notifyApiError(notify, err, 'Save Failed', 'The supplier could not be saved. Please try again.');
     }
   };
 
@@ -116,8 +110,8 @@ const SupplierList = () => {
         setSelectedSupplier(null);
       }
       setDeleteCandidateId(null);
-    } catch {
-      notify.error('Delete Failed', 'The supplier could not be removed.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Delete Failed', 'The supplier could not be removed.');
     }
   };
 
@@ -202,7 +196,9 @@ const SupplierList = () => {
         </div>
       ) : error ? (
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">
-          <p className="font-semibold mb-3">Failed to load suppliers.</p>
+          <p className="font-semibold mb-3">
+            {getApiErrorDisplay(error, 'Load Failed', 'Failed to load suppliers.').message}
+          </p>
           <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetch()}>
             Retry
           </button>

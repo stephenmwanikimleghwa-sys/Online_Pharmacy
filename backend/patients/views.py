@@ -57,6 +57,8 @@ class PatientViewSet(viewsets.ModelViewSet):
     filter_backends = [SearchFilter]
     search_fields = ["first_name", "last_name", "phone_number", "national_id"]
     http_method_names = ["get", "post", "patch", "head", "options"]
+    # Clinical search needs more than the global PAGE_SIZE=20 default.
+    pagination_class = None
 
     def get_queryset(self):
         qs = Patient.objects.filter(is_active=True).order_by("last_name", "first_name")

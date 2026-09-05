@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 import { createTransferRequest } from '../services/procurementService';
 import LoadingButton from './LoadingButton';
 
@@ -41,10 +42,7 @@ const TransferRequestModal = ({
       onSuccess?.();
       onClose();
     } catch (err) {
-      notify.error(
-        'Request failed',
-        err.response?.data?.message || 'Could not submit transfer request.',
-      );
+      notifyApiError(notify, err, 'Request failed', 'Could not submit transfer request.');
     } finally {
       setSubmitting(false);
     }

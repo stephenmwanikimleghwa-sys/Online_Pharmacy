@@ -13,10 +13,13 @@ import {
 import BranchSelector from "../BranchSelector";
 import { formatLoginAt } from "../../utils/formatLoginAt";
 import { getNavGroups } from "./navConfig";
+import { OTC_DRAFT_EVENT, peekOtcDraftItemCount } from "../../utils/otcDraftStorage";
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, activeBranch } = useAuth();
+  const branchId = activeBranch?.id ?? user?.branch ?? null;
+  const [otcDraftCount, setOtcDraftCount] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       return localStorage.getItem("transcounty_sidebar_collapsed") === "1";
@@ -24,6 +27,17 @@ const Sidebar = () => {
       return false;
     }
   });
+
+  useEffect(() => {
+    const refresh = () => setOtcDraftCount(peekOtcDraftItemCount(branchId));
+    refresh();
+    window.addEventListener(OTC_DRAFT_EVENT, refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener(OTC_DRAFT_EVENT, refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [branchId]);
 
   useEffect(() => {
     try {
@@ -166,11 +180,12 @@ const Sidebar = () => {
               const active =
                 location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
               const prefetchHandlers = getLinkPrefetch(to);
+              const showOtcBadge = to === "/otc-sales" && otcDraftCount > 0;
               return (
                 <Link
                   key={to}
                   to={to}
-                  title={label}
+                  title={showOtcBadge ? `${label} (${otcDraftCount} in cart)` : label}
                   {...prefetchHandlers}
                   className={`flex items-center ${
                     isCollapsed ? "justify-center p-2.5" : "px-2.5 py-2"
@@ -199,10 +214,17 @@ const Sidebar = () => {
                     }
                   }}
                 >
-                  <Icon
-                    className={`w-[1.125rem] h-[1.125rem] flex-shrink-0 ${!isCollapsed ? "mr-2.5" : ""}`}
-                  />
-                  {!isCollapsed && <span className="truncate leading-tight">{label}</span>}
+                  <span className={`relative flex-shrink-0 ${!isCollapsed ? "mr-2.5" : ""}`}>
+                    <Icon className="w-[1.125rem] h-[1.125rem]" />
+                    {showOtcBadge && (
+                      <span className="absolute -top-1.5 -right-2 min-w-[1rem] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold leading-4 text-center">
+                        {otcDraftCount > 9 ? "9+" : otcDraftCount}
+                      </span>
+                    )}
+                  </span>
+                  {!isCollapsed && (
+                    <span className="truncate leading-tight flex-1">{label}</span>
+                  )}
                 </Link>
               );
             })}

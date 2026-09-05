@@ -14,6 +14,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import EmptyState from '../components/ui/EmptyState';
 import { PanelSkeleton } from '../components/ui/Skeleton';
 import PageHeader from '../components/PageHeader';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const DispensingLogsPage = lazy(() => import('./DispensingLogsPage'));
 
@@ -119,15 +120,18 @@ const ReportsDashboard = () => {
     </td>
   );
 
-  const ErrorPanel = ({ message, onRetry }) => (
-    <EmptyState
-      icon={ExclamationTriangleIcon}
-      title="Failed to load report"
-      message={message || 'Please try again later or contact support.'}
-      tone="critical"
-      action={<button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm font-bold text-white" onClick={onRetry}>Retry</button>}
-    />
-  );
+  const ErrorPanel = ({ error, onRetry }) => {
+    const display = getApiErrorDisplay(error, 'Load Failed', 'Please try again later or contact support.');
+    return (
+      <EmptyState
+        icon={ExclamationTriangleIcon}
+        title={display.title === 'Load Failed' ? 'Failed to load report' : display.title}
+        message={display.message}
+        tone="critical"
+        action={<button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm font-bold text-white" onClick={onRetry}>Retry</button>}
+      />
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
@@ -245,7 +249,7 @@ const ReportsDashboard = () => {
         <div className="overflow-x-auto">
 
           {activeReport === 'sales' && (
-            salesError ? <ErrorPanel message={salesError?.message?.includes('403') ? 'You do not have permission to view this report. Ask an admin to grant access.' : salesError?.message} onRetry={refetchSales} />
+            salesError ? <ErrorPanel error={salesError} onRetry={refetchSales} />
             : loadingSales ? <PanelSkeleton rows={6} />
             : salesData?.sales?.length === 0 ? <EmptyState icon={ChartBarIcon} title="No sales found" message="No sales match the selected filters." />
             : (
@@ -273,7 +277,7 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'valuation' && (
-            valuationError ? <ErrorPanel message={valuationError?.message} onRetry={refetchValuation} />
+            valuationError ? <ErrorPanel error={valuationError} onRetry={refetchValuation} />
             : loadingValuation ? <PanelSkeleton rows={6} />
             : valuationData?.valuation?.length === 0 ? <EmptyState icon={CurrencyDollarIcon} title="No stock found" message="No stock valuation data for this branch." />
             : (
@@ -303,7 +307,7 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'expiry' && (
-            expiryError ? <ErrorPanel message={expiryError?.message} onRetry={refetchExpiry} />
+            expiryError ? <ErrorPanel error={expiryError} onRetry={refetchExpiry} />
             : loadingExpiry ? <PanelSkeleton rows={5} />
             : expiryData?.expiry?.length === 0 ? <EmptyState icon={CalendarDaysIcon} title="No products expiring" message="No products expiring in this timeframe." tone="positive" />
             : (
@@ -330,7 +334,7 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'staff' && (
-            staffError ? <ErrorPanel message={staffError?.message} onRetry={refetchStaff} />
+            staffError ? <ErrorPanel error={staffError} onRetry={refetchStaff} />
             : loadingStaff ? <PanelSkeleton rows={5} />
             : staffData?.activity?.length === 0 ? <EmptyState icon={UserGroupIcon} title="No activity found" message="No staff activity in the selected date range." />
             : (
@@ -352,7 +356,7 @@ const ReportsDashboard = () => {
           )}
 
           {activeReport === 'procurement' && (
-            procurementError ? <ErrorPanel message={procurementError?.message} onRetry={refetchProcurement} />
+            procurementError ? <ErrorPanel error={procurementError} onRetry={refetchProcurement} />
             : loadingProcurement ? <PanelSkeleton rows={5} />
             : (
               <div className="space-y-8">

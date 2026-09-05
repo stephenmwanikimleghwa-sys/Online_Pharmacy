@@ -16,7 +16,9 @@ const getQuotation = async (id) => {
 };
 
 const createQuotation = async (data) => {
-  const response = await api.post('/finance/quotations/', data);
+  const response = await api.post('/finance/quotations/', data, {
+    skipGlobalErrorNotification: true,
+  });
   return response.data;
 };
 

@@ -31,7 +31,7 @@ const CustomerProfileModal = ({ customer, onClose, onRefresh }) => {
       const res = await api.get(`/auth/customers/${customer.id}/ledger/`);
       setLedgerData(res.data);
     } catch (err) {
-      notify.error("Could Not Load Ledger", "Customer account history could not be loaded.");
+      notifyApiError(notify, err, "Could Not Load Ledger", "Customer account history could not be loaded.");
     } finally {
       setLoading(false);
     }

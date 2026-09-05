@@ -10,6 +10,7 @@ import { queryClient } from '../lib/queryClient';
 import { QUERY_KEYS } from '../lib/queryKeys';
 import { unwrapList } from '../utils/parseApiData';
 import { formatLoginAt } from '../utils/formatLoginAt';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const DEFAULT_PERMISSION_FLAGS = {
   can_manage_users: false,
@@ -78,7 +79,9 @@ const ManageUsers = () => {
   if (usersError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-sm font-medium text-red-600">Failed to load users.</p>
+        <p className="text-sm font-medium text-red-600">
+          {getApiErrorDisplay(usersError, 'Load Failed', 'Failed to load users.').message}
+        </p>
         <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetch()}>
           Retry
         </button>
@@ -114,9 +117,7 @@ const ManageUsers = () => {
       setPermissionFlags({ ...DEFAULT_PERMISSION_FLAGS });
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
-      const data = err.response?.data;
-      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setActionError('Failed to save user: ' + (serverMsg || err.message));
+      setActionError(getApiErrorDisplay(err, 'Save Failed', 'Failed to save user.').message);
     }
   };
 
@@ -150,9 +151,7 @@ const ManageUsers = () => {
       setTimeout(() => setSuccessMessage(''), 4000);
       setDeleteCandidate(null);
     } catch (err) {
-      const data = err.response?.data;
-      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setActionError('Failed to delete user: ' + (serverMsg || err.message));
+      setActionError(getApiErrorDisplay(err, 'Delete Failed', 'Failed to delete user.').message);
     }
   };
 
@@ -163,9 +162,7 @@ const ManageUsers = () => {
       invalidateUsers();
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
-      const data = err.response?.data;
-      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setActionError('Failed to update user status: ' + (serverMsg || err.message));
+      setActionError(getApiErrorDisplay(err, 'Update Failed', 'Failed to update user status.').message);
     }
   };
 
@@ -183,9 +180,7 @@ const ManageUsers = () => {
       setResetCandidate(null);
       setResetPassword('');
     } catch (err) {
-      const data = err.response?.data;
-      const serverMsg = data?.error?.message || data?.message || (typeof data?.error === 'string' ? data.error : null);
-      setActionError('Failed to reset password: ' + (serverMsg || err.message));
+      setActionError(getApiErrorDisplay(err, 'Reset Failed', 'Failed to reset password.').message);
     }
   };
 

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon, ShieldCheckIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { getApiErrorDisplay } from "../utils/notifyApiError";
 
 const ForcePasswordChange: React.FC = () => {
     const { user, logout, getDashboardPath, updateProfile } = useAuth();
@@ -47,18 +48,13 @@ const ForcePasswordChange: React.FC = () => {
 
             navigate(getDashboardPath());
         } catch (err: any) {
-            const serverError = err.response?.data;
-            if (typeof serverError === "string") {
-                setError(serverError);
-            } else if (serverError?.detail) {
-                setError(serverError.detail);
-            } else if (serverError?.old_password) {
-                setError(`Old Password: ${serverError.old_password.join(" ")}`);
-            } else if (serverError?.new_password) {
-                setError(`New Password: ${serverError.new_password.join(" ")}`);
-            } else {
-                setError("Failed to change password. Please check your old password.");
-            }
+            setError(
+                getApiErrorDisplay(
+                    err,
+                    "Change Failed",
+                    "Failed to change password. Please check your old password.",
+                ).message,
+            );
         } finally {
             setLoading(false);
         }

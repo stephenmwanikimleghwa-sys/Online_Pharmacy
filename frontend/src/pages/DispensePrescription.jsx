@@ -5,6 +5,7 @@ import { prescriptionService } from '../services/prescriptionService';
 import { inventoryService } from '../services/inventoryService';
 import { getProductUnitLabel } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 
 const DispensePrescription = () => {
   const { notify } = useNotification();
@@ -74,7 +75,7 @@ const DispensePrescription = () => {
 
       navigate('/pharmacist/dashboard');
     } catch (error) {
-      notify.error('Dispense Failed', 'The prescription could not be dispensed. Please try again.');
+      notifyApiError(notify, error, 'Dispense Failed', 'The prescription could not be dispensed. Please try again.');
     } finally {
       setDispensing(false);
     }

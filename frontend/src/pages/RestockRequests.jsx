@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBranchParam } from '../hooks/useBranchParam';
 import { Dialog, Transition as HeadlessTransition } from '@headlessui/react';
 import { PlusIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -66,7 +67,7 @@ const RestockRequests = () => {
       }
       setError('');
     } catch (err) {
-      setError('Could not load stock requests. Please try again.');
+      setError(getApiErrorDisplay(err, 'Load Failed', 'Could not load stock requests. Please try again.').message);
     } finally {
       setLoading(false);
     }
@@ -119,7 +120,7 @@ const RestockRequests = () => {
       });
       fetchRequests();
     } catch (err) {
-      setError('Could not create the stock request.');
+      setError(getApiErrorDisplay(err, 'Create Failed', 'Could not create the stock request.').message);
       if (err.response?.data) {
         setFormErrors(err.response.data);
       }
@@ -139,7 +140,7 @@ const RestockRequests = () => {
       await api.post(`/inventory/restock-requests/${requestId}/${action}/`);
       fetchRequests();
     } catch (err) {
-      setError(`Could not ${action} this request.`);
+      setError(getApiErrorDisplay(err, 'Update Failed', `Could not ${action} this request.`).message);
     }
   };
 

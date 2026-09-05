@@ -6,6 +6,7 @@ import {
 } from '../services/procurementService';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError, getApiErrorDisplay } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
 import { useExpiryAlerts } from '../hooks/useExpiryAlerts';
 import { PanelSkeleton } from './ui/Skeleton';
@@ -31,8 +32,8 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
       await markBatchRemoved(batchId);
       notify.success('Removed', 'Expired stock removed from shelf.');
       void refetch();
-    } catch {
-      notify.error('Failed', 'Could not mark batch as removed.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Failed', 'Could not mark batch as removed.');
     }
   };
 
@@ -44,16 +45,17 @@ const ExpiryAlertsWidget = ({ compact = false }) => {
       setClearanceModal(null);
       setClearancePrice('');
       void refetch();
-    } catch {
-      notify.error('Failed', 'Could not set clearance price.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Failed', 'Could not set clearance price.');
     }
   };
 
   if (isLoading) return <PanelSkeleton rows={4} />;
   if (error) {
+    const loadMsg = getApiErrorDisplay(error, 'Load Failed', 'Could not load expiry data.').message;
     return (
       <div className="rounded-2xl border border-dashed p-4 text-sm" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
-        <p>Could not load expiry data.</p>
+        <p>{loadMsg}</p>
         <button
           type="button"
           className="mt-2 font-semibold hover:underline"

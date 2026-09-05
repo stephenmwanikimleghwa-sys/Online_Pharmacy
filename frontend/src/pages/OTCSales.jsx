@@ -12,8 +12,9 @@ const OTCSales = () => {
           OTC <span className="text-primary">Quick Sale</span>
         </h1>
         <p className="font-medium mt-2" style={{ color: "var(--text-secondary)" }}>
-          Search products, add to cart, and complete sales — same workflow as the pharmacist dashboard quick sale.
-          {activeBranch?.name ? ` Recording sales at ${activeBranch.name}.` : ""}
+          Search products, add to cart, and complete sales.
+          {activeBranch?.name ? ` Recording at ${activeBranch.name}.` : ""}{" "}
+          Leave anytime to check a price or look something up — your cart is kept until you complete or clear the sale.
         </p>
       </div>
       <OTCSalePanel />

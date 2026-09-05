@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import api from '../services/api';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const ExportModal = ({
   isOpen,
@@ -64,7 +65,7 @@ const ExportModal = ({
       
       onClose();
     } catch (err) {
-      setError('Failed to export data. Please try again.');
+      setError(getApiErrorDisplay(err, 'Export Failed', 'Failed to export data. Please try again.').message);
     } finally {
       setLoading(false);
     }

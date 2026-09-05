@@ -29,7 +29,7 @@ const DocumentRegistry = () => {
       const response = await api.get(endpoint);
       setDocuments(response.data?.results || response.data || []);
     } catch (error) {
-      notify.error("Could Not Load Documents", "The document list could not be loaded.");
+      notifyApiError(notify, error, "Could Not Load Documents", "The document list could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const DocumentRegistry = () => {
       document.getElementById('file-upload').value = "";
       fetchDocuments();
     } catch (error) {
-      notifyApiError(notify, err, "Upload Failed", "The document could not be uploaded.");
+      notifyApiError(notify, error, "Upload Failed", "The document could not be uploaded.");
     } finally {
       setUploading(false);
     }

@@ -3,6 +3,7 @@ import api from '../services/api';
 import CustomerProfileModal from '../components/CustomerProfileModal';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 import { MagnifyingGlassIcon, UserGroupIcon, CurrencyDollarIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useCustomers } from '../hooks/useCustomers';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -63,10 +64,8 @@ const Customers = () => {
       invalidateCustomers();
       notify.success('Customer Added', 'New customer was added successfully.');
     } catch (err) {
-      const data = err.response?.data;
       setCreateError(
-        (data && typeof data === 'object' && (data.detail || data.message || JSON.stringify(data))) ||
-        'Could not create customer. Please try again.'
+        getApiErrorDisplay(err, 'Create Failed', 'Could not create customer. Please try again.').message,
       );
     } finally {
       setCreatingCustomer(false);
@@ -195,7 +194,9 @@ const Customers = () => {
         </div>
       ) : error ? (
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-center">
-          <p className="font-semibold mb-3">Failed to load customers.</p>
+          <p className="font-semibold mb-3">
+            {getApiErrorDisplay(error, 'Load Failed', 'Failed to load customers.').message}
+          </p>
           <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetch()}>
             Retry
           </button>

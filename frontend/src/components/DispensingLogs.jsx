@@ -4,8 +4,11 @@ import api from '../services/api';
 import { MagnifyingGlassIcon, ClipboardDocumentListIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import ReceiptModal from './ReceiptModal';
+import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 
 const DispensingLogs = () => {
+  const { notify } = useNotification();
   const { token, user, allowedBranches, activeBranch } = useAuth();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +38,9 @@ const DispensingLogs = () => {
       setLogs(data);
       const count = payload?.count ?? response.data?.count ?? data.length;
       setTotalPages(Math.max(1, Math.ceil(Number(count) / 20)));
-    } catch (error) {
-      console.error("Error fetching logs:", error, error.response?.data);
+    } catch (err) {
+      console.error("Error fetching logs:", err);
+      notifyApiError(notify, err, 'Load Failed', 'Could not load dispensing logs.');
     } finally {
       setLoading(false);
     }
@@ -49,8 +53,8 @@ const DispensingLogs = () => {
       const res = await api.get(`/inventory/dispensations/${orderId}/`);
       const order = res.data?.data ?? res.data;
       setReprintOrder(order);
-    } catch {
-      alert('Could not load order details. Please try again.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Load Failed', 'Could not load order details. Please try again.');
     } finally {
       setReprintLoading(null);
     }
@@ -63,11 +67,11 @@ const DispensingLogs = () => {
   const handleVoidSale = async (orderId) => {
     if (!window.confirm(`Are you sure you want to void sale #${orderId}? This will restore the stock and reverse any financials.`)) return;
     try {
-      await api.post(`/inventory/dispensations/${orderId}/void_sale/`);
-      alert(`Sale #${orderId} voided successfully.`);
+      await api.post(`/inventory/dispensations/${orderId}/void_sale/`, {}, { skipGlobalErrorNotification: true });
+      notify.success('Sale Voided', `Sale #${orderId} was voided and stock restored.`);
       fetchLogs();
     } catch (error) {
-      alert(`Could not void sale: ${error.response?.data?.error || error.message}`);
+      notifyApiError(notify, error, 'Void Failed', 'Could not void this sale.');
     }
   };
 

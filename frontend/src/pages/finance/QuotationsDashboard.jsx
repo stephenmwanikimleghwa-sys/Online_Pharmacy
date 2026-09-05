@@ -17,6 +17,11 @@ const CreateQuotationModal = ({ isOpen, onClose }) => {
   const [customerPhone, setCustomerPhone] = useState('');
   const [branchId, setBranchId] = useState(activeBranch?.id || user?.branch?.id || '');
   const [items, setItems] = useState([]);
+
+  React.useEffect(() => {
+    const next = activeBranch?.id || user?.branch?.id || '';
+    if (next) setBranchId(next);
+  }, [activeBranch?.id, user?.branch?.id]);
   
   // Search products via inventory list (catalog for active/selected branch)
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,19 +87,26 @@ const CreateQuotationModal = ({ isOpen, onClose }) => {
       notify.success('Quotation Created', 'The quotation was saved successfully.');
       onClose();
     },
-    onError: () => notify.error('Creation Failed', 'Could not create this quotation.'),
+    onError: (err) => notifyApiError(notify, err, 'Creation Failed', 'Could not create this quotation.'),
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!branchId) {
+      notify.warning('Branch required', 'Select a branch before creating the quotation.');
+      return;
+    }
     if (items.length === 0) {
       notify.warning('No Items', 'Add at least one item to the quotation.');
       return;
     }
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 30);
     createMutation.mutate({
       branch: branchId,
       customer_name: customerName,
       customer_phone: customerPhone,
+      valid_until: validUntil.toISOString().slice(0, 10),
       items: items.map(i => ({ product: i.product, quantity: i.quantity, unit_price: i.unit_price }))
     });
   };

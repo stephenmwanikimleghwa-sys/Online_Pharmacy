@@ -49,6 +49,7 @@ export function useInventoryList(filters: Record<string, unknown> = {}) {
     },
     staleTime: STALE_TIMES.SLOW,
     enabled: !!activeBranch?.id,
+    placeholderData: (previousData) => previousData,
   });
 }
 

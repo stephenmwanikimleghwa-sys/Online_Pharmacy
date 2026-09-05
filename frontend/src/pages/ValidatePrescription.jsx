@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { prescriptionService } from '../services/prescriptionService';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 
 const ValidatePrescription = () => {
   const { notify } = useNotification();
@@ -26,6 +27,7 @@ const ValidatePrescription = () => {
       // Check inventory for prescribed medicines
       await checkInventory(response.data);
     } catch (error) {
+      notifyApiError(notify, error, 'Load Failed', 'Could not load this prescription.');
       } finally {
       setLoading(false);
     }
@@ -48,6 +50,7 @@ const ValidatePrescription = () => {
       await prescriptionService.validatePrescription(id, 'Prescription validated by pharmacist');
   navigate('/pharmacist/dashboard');
     } catch (error) {
+      notifyApiError(notify, error, 'Validation Failed', 'Could not validate this prescription.');
       } finally {
       setValidating(false);
     }
@@ -64,6 +67,7 @@ const ValidatePrescription = () => {
       await prescriptionService.rejectPrescription(id, rejectionReason);
   navigate('/pharmacist/dashboard');
     } catch (error) {
+      notifyApiError(notify, error, 'Reject Failed', 'Could not reject this prescription.');
       } finally {
       setValidating(false);
     }

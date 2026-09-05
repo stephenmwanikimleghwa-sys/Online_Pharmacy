@@ -8,6 +8,7 @@ import StockLogsModal from '../components/StockLogsModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { normalizeDisplayValue } from '../utils/displayHelpers';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError, getApiErrorDisplay } from '../utils/notifyApiError';
 import { useAuth } from '../context/AuthContext';
 import { inventoryService } from '../services/inventoryService';
 
@@ -77,6 +78,7 @@ const AdminStock = () => {
 
 	// Removed debounce - instant search as user types
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
+	const [isSearching, setIsSearching] = useState(false);
 	const requestIdRef = useRef(0);
 
 	const [form, setForm] = useState({
@@ -135,31 +137,37 @@ const AdminStock = () => {
 
 	const fetchItems = async (signal) => {
 		const currentRequestId = ++requestIdRef.current;
+		const isRefresh = !isInitialLoad;
 		try {
 			// Only show loading spinner on initial page load, not on search/filter
 			if (isInitialLoad) {
 				setLoading(true);
 				setIsInitialLoad(false);
+			} else {
+				setIsSearching(true);
 			}
 			setError('');
 
 			// Build query params — paginated so department/adjust/edit stay responsive
+			const trimmedSearchQuery = searchQuery.trim();
+			// Name search should find matches across chemist/agrovet; scope still applies when browsing
+			const effectiveScope = trimmedSearchQuery ? 'all' : catalogScope;
 			const params = {
-				per_page: 500,
+				per_page: trimmedSearchQuery ? 200 : 500,
 				page: 1,
-				scope: catalogScope,
+				scope: effectiveScope,
 			};
+			if (activeBranch?.id) {
+				params.branch = activeBranch.id;
+			}
 
 			// Add filters
 			if (filters.lowStock) params.low_stock = 'true';
 			if (filters.outOfStock) params.out_of_stock = 'true';
 			if (filters.category) params.category = filters.category;
-			const trimmedSearchQuery = searchQuery.trim();
 			if (trimmedSearchQuery) params.search = trimmedSearchQuery;
 
 			let products = [];
-			let totalPagesCount = 1;
-			let totalItemsCount = 0;
 
 			// Always use the inventory endpoint to get branch-scoped stock
 			try {
@@ -171,12 +179,8 @@ const AdminStock = () => {
 				
 				if (Array.isArray(payload.products)) {
 					products = payload.products;
-					totalItemsCount = payload.totalItems ?? products.length;
-					totalPagesCount = payload.totalPages ?? 1;
 				} else if (Array.isArray(payload)) {
 					products = payload;
-					totalItemsCount = products.length;
-					totalPagesCount = 1;
 				}
 				} catch (inventoryErr) {
 				if (signal?.aborted || currentRequestId !== requestIdRef.current) return;
@@ -195,13 +199,16 @@ const AdminStock = () => {
 			if (err.response?.status === 401) {
 				setError('Please log in to view inventory');
 				navigate('/login');
+			} else if (isRefresh) {
+				// Keep existing rows visible on refresh failure so search does not wipe the table
+				notifyApiError(notify, err, 'Search failed', 'Could not refresh the product list. Showing previous results.');
 			} else {
-				// Show error state
-				setError('Failed to load inventory');
-				}
+				setError(getApiErrorDisplay(err, 'Load Failed', 'Failed to load inventory').message);
+			}
 		} finally {
 			if (requestIdRef.current === currentRequestId) {
 				setLoading(false);
+				setIsSearching(false);
 			}
 		}
 	};
@@ -288,7 +295,8 @@ const AdminStock = () => {
 			await api.delete(`/products/${item.id}/`);
 			fetchItems();
 		} catch (err) {
-			setError('Failed to delete item');
+			notifyApiError(notify, err, 'Delete Failed', 'Failed to delete item');
+			setError(getApiErrorDisplay(err, 'Delete Failed', 'Failed to delete item').message);
 		}
 	};
 
@@ -446,11 +454,7 @@ const AdminStock = () => {
 					notify.success('Product Added', 'The product has been added to the system.');
 				} catch (postErr) {
 					setItems((prev) => prev.filter((i) => i.id !== optimisticId));
-					const msg =
-						postErr?.response?.data?.name?.[0] ||
-						postErr?.response?.data?.error?.message ||
-						'The product could not be added. Please try again.';
-					notify.error('Add Failed', typeof msg === 'string' ? msg : 'The product could not be added.');
+					notifyApiError(notify, postErr, 'Add Failed', 'The product could not be added. Please try again.');
 					throw postErr;
 				}
 			}
@@ -461,7 +465,7 @@ const AdminStock = () => {
 			if (err.response?.data) {
 				setFormErrors(err.response.data);
 			} else {
-				setError('Failed to save item');
+				setError(getApiErrorDisplay(err, 'Save Failed', 'Failed to save item').message);
 			}
 		} finally {
 			setSubmitting(false);
@@ -500,7 +504,8 @@ const AdminStock = () => {
 			setAdjustReason('');
 			openLogs(item);
 		} catch (err) {
-			setError('Failed to adjust stock');
+			notifyApiError(notify, err, 'Adjust Failed', 'Failed to adjust stock');
+			setError(getApiErrorDisplay(err, 'Adjust Failed', 'Failed to adjust stock').message);
 		}
 	};
 
@@ -606,6 +611,9 @@ const AdminStock = () => {
 							placeholder="Search by name, category, or supplier..."
 							className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 /30 focus:border-indigo-400 transition-all"
 						/>
+						{isSearching && (
+							<p className="mt-1.5 text-xs text-slate-400">Searching catalog…</p>
+						)}
 					</div>
 					<div className="w-48">
 						<label className="block text-xs font-bold text-slate-400 mb-2">Category</label>
@@ -735,6 +743,22 @@ const AdminStock = () => {
 									</tr>
 									);
 								})}
+								{!loading && !isSearching && items.length === 0 && (
+									<tr>
+										<td colSpan={7} className="px-6 py-16 text-center">
+											<p className="text-sm font-semibold text-slate-700">
+												{searchQuery.trim()
+													? `No products matched “${searchQuery.trim()}”`
+													: 'No products in this catalog view'}
+											</p>
+											<p className="mt-1 text-xs text-slate-500">
+												{searchQuery.trim()
+													? 'Clear the search or try a different name, category, or supplier.'
+													: 'Switch catalog scope or add a product to get started.'}
+											</p>
+										</td>
+									</tr>
+								)}
 							</tbody>
 						</table>
 					</div>

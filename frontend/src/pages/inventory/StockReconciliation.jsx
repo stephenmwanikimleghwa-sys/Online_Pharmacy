@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
+import { notifyApiError } from "../../utils/notifyApiError";
 import { ExclamationTriangleIcon, CheckIcon } from "@heroicons/react/24/outline";
 
 /**
@@ -29,12 +30,14 @@ const StockReconciliation = () => {
 
   const resolveMutation = useMutation({
     mutationFn: ({ id, note }) =>
-      api.post(`/inventory/discrepancies/${id}/resolve/`, { note }),
+      api.post(`/inventory/discrepancies/${id}/resolve/`, { note }, {
+        skipGlobalErrorNotification: true,
+      }),
     onSuccess: () => {
-      notify.success("Discrepancy resolved.", "success");
+      notify.success("Discrepancy resolved.", "Physical count has been recorded.");
       void queryClient.invalidateQueries({ queryKey: ["discrepancies"] });
     },
-    onError: () => notify.error("Error", "Could not resolve the discrepancy."),
+    onError: (err) => notifyApiError(notify, err, "Error", "Could not resolve the discrepancy."),
   });
 
   const discrepancies = data ?? [];

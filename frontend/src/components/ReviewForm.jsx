@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 
 const ReviewForm = ({ productId, onReviewSubmitted }) => {
   const { notify } = useNotification();
@@ -38,7 +39,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
       onReviewSubmitted(response.data); // Callback to refresh reviews
       notify.success('Review Submitted', 'Thank you for your feedback.');
     } catch (error) {
-      notify.error('Submit Failed', 'Your review could not be submitted. Please try again.');
+      notifyApiError(notify, error, 'Submit Failed', 'Your review could not be submitted. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

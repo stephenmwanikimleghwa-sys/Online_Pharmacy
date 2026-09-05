@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { unwrapList } from '../utils/parseApiData';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 import ProductCard from '../components/ProductCard';
 import PageHeader from '../components/PageHeader';
 import { SearchBar, ProductCardSkeleton } from '../components';
@@ -55,7 +56,7 @@ const Products = () => {
 
         setProducts(unwrapList(response.data));
       } catch (err) {
-        setError(err?.response?.data?.message || err.message || 'Failed to fetch products');
+        setError(getApiErrorDisplay(err, 'Load Failed', 'Failed to fetch products').message);
         setProducts([]);
       } finally {
         setLoading(false);

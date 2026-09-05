@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework import serializers
 from ..models import Quotation, QuotationItem
 
@@ -23,6 +26,10 @@ class QuotationSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = ['created_by', 'total_amount', 'created_at', 'updated_at']
+        extra_kwargs = {
+            # Model.save() defaults this, but DRF validates before save — allow omit.
+            'valid_until': {'required': False},
+        }
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
@@ -30,6 +37,10 @@ class QuotationSerializer(serializers.ModelSerializer):
         # Calculate total_amount if not provided
         total = sum([item['quantity'] * item['unit_price'] for item in items_data])
         validated_data['total_amount'] = total
+        validated_data.setdefault(
+            'valid_until',
+            timezone.now().date() + timedelta(days=30),
+        )
         
         quotation = Quotation.objects.create(**validated_data)
         

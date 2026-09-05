@@ -6,6 +6,7 @@ import api from '../services/api';
 import PageLoader from '../components/PageLoader';
 import PageHeader from '../components/PageHeader';
 import { getProductDisplayPrice } from '../utils/parseApiData';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -20,7 +21,7 @@ const ProductDetails = () => {
         const response = await api.get(`/products/${id}/`);
         setProduct(response.data);
       } catch (err) {
-        setError('Failed to load product details');
+        setError(getApiErrorDisplay(err, 'Load Failed', 'Failed to load product details').message);
       } finally {
         setLoading(false);
       }

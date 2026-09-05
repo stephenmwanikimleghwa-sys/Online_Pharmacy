@@ -29,18 +29,6 @@ class Patient(models.Model):
         max_length=20,
         choices=GenderChoices.choices,
     )
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    date_of_birth = models.DateField()
-    gender = models.CharField(
-        max_length=20,
-        choices=[
-            ("MALE", "Male"),
-            ("FEMALE", "Female"),
-            ("OTHER", "Other"),
-            ("PREFER_NOT_TO_SAY", "Prefer not to say"),
-        ],
-    )
     national_id = models.CharField(
         max_length=20, unique=True, blank=True, null=True
     )  # Kenyan ID or passport

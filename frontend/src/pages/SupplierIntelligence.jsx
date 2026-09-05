@@ -13,6 +13,7 @@ import {
   getReorderSuggestions,
 } from "../services/procurementService";
 import { searchProducts } from "../services/productService";
+import { getApiErrorDisplay } from "../utils/notifyApiError";
 import { useAuth } from "../context/AuthContext";
 import { useSuppliers } from "../hooks/useSuppliers";
 import { unwrapList } from "../utils/parseApiData";
@@ -117,24 +118,13 @@ const SupplierIntelligence = () => {
       }
       setInsight(parts.join(" "));
     } catch (err) {
-      const status = err?.response?.status;
-      const detail =
-        err?.response?.data?.detail ||
-        err?.response?.data?.error?.message ||
-        err?.message;
-      if (status === 403) {
-        setAnalyticsError("You do not have permission to view supplier price analysis.");
-      } else if (status === 404) {
-        setAnalyticsError("Supplier analysis is not available on the server yet. Try again after the next update.");
-      } else if (!err?.response) {
-        setAnalyticsError("Could not reach the server. Check your connection and try again.");
-      } else {
-        setAnalyticsError(
-          typeof detail === "string" && detail
-            ? detail
-            : "Could not analyse supplier prices. Please try again.",
-        );
-      }
+      setAnalyticsError(
+        getApiErrorDisplay(
+          err,
+          "Analysis Failed",
+          "Could not analyse supplier prices. Please try again.",
+        ).message,
+      );
       setInsight("");
     } finally {
       setLoadingAnalytics(false);
@@ -200,8 +190,10 @@ const SupplierIntelligence = () => {
               : "Prices are similar across suppliers.")
         );
       }
-    } catch {
-      setCompareError("Could not compare suppliers for this product.");
+    } catch (err) {
+      setCompareError(
+        getApiErrorDisplay(err, 'Compare Failed', 'Could not compare suppliers for this product.').message,
+      );
     } finally {
       setComparing(false);
     }

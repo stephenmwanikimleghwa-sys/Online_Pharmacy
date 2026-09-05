@@ -5,6 +5,7 @@ import clinicalService from '../../services/clinicalService';
 import api from '../../services/api';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError } from '../../utils/notifyApiError';
 import { PanelSkeleton } from '../../components/ui/Skeleton';
 import PageHeader from '../../components/PageHeader';
 
@@ -50,8 +51,8 @@ const ClinicalDashboard = () => {
       setNewPhone('');
       notify.success('Consultation started', 'You can now record notes and prescriptions.');
     },
-    onError: () => {
-      notify.error('Could not start', 'Failed to create the consultation. Try again.');
+    onError: (err) => {
+      notifyApiError(notify, err, 'Could not start', 'Failed to create the consultation. Try again.');
     },
   });
 
@@ -67,22 +68,31 @@ const ClinicalDashboard = () => {
     }
     setCreatingPatient(true);
     try {
+      const phone = newPhone.trim() || '0000000000';
+      if (phone.length > 15) {
+        notify.warning('Phone too long', 'Use at most 15 characters for the phone number.');
+        return;
+      }
       const res = await api.post(
         '/patients/patients/',
         {
-          first_name: first,
-          last_name: last,
-          phone_number: newPhone.trim() || '0000000000',
+          first_name: first.slice(0, 50),
+          last_name: last.slice(0, 50),
+          phone_number: phone,
           gender: 'PREFER_NOT_TO_SAY',
           date_of_birth: '2000-01-01',
         },
         { skipGlobalErrorNotification: true },
       );
       const patient = res.data?.data ?? res.data;
+      if (!patient?.id) {
+        notify.error('Registration failed', 'Server did not return a patient id. Check the patients API.');
+        return;
+      }
       setSelectedPatient(patient);
       notify.success('Patient registered', `${first} ${last} is ready for consultation.`);
-    } catch {
-      notify.error('Registration failed', 'Could not create the patient record.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Registration failed', 'Could not create the patient record.');
     } finally {
       setCreatingPatient(false);
     }

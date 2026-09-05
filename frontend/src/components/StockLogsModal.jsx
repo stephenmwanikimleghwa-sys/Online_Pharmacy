@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../services/inventoryService';
 import { unwrapList } from '../utils/parseApiData';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const StockLogsModal = ({ item, onClose }) => {
   const [logs, setLogs] = useState([]);
@@ -18,7 +19,7 @@ const StockLogsModal = ({ item, onClose }) => {
       const response = await inventoryService.getStockLogs(item.id);
       setLogs(unwrapList(response.data));
     } catch (err) {
-      setError('Failed to fetch stock logs');
+      setError(getApiErrorDisplay(err, 'Load Failed', 'Failed to fetch stock logs').message);
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { useAuth, BranchInfo } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNotification } from "../context/NotificationContext";
 import { mapBusinessErrorCode, extractStructuredError } from "../utils/apiErrorDisplay";
+import { notifyApiError } from "../utils/notifyApiError";
 import { prefetchOnLogin } from "../lib/prefetchOnLogin";
 import { getBranchIcon, getBranchSubtitle } from "../utils/branchDisplay";
 
@@ -61,7 +62,12 @@ const BranchSelectionScreen: React.FC = () => {
       if (mapped) {
         notify.error(mapped.title, mapped.message);
       } else {
-        notify.error("Branch Switch Failed", "Could not switch to that branch. Please try again.");
+        notifyApiError(
+          notify,
+          result.error,
+          "Branch Switch Failed",
+          "Could not switch to that branch. Please try again.",
+        );
       }
     }
   };

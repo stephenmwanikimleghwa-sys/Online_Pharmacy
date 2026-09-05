@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import ReceiptPrintout from "./ReceiptPrintout";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
+import { notifyApiError } from "../utils/notifyApiError";
 import api from "../services/api";
 
 const normalizePharmacyData = (payload) => {
@@ -29,6 +31,7 @@ const ReceiptModal = ({ order, onClose }) => {
   const [withHeader, setWithHeader] = useState(true);
   const printRef = useRef(null);
   const { user } = useAuth();
+  const { notify } = useNotification();
   const [printedOnce, setPrintedOnce] = useState(false);
 
   useEffect(() => {
@@ -60,13 +63,14 @@ const ReceiptModal = ({ order, onClose }) => {
   const handleVoidSale = async () => {
     if (!window.confirm(`Are you sure you want to void sale #${order?.id}? This will restore the stock and reverse any financials.`)) return;
     try {
-      await api.post(`/inventory/dispensations/${order?.id}/void_sale/`);
-      alert(`Sale #${order?.id} voided successfully.`);
+      await api.post(`/inventory/dispensations/${order?.id}/void_sale/`, {}, {
+        skipGlobalErrorNotification: true,
+      });
+      notify.success('Sale Voided', `Sale #${order?.id} was voided successfully.`);
       if (typeof onClose === 'function') onClose();
-      // Reload page to reflect changes if necessary
       window.location.reload();
     } catch (error) {
-      alert(`Could not void sale: ${error.response?.data?.error || error.message}`);
+      notifyApiError(notify, error, 'Void Failed', 'Could not void this sale.');
     }
   };
 

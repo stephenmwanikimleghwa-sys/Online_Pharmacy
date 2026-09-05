@@ -30,7 +30,7 @@ const QuickSale = ({ isOpen, onClose }) => (
             leaveTo="opacity-0 scale-95"
           >
             <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-xl modal-card p-8 transition-all">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-2">
                 <Dialog.Title className="text-2xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>
                   Quick Sale
                 </Dialog.Title>
@@ -38,6 +38,9 @@ const QuickSale = ({ isOpen, onClose }) => (
                   <XIcon className="h-6 w-6" />
                 </button>
               </div>
+              <p className="text-xs mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Closing this window keeps your cart. Reopen Quick Sale or open OTC Sales to continue.
+              </p>
               <OTCSalePanel />
             </Dialog.Panel>
           </Transition.Child>

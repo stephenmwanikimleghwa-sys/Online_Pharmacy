@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { getApiErrorDisplay } from '../utils/notifyApiError';
 
 const PrescriptionForm = ({ onUploadSuccess }) => {
   const [file, setFile] = useState(null);
@@ -46,7 +47,7 @@ const PrescriptionForm = ({ onUploadSuccess }) => {
       setFile(null);
       e.target.reset();
     } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed. Please try again.');
+      setError(getApiErrorDisplay(err, 'Upload Failed', 'Upload failed. Please try again.').message);
     } finally {
       setUploading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useSync } from "../context/SyncContext";
 import api from "../services/api";
+import { getApiErrorDisplay } from "../utils/notifyApiError";
 
 // ─── Helper ────────────────────────────────────────────────────────────────
 const fmt = (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2 });
@@ -217,8 +218,8 @@ const NewStockIntake = ({ onClose, onSuccess }) => {
         await queueOffline();
         return;
       }
-      const detail = err.response?.data?.message || err.response?.data?.detail || "Stock intake failed. Please try again.";
-      setError(detail);
+      const display = getApiErrorDisplay(err, 'Stock Intake Failed', 'Stock intake failed. Please try again.');
+      setError(display.message);
     } finally {
       setSubmitting(false);
     }

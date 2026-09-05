@@ -49,7 +49,7 @@ const SupplierProfileModal = ({ supplier, onClose, onRefresh, onEdit, onDelete }
       const res = await api.get(`/inventory/suppliers/${supplier.id}/ledger/`);
       setLedgerData(res.data);
     } catch (err) {
-      notify.error("Could Not Load Ledger", "Supplier account history could not be loaded.");
+      notifyApiError(notify, err, "Could Not Load Ledger", "Supplier account history could not be loaded.");
     } finally {
       setLoading(false);
     }

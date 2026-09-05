@@ -17,6 +17,7 @@ import WelcomeBanner from '../components/WelcomeBanner';
 import NewStockIntake from '../components/NewStockIntake';
 import ExpiryAlertsWidget from '../components/ExpiryAlertsWidget';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError, getApiErrorDisplay } from '../utils/notifyApiError';
 import { useDashboardGlobal, useDashboardBranch } from '../hooks/useDashboard';
 import { useLowStockAlerts } from '../hooks/useProducts';
 import { useExpiryAlerts } from '../hooks/useExpiryAlerts';
@@ -115,8 +116,8 @@ const AdminDashboard = () => {
       setApproveModal(null);
       notify.success('Approved', 'Transfer approved. Stock levels updated.');
       invalidateDashboard();
-    } catch {
-      notify.error('Failed', 'Could not approve transfer.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Failed', 'Could not approve transfer.');
     }
   };
 
@@ -128,8 +129,8 @@ const AdminDashboard = () => {
       setRejectModal(null);
       setRejectReason('');
       invalidateDashboard();
-    } catch {
-      notify.error('Failed', 'Could not reject transfer.');
+    } catch (err) {
+      notifyApiError(notify, err, 'Failed', 'Could not reject transfer.');
     }
   };
 
@@ -153,7 +154,9 @@ const AdminDashboard = () => {
   if (globalError && !globalData) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <p className="text-sm font-medium text-red-600">Failed to load global overview.</p>
+        <p className="text-sm font-medium text-red-600">
+          {getApiErrorDisplay(globalError, 'Load Failed', 'Failed to load global overview.').message}
+        </p>
         <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm" onClick={() => void refetchGlobal()}>
           Retry
         </button>
@@ -416,18 +419,25 @@ const AdminDashboard = () => {
           />
         )}
 
-        {activeBranch?.id && branchError && !branchOps && (
-          <EmptyState
-            icon={ExclamationTriangleIcon}
-            title="Failed to load branch operations"
-            message="Something went wrong fetching this branch's data."
-            action={(
-              <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm font-semibold text-white" onClick={() => void refetchBranch()}>
-                Retry
-              </button>
-            )}
-          />
-        )}
+        {activeBranch?.id && branchError && !branchOps && (() => {
+          const display = getApiErrorDisplay(
+            branchError,
+            'Load Failed',
+            "Something went wrong fetching this branch's data.",
+          );
+          return (
+            <EmptyState
+              icon={ExclamationTriangleIcon}
+              title={display.title === 'Load Failed' ? 'Failed to load branch operations' : display.title}
+              message={display.message}
+              action={(
+                <button type="button" className="btn-primary px-4 py-2 rounded-xl text-sm font-semibold text-white" onClick={() => void refetchBranch()}>
+                  Retry
+                </button>
+              )}
+            />
+          );
+        })()}
 
         {activeBranch?.id && loadingOps && !branchOps && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

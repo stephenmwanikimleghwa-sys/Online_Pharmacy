@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import inventoryService from '../../services/inventoryService';
 import { useNotification } from '../../context/NotificationContext';
+import { notifyApiError, getApiErrorDisplay } from '../../utils/notifyApiError';
 
 const BatchList = () => {
     const [batches, setBatches] = useState([]);
@@ -18,8 +19,9 @@ const BatchList = () => {
             const response = await inventoryService.getBatches();
             setBatches(Array.isArray(response.data) ? response.data : (response.data?.results || []));
         } catch (err) {
-            setError('Batch records could not be loaded.');
-            notify.error('Could Not Load Batches', 'Batch records could not be loaded. Please try again.');
+            const display = getApiErrorDisplay(err, 'Could Not Load Batches', 'Batch records could not be loaded. Please try again.');
+            setError(display.message);
+            notifyApiError(notify, err, display.title, display.message);
         } finally {
             setLoading(false);
         }

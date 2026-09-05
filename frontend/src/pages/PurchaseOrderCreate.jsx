@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PlusIcon, TrashIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { notifyApiError } from '../utils/notifyApiError';
 import api from '../services/api';
 import { createPurchaseOrder } from '../services/procurementService';
 import LoadingButton from '../components/LoadingButton';
@@ -180,7 +181,7 @@ const PurchaseOrderCreate = () => {
       notify.success('Created', `Purchase order created with ${validRows.length} product(s).`);
       navigate('/purchase-orders');
     } catch (err) {
-      notify.error('Failed', err.response?.data?.message || 'Could not create PO.');
+      notifyApiError(notify, err, 'Failed', 'Could not create PO.');
     } finally {
       setLoading(false);
     }

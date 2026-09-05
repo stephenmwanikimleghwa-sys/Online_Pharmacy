@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
@@ -9,9 +9,16 @@ import {
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import { getApiErrorDisplay } from "../utils/notifyApiError";
 import { useSync } from "../context/SyncContext";
 import { fetchBranchCatalog, searchProducts } from "../services/productService";
 import { getProductDisplayPrice, getProductBranchQuantity } from "../utils/parseApiData";
+import {
+  clearOtcDraft,
+  hasOtcDraftProgress,
+  loadOtcDraft,
+  saveOtcDraft,
+} from "../utils/otcDraftStorage";
 import LoadingButton from "./LoadingButton";
 import ReceiptModal from "./ReceiptModal";
 import TransferRequestModal from "./TransferRequestModal";
@@ -20,12 +27,15 @@ import { getProductAvailability, checkProductExpiry } from "../services/procurem
 
 /**
  * Shared OTC quick-sale UI (same flow as pharmacist QuickSale modal).
+ * Cart + setup are saved to sessionStorage so leaving the page (price check,
+ * stock lookup, etc.) does not wipe an in-progress sale.
  */
 const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const { notify } = useNotification();
   const { activeBranch, user } = useAuth();
   const { online, queueWrite } = useSync();
   const branchId = activeBranch?.id ?? user?.branch ?? null;
+  const draftHydratedRef = useRef(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -42,6 +52,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [expiryWarning, setExpiryWarning] = useState(null);
   const [pendingProduct, setPendingProduct] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [draftBanner, setDraftBanner] = useState(null);
 
   // Setup Phase State
   const [setup, setSetup] = useState({
@@ -168,10 +179,80 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     }
   }, [setup.customerType, customers.length, loadCustomers]);
 
+  // Restore in-progress sale after navigation / modal close
+  useEffect(() => {
+    draftHydratedRef.current = false;
+    if (branchId == null) {
+      draftHydratedRef.current = true;
+      return;
+    }
+    const draft = loadOtcDraft(branchId);
+    if (hasOtcDraftProgress(draft)) {
+      setSelectedItems(Array.isArray(draft.selectedItems) ? draft.selectedItems : []);
+      if (draft.setup) {
+        setSetup({
+          complete: Boolean(draft.setup.complete),
+          customerType: draft.setup.customerType === "credit" ? "credit" : "walk-in",
+          patientName: draft.setup.patientName || "",
+          creditCustomerId: draft.setup.creditCustomerId || "",
+          pricingTier: draft.setup.pricingTier === "wholesale" ? "wholesale" : "retail",
+        });
+      }
+      setDiscount(typeof draft.discount === "string" ? draft.discount : "");
+      if (draft.paymentMethod) setPaymentMethod(draft.paymentMethod);
+      const count = Array.isArray(draft.selectedItems) ? draft.selectedItems.length : 0;
+      setDraftBanner(
+        count > 0
+          ? `Sale restored — ${count} item${count === 1 ? "" : "s"} still in the cart. You can leave to check prices or stock; progress is kept until you complete or clear the sale.`
+          : "Sale setup restored. You can leave this screen and come back without starting over.",
+      );
+    } else {
+      setDraftBanner(null);
+    }
+    draftHydratedRef.current = true;
+  }, [branchId]);
+
+  // Persist cart whenever it changes (after hydrate)
+  useEffect(() => {
+    if (!draftHydratedRef.current || branchId == null || lastOrder) return;
+    saveOtcDraft(branchId, {
+      selectedItems,
+      setup,
+      discount,
+      paymentMethod,
+    });
+  }, [selectedItems, setup, discount, paymentMethod, branchId, lastOrder]);
+
   useEffect(() => {
     const t = setTimeout(() => runSearch(searchTerm), 350);
     return () => clearTimeout(t);
   }, [searchTerm, runSearch]);
+
+  const clearInProgressSale = useCallback(() => {
+    setSelectedItems([]);
+    setDiscount("");
+    setSaleError("");
+    setSearchTerm("");
+    setOutOfStockHint(null);
+    setPaymentMethod("cash");
+    setSetup({
+      complete: false,
+      customerType: "walk-in",
+      patientName: "",
+      creditCustomerId: "",
+      pricingTier: "retail",
+    });
+    setDraftBanner(null);
+    clearOtcDraft(branchId);
+  }, [branchId]);
+
+  const finishSaleCart = useCallback(() => {
+    setSelectedItems([]);
+    setSearchTerm("");
+    setDiscount("");
+    setDraftBanner(null);
+    clearOtcDraft(branchId);
+  }, [branchId]);
 
   const confirmAddToSale = (product) => {
     const existing = selectedItems.find((item) => item.id === product.id);
@@ -359,8 +440,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           })),
           patient_name: setup.patientName,
         });
-        setSelectedItems([]);
-        setSearchTerm("");
+        finishSaleCart();
         setSearchResults(catalog);
         notify.success(
           `Sale saved offline (KES ${Number(total).toLocaleString()}). It will upload automatically when you're back online.`,
@@ -382,8 +462,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       );
       const order = response.data?.data ?? response.data;
       setLastOrder(order);
-      setSelectedItems([]);
-      setSearchTerm("");
+      finishSaleCart();
       setSearchResults(catalog);
       void loadCatalog();
       notify.success(
@@ -420,8 +499,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             );
             const total = calculateTotal();
             setLastOrder({ offline: true, total_amount: total });
-            setSelectedItems([]);
-            setSearchTerm("");
+            finishSaleCart();
             notify.success(
               `Connection lost — sale saved offline (KES ${Number(total).toLocaleString()}). It will upload automatically.`,
               "success",
@@ -433,14 +511,12 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
           /* fall through to error display */
         }
       }
-      const data = error.response?.data;
-      const msg =
-        data?.error?.message ||
-        data?.detail ||
-        data?.error ||
-        data?.message ||
-        "Failed to complete sale. Please try again.";
-      setSaleError(typeof msg === "string" ? msg : "Failed to complete sale.");
+      const display = getApiErrorDisplay(
+        error,
+        "Sale Failed",
+        "Failed to complete sale. Please try again.",
+      );
+      setSaleError(display.message);
     } finally {
       setCompleting(false);
     }
@@ -450,6 +526,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
     setLastOrder(null);
     setSaleError("");
     setShowReceipt(false);
+    clearInProgressSale();
   };
 
   const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
@@ -505,6 +582,19 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   if (!setup.complete) {
     return (
       <div className="max-w-xl mx-auto glass-card rounded-2xl p-8 border" style={{ borderColor: "var(--border-primary)" }}>
+        {draftBanner && (
+          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <p className="font-semibold">In-progress sale kept</p>
+            <p className="mt-1 text-emerald-800/90">{draftBanner}</p>
+            <button
+              type="button"
+              className="mt-2 text-xs font-bold underline"
+              onClick={() => setDraftBanner(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <h2 className="text-2xl font-bold mb-6 text-center">OTC Sale Setup</h2>
         
         <div className="space-y-6">
@@ -599,8 +689,33 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="lg:col-span-2">
+        {draftBanner && (
+          <div className="mb-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold">Sale in progress is saved</p>
+              <p className="mt-1 text-emerald-800/90">{draftBanner}</p>
+            </div>
+            <button
+              type="button"
+              className="text-xs font-bold underline shrink-0"
+              onClick={() => setDraftBanner(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+        {!draftBanner && selectedItems.length > 0 && (
+          <p className="mb-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+            Tip: you can leave OTC to check prices or look something up — this cart stays until you complete or clear the sale.
+          </p>
+        )}
+      </div>
       <div className="glass-card rounded-2xl p-6 border" style={{ borderColor: "var(--border-primary)" }}>
         <label className="form-label">Search product</label>
+        <p className="text-xs mb-2" style={{ color: "var(--text-secondary)" }}>
+          Search shows price and stock without adding — use Add only when selling.
+        </p>
         <div className="relative mb-4">
           {!searchTerm && (
             <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -718,7 +833,26 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       </div>
 
       <div className="glass-card rounded-2xl p-6 border flex flex-col" style={{ borderColor: "var(--border-primary)" }}>
-        <h3 className="font-bold mb-4">Current sale</h3>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="font-bold">Current sale</h3>
+          {(selectedItems.length > 0 || setup.complete) && (
+            <button
+              type="button"
+              className="text-xs font-semibold text-rose-600 hover:text-rose-700 underline"
+              onClick={() => {
+                if (
+                  selectedItems.length > 0 &&
+                  !window.confirm("Clear this sale? Items in the cart will be removed.")
+                ) {
+                  return;
+                }
+                clearInProgressSale();
+              }}
+            >
+              Clear sale
+            </button>
+          )}
+        </div>
         {saleError && (
           <div className="alert-error mb-4 text-sm rounded-xl p-3">{saleError}</div>
         )}

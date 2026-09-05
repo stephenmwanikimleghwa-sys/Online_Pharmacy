@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import { notifyApiError, getApiErrorDisplay } from "../utils/notifyApiError";
 import { getRestockNeeds } from "../services/procurementService";
 import PageHeader from "../components/PageHeader";
 import { PanelSkeleton } from "../components/ui/Skeleton";
@@ -51,19 +52,10 @@ const RestocksHub = () => {
       setData(res.data || null);
     } catch (err) {
       setData(null);
-      const detail =
-        err?.response?.data?.detail ||
-        err?.response?.data?.error?.message ||
-        (err?.response?.status === 404
-          ? "Restock needs is not on the server yet. Wait for the latest deploy, then refresh."
-          : null) ||
-        (err?.response?.status === 403
-          ? "Only admins can open network Restocks."
-          : null) ||
-        (!err?.response
-          ? "Could not reach the server. Check your connection and try again."
-          : null);
-      setError(detail || "Could not load restock needs. Please try again.");
+      setError(
+        getApiErrorDisplay(err, "Load Failed", "Could not load restock needs. Please try again.")
+          .message,
+      );
     } finally {
       setLoading(false);
     }
@@ -103,11 +95,11 @@ const RestocksHub = () => {
     try {
       const result = await switchBranch(switchModal.branchId);
       if (!result?.success) {
-        notify.error(
+        notifyApiError(
+          notify,
+          result?.error,
           "Could not switch",
-          typeof result?.error === "string"
-            ? result.error
-            : "Branch switch failed. Stay on this page and try again.",
+          "Branch switch failed. Stay on this page and try again.",
         );
         return;
       }
@@ -358,7 +350,12 @@ const RestocksHub = () => {
                     try {
                       const result = await switchBranch(switchModal.branchId);
                       if (!result?.success) {
-                        notify.error("Could not switch", "Branch switch failed. Try again.");
+                        notifyApiError(
+                          notify,
+                          result?.error,
+                          "Could not switch",
+                          "Branch switch failed. Try again.",
+                        );
                         return;
                       }
                       setSwitchModal(null);
