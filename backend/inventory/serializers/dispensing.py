@@ -55,7 +55,7 @@ class DispensationItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['total_price']
 
 class DispensationSerializer(serializers.ModelSerializer):
-    items = DispensationItemSerializer(many=True)
+    items = DispensationItemSerializer(many=True, required=False)
     dispensed_by_name = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
     branch_name = serializers.CharField(

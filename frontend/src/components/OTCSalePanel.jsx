@@ -375,138 +375,142 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       return;
     }
 
-    const cleanedItems = selectedItems.map(i => ({...i, quantity: parseInt(i.quantity) || 1}));
-    const total = cleanedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const cleanedItems = selectedItems.map((i) => ({
+      ...i,
+      quantity: parseInt(i.quantity, 10) || 1,
+    }));
+    const cartTotal = cleanedItems.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0,
+    );
 
-    if (total > 10000) {
-      const confirmMsg = cleanedItems.length === 1 
-        ? `Large order: ${cleanedItems[0].quantity} × KES ${cleanedItems[0].unitPrice.toLocaleString()} = KES ${total.toLocaleString()}. Confirm?`
-        : `Large order: ${cleanedItems.reduce((sum, item) => sum + item.quantity, 0)} items = KES ${total.toLocaleString()}. Confirm?`;
+    if (cartTotal > 10000) {
+      const confirmMsg =
+        cleanedItems.length === 1
+          ? `Large order: ${cleanedItems[0].quantity} × KES ${cleanedItems[0].unitPrice.toLocaleString()} = KES ${cartTotal.toLocaleString()}. Confirm?`
+          : `Large order: ${cleanedItems.reduce((sum, item) => sum + item.quantity, 0)} items = KES ${cartTotal.toLocaleString()}. Confirm?`;
       if (!window.confirm(confirmMsg)) return;
     }
 
+    const getMappedPaymentMode = () => {
+      if (setup.customerType === "credit") return "CREDIT";
+      switch (paymentMethod) {
+        case "cash":
+          return "CASH";
+        case "till":
+          return "MPESA_TILL";
+        case "paybill":
+          return "MPESA_TILL";
+        case "bank_transfer":
+          return "NATIONAL_BANK";
+        case "card":
+          return "EQUITY_TILL";
+        case "mobile_money":
+          return "MPESA_TILL";
+        default:
+          return "CASH";
+      }
+    };
+
+    const paymentMode = getMappedPaymentMode();
+    const isCreditSale = paymentMode === "CREDIT";
+    const salePayload = {
+      items: cleanedItems.map((item) => ({
+        product_id: item.id,
+        quantity: item.quantity,
+      })),
+      payment_mode: paymentMode,
+      customer_id: setup.customerType === "credit" ? setup.creditCustomerId : null,
+      patient_name: setup.patientName,
+      pricing_tier: setup.pricingTier.toUpperCase(),
+      discount: Math.max(0, parseFloat(discount) || 0),
+      branch_id: branchId,
+    };
+
+    const buildLocalReceiptOrder = () => ({
+      offline: true,
+      id: null,
+      total_amount: cartTotal,
+      discount: Math.max(0, parseFloat(discount) || 0),
+      patient_name: setup.patientName,
+      payment_mode: paymentMode,
+      items: cleanedItems.map((i) => ({
+        product_name: i.name,
+        name: i.name,
+        quantity: i.quantity,
+        price_per_unit: i.unitPrice,
+        unit_price: i.unitPrice,
+        total_price: i.unitPrice * i.quantity,
+      })),
+    });
+
+    const queueOffline = async () => {
+      if (isCreditSale) {
+        setSaleError(
+          "Credit sales require a connection to check the customer's credit limit. Please try again when online.",
+        );
+        return false;
+      }
+      await queueWrite("sale", salePayload, branchId);
+      setLastOrder(buildLocalReceiptOrder());
+      finishSaleCart();
+      setSearchResults(catalog);
+      notify.warning(
+        "Sale queued offline",
+        "Receipt printed locally. Stock and sales reports update only after sync (check Sync status in the header). Keep this device online until it shows Synced.",
+      );
+      setShowReceipt(true);
+      return true;
+    };
+
     setCompleting(true);
     try {
-      const getMappedPaymentMode = () => {
-        if (setup.customerType === 'credit') return 'CREDIT';
-        switch(paymentMethod) {
-          case 'cash': return 'CASH';
-          case 'till': return 'MPESA_TILL';
-          case 'paybill': return 'MPESA_TILL';
-          case 'bank_transfer': return 'NATIONAL_BANK';
-          case 'card': return 'EQUITY_TILL';
-          case 'mobile_money': return 'MPESA_TILL';
-          default: return 'CASH';
-        }
-      };
-
-      const paymentMode = getMappedPaymentMode();
-      const salePayload = {
-        items: selectedItems.map((item) => ({
-          product_id: item.id,
-          quantity: item.quantity,
-        })),
-        payment_mode: paymentMode,
-        customer_id: setup.customerType === 'credit' ? setup.creditCustomerId : null,
-        patient_name: setup.patientName,
-        pricing_tier: setup.pricingTier.toUpperCase(),
-        discount: Math.max(0, parseFloat(discount) || 0),
-        branch_id: branchId,
-      };
-
-      // Credit sales need a server-side credit-limit check, so they cannot be
-      // completed offline. Block queuing them and ask the user to retry online.
-      const isCreditSale = paymentMode === 'CREDIT';
-
-      // Offline (or a failed POST below) → queue the sale in the durable outbox
-      // so it uploads when the connection returns. The cashier gets immediate
-      // confirmation; stock reconciles server-side on sync (oversell is handled).
-      const queueOffline = async (reason) => {
-        if (isCreditSale) {
-          setSaleError(
-            "Credit sales require a connection to check the customer's credit limit. Please try again when online.",
-          );
-          return false;
-        }
-        await queueWrite('sale', salePayload, branchId);
-        const total = calculateTotal();
-        setLastOrder({
-          offline: true,
-          total_amount: total,
-          items: selectedItems.map((i) => ({
-            product_name: i.name,
-            quantity: i.quantity,
-            price_per_unit: i.unitPrice,
-          })),
-          patient_name: setup.patientName,
-        });
-        finishSaleCart();
-        setSearchResults(catalog);
-        notify.success(
-          `Sale saved offline (KES ${Number(total).toLocaleString()}). It will upload automatically when you're back online.`,
-          "success",
-        );
-        setShowReceipt(true);
-        return true;
-      };
-
       if (!online) {
-        await queueOffline("offline");
+        await queueOffline();
         return;
       }
 
-      const response = await api.post(
-        "/inventory/dispense/otc/",
-        salePayload,
-        { skipGlobalErrorNotification: true },
-      );
-      const order = response.data?.data ?? response.data;
+      const response = await api.post("/inventory/dispense/otc/", salePayload, {
+        skipGlobalErrorNotification: true,
+      });
+      const raw = response.data?.data ?? response.data?.dispensation ?? response.data;
+      // Always keep printable line items — never show a blank item list after a confirmed cart.
+      const order = {
+        ...raw,
+        offline: false,
+        items:
+          (Array.isArray(raw?.items) && raw.items.length > 0
+            ? raw.items
+            : null) ||
+          cleanedItems.map((i) => ({
+            product_name: i.name,
+            name: i.name,
+            quantity: i.quantity,
+            price_per_unit: i.unitPrice,
+            unit_price: i.unitPrice,
+            total_price: i.unitPrice * i.quantity,
+          })),
+        total_amount: raw?.total_amount ?? cartTotal,
+        discount: raw?.discount ?? Math.max(0, parseFloat(discount) || 0),
+        patient_name: raw?.patient_name ?? setup.patientName,
+      };
       setLastOrder(order);
       finishSaleCart();
       setSearchResults(catalog);
       void loadCatalog();
       notify.success(
-        `Sale recorded. Total: KES ${Number(order?.total_amount ?? calculateTotal()).toLocaleString()}.`,
-        "success"
+        `Sale recorded. Total: KES ${Number(order?.total_amount ?? cartTotal).toLocaleString()}.`,
+        "success",
       );
       setShowReceipt(true);
     } catch (error) {
-      // A network error (no response) while submitting online → fall back to the
-      // offline queue instead of losing the sale. Real server rejections (4xx
-      // with a response) are surfaced to the user as before.
+      // Network timeout / no response → queue offline with full receipt items
+      // (do not build a bare { offline, total } order — that prints "No items").
       const noResponse = !error.response;
-      if (noResponse && setup.customerType !== 'credit') {
+      if (noResponse && !isCreditSale) {
         try {
-          const paymentMode =
-            setup.customerType === 'credit' ? 'CREDIT' : undefined;
-          if (paymentMode !== 'CREDIT') {
-            await queueWrite(
-              'sale',
-              {
-                items: selectedItems.map((item) => ({
-                  product_id: item.id,
-                  quantity: item.quantity,
-                })),
-                payment_mode:
-                  paymentMethod === 'cash' ? 'CASH' : 'MPESA_TILL',
-                customer_id: null,
-                patient_name: setup.patientName,
-                pricing_tier: setup.pricingTier.toUpperCase(),
-                discount: Math.max(0, parseFloat(discount) || 0),
-                branch_id: branchId,
-              },
-              branchId,
-            );
-            const total = calculateTotal();
-            setLastOrder({ offline: true, total_amount: total });
-            finishSaleCart();
-            notify.success(
-              `Connection lost — sale saved offline (KES ${Number(total).toLocaleString()}). It will upload automatically.`,
-              "success",
-            );
-            setShowReceipt(true);
-            return;
-          }
+          const queued = await queueOffline();
+          if (queued) return;
         } catch {
           /* fall through to error display */
         }

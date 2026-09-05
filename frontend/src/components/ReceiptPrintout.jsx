@@ -50,7 +50,13 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     return text || fallback;
   };
 
-  const items = order.items || [];
+  const items =
+    (Array.isArray(order?.items) && order.items) ||
+    (Array.isArray(order?.dispensation_items) && order.dispensation_items) ||
+    (Array.isArray(order?.data?.items) && order.data.items) ||
+    (Array.isArray(order?.dispensation?.items) && order.dispensation.items) ||
+    [];
+  const isOfflinePending = Boolean(order?.offline);
   const branchName = normalizeText(order?.branch_name, "");
   const branchAddress = safeText(
     order?.branch_address || order?.branch?.address || order?.location?.address,
@@ -233,6 +239,16 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       <div className="r-center r-bold" style={{ letterSpacing: 2 }}>
         SALES RECEIPT
       </div>
+      {isOfflinePending && (
+        <>
+          <div className="r-center r-small" style={{ fontWeight: 700, marginTop: 4 }}>
+            *** PENDING SERVER SYNC ***
+          </div>
+          <div className="r-center r-small">
+            Not on sales report until this device syncs
+          </div>
+        </>
+      )}
       <div className="r-dash" />
 
       {/* ── BILL TO / REF / DATE ── */}

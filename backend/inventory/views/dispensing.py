@@ -330,10 +330,17 @@ def dispense_otc(request):
         )
 
         item_count = len(products_to_dispense)
+        # Re-fetch with items so receipt/API clients always get line details
+        dispensation = (
+            Dispensation.objects.select_related("branch", "dispensed_by", "customer")
+            .prefetch_related("items__product")
+            .get(pk=dispensation.pk)
+        )
+        payload = DispensationSerializer(dispensation).data
         return api_success(
             f"{item_count} item(s) sold. Total: KES {total_amount:.2f}.",
-            data=DispensationSerializer(dispensation).data,
-            extra={"dispensation": DispensationSerializer(dispensation).data},
+            data=payload,
+            extra={"dispensation": payload},
         )
 
 @api_view(['GET'])

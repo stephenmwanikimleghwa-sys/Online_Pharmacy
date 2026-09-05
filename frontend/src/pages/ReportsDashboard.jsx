@@ -21,7 +21,7 @@ const DispensingLogsPage = lazy(() => import('./DispensingLogsPage'));
 const fmt = (n) => Number(n || 0).toLocaleString();
 
 const ReportsDashboard = () => {
-  const { user } = useAuth();
+  const { user, activeBranch } = useAuth();
   const [params, setParams] = useSearchParams();
   const section = useMemo(() => {
     const raw = (params.get('section') || 'reports').toLowerCase();
@@ -37,13 +37,22 @@ const ReportsDashboard = () => {
 
   const [activeReport, setActiveReport] = useState('sales');
   const [filters, setFilters] = useState({
-    startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
-    branchId: user?.branch?.id || '',
+    branchId: activeBranch?.id || user?.branch?.id || '',
     staffId: '',
     productId: '',
     days: 90,
   });
+
+  // Keep report branch filter aligned with the branch staff are working in
+  React.useEffect(() => {
+    const nextBranch = activeBranch?.id || user?.branch?.id || '';
+    if (!nextBranch) return;
+    setFilters((prev) =>
+      String(prev.branchId) === String(nextBranch) ? prev : { ...prev, branchId: nextBranch },
+    );
+  }, [activeBranch?.id, user?.branch?.id]);
 
   const { data: salesData, isLoading: loadingSales, error: salesError, refetch: refetchSales } = useQuery({
     queryKey: ['salesReport', filters],

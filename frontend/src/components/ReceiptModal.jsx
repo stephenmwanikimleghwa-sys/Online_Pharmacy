@@ -235,6 +235,15 @@ const ReceiptModal = ({ order, onClose }) => {
           </button>
         </div>
 
+        {order?.offline && (
+          <div className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <p className="font-bold">Pending server sync</p>
+            <p className="mt-0.5">
+              This sale is only on this device until Sync shows Synced. Stock and today&apos;s sales report will not include it yet.
+            </p>
+          </div>
+        )}
+
         {/* Scrollable receipt preview */}
         <div
           className="overflow-y-auto p-4"
