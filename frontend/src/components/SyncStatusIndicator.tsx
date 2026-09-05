@@ -1,4 +1,3 @@
-import React from "react";
 import StatusDot from "./ui/StatusDot";
 import { useSync } from "../context/SyncContext";
 
@@ -8,6 +7,7 @@ import { useSync } from "../context/SyncContext";
  * Shows connectivity and the outbox state so branch staff can trust that a sale
  * recorded offline is safely queued and will upload. States:
  *  - offline               → "Offline" (queued writes will sync on reconnect)
+ *  - failed > 0            → "Sync failed N" (needs attention)
  *  - online, pending > 0   → "Syncing N…" (flush in progress or scheduled)
  *  - online, pending == 0  → "Synced" (+ last-synced time)
  */
@@ -22,7 +22,8 @@ function relativeTime(ts: number | null): string {
 }
 
 export default function SyncStatusIndicator({ className = "" }: { className?: string }) {
-  const { online, pending, syncing, lastSyncedAt } = useSync();
+  const { online, pending, failed, syncing, lastSyncedAt, lastDiscrepancies, syncNow } =
+    useSync();
 
   let tone: "operational" | "warning" | "critical" | "idle";
   let label: string;
@@ -35,10 +36,19 @@ export default function SyncStatusIndicator({ className = "" }: { className?: st
       pending > 0
         ? `No connection. ${pending} change(s) saved locally and will upload when you're back online.`
         : "No connection. Your work is saved locally.";
+  } else if (failed > 0) {
+    tone = "critical";
+    label = `Sync failed · ${failed}`;
+    title =
+      `${failed} change(s) could not upload after repeated tries. ` +
+      `Sales/stock may be missing from reports until this is fixed. Click to retry.`;
   } else if (pending > 0 || syncing) {
     tone = "warning";
     label = `Syncing ${pending || ""}`.trim() + "…";
     title = `Uploading ${pending} queued change(s) to the server.`;
+    if (lastDiscrepancies > 0) {
+      title += ` ${lastDiscrepancies} oversell discrepancy(ies) were logged for reconciliation.`;
+    }
   } else {
     tone = "operational";
     const rel = relativeTime(lastSyncedAt);
@@ -47,12 +57,16 @@ export default function SyncStatusIndicator({ className = "" }: { className?: st
   }
 
   return (
-    <span
+    <button
+      type="button"
       className={`inline-flex items-center rounded-full px-2.5 py-1 ${className}`}
       style={{ background: "var(--surface-2, rgba(0,0,0,0.04))" }}
       title={title}
+      onClick={() => {
+        if (online) void syncNow();
+      }}
     >
       <StatusDot tone={tone} label={label} title={title} />
-    </span>
+    </button>
   );
 }

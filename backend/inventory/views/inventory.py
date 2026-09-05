@@ -671,6 +671,21 @@ def adjust_inventory(request, pk):
             logged_by=request.user,
         )
 
+        log_activity(
+            user=request.user,
+            event_type="STOCK_ADJUSTED",
+            branch=branch,
+            details_dict={
+                "product_id": product.id,
+                "product_name": product.name,
+                "quantity": quantity,
+                "previous_quantity": float(previous_quantity),
+                "new_quantity": float(new_quantity),
+                "reason": reason,
+                "change_type": change_type,
+            },
+        )
+
     return Response(ProductSerializer(product).data)
 
 @api_view(["GET"])

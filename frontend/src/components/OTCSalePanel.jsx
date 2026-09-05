@@ -19,6 +19,7 @@ import {
   loadOtcDraft,
   saveOtcDraft,
 } from "../utils/otcDraftStorage";
+import { newClientUuid } from "../lib/offlineDb";
 import LoadingButton from "./LoadingButton";
 import ReceiptModal from "./ReceiptModal";
 import TransferRequestModal from "./TransferRequestModal";
@@ -414,6 +415,9 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
     const paymentMode = getMappedPaymentMode();
     const isCreditSale = paymentMode === "CREDIT";
+    // One idempotency key for this sale attempt — shared by online POST and any
+    // offline fallback so a timed-out online success cannot double-apply.
+    const clientUuid = newClientUuid();
     const salePayload = {
       items: cleanedItems.map((item) => ({
         product_id: item.id,
@@ -425,6 +429,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       pricing_tier: setup.pricingTier.toUpperCase(),
       discount: Math.max(0, parseFloat(discount) || 0),
       branch_id: branchId,
+      client_uuid: clientUuid,
     };
 
     const buildLocalReceiptOrder = () => ({
@@ -451,7 +456,10 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
         );
         return false;
       }
-      await queueWrite("sale", salePayload, branchId);
+      await queueWrite("sale", salePayload, {
+        branch_id: branchId,
+        client_uuid: clientUuid,
+      });
       setLastOrder(buildLocalReceiptOrder());
       finishSaleCart();
       setSearchResults(catalog);

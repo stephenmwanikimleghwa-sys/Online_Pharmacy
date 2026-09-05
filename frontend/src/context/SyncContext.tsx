@@ -8,13 +8,21 @@ import React, {
   useRef,
 } from "react";
 import { flushOutbox } from "../lib/syncEngine";
-import { countPending, enqueueOp, type OutboxOpType } from "../lib/offlineDb";
+import {
+  countFailed,
+  countPending,
+  enqueueOp,
+  type EnqueueOptions,
+  type OutboxOpType,
+} from "../lib/offlineDb";
 
 interface SyncContextType {
   /** Browser connectivity. */
   online: boolean;
   /** Ops queued locally and not yet acknowledged by the server. */
   pending: number;
+  /** Ops that failed repeatedly and need staff attention. */
+  failed: number;
   /** True while a flush is in progress. */
   syncing: boolean;
   /** Epoch ms of the last successful flush, or null. */
@@ -25,7 +33,7 @@ interface SyncContextType {
   queueWrite: (
     opType: OutboxOpType,
     payload: unknown,
-    branchId?: number | null,
+    branchId?: number | null | EnqueueOptions,
   ) => Promise<void>;
   /** Force a flush attempt now. */
   syncNow: () => Promise<void>;
@@ -41,6 +49,7 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
     typeof navigator !== "undefined" ? navigator.onLine : true,
   );
   const [pending, setPending] = useState(0);
+  const [failed, setFailed] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [lastDiscrepancies, setLastDiscrepancies] = useState(0);
@@ -49,6 +58,7 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshPending = useCallback(async () => {
     try {
       setPending(await countPending());
+      setFailed(await countFailed());
     } catch {
       /* IndexedDB unavailable — leave count as-is. */
     }
@@ -71,7 +81,11 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshPending]);
 
   const queueWrite = useCallback(
-    async (opType: OutboxOpType, payload: unknown, branchId?: number | null) => {
+    async (
+      opType: OutboxOpType,
+      payload: unknown,
+      branchId?: number | null | EnqueueOptions,
+    ) => {
       await enqueueOp(opType, payload, branchId);
       await refreshPending();
       // Fire-and-forget: if offline this no-ops and the op waits in the outbox.
@@ -115,6 +129,7 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         online,
         pending,
+        failed,
         syncing,
         lastSyncedAt,
         lastDiscrepancies,

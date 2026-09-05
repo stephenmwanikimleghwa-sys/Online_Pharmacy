@@ -31,6 +31,10 @@ const DB_NAME = "transcounty_offline";
 const DB_VERSION = 1;
 const STORE = "outbox";
 
+/** Ops stuck in "syncing" longer than this are treated as pending again
+ * (browser crash / closed tab mid-flush would otherwise hide them forever). */
+const STALE_SYNCING_MS = 2 * 60 * 1000;
+
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDb(): Promise<IDBDatabase> {
@@ -80,36 +84,73 @@ export function newClientUuid(): string {
   });
 }
 
+export type EnqueueOptions = {
+  branch_id?: number | null;
+  /** Reuse an existing idempotency key (e.g. online POST that timed out). */
+  client_uuid?: string;
+};
+
 /** Queue a new operation. Returns the stored record. */
 export async function enqueueOp(
   op_type: OutboxOpType,
   payload: unknown,
-  branch_id?: number | null,
+  branch_id?: number | null | EnqueueOptions,
 ): Promise<OutboxOp> {
+  const opts: EnqueueOptions =
+    typeof branch_id === "object" && branch_id !== null
+      ? branch_id
+      : { branch_id: branch_id ?? null };
+
   const record: OutboxOp = {
-    client_uuid: newClientUuid(),
+    client_uuid: opts.client_uuid || newClientUuid(),
     op_type,
     payload,
     status: "pending",
     created_at: Date.now(),
     attempts: 0,
-    branch_id: branch_id ?? null,
+    branch_id: opts.branch_id ?? null,
   };
   await tx("readwrite", (store) => store.put(record));
   return record;
 }
 
-/** All ops not yet acknowledged (pending or failed), oldest first. */
+/** Recover ops stuck in "syncing" after a crash / closed tab mid-flush. */
+export async function recoverStaleSyncingOps(): Promise<number> {
+  const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
+  const cutoff = Date.now() - STALE_SYNCING_MS;
+  let recovered = 0;
+  for (const op of all) {
+    if (op.status !== "syncing") continue;
+    if (op.created_at > cutoff && op.attempts === 0) continue;
+    op.status = "pending";
+    op.last_error = op.last_error || "Recovered from interrupted sync";
+    await tx("readwrite", (store) => store.put(op));
+    recovered += 1;
+  }
+  return recovered;
+}
+
+/** Ops eligible for the next flush attempt. */
 export async function getUnsyncedOps(): Promise<OutboxOp[]> {
+  await recoverStaleSyncingOps();
   const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
   return all
-    .filter((o) => o.status !== "syncing")
+    .filter((o) => o.status === "pending" || o.status === "failed")
     .sort((a, b) => a.created_at - b.created_at);
 }
 
 export async function countPending(): Promise<number> {
+  await recoverStaleSyncingOps();
   const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
-  return all.filter((o) => o.status !== "syncing").length;
+  return all.filter(
+    (o) => o.status === "pending" || o.status === "failed" || o.status === "syncing",
+  ).length;
+}
+
+export async function countFailed(): Promise<number> {
+  const all = await tx<OutboxOp[]>("readonly", (store) => store.getAll());
+  // Permanent apply failures after repeated attempts — surface in the sync pill.
+  return all.filter((o) => o.status === "failed" && o.attempts >= 5).length;
 }
 
 export async function markSyncing(client_uuid: string): Promise<void> {
@@ -119,6 +160,16 @@ export async function markSyncing(client_uuid: string): Promise<void> {
   if (!existing) return;
   existing.status = "syncing";
   existing.attempts += 1;
+  await tx("readwrite", (store) => store.put(existing));
+}
+
+export async function markPending(client_uuid: string, error?: string): Promise<void> {
+  const existing = await tx<OutboxOp | undefined>("readonly", (store) =>
+    store.get(client_uuid),
+  );
+  if (!existing) return;
+  existing.status = "pending";
+  if (error) existing.last_error = error;
   await tx("readwrite", (store) => store.put(existing));
 }
 

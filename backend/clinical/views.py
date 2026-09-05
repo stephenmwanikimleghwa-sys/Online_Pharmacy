@@ -56,6 +56,20 @@ class ConsultationViewSet(viewsets.ModelViewSet):
             consultation.save()
             
             unpaid_labs.update(is_paid=True)
+
+            from users.utils import log_activity
+            log_activity(
+                user=request.user,
+                event_type='SALE_MADE',
+                branch=consultation.branch,
+                details_dict={
+                    'dispensation_id': dispensation.id,
+                    'total_amount': float(total_amount),
+                    'source': 'clinical_billing',
+                    'consultation_id': consultation.id,
+                    'patient_id': consultation.patient_id,
+                },
+            )
             
         return api_success(
             "Billed to OTC Sales successfully.",

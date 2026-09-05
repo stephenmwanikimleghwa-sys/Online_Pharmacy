@@ -78,6 +78,20 @@ class QuotationViewSet(viewsets.ModelViewSet):
             # 3. Update Quotation Status
             quotation.status = 'converted'
             quotation.save()
+
+            from users.utils import log_activity
+            log_activity(
+                user=request.user,
+                event_type='SALE_MADE',
+                branch=quotation.branch,
+                details_dict={
+                    'dispensation_id': dispensation.id,
+                    'total_amount': float(quotation.total_amount),
+                    'items_count': quotation.items.count(),
+                    'source': 'quotation_convert',
+                    'quotation_id': quotation.id,
+                },
+            )
             
         return api_success(
             "Quotation successfully converted to sale.",

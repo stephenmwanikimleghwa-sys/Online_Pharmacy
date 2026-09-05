@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 from config.api_responses import api_not_found, api_success, api_validation_error
+from users.utils import log_activity
 from ..models.dispensing import SaleReturn, SaleReturnItem, Dispensation
 from products.models import BranchStock, StockLog
 from ..serializers.sales_returns import SaleReturnSerializer, SaleReturnItemSerializer
@@ -129,6 +130,18 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
                     branch_stock.quantity = new_qty
                     branch_stock.save()
 
+            log_activity(
+                user=request.user,
+                event_type='SALE_RETURN_APPROVED',
+                branch=sale_return.branch,
+                details_dict={
+                    'return_id': sale_return.id,
+                    'dispensation_id': sale_return.dispensation_id,
+                    'total_refund': float(sale_return.total_refund),
+                    'items_count': sale_return.items.count(),
+                },
+            )
+
         return api_success("Return approved and stock updated where applicable.")
 
     @action(detail=True, methods=['post'])
@@ -141,5 +154,15 @@ class SaleReturnViewSet(viewsets.ModelViewSet):
         sale_return.status = 'rejected'
         sale_return.approved_by = request.user
         sale_return.save()
+
+        log_activity(
+            user=request.user,
+            event_type='SALE_RETURN_REJECTED',
+            branch=sale_return.branch,
+            details_dict={
+                'return_id': sale_return.id,
+                'dispensation_id': sale_return.dispensation_id,
+            },
+        )
 
         return api_success("Return rejected successfully.")

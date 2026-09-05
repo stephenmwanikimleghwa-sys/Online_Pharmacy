@@ -131,6 +131,30 @@ def dispense_otc(request):
             http_status=403,
         )
 
+    # Idempotency: same client_uuid as an offline-queued sale (or a timed-out
+    # online retry) must not create a second dispensation / double stock hit.
+    client_uuid = request.data.get("client_uuid")
+    if client_uuid:
+        from inventory.models.sync import SyncOperation, SyncOpStatus, SyncOpType
+        from inventory.serializers.dispensing import DispensationSerializer
+
+        existing = SyncOperation.objects.filter(client_uuid=client_uuid).first()
+        if existing is not None and existing.result_ref:
+            try:
+                existing_disp = (
+                    Dispensation.objects.select_related("branch", "dispensed_by", "customer")
+                    .prefetch_related("items__product")
+                    .get(pk=int(existing.result_ref))
+                )
+                payload = DispensationSerializer(existing_disp).data
+                return api_success(
+                    "Sale already recorded (idempotent replay).",
+                    data=payload,
+                    extra={"dispensation": payload, "duplicate": True},
+                )
+            except (Dispensation.DoesNotExist, ValueError, TypeError):
+                pass
+
     with transaction.atomic():
         items_data = request.data.get('items', [])
         payment_mode = request.data.get('payment_mode', 'CASH')
@@ -337,6 +361,31 @@ def dispense_otc(request):
             .get(pk=dispensation.pk)
         )
         payload = DispensationSerializer(dispensation).data
+
+        # Record idempotency ledger so a timed-out client that later syncs the
+        # same client_uuid does not apply the sale twice.
+        if client_uuid:
+            from inventory.models.sync import SyncOperation, SyncOpStatus, SyncOpType
+
+            SyncOperation.objects.update_or_create(
+                client_uuid=client_uuid,
+                defaults={
+                    "op_type": SyncOpType.SALE,
+                    "status": SyncOpStatus.APPLIED,
+                    "branch": active_branch,
+                    "user": request.user,
+                    "payload": {
+                        "items": items_data,
+                        "payment_mode": payment_mode,
+                        "pricing_tier": pricing_tier,
+                        "discount": discount,
+                        "source": "online_otc",
+                    },
+                    "result_ref": str(dispensation.id),
+                    "had_discrepancy": False,
+                },
+            )
+
         return api_success(
             f"{item_count} item(s) sold. Total: KES {total_amount:.2f}.",
             data=payload,

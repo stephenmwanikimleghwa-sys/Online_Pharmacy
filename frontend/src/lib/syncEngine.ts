@@ -15,6 +15,7 @@ import {
   getUnsyncedOps,
   markSyncing,
   markFailed,
+  markPending,
   removeOp,
   type OutboxOp,
 } from "./offlineDb";
@@ -47,6 +48,7 @@ function invalidateAfterSync(): void {
     "dispensations",
     "stockIntakes",
     "discrepancies",
+    "salesReport",
   ]) {
     void queryClient.invalidateQueries({ queryKey: [key] });
   }
@@ -100,8 +102,10 @@ export async function flushOutbox(): Promise<FlushSummary> {
           skipGlobalErrorNotification: true,
         });
         const results: SyncResultItem[] = resp.data?.results ?? resp.data?.data?.results ?? [];
+        const seen = new Set<string>();
 
         for (const r of results) {
+          seen.add(r.client_uuid);
           if (r.status === "applied" || r.status === "duplicate") {
             await removeOp(r.client_uuid);
             if (r.status === "applied") summary.applied += 1;
@@ -112,10 +116,16 @@ export async function flushOutbox(): Promise<FlushSummary> {
             summary.failed += 1;
           }
         }
+        // Ops the server never mentioned — put back to pending for retry.
+        for (const o of group) {
+          if (!seen.has(o.client_uuid)) {
+            await markPending(o.client_uuid, "No result from sync response");
+          }
+        }
       } catch (err) {
-        // Network/5xx: leave the group queued (revert to pending) for retry.
+        // Network/5xx: revert to pending for retry (do not leave stuck as syncing).
         const message = err instanceof Error ? err.message : "sync request failed";
-        await Promise.all(group.map((o) => markFailed(o.client_uuid, message)));
+        await Promise.all(group.map((o) => markPending(o.client_uuid, message)));
         summary.failed += group.length;
       }
     }

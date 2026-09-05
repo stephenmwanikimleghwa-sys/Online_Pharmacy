@@ -293,6 +293,22 @@ def _apply_intake(payload, branch, user, source_op):
             raise SyncApplyError(str(exc))
         created_ids.append(str(intake.id))
 
+    from users.utils import log_activity
+
+    log_activity(
+        user=user,
+        event_type="PRODUCT_RESTOCKED",
+        branch=branch,
+        details_dict={
+            "intake_ids": created_ids,
+            "items_count": len(created_ids),
+            "supplier_id": supplier.id if supplier else None,
+            "invoice_number": invoice_number,
+            "offline_sync": True,
+            "source_client_uuid": getattr(source_op, "client_uuid", None),
+        },
+    )
+
     return {"server_id": ",".join(created_ids), "discrepancy": False}
 
 
@@ -350,6 +366,26 @@ def _apply_adjustment(payload, branch, user, source_op):
         change_type=change_type,
         reason=reason + (" [CLAMPED]" if discrepancy else ""),
         logged_by=user,
+    )
+
+    from users.utils import log_activity
+
+    log_activity(
+        user=user,
+        event_type="STOCK_ADJUSTED",
+        branch=branch,
+        details_dict={
+            "product_id": product.id,
+            "product_name": product.name,
+            "quantity": quantity,
+            "previous_quantity": float(previous),
+            "new_quantity": float(new_qty),
+            "reason": reason,
+            "change_type": change_type,
+            "clamped": discrepancy is not None,
+            "offline_sync": True,
+            "source_client_uuid": getattr(source_op, "client_uuid", None),
+        },
     )
 
     return {"server_id": str(product.id), "discrepancy": discrepancy is not None}
