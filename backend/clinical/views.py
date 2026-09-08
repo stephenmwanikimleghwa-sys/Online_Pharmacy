@@ -8,13 +8,30 @@ from .serializers import ConsultationSerializer, LabTestSerializer
 
 from inventory.models.dispensing import Dispensation, DispensationItem
 from config.api_responses import api_success, api_validation_error
+from users.active_branch import get_active_branch, require_active_branch
+
 
 class ConsultationViewSet(viewsets.ModelViewSet):
-    queryset = Consultation.objects.all()
+    queryset = Consultation.objects.select_related(
+        'patient', 'practitioner', 'branch'
+    ).prefetch_related('lab_tests').all()
     serializer_class = ConsultationSerializer
-    
+
     def perform_create(self, serializer):
-        serializer.save(practitioner=self.request.user, branch=self.request.user.branch)
+        denied = require_active_branch(self.request)
+        if denied:
+            from rest_framework.exceptions import PermissionDenied
+            payload = getattr(denied, "data", None) or {}
+            err = payload.get("error") if isinstance(payload, dict) else None
+            detail = (
+                (err.get("message") if isinstance(err, dict) else None)
+                or "Please select which branch you are working at before continuing."
+            )
+            raise PermissionDenied(detail)
+        branch = get_active_branch(self.request) or getattr(
+            self.request.user, 'branch', None
+        )
+        serializer.save(practitioner=self.request.user, branch=branch)
         
     @action(detail=True, methods=['post'])
     def bill_to_otc(self, request, pk=None):

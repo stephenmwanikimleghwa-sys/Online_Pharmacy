@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import clinicalService from '../../services/clinicalService';
 import { useNotification } from '../../context/NotificationContext';
 import { notifyApiError } from '../../utils/notifyApiError';
-import { ArrowLeftIcon, BanknotesIcon, CheckCircleIcon, DocumentTextIcon, BeakerIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, BanknotesIcon, CheckCircleIcon, DocumentTextIcon, HeartIcon } from '@heroicons/react/24/outline';
 
 const ConsultationWorkflow = () => {
   const { notify } = useNotification();
@@ -56,7 +56,9 @@ const ConsultationWorkflow = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(['consultation', id]);
       notify.success('Consultation Updated', 'Your changes have been saved.');
-    }
+    },
+    onError: (err) =>
+      notifyApiError(notify, err, 'Update failed', 'Could not save consultation changes.'),
   });
 
   const billMutation = useMutation({

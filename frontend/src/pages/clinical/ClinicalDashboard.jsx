@@ -41,7 +41,7 @@ const ClinicalDashboard = () => {
 
   const createMutation = useMutation({
     mutationFn: clinicalService.createConsultation,
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries(['consultations']);
       setShowNewModal(false);
       setSelectedPatient(null);
@@ -50,6 +50,9 @@ const ClinicalDashboard = () => {
       setNewLastName('');
       setNewPhone('');
       notify.success('Consultation started', 'You can now record notes and prescriptions.');
+      if (created?.id) {
+        navigate(`/clinical/${created.id}`);
+      }
     },
     onError: (err) => {
       notifyApiError(notify, err, 'Could not start', 'Failed to create the consultation. Try again.');

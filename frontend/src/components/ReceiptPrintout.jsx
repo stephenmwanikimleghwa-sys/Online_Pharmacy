@@ -1,21 +1,19 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * ReceiptPrintout
- * Renders a thermal‑style 80mm receipt layout.
- * withHeader=true → includes pharmacy name / contact / address / tagline block.
- * This component is rendered both inside the modal preview AND in the hidden
- * #receipt-printout div that the @media print CSS reveals.
+ * Thermal 80mm sales receipt — matches Transcounty Pharmacy Main printed format:
+ * header → SALES RECEIPT → Bill To / Ref / Date → No. NAME PRICE QTY TOT. →
+ * SUBTOTALS / DISCOUNT / NET TOTAL → Served By / Time → We Value Your Health
  */
 const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   if (!order) return null;
 
   const DEFAULT_RECEIPT_DETAILS = {
-    name: "Transcounty Main",
-    phone: "+254726246981",
-    email: "transcountypharm@yahoo.com",
-    address: "Modern Building - Laini Moja Kitale",
-    tagline: "Dealers in Human Drugs & Surgical products",
+    name: "TRANSCOUNTY PHARMACY MAIN",
+    phone: "0720 - 246 - 981",
+    email: "transcountypharmacy@gmail.com",
+    address: "Modern Building, Laini Moja",
+    tagline: "Dealers in Human Drugs & Surgical Products",
   };
 
   const normalizeText = (value, fallback = "") => {
@@ -44,10 +42,20 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
 
   const safeText = (value, fallback = "") => {
     const text = normalizeText(value, fallback);
-    if (isPlaceholderValue(text)) {
-      return fallback;
-    }
+    if (isPlaceholderValue(text)) return fallback;
     return text || fallback;
+  };
+
+  const formatPhone = (raw) => {
+    const digits = String(raw || "").replace(/\D/g, "");
+    if (digits.length === 12 && digits.startsWith("254")) {
+      const local = `0${digits.slice(3)}`;
+      return `${local.slice(0, 4)} - ${local.slice(4, 7)} - ${local.slice(7)}`;
+    }
+    if (digits.length === 10 && digits.startsWith("0")) {
+      return `${digits.slice(0, 4)} - ${digits.slice(4, 7)} - ${digits.slice(7)}`;
+    }
+    return normalizeText(raw, DEFAULT_RECEIPT_DETAILS.phone);
   };
 
   const items =
@@ -60,76 +68,97 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
   const branchName = normalizeText(order?.branch_name, "");
   const branchAddress = safeText(
     order?.branch_address || order?.branch?.address || order?.location?.address,
-    pharmacy?.address || ""
+    pharmacy?.address || "",
   );
   const branchPhone = safeText(
     order?.branch_contact_phone || order?.branch?.contact_phone || order?.contact_phone,
-    pharmacy?.contact_phone || ""
+    pharmacy?.contact_phone || "",
   );
   const branchEmail = safeText(
     order?.branch_email || order?.branch?.email || order?.email,
-    pharmacy?.email || ""
+    pharmacy?.email || "",
   );
   const branchTagline = safeText(
     order?.branch_tagline || order?.branch?.tagline,
-    pharmacy?.tagline || ""
+    pharmacy?.tagline || "",
   );
 
-  // Persist the first-seen valid values so they aren't overwritten by later
-  // updates (e.g., when a pharmacy/profile refresh supplies placeholder data).
   const persisted = useRef({});
 
   useEffect(() => {
     const trySet = (key, val, fallback) => {
       const current = String(persisted.current[key] || "");
-      if (current && !isPlaceholderValue(current)) return; // keep good value
+      if (current && !isPlaceholderValue(current)) return;
       const candidate = normalizeText(val, fallback);
       if (candidate && !isPlaceholderValue(candidate)) persisted.current[key] = candidate;
     };
 
     trySet("name", branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name);
-    trySet("phone", branchPhone || pharmacy?.contact_phone || pharmacy?.phone, DEFAULT_RECEIPT_DETAILS.phone);
+    trySet(
+      "phone",
+      branchPhone || pharmacy?.contact_phone || pharmacy?.phone,
+      DEFAULT_RECEIPT_DETAILS.phone,
+    );
     trySet("email", branchEmail || pharmacy?.email, DEFAULT_RECEIPT_DETAILS.email);
     trySet("address", branchAddress || pharmacy?.address, DEFAULT_RECEIPT_DETAILS.address);
     trySet("tagline", branchTagline || pharmacy?.tagline, DEFAULT_RECEIPT_DETAILS.tagline);
   }, [branchName, branchAddress, branchPhone, branchEmail, branchTagline, pharmacy]);
 
   const displayPharmacy = {
-    name: normalizeText(persisted.current.name || branchName || pharmacy?.name, DEFAULT_RECEIPT_DETAILS.name),
-    phone: normalizeText(persisted.current.phone || branchPhone || pharmacy?.contact_phone || pharmacy?.phone, DEFAULT_RECEIPT_DETAILS.phone),
-    email: normalizeText(persisted.current.email || branchEmail || pharmacy?.email, DEFAULT_RECEIPT_DETAILS.email),
-    address: normalizeText(persisted.current.address || branchAddress || pharmacy?.address, DEFAULT_RECEIPT_DETAILS.address),
-    tagline: normalizeText(persisted.current.tagline || branchTagline || pharmacy?.tagline, DEFAULT_RECEIPT_DETAILS.tagline),
+    name: normalizeText(
+      persisted.current.name || branchName || pharmacy?.name,
+      DEFAULT_RECEIPT_DETAILS.name,
+    ).toUpperCase(),
+    phone: formatPhone(
+      persisted.current.phone ||
+        branchPhone ||
+        pharmacy?.contact_phone ||
+        pharmacy?.phone ||
+        DEFAULT_RECEIPT_DETAILS.phone,
+    ),
+    email: normalizeText(
+      persisted.current.email || branchEmail || pharmacy?.email,
+      DEFAULT_RECEIPT_DETAILS.email,
+    ),
+    address: normalizeText(
+      persisted.current.address || branchAddress || pharmacy?.address,
+      DEFAULT_RECEIPT_DETAILS.address,
+    ),
+    tagline: normalizeText(
+      persisted.current.tagline || branchTagline || pharmacy?.tagline,
+      DEFAULT_RECEIPT_DETAILS.tagline,
+    ),
   };
-  
-  const subtotal = items.reduce(
-    (s, it) => s + (Number(it.price_per_unit || it.unit_price || it.unitPrice) || 0) * (Number(it.quantity) || 0),
-    0
-  );
-  
-  const totalQuantity = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
-  
-  // Use nullish coalescing — 0 is a valid total (e.g. 100% discount) and must not fall back to subtotal
-  const total = (order.total_amount !== null && order.total_amount !== undefined)
-    ? Number(order.total_amount)
-    : subtotal;
-  
-  // Prefer the backend's stored discount field; fall back to inferring from subtotal vs total
-  const discountKes = (order.discount !== null && order.discount !== undefined && Number(order.discount) > 0)
-    ? Number(order.discount)
-    : (subtotal - total > 0 ? subtotal - total : 0);
-  // Compute percentage from the subtotal before discount
-  const discountPct = subtotal > 0 && discountKes > 0 ? ((discountKes / subtotal) * 100).toFixed(1) : null;
 
-  const dateObj = order.created_at || order.dispensed_at ? new Date(order.created_at || order.dispensed_at) : new Date();
-  const dateStr = dateObj.toLocaleDateString("en-KE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const subtotal = items.reduce(
+    (s, it) =>
+      s +
+      (Number(it.price_per_unit || it.unit_price || it.unitPrice) || 0) *
+        (Number(it.quantity) || 0),
+    0,
+  );
+
+  const total =
+    order.total_amount !== null && order.total_amount !== undefined
+      ? Number(order.total_amount)
+      : subtotal;
+
+  const discountKes =
+    order.discount !== null && order.discount !== undefined && Number(order.discount) > 0
+      ? Number(order.discount)
+      : subtotal - total > 0
+        ? subtotal - total
+        : 0;
+
+  const dateObj =
+    order.created_at || order.dispensed_at
+      ? new Date(order.created_at || order.dispensed_at)
+      : new Date();
+  const dateStr = dateObj.toISOString().slice(0, 10);
   const timeStr = dateObj.toLocaleTimeString("en-KE", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 
   const servedBy =
@@ -139,35 +168,38 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     order.user ||
     "Staff";
 
-  const refNo = String(order.id || "").padStart(4, "0");
+  const refNo = order.id != null && order.id !== "" ? String(order.id) : "—";
 
-  /* ── format currency ── */
-  const fmt = (n) => Number(n).toFixed(2);
+  const fmt = (n) =>
+    Number(n).toLocaleString("en-KE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  const fmtInt = (n) => {
+    const v = Number(n);
+    return Number.isInteger(v) ? String(v) : v.toFixed(2);
+  };
 
-  /* ── column widths for item table ──
-     No. | NAME (variable) | QTY | PRICE | TOT
-     We work in character units; 40 chars ≈ 80mm at 11 px courier */
-  const LINE_WIDTH = 40;
+  // No. | NAME | PRICE | QTY | TOT.  (~40 chars at courier 11px / 80mm)
+  const LINE_WIDTH = 42;
 
   const renderItemRow = (item, idx) => {
     const name = item.product_details?.name || item.product_name || item.name || "Item";
     const qty = String(Number(item.quantity) || 0);
     const unitPrice = Number(item.price_per_unit || item.unit_price || item.unitPrice) || 0;
-    const price = fmt(unitPrice);
-    const tot = fmt(unitPrice * (Number(item.quantity) || 0));
-    const numCol = String(idx + 1) + ".";
+    const lineTot = unitPrice * (Number(item.quantity) || 0);
+    const numCol = `${idx + 1}.`;
+    // Physical layout: PRICE then QTY then TOT.
+    const rightPart = `${fmtInt(unitPrice).padStart(6)} ${qty.padStart(4)} ${fmtInt(lineTot).padStart(7)}`;
+    const nameWidth = Math.max(8, LINE_WIDTH - numCol.length - 1 - rightPart.length);
 
-    // Right portion: "QTY  PRICE   TOT"
-    const rightPart = `${qty.padStart(3)}  ${price.padStart(7)}  ${tot.padStart(7)}`;
-    const nameWidth = LINE_WIDTH - numCol.length - 1 - rightPart.length;
-
-    // Split name into lines if too long
-    const words = name.split(" ");
+    const words = String(name).split(/\s+/);
     const nameLines = [];
     let currentLine = "";
     for (const word of words) {
-      if ((currentLine + (currentLine ? " " : "") + word).length <= nameWidth) {
-        currentLine += (currentLine ? " " : "") + word;
+      const next = currentLine ? `${currentLine} ${word}` : word;
+      if (next.length <= nameWidth) {
+        currentLine = next;
       } else {
         if (currentLine) nameLines.push(currentLine);
         currentLine = word;
@@ -175,13 +207,8 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
     }
     if (currentLine) nameLines.push(currentLine);
 
-    const batch = item.batch_number || item.batch || item.batchNumber || "";
-    const expiryRaw = item.expiry_date || item.expiry || item.expiryDate || null;
-    const expiryFmt = expiryRaw ? new Date(expiryRaw).toLocaleDateString("en-KE", { day: '2-digit', month: 'short', year: 'numeric' }) : "";
-
     return (
-      <div key={item.id || idx} style={{ marginBottom: 1 }}>
-        {/* First line: No + first name line + QTY PRICE TOT */}
+      <div key={item.id || idx} style={{ marginBottom: 2 }}>
         <div className="r-row">
           <span style={{ whiteSpace: "pre" }}>
             {numCol.padEnd(numCol.length + 1)}
@@ -189,54 +216,31 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
           </span>
           <span style={{ whiteSpace: "pre", flexShrink: 0 }}>{rightPart}</span>
         </div>
-        {/* Continuation lines for long names (indented, no amounts) */}
-        {nameLines.slice(1).map((l, li) => (
-          <div key={li} style={{ paddingLeft: numCol.length + 1 + "ch" }}>
-            {l}
+        {nameLines.slice(1).map((line, li) => (
+          <div key={li} style={{ paddingLeft: `${numCol.length + 1}ch` }}>
+            {line}
           </div>
         ))}
-        {/* Batch and Expiry info line */}
-        <div className="r-row r-small" style={{ marginTop: 2 }}>
-          <span style={{ whiteSpace: "pre" }}>
-            {`Batch: ${batch || '-'}  Exp: ${expiryFmt || '-'}`}
-          </span>
-          <span style={{ whiteSpace: "pre", flexShrink: 0 }} />
-        </div>
       </div>
     );
   };
 
   return (
     <div className="receipt-paper">
-      {/* ── HEADER ── */}
       {withHeader && (
         <>
           <div className="r-center r-bold" style={{ fontSize: 13 }}>
             {displayPharmacy.name}
           </div>
-          {order?.branch_name && order.branch_name !== displayPharmacy.name && (
-            <div className="r-center r-bold" style={{ fontSize: 11, marginTop: '2px' }}>
-              Branch: {order.branch_name}
-            </div>
-          )}
-          <div className="r-center r-small">
-            Cell: {displayPharmacy.phone}
-          </div>
-          <div className="r-center r-small">
-            Email: {displayPharmacy.email}
-          </div>
-          <div className="r-center r-small">
-            {displayPharmacy.address}
-          </div>
-          <div className="r-center r-small">
-            {displayPharmacy.tagline}
-          </div>
-          <div className="r-dash-solid" />
+          <div className="r-center r-small">Cell: {displayPharmacy.phone}</div>
+          <div className="r-center r-small">Email: {displayPharmacy.email}</div>
+          <div className="r-center r-small">{displayPharmacy.address}</div>
+          <div className="r-center r-small">{displayPharmacy.tagline}</div>
         </>
       )}
 
-      {/* ── TITLE ── */}
-      <div className="r-center r-bold" style={{ letterSpacing: 2 }}>
+      <div className="r-dash" />
+      <div className="r-center r-bold" style={{ letterSpacing: 1 }}>
         SALES RECEIPT
       </div>
       {isOfflinePending && (
@@ -244,35 +248,29 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
           <div className="r-center r-small" style={{ fontWeight: 700, marginTop: 4 }}>
             *** PENDING SERVER SYNC ***
           </div>
-          <div className="r-center r-small">
-            Not on sales report until this device syncs
-          </div>
+          <div className="r-center r-small">Not on sales report until this device syncs</div>
         </>
       )}
       <div className="r-dash" />
 
-      {/* ── BILL TO / REF / DATE ── */}
       <div className="r-small">
-        Bill To: {order.customer_name || order.patient_name || 'Walk In Customer'}
+        Bill To:{" "}
+        <span style={{ textDecoration: "underline" }}>
+          {order.customer_name || order.patient_name || "Walk In Customer"}
+        </span>
       </div>
       <div className="r-row r-small">
-        <span>Ref No: #{refNo}</span>
+        <span>Ref. No: {refNo}</span>
         <span>Date: {dateStr}</span>
       </div>
       <div className="r-dash" />
 
-      {/* ── COLUMN HEADERS ── */}
       <div className="r-row" style={{ fontWeight: 700 }}>
-        <span style={{ whiteSpace: "pre" }}>{"No. NAME                  "}</span>
-        <span style={{ whiteSpace: "pre", flexShrink: 0 }}>{"QTY    PRICE      TOT"}</span>
-      </div>
-      <div className="r-row r-small" style={{ fontWeight: 700 }}>
-        <span style={{ whiteSpace: "pre" }}>{"(Batch / Expiry shown per item)"}</span>
-        <span style={{ whiteSpace: "pre", flexShrink: 0 }} />
+        <span style={{ whiteSpace: "pre" }}>{"No. NAME"}</span>
+        <span style={{ whiteSpace: "pre", flexShrink: 0 }}>{"PRICE  QTY    TOT."}</span>
       </div>
       <div className="r-dash" />
 
-      {/* ── ITEMS ── */}
       <div>
         {items.length === 0 ? (
           <div className="r-center r-small">No items</div>
@@ -280,52 +278,34 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
           items.map((item, idx) => renderItemRow(item, idx))
         )}
       </div>
-      <div className="r-dash" />
 
-      {/* ── TOTALS ── */}
+      <div className="r-dash-solid" />
+
       <div className="r-row r-small">
         <span />
         <span>
-          SUBTOTAL:{" "}
-          <strong>KES {fmt(subtotal)}</strong>
+          SUBTOTALS: <strong>{fmt(subtotal)}</strong>
         </span>
       </div>
-      {discountKes > 0 && (
-        <div className="r-row r-small">
-          <span />
-          <span style={{ fontWeight: 700 }}>
-            DISCOUNT{discountPct ? ` (${discountPct}%)` : ''}:&nbsp;-KES {fmt(discountKes)}
-          </span>
-        </div>
-      )}
-      <div className="r-dash" style={{ margin: '3px 0' }} />
-      <div className="r-row" style={{ fontWeight: 700 }}>
+      <div className="r-row r-small">
         <span />
         <span>
-          TOTAL:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KES {fmt(total)}
+          DISCOUNT: <strong>{fmt(discountKes)}</strong>
         </span>
       </div>
-      <div className="r-dash" />
-      <div className="r-row r-small" style={{ fontWeight: 700 }}>
-        <span>Total Items Sold:</span>
-        <span>{totalQuantity}</span>
+      <div className="r-row" style={{ fontWeight: 700 }}>
+        <span />
+        <span>NET TOTAL: {fmt(total)}</span>
       </div>
-      <div className="r-dash" />
 
-      {/* ── FOOTER ── */}
+      <div className="r-dash" />
       <div className="r-row r-small">
         <span>Served By: {servedBy}</span>
         <span>Time: {timeStr}</span>
       </div>
       <div className="r-spacer" />
-      <div className="r-center r-small" style={{ fontStyle: 'italic', marginTop: '4px', marginBottom: '4px' }}>
-        The amount is in KSHS. and VAT inclusive where applicable.
-      </div>
       <div className="r-center r-bold r-small">We Value Your Health</div>
-      <div className="r-spacer" />
-      <div className="r-center r-small">
-        {"- ".repeat(20)}
-      </div>
+      <div className="r-dash" />
     </div>
   );
 };
