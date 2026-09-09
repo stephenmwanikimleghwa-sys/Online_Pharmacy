@@ -28,10 +28,15 @@ const updateQuotation = async (id, data) => {
 };
 
 const convertToSale = async (id, payment_method = 'CASH', notes = '') => {
-  const response = await api.post(`/finance/quotations/${id}/convert_to_sale/`, {
-    payment_method,
-    notes
-  });
+  const response = await api.post(
+    `/finance/quotations/${id}/convert_to_sale/`,
+    {
+      payment_mode: payment_method,
+      payment_method,
+      notes,
+    },
+    { skipGlobalErrorNotification: true },
+  );
   return response.data;
 };
 

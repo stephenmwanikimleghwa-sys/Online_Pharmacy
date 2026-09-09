@@ -167,6 +167,8 @@ export function mapAxiosErrorToDisplay(
   const status = error.response.status;
   const data = error.response.data;
   const fieldMessage = formatFieldErrors(data);
+  // Re-read after formatFieldErrors for 5xx paths that still carry a useful message.
+  const structuredMessage = structured?.message ?? null;
 
   switch (status) {
     case 400:
@@ -231,10 +233,14 @@ export function mapAxiosErrorToDisplay(
       };
     default:
       if (status >= 500) {
+        const serverMessage = fieldMessage || structuredMessage;
         return {
           title: "System Error",
           message:
-            "Something went wrong on our end. Your data has not been affected. Please try again in a moment.",
+            serverMessage &&
+            !/something went wrong on our end/i.test(serverMessage)
+              ? serverMessage
+              : "Something went wrong on our end. Your data has not been affected. Please try again in a moment.",
           actionLabel: error.config && ctx.onRetry ? "Try Again" : undefined,
           action:
             error.config && ctx.onRetry
