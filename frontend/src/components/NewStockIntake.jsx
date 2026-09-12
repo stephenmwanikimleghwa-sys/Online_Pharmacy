@@ -30,7 +30,10 @@ const ProductSearch = ({ value, onChange, branchId }) => {
     if (!q.trim()) { setResults([]); return; }
     try {
       const res = await api.get("/inventory/list/", { params: { search: q, branch: branchId, per_page: 20 } });
-      const items = res.data?.results || res.data?.data || res.data || [];
+      const data = res.data || {};
+      const items = Array.isArray(data)
+        ? data
+        : data.products || data.results || data.data || [];
       setResults(Array.isArray(items) ? items : []);
     } catch { setResults([]); }
   }, [branchId]);

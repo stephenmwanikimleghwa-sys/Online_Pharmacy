@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNotification } from '../../context/NotificationContext';
 import { notifyApiError } from '../../utils/notifyApiError';
 import LoadingButton from '../../components/LoadingButton';
@@ -6,19 +6,131 @@ import { useAuth } from '../../context/AuthContext';
 import ActiveBranchGuard from '../../components/ActiveBranchGuard';
 import inventoryService from '../../services/inventoryService';
 
+/** Searchable product picker — full catalog is too large for a <select> (capped at 500 → names stop around "C"). */
+function TransferProductSearch({ branchId, selected, onSelect }) {
+  const [query, setQuery] = useState(selected?.name || '');
+  const [results, setResults] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (selected?.name) setQuery(selected.name);
+  }, [selected?.id, selected?.name]);
+
+  const search = useCallback(
+    async (q) => {
+      const term = (q || '').trim();
+      if (term.length < 2) {
+        setResults([]);
+        return;
+      }
+      setSearching(true);
+      try {
+        const res = await inventoryService.getInventory({
+          search: term,
+          per_page: 40,
+          branch: branchId || undefined,
+        });
+        const data = res.data || {};
+        const list = Array.isArray(data)
+          ? data
+          : data.products || data.results || data.data || [];
+        setResults(Array.isArray(list) ? list : []);
+      } catch {
+        setResults([]);
+      } finally {
+        setSearching(false);
+      }
+    },
+    [branchId],
+  );
+
+  const handleInput = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    onSelect(null);
+    setOpen(true);
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => void search(val), 300);
+  };
+
+  const pick = (p) => {
+    setQuery(p.name);
+    setOpen(false);
+    setResults([]);
+    onSelect(p);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        className="form-input w-full"
+        placeholder="Type at least 2 letters to search…"
+        value={query}
+        onChange={handleInput}
+        onFocus={() => query.trim().length >= 2 && setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 180)}
+        autoComplete="off"
+        required={!selected?.id}
+      />
+      {searching && (
+        <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Searching…</p>
+      )}
+      {open && results.length > 0 && (
+        <div
+          className="absolute z-50 w-full mt-1 rounded-xl border shadow-xl overflow-hidden max-h-56 overflow-y-auto"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+        >
+          {results.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="w-full text-left px-4 py-2.5 text-sm border-b last:border-0 hover:opacity-90"
+              style={{ borderColor: 'var(--border-primary)' }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                pick(p);
+              }}
+            >
+              <span className="font-semibold block" style={{ color: 'var(--text-primary)' }}>
+                {p.name}
+              </span>
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {p.stock_quantity != null ? `Stock: ${p.stock_quantity}` : 'Stock: —'}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {open && !searching && query.trim().length >= 2 && results.length === 0 && (
+        <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+          No products match “{query.trim()}”.
+        </p>
+      )}
+      {selected?.id && (
+        <p className="text-xs mt-1 font-medium" style={{ color: '#047857' }}>
+          Selected: {selected.name}
+          {selected.stock_quantity != null ? ` (stock ${selected.stock_quantity})` : ''}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const BranchTransfers = () => {
   const { notify } = useNotification();
   const { user, activeBranch, allowedBranches } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.is_admin;
   const [transfers, setTransfers] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [approvingTransfer, setApprovingTransfer] = useState(null);
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [form, setForm] = useState({
-    product: '',
     destination_branch: '',
     quantity: '',
     notes: '',
@@ -48,17 +160,7 @@ const BranchTransfers = () => {
   }, [loadTransfers]);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const res = await inventoryService.getInventory({ per_page: 5000 });
-        const data = res.data || {};
-        const list = Array.isArray(data) ? data : (data.products || data.results || []);
-        setProducts(Array.isArray(list) ? list : []);
-      } catch {
-        setProducts([]);
-      }
-    };
-    void loadProducts();
+    setSelectedProduct(null);
   }, [activeBranch?.id]);
 
   const canApprove = (transfer) => {
@@ -74,7 +176,7 @@ const BranchTransfers = () => {
       return;
     }
     const quantity = parseInt(form.quantity, 10);
-    if (!form.product || !form.destination_branch || !quantity || quantity < 1) {
+    if (!selectedProduct?.id || !form.destination_branch || !quantity || quantity < 1) {
       notify.error('Incomplete Information', 'Product, destination branch, and quantity are required.');
       return;
     }
@@ -83,7 +185,7 @@ const BranchTransfers = () => {
       setSubmitting(true);
       const dest = destinationOptions.find((b) => b.id === parseInt(form.destination_branch, 10));
       await inventoryService.createTransfer({
-        product: parseInt(form.product, 10),
+        product: selectedProduct.id,
         source_branch: activeBranch.id,
         destination_branch: parseInt(form.destination_branch, 10),
         quantity,
@@ -93,7 +195,8 @@ const BranchTransfers = () => {
         'Transfer Requested',
         `Stock transfer from ${activeBranch.name} to ${dest?.name || 'the selected branch'} has been submitted for approval.`,
       );
-      setForm({ product: '', destination_branch: '', quantity: '', notes: '' });
+      setForm({ destination_branch: '', quantity: '', notes: '' });
+      setSelectedProduct(null);
       void loadTransfers();
     } catch (err) {
       notifyApiError(notify, err, 'Transfer Failed', 'The transfer request could not be created.');
@@ -143,19 +246,11 @@ const BranchTransfers = () => {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="form-label">Product</label>
-              <select
-                className="form-input w-full"
-                value={form.product}
-                onChange={(e) => setForm((f) => ({ ...f, product: e.target.value }))}
-                required
-              >
-                <option value="">Select product</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} {p.stock_quantity != null ? `(stock: ${p.stock_quantity})` : ''}
-                  </option>
-                ))}
-              </select>
+              <TransferProductSearch
+                branchId={activeBranch?.id}
+                selected={selectedProduct}
+                onSelect={setSelectedProduct}
+              />
             </div>
             <div>
               <label className="form-label">Destination branch</label>
