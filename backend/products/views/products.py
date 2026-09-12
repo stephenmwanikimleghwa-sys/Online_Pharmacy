@@ -498,14 +498,25 @@ class ProductViewSet(viewsets.ModelViewSet):
     def availability(self, request: Request, pk=None) -> Response:
         """
         Cross-branch stock availability for a product.
+
+        Kept deliberately light — no full ProductSerializer / heavy prefetches.
         """
         from inventory.views.supplier import _user_can_see_transfer_details
 
-        product = self.get_object()
+        try:
+            product = Product.objects.only("id", "name").get(pk=pk, is_active=True)
+        except Product.DoesNotExist:
+            return api_response(
+                error="Product not found.",
+                status_code=status.HTTP_404_NOT_FOUND,
+                success=False,
+            )
+
         active_branch = _branch_for_request(request)
         stocks = (
-            BranchStock.objects.filter(product=product)
+            BranchStock.objects.filter(product_id=product.id)
             .select_related("branch")
+            .only("quantity", "branch_id", "branch__id", "branch__name")
             .order_by("branch__name")
         )
 

@@ -56,3 +56,51 @@ export function getProductBranchQuantity(
   }
   return Number(product.stock_quantity) || 0;
 }
+
+export type BranchAvailabilityAlt = {
+  branch_id: number;
+  branch_name: string;
+  quantity: number;
+  status: string;
+};
+
+/** Instant cross-branch hint from payload already on the product (no network). */
+export function deriveOtherBranchAvailability(
+  product: {
+    id?: number;
+    name?: string;
+    branch_stocks?: { branch_id: number | string; branch_name?: string; quantity: number }[];
+  },
+  activeBranchId?: number | string | null,
+): {
+  productName: string;
+  alternatives: BranchAvailabilityAlt[];
+  availableElsewhere: boolean;
+  hasLocalBranchData: boolean;
+} | null {
+  const stocks = product.branch_stocks;
+  if (!Array.isArray(stocks) || stocks.length === 0) return null;
+
+  const activeId = activeBranchId != null ? Number(activeBranchId) : null;
+  const alternatives: BranchAvailabilityAlt[] = [];
+  for (const bs of stocks) {
+    const qty = Number(bs.quantity) || 0;
+    if (qty <= 0) continue;
+    if (activeId != null && !Number.isNaN(activeId) && Number(bs.branch_id) === activeId) {
+      continue;
+    }
+    alternatives.push({
+      branch_id: Number(bs.branch_id),
+      branch_name: bs.branch_name || `Branch ${bs.branch_id}`,
+      quantity: qty,
+      status: "IN_STOCK",
+    });
+  }
+  alternatives.sort((a, b) => a.branch_name.localeCompare(b.branch_name));
+  return {
+    productName: product.name || "Product",
+    alternatives,
+    availableElsewhere: alternatives.length > 0,
+    hasLocalBranchData: true,
+  };
+}

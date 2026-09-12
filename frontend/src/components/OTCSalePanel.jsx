@@ -12,7 +12,7 @@ import { useNotification } from "../context/NotificationContext";
 import { getApiErrorDisplay } from "../utils/notifyApiError";
 import { useSync } from "../context/SyncContext";
 import { fetchBranchCatalog, searchProducts } from "../services/productService";
-import { getProductDisplayPrice, getProductBranchQuantity } from "../utils/parseApiData";
+import { getProductDisplayPrice, getProductBranchQuantity, deriveOtherBranchAvailability } from "../utils/parseApiData";
 import {
   clearOtcDraft,
   hasOtcDraftProgress,
@@ -48,6 +48,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
   const [lastOrder, setLastOrder] = useState(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [outOfStockHint, setOutOfStockHint] = useState(null);
+  const [checkingAvailabilityId, setCheckingAvailabilityId] = useState(null);
   const [catalog, setCatalog] = useState([]);
   const [transferModal, setTransferModal] = useState(null);
   const [expiryWarning, setExpiryWarning] = useState(null);
@@ -83,29 +84,46 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
   const showAvailabilityHint = useCallback(
     async (product) => {
+      const local = deriveOtherBranchAvailability(product, branchId);
+      const baseHint = {
+        product,
+        productName: product.name,
+        activeBranchName: activeBranch?.name || "your branch",
+        alternatives: local?.alternatives || [],
+        availableElsewhere: Boolean(local?.availableElsewhere),
+        canSeeDetails: Boolean(local?.hasLocalBranchData),
+        loading: !local?.hasLocalBranchData,
+      };
+      // Paint immediately from payload already on the product when possible.
+      setOutOfStockHint(baseHint);
+      setCheckingAvailabilityId(product.id);
+
       try {
         const res = await getProductAvailability(product.id);
-        const data = res.data;
+        const data = res.data || {};
         setOutOfStockHint({
           product,
           productName: data.product_name || product.name,
-          activeBranchName: data.active_branch?.branch_name || activeBranch?.name || "your branch",
-          alternatives: data.other_branches || [],
-          availableElsewhere: data.available_elsewhere,
+          activeBranchName:
+            data.active_branch?.branch_name || activeBranch?.name || "your branch",
+          alternatives: data.other_branches || local?.alternatives || [],
+          availableElsewhere:
+            data.available_elsewhere ?? Boolean(local?.availableElsewhere),
           message: data.message,
-          canSeeDetails: Array.isArray(data.other_branches),
+          canSeeDetails: Array.isArray(data.other_branches) || Boolean(local?.hasLocalBranchData),
+          loading: false,
         });
       } catch {
-        setOutOfStockHint({
-          product,
-          productName: product.name,
-          activeBranchName: activeBranch?.name || "your branch",
-          alternatives: [],
-          availableElsewhere: false,
-        });
+        setOutOfStockHint((prev) =>
+          prev?.product?.id === product.id
+            ? { ...prev, loading: false, canSeeDetails: Boolean(local?.hasLocalBranchData) }
+            : prev,
+        );
+      } finally {
+        setCheckingAvailabilityId(null);
       }
     },
-    [activeBranch?.name],
+    [activeBranch?.name, branchId],
   );
 
   const runSearch = useCallback(
@@ -118,20 +136,29 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       }
       setSearching(true);
       try {
-        const products = await searchProducts(q, { branchId, perPage: 80, context: "sales" });
-        setSearchResults(sortForOTC(products));
-        setOutOfStockHint(null);
-        if (products.length === 0) {
-          // RULE 3: explain out-of-stock + show other-branch availability when possible
-          const broad = await api.get("/products/", {
-            params: { context: "inventory", search: q, page_size: 5 },
+        // Sales + inventory in parallel — inventory includes out-of-stock rows with
+        // branch_stocks so "check other branch" is instant and we don't wait twice.
+        const [salesProducts, invRes] = await Promise.all([
+          searchProducts(q, { branchId, perPage: 40, context: "sales" }),
+          api.get("/inventory/list/", {
+            params: { search: q, per_page: 40, branch: branchId || undefined },
             skipGlobalErrorNotification: true,
-          });
-          const matches = broad.data?.results || broad.data?.data || [];
-          if (matches.length > 0) {
-            setSearchResults(sortForOTC(matches));
-          }
+          }).catch(() => null),
+        ]);
+        const invData = invRes?.data || {};
+        const invProducts = Array.isArray(invData)
+          ? invData
+          : invData.products || invData.results || [];
+        const byId = new Map();
+        for (const p of invProducts) {
+          if (p?.id != null) byId.set(p.id, p);
         }
+        for (const p of salesProducts) {
+          if (p?.id != null) byId.set(p.id, { ...byId.get(p.id), ...p });
+        }
+        const merged = Array.from(byId.values());
+        setSearchResults(sortForOTC(merged.length ? merged : salesProducts));
+        setOutOfStockHint(null);
       } catch {
         setSearchResults([]);
       } finally {
@@ -143,7 +170,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
 
   const loadCatalog = useCallback(async () => {
     try {
-      const products = await fetchBranchCatalog({ branchId, perPage: 200, context: "sales" });
+      const products = await fetchBranchCatalog({ branchId, perPage: 80, context: "sales" });
       const sorted = sortForOTC(products);
       setCatalog(sorted);
     } catch {
@@ -761,7 +788,9 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
               <p className="text-red-700 font-semibold">
                 ❌ Out of stock at {outOfStockHint.activeBranchName}
               </p>
-              {outOfStockHint.canSeeDetails && outOfStockHint.alternatives?.length > 0 ? (
+              {outOfStockHint.loading ? (
+                <p className="text-amber-800">Checking other branches…</p>
+              ) : outOfStockHint.canSeeDetails && outOfStockHint.alternatives?.length > 0 ? (
                 <>
                   <p className="font-semibold">Available at other branches:</p>
                   {outOfStockHint.alternatives.map((alt) => (
@@ -797,6 +826,7 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
             const qty = getProductBranchQuantity(product, branchId, activeBranch?.name);
             const price = getProductDisplayPrice(product);
             const outHere = qty <= 0;
+            const checkingThis = checkingAvailabilityId === product.id;
             return (
               <div
                 key={product.id}
@@ -816,10 +846,11 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
                     </span>
                     <button
                       type="button"
-                      className="block text-xs text-indigo-600 mt-1 underline"
+                      className="block text-xs text-indigo-600 mt-1 underline disabled:opacity-50"
+                      disabled={checkingThis}
                       onClick={() => void showAvailabilityHint(product)}
                     >
-                      Check other branch availability
+                      {checkingThis ? "Checking…" : "Check other branch availability"}
                     </button>
                   </>
                 ) : (

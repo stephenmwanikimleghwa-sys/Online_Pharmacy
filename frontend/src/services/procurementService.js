@@ -70,4 +70,6 @@ export const rejectTransfer = (id, reason) =>
   api.post(`/inventory/transfers/${id}/reject/`, { reason });
 
 export const getProductAvailability = (productId) =>
-  api.get(`/products/${productId}/availability/`);
+  api.get(`/products/${productId}/availability/`, {
+    skipGlobalErrorNotification: true,
+  });
