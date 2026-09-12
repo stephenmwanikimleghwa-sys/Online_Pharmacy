@@ -466,6 +466,8 @@ const OTCSalePanel = ({ notesPrefix = "OTC sale" }) => {
       discount: Math.max(0, parseFloat(discount) || 0),
       patient_name: setup.patientName,
       payment_mode: paymentMode,
+      branch_name: activeBranch?.name || "",
+      branch_type: activeBranch?.branch_type || "",
       items: cleanedItems.map((i) => ({
         product_name: i.name,
         name: i.name,
