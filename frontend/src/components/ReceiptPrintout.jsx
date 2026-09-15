@@ -3,7 +3,7 @@ import React from "react";
 /**
  * Thermal 80mm sales receipt.
  * Branding is branch-specific (Peakfarm vs Transcounty Main/Annex).
- * Columns use a fixed monospace grid so PRICE / QTY / TOT. stay aligned.
+ * Item columns use a fixed table — CSS grid often overlaps on thermal print engines.
  */
 
 const BRANCH_PROFILES = {
@@ -79,16 +79,28 @@ function formatPhone(raw, fallbackPhone) {
   return normalizeText(raw, fallbackPhone);
 }
 
-/** Shared grid: No. | NAME | PRICE | QTY | TOT. */
-const COL_GRID = {
-  display: "grid",
-  gridTemplateColumns: "2.2ch minmax(0, 1fr) 7ch 4.5ch 8ch",
-  columnGap: "4px",
-  alignItems: "start",
+const TABLE_STYLE = {
   width: "100%",
+  borderCollapse: "collapse",
+  tableLayout: "fixed",
+  fontFamily: "'Courier New', Courier, monospace",
+  fontSize: "10px",
 };
 
-const COL_RIGHT = {
+const TH_STYLE = {
+  fontWeight: 700,
+  padding: "0 1px 2px 0",
+  verticalAlign: "bottom",
+};
+
+const TD_STYLE = {
+  padding: "1px 1px 2px 0",
+  verticalAlign: "top",
+  wordBreak: "break-word",
+};
+
+const NUM_STYLE = {
+  ...TD_STYLE,
   textAlign: "right",
   whiteSpace: "nowrap",
   fontVariantNumeric: "tabular-nums",
@@ -121,7 +133,6 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       isPlaceholderValue(rawPhone) ? profile.phone : rawPhone,
       profile.phone,
     ),
-    // Brand emails/addresses are fixed per branch (do not inherit shared pharmacy profile).
     email: profile.email,
     address: profile.address,
     tagline: profile.tagline,
@@ -181,30 +192,11 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  /** Compact amounts for narrow thermal columns (avoid 1,234.00 blowing PRICE/TOT). */
   const fmtAmt = (n) => {
     const v = Number(n) || 0;
-    // Keep receipt amounts compact but consistent width for alignment.
-    return v.toLocaleString("en-KE", {
-      minimumFractionDigits: Number.isInteger(v) ? 0 : 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
-  const renderItemRow = (item, idx) => {
-    const name = item.product_details?.name || item.product_name || item.name || "Item";
-    const qty = Number(item.quantity) || 0;
-    const unitPrice = Number(item.price_per_unit || item.unit_price || item.unitPrice) || 0;
-    const lineTot = unitPrice * qty;
-
-    return (
-      <div key={item.id || idx} style={{ ...COL_GRID, marginBottom: 3 }}>
-        <span>{idx + 1}.</span>
-        <span style={{ wordBreak: "break-word" }}>{name}</span>
-        <span style={COL_RIGHT}>{fmtAmt(unitPrice)}</span>
-        <span style={COL_RIGHT}>{qty}</span>
-        <span style={COL_RIGHT}>{fmtAmt(lineTot)}</span>
-      </div>
-    );
+    if (Number.isInteger(v)) return String(v);
+    return v.toFixed(2);
   };
 
   return (
@@ -247,22 +239,51 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       </div>
       <div className="r-dash" />
 
-      <div style={{ ...COL_GRID, fontWeight: 700, marginBottom: 2 }}>
-        <span>No.</span>
-        <span>NAME</span>
-        <span style={COL_RIGHT}>PRICE</span>
-        <span style={COL_RIGHT}>QTY</span>
-        <span style={COL_RIGHT}>TOT.</span>
-      </div>
-      <div className="r-dash" />
-
-      <div>
-        {items.length === 0 ? (
-          <div className="r-center r-small">No items</div>
-        ) : (
-          items.map((item, idx) => renderItemRow(item, idx))
-        )}
-      </div>
+      <table className="r-items" style={TABLE_STYLE}>
+        <colgroup>
+          <col style={{ width: "9%" }} />
+          <col style={{ width: "41%" }} />
+          <col style={{ width: "18%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "20%" }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th style={{ ...TH_STYLE, textAlign: "left" }}>No.</th>
+            <th style={{ ...TH_STYLE, textAlign: "left" }}>NAME</th>
+            <th style={{ ...TH_STYLE, textAlign: "right" }}>PRICE</th>
+            <th style={{ ...TH_STYLE, textAlign: "right" }}>QTY</th>
+            <th style={{ ...TH_STYLE, textAlign: "right" }}>TOT.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="r-center r-small" style={TD_STYLE}>
+                No items
+              </td>
+            </tr>
+          ) : (
+            items.map((item, idx) => {
+              const name =
+                item.product_details?.name || item.product_name || item.name || "Item";
+              const qty = Number(item.quantity) || 0;
+              const unitPrice =
+                Number(item.price_per_unit || item.unit_price || item.unitPrice) || 0;
+              const lineTot = unitPrice * qty;
+              return (
+                <tr key={item.id || idx}>
+                  <td style={TD_STYLE}>{idx + 1}.</td>
+                  <td style={TD_STYLE}>{name}</td>
+                  <td style={NUM_STYLE}>{fmtAmt(unitPrice)}</td>
+                  <td style={NUM_STYLE}>{qty}</td>
+                  <td style={NUM_STYLE}>{fmtAmt(lineTot)}</td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
 
       <div className="r-dash-solid" />
 
@@ -284,8 +305,12 @@ const ReceiptPrintout = ({ order, pharmacy, withHeader = true }) => {
       </div>
 
       <div className="r-dash" />
-      <div className="r-row r-small">
-        <span>Served By: {servedBy}</span>
+      {/* Served By only with pharmacy header — omit entirely when printing without header */}
+      <div
+        className="r-row r-small"
+        style={withHeader ? undefined : { justifyContent: "flex-end" }}
+      >
+        {withHeader ? <span>Served By: {servedBy}</span> : null}
         <span>Time: {timeStr}</span>
       </div>
       <div className="r-spacer" />

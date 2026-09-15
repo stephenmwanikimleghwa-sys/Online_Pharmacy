@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import ReceiptPrintout from "./ReceiptPrintout";
 import { useAuth } from "../context/AuthContext";
@@ -82,44 +82,43 @@ const ReceiptModal = ({ order, onClose }) => {
       window.alert('Printing restricted: receipt has already been printed once.');
       return;
     }
-    setWithHeader(includeHeader);
+    // Commit header mode before reading DOM — avoids printing stale "Served By" / header.
+    flushSync(() => {
+      setWithHeader(includeHeader);
+    });
 
-    /* Give React one tick to re-render the hidden printout with correct header */
-    setTimeout(() => {
-      const printContent = document.getElementById("receipt-printout").innerHTML;
-      const iframe = document.createElement("iframe");
-      
-      // Hide the iframe off-screen
-      iframe.style.position = "absolute";
-      iframe.style.width = "0px";
-      iframe.style.height = "0px";
-      iframe.style.border = "none";
-      document.body.appendChild(iframe);
+    const printContent = document.getElementById("receipt-printout")?.innerHTML || "";
+    const iframe = document.createElement("iframe");
 
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      const normalizeForFile = (value, fallback = 'unknown') => {
-        const text = String(value || fallback)
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '_')
-          .replace(/^_+|_+$/g, '');
-        return text || fallback;
-      };
-      const safeBranch = normalizeForFile(order?.branch_name || 'Transcounty Main');
-      const safeDate = new Date(order?.created_at || order?.dispensed_at || Date.now())
-        .toISOString()
-        .slice(0, 10)
-        .replace(/-/g, '');
-      const paymentMethod = (
-        order?.payment_mode ||
-        order?.payment_method ||
-        order?.payment?.method ||
-        order?.payment?.payment_mode ||
-        'unknown'
-      );
-      const receiptTitle = `${safeBranch}_receipt_${order?.id || 'NEW'}_${normalizeForFile(paymentMethod)}_${safeDate}_${Date.now()}.pdf`;
-      
-      doc.write(`
+    iframe.style.position = "absolute";
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    const normalizeForFile = (value, fallback = "unknown") => {
+      const text = String(value || fallback)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return text || fallback;
+    };
+    const safeBranch = normalizeForFile(order?.branch_name || "Transcounty Main");
+    const safeDate = new Date(order?.created_at || order?.dispensed_at || Date.now())
+      .toISOString()
+      .slice(0, 10)
+      .replace(/-/g, "");
+    const paymentMethod =
+      order?.payment_mode ||
+      order?.payment_method ||
+      order?.payment?.method ||
+      order?.payment?.payment_mode ||
+      "unknown";
+    const receiptTitle = `${safeBranch}_receipt_${order?.id || "NEW"}_${normalizeForFile(paymentMethod)}_${safeDate}_${Date.now()}.pdf`;
+
+    doc.write(`
         <html>
           <head>
             <title>${receiptTitle}</title>
@@ -130,12 +129,12 @@ const ReceiptModal = ({ order, onClose }) => {
               }
               body {
                 margin: 0;
-                padding: 8mm 3mm 4mm 3mm; /* increased top padding to prevent cutoff */
+                padding: 8mm 3mm 4mm 3mm;
                 background: #fff;
                 color: #000 !important;
                 font-family: 'Courier New', Courier, monospace;
                 font-size: 11px;
-                font-weight: 600; /* Bolder text for clearer thermal print */
+                font-weight: 600;
                 line-height: 1.4;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -152,6 +151,23 @@ const ReceiptModal = ({ order, onClose }) => {
               .r-row-right { text-align: right; }
               .r-small   { font-size: 10px; }
               .r-spacer  { height: 4px; }
+              table.r-items {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+                font-size: 10px;
+              }
+              table.r-items th,
+              table.r-items td {
+                padding: 1px 1px 2px 0;
+                vertical-align: top;
+                word-break: break-word;
+              }
+              table.r-items th:nth-child(n+3),
+              table.r-items td:nth-child(n+3) {
+                text-align: right;
+                white-space: nowrap;
+              }
             </style>
           </head>
           <body>
@@ -159,29 +175,26 @@ const ReceiptModal = ({ order, onClose }) => {
           </body>
         </html>
       `);
-      doc.close();
+    doc.close();
 
-      iframe.contentWindow.focus();
-      // Wait for iframe layout then trigger print
+    iframe.contentWindow.focus();
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      try {
+        const allowedPrint = user && ["admin", "pharmacist", "cashier"].includes(user.role);
+        if (!allowedPrint) {
+          const key = "printed_receipts";
+          const payload = JSON.parse(localStorage.getItem(key) || "{}");
+          payload[String(order.id)] = true;
+          localStorage.setItem(key, JSON.stringify(payload));
+          setPrintedOnce(true);
+        }
+      } catch (e) {}
+
       setTimeout(() => {
-        iframe.contentWindow.print();
-        // Mark as printed for non-privileged users
-        try {
-          const allowedPrint = (user && ["admin","pharmacist","cashier"].includes(user.role));
-          if (!allowedPrint) {
-            const key = 'printed_receipts';
-            const payload = JSON.parse(localStorage.getItem(key) || "{}");
-            payload[String(order.id)] = true;
-            localStorage.setItem(key, JSON.stringify(payload));
-            setPrintedOnce(true);
-          }
-        } catch (e) {}
-
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }, 250);
-    }, 80);
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 250);
   };
 
   /* Close on backdrop click */

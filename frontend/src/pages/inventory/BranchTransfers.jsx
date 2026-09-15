@@ -5,8 +5,13 @@ import LoadingButton from '../../components/LoadingButton';
 import { useAuth } from '../../context/AuthContext';
 import ActiveBranchGuard from '../../components/ActiveBranchGuard';
 import inventoryService from '../../services/inventoryService';
+import { unwrapList } from '../../utils/parseApiData';
 
-/** Searchable product picker — full catalog is too large for a <select> (capped at 500 → names stop around "C"). */
+/**
+ * Typeahead product picker.
+ * A plain <select> only ever got the first 500 names (alphabetically ≈ A–C).
+ * Search hits the API with `search=` so any product past C can be found.
+ */
 function TransferProductSearch({ branchId, selected, onSelect }) {
   const [query, setQuery] = useState(selected?.name || '');
   const [results, setResults] = useState([]);
@@ -29,14 +34,17 @@ function TransferProductSearch({ branchId, selected, onSelect }) {
       try {
         const res = await inventoryService.getInventory({
           search: term,
-          per_page: 40,
+          per_page: 80,
           branch: branchId || undefined,
+          scope: 'local',
         });
         const data = res.data || {};
-        const list = Array.isArray(data)
-          ? data
-          : data.products || data.results || data.data || [];
-        setResults(Array.isArray(list) ? list : []);
+        const nested =
+          data && typeof data === 'object' && data.data && typeof data.data === 'object'
+            ? data.data
+            : data;
+        const list = unwrapList(nested);
+        setResults(list);
       } catch {
         setResults([]);
       } finally {
@@ -45,6 +53,8 @@ function TransferProductSearch({ branchId, selected, onSelect }) {
     },
     [branchId],
   );
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   const handleInput = (e) => {
     const val = e.target.value;
@@ -67,7 +77,7 @@ function TransferProductSearch({ branchId, selected, onSelect }) {
       <input
         type="text"
         className="form-input w-full"
-        placeholder="Type at least 2 letters to search…"
+        placeholder="Search product name (min. 2 letters)…"
         value={query}
         onChange={handleInput}
         onFocus={() => query.trim().length >= 2 && setOpen(true)}
@@ -75,6 +85,9 @@ function TransferProductSearch({ branchId, selected, onSelect }) {
         autoComplete="off"
         required={!selected?.id}
       />
+      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+        Type part of the name — the list is too large to show all products at once.
+      </p>
       {searching && (
         <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Searching…</p>
       )}
