@@ -84,19 +84,25 @@ export const AddMedicineModal = ({
   const inputBase = (hasError) =>
     `form-input ${hasError ? 'border-rose-300 ring-4 ring-rose-500/5 border-rose-400' : ''}`;
 
-  // When user picks a suggestion — prefill fields and warn
+  // When user picks a suggestion — prefill empty fields only (never overwrite category/form).
   const selectSuggestion = (product) => {
     setForm(prev => ({
       ...prev,
       name: product.name,
-      category: product.category || prev.category,
-      dosage_form: product.dosage_form || prev.dosage_form,
-      manufacturer: product.manufacturer || prev.manufacturer,
-      description: product.description || prev.description,
+      category: prev.category || product.category || '',
+      dosage_form: prev.dosage_form || product.dosage_form || '',
+      manufacturer: prev.manufacturer || product.manufacturer || '',
+      description: prev.description || product.description || '',
     }));
     setDuplicateMatch(product);
     setShowSuggestions(false);
   };
+
+  const categoryQuery = (form.category || '').trim().toLowerCase();
+  const categorySuggestions =
+    categoryQuery.length >= 1
+      ? categories.filter((c) => String(c).toLowerCase().includes(categoryQuery)).slice(0, 12)
+      : [];
 
   return createPortal(
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -216,7 +222,7 @@ export const AddMedicineModal = ({
               {formErrors.name && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.name}</p>}
             </div>
 
-            {/* Category */}
+            {/* Category — free text; suggestions only after typing (no silent default) */}
             <div>
               <label className="form-label">Category</label>
               <div className="relative">
@@ -229,41 +235,45 @@ export const AddMedicineModal = ({
                     setShowCategoryDropdown(true);
                   }}
                   onFocus={() => setShowCategoryDropdown(true)}
-                  placeholder="e.g. Painkillers"
+                  onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 150)}
+                  placeholder="Type category, e.g. ANALGESICS"
                   className={inputBase(formErrors.category)}
                   autoComplete="off"
                 />
-                {showCategoryDropdown && categories.length > 0 && (
+                {showCategoryDropdown && categorySuggestions.length > 0 && (
                   <ul className="absolute z-10 w-full bg-white border border-slate-200 mt-1 rounded-xl shadow-lg max-h-48 overflow-y-auto overflow-x-hidden">
-                    {categories
-                      .filter(c => c.toLowerCase().includes(form.category.toLowerCase()))
-                      .map((cat, idx) => (
-                        <li
-                          key={idx}
-                          className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
-                          onClick={() => {
-                            setForm({ ...form, category: cat });
-                            setShowCategoryDropdown(false);
-                          }}
-                        >
-                          {cat}
-                        </li>
-                      ))}
+                    {categorySuggestions.map((cat) => (
+                      <li
+                        key={cat}
+                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setForm({ ...form, category: cat });
+                          setShowCategoryDropdown(false);
+                        }}
+                      >
+                        {cat}
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
+              <p className="mt-1 text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
+                Type to search existing categories, or enter a new one. Nothing is pre-selected.
+              </p>
               {formErrors.category && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.category}</p>}
             </div>
 
-            {/* Dosage Form (Unit of Measure) */}
+            {/* Dosage Form (Unit of Measure) — no default to Other */}
             <div>
               <label className="form-label">Unit of Measure / Form</label>
               <select
                 name="dosage_form"
-                value={form.dosage_form || 'other'}
+                value={form.dosage_form || ''}
                 onChange={(e) => setForm({ ...form, dosage_form: e.target.value })}
-                className={inputBase()}
+                className={inputBase(formErrors.dosage_form)}
               >
+                <option value="">Select form…</option>
                 <option value="tablet">Tablet</option>
                 <option value="capsule">Capsule</option>
                 <option value="syrup">Syrup</option>
@@ -275,6 +285,7 @@ export const AddMedicineModal = ({
                 <option value="powder">Powder</option>
                 <option value="other">Other</option>
               </select>
+              {formErrors.dosage_form && <p className="mt-2 text-xs font-bold text-rose-500 px-2">{formErrors.dosage_form}</p>}
             </div>
 
             {/* Department */}

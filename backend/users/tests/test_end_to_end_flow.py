@@ -39,6 +39,7 @@ class EndToEndFlowTest(TestCase):
             "name": "TestMed 100mg",
             "description": "Test medicine",
             "category": "general",
+            "dosage_form": "tablet",
             "price": "25.00",
             "stock_quantity": 50,
         }

@@ -16,8 +16,8 @@ const AdminStock = () => {
 	const { notify } = useNotification();
 	const navigate = useNavigate();
 	const { user, activeBranch } = useAuth();
-	const defaultDepartment =
-		(activeBranch?.type || '').toUpperCase() === 'AGROVET' ? 'AGROVET' : 'CHEMIST';
+	const branchType = (activeBranch?.type || activeBranch?.branch_type || '').toUpperCase();
+	const defaultDepartment = branchType === 'AGROVET' ? 'AGROVET' : 'CHEMIST';
 
 	const [items, setItems] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ const AdminStock = () => {
 		wholesale_price: '',
 		retail_price: '',
 		stock_quantity: 0,
-		dosage_form: 'other',
+		dosage_form: '',
 		strength: '',
 		shelf_location: '',
 		expiry_date: '',
@@ -225,7 +225,7 @@ const AdminStock = () => {
 			wholesale_price: '',
 			retail_price: '',
 			stock_quantity: 0,
-			dosage_form: 'other',
+			dosage_form: '',
 			strength: '',
 			shelf_location: '',
 			expiry_date: '',
@@ -234,6 +234,7 @@ const AdminStock = () => {
 			reorder_threshold: 10,
 			image: null,
 		});
+		setFormErrors({});
 		setIsModalOpen(true);
 		};
 
@@ -253,7 +254,7 @@ const AdminStock = () => {
 			wholesale_price: item.pricing_tier?.wholesale_price || '',
 			retail_price: item.pricing_tier?.retail_price || '',
 			stock_quantity: item.stock_quantity || 0,
-			dosage_form: item.dosage_form || 'other',
+			dosage_form: item.dosage_form || '',
 			strength: item.strength || '',
 			shelf_location: item.shelf_location || '',
 			expiry_date: item.expiry_date || '',
@@ -277,7 +278,7 @@ const AdminStock = () => {
 			wholesale_price: item.pricing_tier?.wholesale_price || '',
 			retail_price: item.pricing_tier?.retail_price || '',
 			stock_quantity: item.stock_quantity || 0,
-			dosage_form: item.dosage_form || 'other',
+			dosage_form: item.dosage_form || '',
 			strength: item.strength || '',
 			shelf_location: item.shelf_location || '',
 			expiry_date: item.expiry_date || '',
@@ -309,6 +310,10 @@ const AdminStock = () => {
 
 		if (!form.category?.trim()) {
 			errors.category = 'Category is required';
+		}
+
+		if (!form.dosage_form?.trim()) {
+			errors.dosage_form = 'Unit of measure / form is required';
 		}
 
 		// Buying price is always required now (as it calculates the others)

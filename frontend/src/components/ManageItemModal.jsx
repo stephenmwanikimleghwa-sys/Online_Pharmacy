@@ -44,7 +44,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
     use_legacy_prices: item.pricing_tier?.use_legacy_prices ?? false,
     wholesale_price: item.pricing_tier?.wholesale_price ?? item.wholesale_price ?? '',
     retail_price: item.pricing_tier?.retail_price ?? item.selling_price ?? '',
-    dosage_form: item.dosage_form || 'other',
+    dosage_form: item.dosage_form || '',
     strength: item.strength || '',
     description: item.description || '',
     reorder_threshold: item.reorder_threshold ?? 10,
@@ -147,6 +147,7 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
     const errors = {};
     if (!form.name?.trim()) errors.name = 'Name is required';
     if (!form.category?.trim()) errors.category = 'Category is required';
+    if (!form.dosage_form?.trim()) errors.dosage_form = 'Unit of measure / form is required';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -604,10 +605,11 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
               <div>
                 <label className="form-label">Unit of Measure / Form</label>
                 <select
-                  value={form.dosage_form}
+                  value={form.dosage_form || ''}
                   onChange={(e) => setForm({ ...form, dosage_form: e.target.value })}
-                  className="form-input w-full"
+                  className={inputBase(formErrors.dosage_form)}
                 >
+                  <option value="">Select form…</option>
                   <option value="tablet">Tablet</option>
                   <option value="capsule">Capsule</option>
                   <option value="syrup">Syrup</option>
@@ -619,6 +621,9 @@ const ManageItemModal = ({ item, onClose, onRestock, onEdit, onDelete }) => {
                   <option value="powder">Powder</option>
                   <option value="other">Other</option>
                 </select>
+                {formErrors.dosage_form && (
+                  <p className="mt-1 text-xs font-bold text-rose-500 px-1">{formErrors.dosage_form}</p>
+                )}
               </div>
 
               {/* Department */}

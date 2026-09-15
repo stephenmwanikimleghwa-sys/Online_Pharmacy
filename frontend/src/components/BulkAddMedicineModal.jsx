@@ -26,7 +26,7 @@ const emptyRow = (department = 'CHEMIST') => ({
   name: '',
   category: '',
   department,
-  dosage_form: 'tablet',
+  dosage_form: '',
   buying_price: '',
   retail_price: '',
   stock_quantity: '',
@@ -180,7 +180,9 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
   const { notify } = useNotification();
   const { activeBranch } = useAuth();
   const defaultDepartment =
-    (activeBranch?.type || '').toUpperCase() === 'AGROVET' ? 'AGROVET' : 'CHEMIST';
+    (activeBranch?.type || activeBranch?.branch_type || '').toUpperCase() === 'AGROVET'
+      ? 'AGROVET'
+      : 'CHEMIST';
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState(() => [emptyRow(defaultDepartment)]);
   const [rowErrors, setRowErrors] = useState({});
@@ -226,6 +228,8 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
     rows.forEach(row => {
       const rowErr = {};
       if (!row.name.trim()) rowErr.name = 'Name required';
+      if (!row.category.trim()) rowErr.category = 'Required';
+      if (!row.dosage_form) rowErr.dosage_form = 'Required';
       if (!row.buying_price || parseFloat(row.buying_price) <= 0) rowErr.buying_price = 'Required';
       if (row.stock_quantity === '' || parseInt(row.stock_quantity) < 0) rowErr.stock_quantity = 'Required';
       if (Object.keys(rowErr).length) errors[row.id] = rowErr;
@@ -249,9 +253,9 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
     try {
       const payload = rows.map(row => ({
         name: row.name.trim(),
-        category: row.category.trim() || undefined,
+        category: row.category.trim(),
         department: row.department || 'CHEMIST',
-        dosage_form: row.dosage_form || undefined,
+        dosage_form: row.dosage_form,
         manufacturer: row.manufacturer.trim() || undefined,
         buying_price: parseFloat(row.buying_price),
         // Pass retail price as legacy price if provided
@@ -400,28 +404,31 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                           />
                         </td>
 
-                        {/* Category */}
+                        {/* Category — free text so staff are never stuck with a silent default */}
                         <td className="px-3 py-2">
-                          {categories.length > 0 ? (
-                            <select
-                              value={row.category}
-                              onChange={e => updateRow(row.id, 'category', e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            >
-                              <option value="">Select…</option>
-                              {categories.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
-                          ) : (
+                          <div className="relative">
                             <input
                               type="text"
+                              list={`bulk-cat-${row.id}`}
                               value={row.category}
                               onChange={e => updateRow(row.id, 'category', e.target.value)}
-                              placeholder="Category"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              placeholder="e.g. ANALGESICS"
+                              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all ${
+                                rowErrors[row.id]?.category
+                                  ? 'border-rose-400 bg-rose-50 ring-rose-500/20 focus:ring-rose-500/30'
+                                  : 'border-slate-200 bg-white focus:ring-primary/20 focus:border-indigo-400'
+                              }`}
+                              title={rowErrors[row.id]?.category ?? undefined}
+                              autoComplete="off"
                             />
-                          )}
+                            {categories.length > 0 && (
+                              <datalist id={`bulk-cat-${row.id}`}>
+                                {categories.map(c => (
+                                  <option key={c} value={c} />
+                                ))}
+                              </datalist>
+                            )}
+                          </div>
                         </td>
 
                         {/* Department */}
@@ -441,8 +448,14 @@ const BulkAddMedicineModal = ({ isOpen, onClose, onSuccess, categories = [] }) =
                           <select
                             value={row.dosage_form}
                             onChange={e => updateRow(row.id, 'dosage_form', e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                              rowErrors[row.id]?.dosage_form
+                                ? 'border-rose-400 bg-rose-50'
+                                : 'border-slate-200 bg-white'
+                            }`}
+                            title={rowErrors[row.id]?.dosage_form ?? undefined}
                           >
+                            <option value="">Select…</option>
                             {DOSAGE_FORMS.map(d => (
                               <option key={d.value} value={d.value}>{d.label}</option>
                             ))}

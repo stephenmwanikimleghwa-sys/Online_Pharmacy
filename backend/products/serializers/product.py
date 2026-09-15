@@ -152,6 +152,12 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
     price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01, required=False)
     stock_quantity = serializers.IntegerField(min_value=0)
+    # Explicit — do not inherit model defaults (category blank / dosage_form="other").
+    category = serializers.CharField(max_length=100, required=True, allow_blank=False)
+    dosage_form = serializers.ChoiceField(
+        choices=Product.DOSAGE_FORM_CHOICES,
+        required=True,
+    )
     buying_price = serializers.DecimalField(
         max_digits=10, decimal_places=2, min_value=0.01,
         required=False, write_only=True,
@@ -184,6 +190,26 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "vat_obligation",
             "image",
         )
+
+    def validate_category(self, value: Optional[str]) -> str:
+        """Category must be chosen explicitly — never blank."""
+        category = (value or "").strip()
+        if not category:
+            raise serializers.ValidationError(
+                "Category is required. Enter an existing category (e.g. ANALGESICS) or a new one."
+            )
+        return category
+
+    def validate_dosage_form(self, value: Optional[str]) -> str:
+        form = (value or "").strip().lower()
+        if not form:
+            raise serializers.ValidationError("Unit of measure / dosage form is required.")
+        allowed = {c[0] for c in Product.DOSAGE_FORM_CHOICES}
+        if form not in allowed:
+            raise serializers.ValidationError(
+                f"Invalid dosage form. Choose one of: {', '.join(sorted(allowed))}."
+            )
+        return form
 
     def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Require either price or buying_price; honor manual prices when provided."""

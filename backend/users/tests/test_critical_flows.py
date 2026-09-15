@@ -229,6 +229,7 @@ class CriticalUserFlowTests(APITestCase):
         response = self.client.post('/api/products/', {
             'name': 'Unauthorized Product',
             'category': CategoryChoices.VITAMINS,
+            'dosage_form': 'tablet',
             'price': '100.00',
             'stock_quantity': 200
         }, format='json')

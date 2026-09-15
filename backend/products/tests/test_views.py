@@ -46,6 +46,7 @@ class ProductTests(APITestCase):
         data = {
             "name": "New Product",
             "category": "antibiotics",
+            "dosage_form": "tablet",
             "price": "200.00",
             "stock_quantity": 20,
             "description": "New Description"
@@ -60,6 +61,7 @@ class ProductTests(APITestCase):
         data = {
             "name": "Pharm Product",
             "category": "vitamins",
+            "dosage_form": "capsule",
             "price": "50.00",
             "stock_quantity": 100
         }
@@ -72,6 +74,7 @@ class ProductTests(APITestCase):
         data = {
             "name": "Illegal Product",
             "category": "other",
+            "dosage_form": "other",
             "price": "10.00",
             "stock_quantity": 1
         }

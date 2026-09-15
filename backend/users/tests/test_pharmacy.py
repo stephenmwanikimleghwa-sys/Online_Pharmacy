@@ -92,6 +92,7 @@ class PharmacyTests(TestCase):
             "name": "New Product A",
             "price": 150,
             "category": "pain_relief",
+            "dosage_form": "tablet",
             "stock_quantity": 50
         }
         response = self.client.post(url, data)
